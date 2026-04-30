@@ -1,36 +1,49 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Teacher Dashboard - TEF</title>
-</head>
-
 <body>
 
 <h2>Teacher Dashboard</h2>
 
 <div id="info"></div>
-<button href="teacher-submit-grades.html">submit Grades</button >
 
+<hr>
+
+<h3>Teaching Tools</h3>
+
+<button onclick="go('teacher-create-assignment.html')">Create Assignment</button>
+<button onclick="go('teacher-mark-assignment.html')">Mark Assignments</button>
+
+<button onclick="go('teacher-create-quiz.html')">Create Quiz</button>
+<button onclick="go('teacher-quiz-review.html')">Quiz Results</button>
+
+<button onclick="go('teacher-notes.html')">Send Lessons</button>
+
+<br><br>
 <button onclick="logout()">Logout</button>
 
 <script>
-  const user = JSON.parse(localStorage.getItem("user"));
 
-  if (!user || user.role !== "teacher") {
-    window.location.href = "login.html";
-  }
+const user = JSON.parse(localStorage.getItem("user"));
 
-  document.getElementById("info").innerHTML = `
-    <p><b>Name:</b> ${user.name}</p>
-    <p><b>ID:</b> ${user.id}</p>
-    <p><b>Classes:</b> ${user.classes?.join(", ")}</p>
-    <p><b>Status:</b> ${user.status}</p>
-  `;
+if(!user || user.role !== "teacher"){
+  location.href = "login.html";
+}
 
-  function logout() {
-    localStorage.removeItem("user");
-    window.location.href = "login.html";
-  }
+document.getElementById("info").innerHTML = `
+  <b>${user.name}</b><br>
+  ID: ${user.userId}<br>
+  Classes: ${(user.classes || []).join(", ")}
+`;
+
+function go(page){
+  location.href = page;
+}
+
+function logout(){
+  localStorage.removeItem("user");
+  location.href = "login.html";
+}
+
 </script>
 
 </body>
