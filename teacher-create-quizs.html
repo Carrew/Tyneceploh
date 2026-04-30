@@ -2,7 +2,7 @@
 <html>
 <body>
 
-<h2>Create Quiz (MCQ)</h2>
+<h2>Create Quiz (Weighted MCQ)</h2>
 
 <select id="class"></select>
 <input id="title" placeholder="Quiz Title">
@@ -36,24 +36,30 @@ document.getElementById("class").innerHTML =
 let count = 0;
 
 window.addQ = function(){
+
   count++;
 
   document.getElementById("questions").innerHTML += `
     <div style="margin:10px 0;">
-      Q${count}: <input id="q${count}" placeholder="Question"><br>
+      <b>Q${count}</b><br>
 
-      A <input id="a${count}" placeholder="A">
-      B <input id="b${count}" placeholder="B">
-      C <input id="c${count}" placeholder="C">
-      D <input id="d${count}" placeholder="D"><br>
+      <input id="q${count}" placeholder="Question"><br>
 
-      Correct Answer:
+      A <input id="a${count}">
+      B <input id="b${count}">
+      C <input id="c${count}">
+      D <input id="d${count}"><br>
+
+      Correct:
       <select id="ans${count}">
         <option value="A">A</option>
         <option value="B">B</option>
         <option value="C">C</option>
         <option value="D">D</option>
       </select>
+
+      Score:
+      <input id="s${count}" type="number" style="width:60px" value="1">
     </div>
   `;
 };
@@ -61,21 +67,29 @@ window.addQ = function(){
 window.createQuiz = async function(){
 
   const questions = [];
+  let total = 0;
 
   for(let i=1;i<=count;i++){
 
     const q = document.getElementById(`q${i}`).value;
+    const a = document.getElementById(`a${i}`).value;
+    const b = document.getElementById(`b${i}`).value;
+    const c = document.getElementById(`c${i}`).value;
+    const d = document.getElementById(`d${i}`).value;
+
+    const ans = document.getElementById(`ans${i}`).value;
+    const score = Number(document.getElementById(`s${i}`).value || 0);
+
+    if(!q || !a || !b || !c || !d) continue;
 
     questions.push({
       q,
-      options: [
-        document.getElementById(`a${i}`).value,
-        document.getElementById(`b${i}`).value,
-        document.getElementById(`c${i}`).value,
-        document.getElementById(`d${i}`).value
-      ],
-      answer: document.getElementById(`ans${i}`).value
+      options:[a,b,c,d],
+      answer:ans,
+      score
     });
+
+    total += score;
   }
 
   await addDoc(collection(db,"quizzes"),{
@@ -83,10 +97,11 @@ window.createQuiz = async function(){
     class:document.getElementById("class").value,
     title:document.getElementById("title").value,
     questions,
+    totalScore: total,
     createdAt:Date.now()
   });
 
-  alert("Quiz created");
+  alert("Quiz created with total score: " + total);
 };
 
 </script>
