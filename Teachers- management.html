@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Create Teacher - TEF</title>
+</head>
+
+<body>
+
+<h2>Create Teacher</h2>
+
+<input id="name" placeholder="Teacher Name">
+<input id="subject" placeholder="Subject">
+
+<select id="status">
+  <option value="Active">Active</option>
+  <option value="Inactive">Inactive</option>
+</select>
+
+<button onclick="createTeacher()">Create Teacher</button>
+
+<p id="result"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// CORE FUNCTIONS
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generatePin() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+function generateTeacherId(count) {
+  return `TCH${String(count + 1).padStart(3, "0")}`;
+}
+
+window.createTeacher = async function () {
+
+  const name = document.getElementById("name").value;
+  const subject = document.getElementById("subject").value;
+  const status = document.getElementById("status").value;
+
+  const snapshot = await getDocs(collection(db, "users"));
+  const teacherCount = snapshot.docs.filter(d => d.data().role === "teacher").length;
+
+  const id = generateTeacherId(teacherCount);
+  const pin = generatePin();
+  const pinHash = await sha256(pin);
+
+  const user = {
+    id,
+    name,
+    subject,
+    status,
+    role: "teacher",
+    pinHash,
+    createdAt: Date.now()
+  };
+
+  await addDoc(collection(db, "users"), user);
+
+  document.getElementById("result").innerHTML = `
+    Teacher Created<br>
+    ID: ${id}<br>
+    PIN: ${pin}
+  `;
+
+};
+
+</script>
+
+</body>
+</html>
