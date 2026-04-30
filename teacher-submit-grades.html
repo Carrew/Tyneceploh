@@ -6,21 +6,26 @@
 
 <body>
 
-<h2>Submit Student Grades</h2>
+<h2>Submit Grades</h2>
 
-<select id="studentSelect"></select>
+<select id="student"></select>
 
 <input id="subject" placeholder="Subject">
 
-<h4>Scores</h4>
-<input type="number" id="s1" placeholder="1st Period">
-<input type="number" id="s2" placeholder="2nd Period">
-<input type="number" id="s3" placeholder="3rd Period">
-<input type="number" id="exam" placeholder="Exam">
+<select id="period">
+  <option>1st Period</option>
+  <option>2nd Period</option>
+  <option>3rd Period</option>
+  <option>Semester Exam</option>
+  <option>4th Period</option>
+  <option>5th Period</option>
+  <option>6th Period</option>
+  <option>Final Exam</option>
+</select>
 
-<p><b>Average:</b> <span id="avg">0</span></p>
+<input id="score" type="number" placeholder="Score">
 
-<button onclick="submitGrade()">Submit Grade</button>
+<button onclick="submitGrade()">Submit</button>
 
 <p id="msg"></p>
 
@@ -44,76 +49,48 @@ if (!user || user.role !== "teacher") {
   window.location.href = "login.html";
 }
 
-let students = [];
-
 //
-// 🎯 LOAD ONLY ALLOWED STUDENTS
+// 📥 LOAD ONLY TEACHER'S STUDENTS
 //
 async function loadStudents() {
 
   const snap = await getDocs(collection(db, "users"));
 
-  const teacherClasses = user.classes || [];
+  const students = [];
 
-  students = [];
-
-  snap.forEach(doc => {
-    const data = doc.data();
+  snap.forEach(d => {
+    const data = d.data();
 
     if (
       data.role === "student" &&
-      teacherClasses.includes(data.class)
+      user.classes?.includes(data.class)
     ) {
       students.push(data);
     }
   });
 
-  const select = document.getElementById("studentSelect");
+  const select = document.getElementById("student");
 
   select.innerHTML = students.map(s =>
-    `<option value="${s.id}">${s.name} (${s.class})</option>`
+    `<option value="${s.id}|${s.name}|${s.class}">
+      ${s.name} (${s.class})
+    </option>`
   ).join("");
 }
-
-//
-// 📊 AUTO AVERAGE
-//
-function calculateAverage() {
-
-  const s1 = Number(document.getElementById("s1").value) || 0;
-  const s2 = Number(document.getElementById("s2").value) || 0;
-  const s3 = Number(document.getElementById("s3").value) || 0;
-  const exam = Number(document.getElementById("exam").value) || 0;
-
-  const avg = ((s1 + s2 + s3 + exam) / 4).toFixed(2);
-
-  document.getElementById("avg").innerText = avg;
-
-  return avg;
-}
-
-["s1","s2","s3","exam"].forEach(id => {
-  document.getElementById(id).addEventListener("input", calculateAverage);
-});
 
 //
 // 🚀 SUBMIT GRADE
 //
 window.submitGrade = async function () {
 
-  const studentId = document.getElementById("studentSelect").value;
+  const studentVal = document.getElementById("student").value;
   const subject = document.getElementById("subject").value;
+  const period = document.getElementById("period").value;
+  const score = Number(document.getElementById("score").value);
 
-  const s1 = Number(document.getElementById("s1").value);
-  const s2 = Number(document.getElementById("s2").value);
-  const s3 = Number(document.getElementById("s3").value);
-  const exam = Number(document.getElementById("exam").value);
+  const [studentId, studentName, studentClass] = studentVal.split("|");
 
-  const avg = calculateAverage();
-
-  const student = students.find(s => s.id === studentId);
-
-  if (!student || !subject) {
+  if (!subject || !score) {
     alert("Fill all fields");
     return;
   }
@@ -122,30 +99,23 @@ window.submitGrade = async function () {
     teacherId: user.id,
     teacherName: user.name,
 
-    studentId: student.id,
-    studentName: student.name,
-    class: student.class,
+    studentId,
+    studentName,
+    class: studentClass,
 
     subject,
-
-    scores: {
-      "1st": s1,
-      "2nd": s2,
-      "3rd": s3,
-      "exam": exam
-    },
-
-    average: Number(avg),
+    period,
+    score,
 
     status: "pending",
     feedback: "",
 
-    createdAt: Date.now(),
-    reviewedAt: null
+    createdAt: Date.now()
   });
 
-  document.getElementById("msg").innerText = "Grade submitted for approval";
+  document.getElementById("msg").innerText = "Grade submitted (pending approval)";
 
+  document.getElementById("score").value = "";
 };
 
 //
