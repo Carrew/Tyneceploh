@@ -21,17 +21,27 @@ const db = getFirestore(app);
 const user = JSON.parse(localStorage.getItem("user"));
 if (!user || user.role !== "student") location.href="login.html";
 
-let submitted = {};
+let submittedMap = {};
+let submissionsMap = {};
 
+//
+// 📥 LOAD EVERYTHING
+//
 async function load(){
 
   const aSnap = await getDocs(collection(db,"assignments"));
   const sSnap = await getDocs(collection(db,"submissions"));
 
+  submittedMap = {};
+  submissionsMap = {};
+
+  // store submissions
   sSnap.forEach(d=>{
     const s = d.data();
+
     if(s.studentId === user.id){
-      submitted[s.assignmentId] = true;
+      submittedMap[s.assignmentId] = true;
+      submissionsMap[s.assignmentId] = s;
     }
   });
 
@@ -44,38 +54,83 @@ async function load(){
 
     const qs = Array.isArray(a.questions) ? a.questions : [];
 
-    const done = submitted[d.id];
+    const submission = submissionsMap[d.id];
+    const isSubmitted = !!submission;
+    const isMarked = submission?.status === "marked";
 
     html += `
       <div style="border:1px solid #ccc;padding:10px;margin:10px;">
         <h3>${a.title}</h3>
 
-        ${qs.map((q,i)=>`
-          <p>${q.q}</p>
-          ${done ? "Submitted" : `<input id="${d.id}_${i}">`}
-        `).join("")}
+        ${qs.map((q,i)=>{
 
-        ${done
-          ? `<button disabled>Done</button>`
-          : `<button onclick="submit('${d.id}',${qs.length})">Submit</button>`
+          const studentAns = submission?.answers?.[i] || "-";
+
+          return `
+            <div style="margin-bottom:8px;">
+              <b>${q.q}</b><br>
+
+              Your Answer: ${studentAns}<br>
+              Max Score: ${q.score}<br>
+
+              ${renderStatus(submission, i)}
+            </div>
+          `;
+        }).join("")}
+
+        <hr>
+
+        ${
+          !isSubmitted
+          ? `<button onclick="submit('${d.id}',${qs.length})">Submit</button>`
+          : isMarked
+            ? `<b style="color:green">Marked - Score: ${submission.score}</b>`
+            : `<b>Submitted - Awaiting marking</b>`
         }
+
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML = html;
+  document.getElementById("list").innerHTML = html || "No assignments";
 }
 
+//
+// 🎯 SHOW PASS / FAIL / PARTIAL RESULT
+//
+function renderStatus(submission, i){
+
+  if(!submission) return "";
+
+  if(submission.status !== "marked"){
+    return `<i>Pending review</i>`;
+  }
+
+  // optional future per-question breakdown (safe fallback)
+  return `<i style="color:green">Marked</i>`;
+}
+
+//
+// 🚀 SUBMIT
+//
 window.submit = async function(id,len){
 
-  if(submitted[id]) return alert("Already submitted");
+  if(submittedMap[id]){
+    alert("Already submitted");
+    return;
+  }
 
   const answers = [];
 
   for(let i=0;i<len;i++){
-    const v = document.getElementById(`${id}_${i}`).value;
-    if(!v) return alert("Fill all answers");
-    answers.push(v);
+    const v = document.getElementById(`${id}_${i}`)?.value;
+
+    if(!v){
+      alert("Fill all answers");
+      return;
+    }
+
+    answers.push(v.trim());
   }
 
   await addDoc(collection(db,"submissions"),{
@@ -88,10 +143,9 @@ window.submit = async function(id,len){
     createdAt:Date.now()
   });
 
-  submitted[id] = true;
+  submittedMap[id] = true;
 
   alert("Submitted");
-
   load();
 };
 
