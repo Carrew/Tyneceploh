@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Submit Grades - TEF</title>
+</head>
+
+<body>
+
+<h2>Submit Student Grades</h2>
+
+<select id="studentSelect"></select>
+
+<input id="subject" placeholder="Subject">
+
+<h4>Scores</h4>
+<input type="number" id="s1" placeholder="1st Period">
+<input type="number" id="s2" placeholder="2nd Period">
+<input type="number" id="s3" placeholder="3rd Period">
+<input type="number" id="exam" placeholder="Exam">
+
+<p><b>Average:</b> <span id="avg">0</span></p>
+
+<button onclick="submitGrade()">Submit Grade</button>
+
+<p id="msg"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "teacher") {
+  window.location.href = "login.html";
+}
+
+let students = [];
+
+//
+// 🎯 LOAD ONLY ALLOWED STUDENTS
+//
+async function loadStudents() {
+
+  const snap = await getDocs(collection(db, "users"));
+
+  const teacherClasses = user.classes || [];
+
+  students = [];
+
+  snap.forEach(doc => {
+    const data = doc.data();
+
+    if (
+      data.role === "student" &&
+      teacherClasses.includes(data.class)
+    ) {
+      students.push(data);
+    }
+  });
+
+  const select = document.getElementById("studentSelect");
+
+  select.innerHTML = students.map(s =>
+    `<option value="${s.id}">${s.name} (${s.class})</option>`
+  ).join("");
+}
+
+//
+// 📊 AUTO AVERAGE
+//
+function calculateAverage() {
+
+  const s1 = Number(document.getElementById("s1").value) || 0;
+  const s2 = Number(document.getElementById("s2").value) || 0;
+  const s3 = Number(document.getElementById("s3").value) || 0;
+  const exam = Number(document.getElementById("exam").value) || 0;
+
+  const avg = ((s1 + s2 + s3 + exam) / 4).toFixed(2);
+
+  document.getElementById("avg").innerText = avg;
+
+  return avg;
+}
+
+["s1","s2","s3","exam"].forEach(id => {
+  document.getElementById(id).addEventListener("input", calculateAverage);
+});
+
+//
+// 🚀 SUBMIT GRADE
+//
+window.submitGrade = async function () {
+
+  const studentId = document.getElementById("studentSelect").value;
+  const subject = document.getElementById("subject").value;
+
+  const s1 = Number(document.getElementById("s1").value);
+  const s2 = Number(document.getElementById("s2").value);
+  const s3 = Number(document.getElementById("s3").value);
+  const exam = Number(document.getElementById("exam").value);
+
+  const avg = calculateAverage();
+
+  const student = students.find(s => s.id === studentId);
+
+  if (!student || !subject) {
+    alert("Fill all fields");
+    return;
+  }
+
+  await addDoc(collection(db, "gradeSubmissions"), {
+    teacherId: user.id,
+    teacherName: user.name,
+
+    studentId: student.id,
+    studentName: student.name,
+    class: student.class,
+
+    subject,
+
+    scores: {
+      "1st": s1,
+      "2nd": s2,
+      "3rd": s3,
+      "exam": exam
+    },
+
+    average: Number(avg),
+
+    status: "pending",
+    feedback: "",
+
+    createdAt: Date.now(),
+    reviewedAt: null
+  });
+
+  document.getElementById("msg").innerText = "Grade submitted for approval";
+
+};
+
+//
+// INIT
+//
+loadStudents();
+
+</script>
+
+</body>
+</html>
