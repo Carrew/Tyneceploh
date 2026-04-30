@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Assignments</title>
+</head>
+
+<body>
+
+<h2>My Assignments</h2>
+
+<div id="list"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "student") {
+  window.location.href = "login.html";
+}
+
+let assignments = [];
+
+//
+// LOAD
+//
+async function loadAssignments() {
+
+  const snap = await getDocs(collection(db, "assignments"));
+
+  assignments = [];
+
+  snap.forEach(d => {
+    const data = d.data();
+
+    if (
+      data.class?.trim().toLowerCase() ===
+      user.class?.trim().toLowerCase()
+    ) {
+      assignments.push({ ...data, docId: d.id });
+    }
+  });
+
+  render();
+}
+
+//
+// RENDER
+//
+function render() {
+
+  const container = document.getElementById("list");
+
+  if (assignments.length === 0) {
+    container.innerHTML = "No assignments.";
+    return;
+  }
+
+  container.innerHTML = assignments.map(a => `
+    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+      <b>${a.subject}</b><br>
+      ${a.question}<br>
+      <small>Due: ${a.dueDate || "N/A"}</small>
+
+      <br><br>
+
+      <textarea id="ans-${a.docId}" placeholder="Your answer"></textarea>
+      <br>
+      <button onclick="submitAnswer('${a.docId}')">Submit</button>
+    </div>
+  `).join("");
+}
+
+//
+// SUBMIT
+//
+window.submitAnswer = async function (id) {
+
+  const answer = document.getElementById(`ans-${id}`).value;
+
+  if (!answer) {
+    alert("Write answer");
+    return;
+  }
+
+  await addDoc(collection(db, "submissions"), {
+    assignmentId: id,
+    studentId: user.id,
+    studentName: user.name,
+    answer,
+    submittedAt: Date.now()
+  });
+
+  alert("Submitted");
+};
+
+//
+// INIT
+//
+loadAssignments();
+
+</script>
+
+</body>
+</html>
