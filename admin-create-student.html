@@ -85,7 +85,11 @@ async function loadStudents() {
   snap.forEach(d => {
     const data = d.data();
     if (data.role === "student") {
-      studentsCache.push({ ...data, docId: d.id });
+      studentsCache.push({
+        ...data,
+        userId: data.userId || data.id, // fallback for old records
+        docId: d.id
+      });
     }
   });
 
@@ -102,12 +106,12 @@ window.renderStudents = function () {
 
   let filtered = studentsCache.filter(s =>
     s.name.toLowerCase().includes(search) ||
-    s.id.toLowerCase().includes(search)
+    (s.userId || "").toLowerCase().includes(search)
   );
 
   list.innerHTML = filtered.map(s => `
     <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-      <b>${s.id}</b> - ${s.name} <br>
+      <b>${s.userId}</b> - ${s.name} <br>
       Class: ${s.class} <br>
       Status: ${s.status}
 
@@ -141,12 +145,12 @@ window.saveStudent = async function () {
     const snap = await getDocs(collection(db, "users"));
     const count = snap.docs.filter(d => d.data().role === "student").length;
 
-    const id = generateId(count);
+    const userId = generateId(count);
     const pin = generatePin();
     const pinHash = await sha256(pin);
 
     await addDoc(collection(db, "users"), {
-      id,
+      userId,
       name,
       class: className,
       status,
@@ -155,7 +159,7 @@ window.saveStudent = async function () {
       createdAt: Date.now()
     });
 
-    alert(`Student created\nID: ${id}\nPIN: ${pin}`);
+    alert(`Student created\nID: ${userId}\nPIN: ${pin}`);
   }
 
   // UPDATE
