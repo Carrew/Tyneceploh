@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Create Assignment</h2>
+
+<select id="class"></select>
+<input id="subject" placeholder="Subject">
+<input id="title" placeholder="Assignment Title">
+
+<div id="questions"></div>
+
+<button onclick="addQuestion()">Add Question</button>
+<br><br>
+
+<button onclick="createAssignment()">Create Assignment</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.role !== "teacher") location.href="login.html";
+
+const classSelect = document.getElementById("class");
+classSelect.innerHTML = (user.classes||[]).map(c=>`<option>${c}</option>`);
+
+let qCount = 0;
+
+window.addQuestion = function(){
+  qCount++;
+  document.getElementById("questions").innerHTML += `
+    <div>
+      Q${qCount}: <input id="q${qCount}">
+      Score: <input id="s${qCount}" type="number">
+    </div>
+  `;
+};
+
+window.createAssignment = async function(){
+
+  const questions = [];
+  let total = 0;
+
+  for(let i=1;i<=qCount;i++){
+    const q = document.getElementById(`q${i}`).value;
+    const s = Number(document.getElementById(`s${i}`).value);
+
+    if(q && s){
+      questions.push({q, score:s});
+      total += s;
+    }
+  }
+
+  await addDoc(collection(db,"assignments"),{
+    teacherId:user.id,
+    class:classSelect.value,
+    subject:document.getElementById("subject").value,
+    title:document.getElementById("title").value,
+    questions,
+    totalScore:total,
+    createdAt:Date.now()
+  });
+
+  alert("Assignment created");
+};
+</script>
+
+</body>
+</html>
