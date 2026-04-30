@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Quiz Review Dashboard</h2>
+
+<select id="quizList" onchange="loadStudents()"></select>
+
+<hr>
+
+<div id="students"></div>
+
+<div id="details"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "teacher") location.href="login.html";
+
+let quizzes = [];
+let submissions = [];
+
+//
+// 📥 LOAD QUIZZES
+//
+async function loadQuizzes(){
+
+  const snap = await getDocs(collection(db,"quizzes"));
+
+  quizzes = [];
+
+  snap.forEach(d=>{
+    const q = d.data();
+
+    if(q.teacherId === user.id){
+      quizzes.push({ id:d.id, ...q });
+    }
+  });
+
+  document.getElementById("quizList").innerHTML =
+    quizzes.map(q=>`<option value="${q.id}">${q.title}</option>`).join("");
+
+  loadStudents();
+}
+
+//
+// 👥 LOAD STUDENTS FOR SELECTED QUIZ
+//
+async function loadStudents(){
+
+  const quizId = document.getElementById("quizList").value;
+
+  const snap = await getDocs(collection(db,"quizSubmissions"));
+
+  submissions = [];
+
+  snap.forEach(d=>{
+    const s = d.data();
+
+    if(s.quizId === quizId){
+      submissions.push({ id:d.id, ...s });
+    }
+  });
+
+  renderStudents();
+}
+
+//
+// 🎨 STUDENT LIST
+//
+function renderStudents(){
+
+  const div = document.getElementById("students");
+
+  if(submissions.length === 0){
+    div.innerHTML = "No submissions yet.";
+    return;
+  }
+
+  div.innerHTML = submissions.map((s,i)=>`
+    <div style="border:1px solid #ccc;margin:10px;padding:10px;">
+      <b>${s.studentName}</b><br>
+      Score: ${s.score}/${s.total}<br>
+
+      <button onclick="view('${i}')">View Details</button>
+    </div>
+  `).join("");
+}
+
+//
+// 🔍 VIEW FULL DETAILS
+//
+window.view = function(index){
+
+  const s = submissions[index];
+  const quiz = quizzes.find(q=>q.id === s.quizId);
+
+  let html = `<h3>${s.studentName}</h3>`;
+
+  quiz.questions.forEach((q,i)=>{
+
+    const studentAns = s.answers[i];
+    const correct = q.answer;
+
+    const isCorrect = studentAns === correct;
+
+    html += `
+      <div style="border-bottom:1px solid #ddd;padding:8px;">
+        <b>Q:</b> ${q.q}<br>
+
+        <b>Student:</b> ${studentAns}<br>
+        <b>Correct:</b> ${correct}<br>
+
+        <b style="color:${isCorrect?'green':'red'}">
+          ${isCorrect ? "Correct" : "Wrong"}
+        </b>
+      </div>
+    `;
+  });
+
+  html += `<br><b>Total Score: ${s.score}/${s.total}</b>`;
+
+  document.getElementById("details").innerHTML = html;
+};
+
+loadQuizzes();
+
+</script>
+
+</body>
+</html>
