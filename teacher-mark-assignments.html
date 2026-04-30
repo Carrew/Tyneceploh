@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Mark Assignments</h2>
+<div id="list"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.role !== "teacher") location.href="login.html";
+
+async function load(){
+
+  const snap = await getDocs(collection(db,"submissions"));
+
+  let html="";
+
+  snap.forEach(d=>{
+    const s = d.data();
+
+    html += `
+      <div>
+        <b>${s.studentName}</b><br>
+        Answers: ${s.answers.join(", ")}
+
+        <br>
+        Score: <input id="score_${d.id}">
+        <button onclick="mark('${d.id}')">Mark</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html;
+}
+
+window.mark = async function(id){
+  const score = Number(document.getElementById(`score_${id}`).value);
+
+  await updateDoc(doc(db,"submissions",id),{
+    score,
+    status:"marked",
+    markedAt:Date.now()
+  });
+
+  alert("Marked");
+};
+
+load();
+</script>
+
+</body>
+</html>
