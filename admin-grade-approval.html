@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grade Approval - TEF</title>
+</head>
+
+<body>
+
+<h2>Grade Approval System</h2>
+
+<div id="list"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  addDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "admin") {
+  window.location.href = "login.html";
+}
+
+let submissions = [];
+
+//
+// 📥 LOAD PENDING SUBMISSIONS
+//
+async function loadSubmissions() {
+
+  const snap = await getDocs(collection(db, "gradeSubmissions"));
+
+  submissions = [];
+
+  snap.forEach(d => {
+    const data = d.data();
+    if (data.status === "pending") {
+      submissions.push({ ...data, docId: d.id });
+    }
+  });
+
+  render();
+}
+
+//
+// 🎨 RENDER
+//
+function render() {
+
+  const container = document.getElementById("list");
+
+  if (submissions.length === 0) {
+    container.innerHTML = "No pending grades.";
+    return;
+  }
+
+  container.innerHTML = submissions.map(s => `
+    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+      <b>${s.studentName}</b> (${s.class})<br>
+      Subject: ${s.subject}<br>
+      Period: ${s.period}<br>
+      Score: ${s.score}<br>
+      Teacher: ${s.teacherName}
+
+      <br><br>
+
+      <button onclick="approve('${s.docId}')">Approve</button>
+      <button onclick="reject('${s.docId}')">Reject</button>
+
+      <br><br>
+
+      <input id="fb-${s.docId}" placeholder="Feedback (for rejection)">
+    </div>
+  `).join("");
+}
+
+//
+// ✅ APPROVE
+//
+window.approve = async function (id) {
+
+  const sub = submissions.find(s => s.docId === id);
+
+  // 1. move to results
+  await addDoc(collection(db, "results"), {
+    studentId: sub.studentId,
+    studentName: sub.studentName,
+    class: sub.class,
+
+    subject: sub.subject,
+    period: sub.period,
+    score: sub.score,
+
+    approvedBy: user.id,
+    approvedAt: Date.now()
+  });
+
+  // 2. update submission
+  await updateDoc(doc(db, "gradeSubmissions", id), {
+    status: "approved",
+    reviewedAt: Date.now()
+  });
+
+  loadSubmissions();
+};
+
+//
+// ❌ REJECT
+//
+window.reject = async function (id) {
+
+  const feedback = document.getElementById(`fb-${id}`).value;
+
+  if (!feedback) {
+    alert("Enter feedback");
+    return;
+  }
+
+  await updateDoc(doc(db, "gradeSubmissions", id), {
+    status: "rejected",
+    feedback,
+    reviewedAt: Date.now()
+  });
+
+  loadSubmissions();
+};
+
+//
+// INIT
+//
+loadSubmissions();
+
+</script>
+
+</body>
+</html>
