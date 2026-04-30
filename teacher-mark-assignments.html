@@ -46,20 +46,27 @@ async function load(){
         <h3>${s.studentName}</h3>
 
         ${qs.map((q,i)=>`
-          <div>
+          <div style="margin-bottom:10px;">
             <b>${q.q}</b><br>
 
-            Student: ${s.answers[i] || "-"}<br>
+            Student Answer: ${s.answers[i] || "-"}<br>
 
-            <label>
-              <input type="checkbox" id="p_${d.id}_${i}">
-              Pass
-            </label>
+            <!-- MODE -->
+            <select id="mode_${d.id}_${i}" onchange="togglePartial('${d.id}',${i})">
+              <option value="pass">Pass</option>
+              <option value="fail">Fail</option>
+              <option value="partial">Partial</option>
+            </select>
 
-            Bonus:
-            <input type="number" id="b_${d.id}_${i}" style="width:60px" value="0">
+            <!-- PARTIAL INPUT -->
+            <input 
+              id="p_${d.id}_${i}" 
+              type="number" 
+              placeholder="Score"
+              style="width:80px; display:none;"
+            >
+            / ${q.score}
           </div>
-          <hr>
         `).join("")}
 
         <button onclick="mark('${d.id}','${s.assignmentId}',${qs.length})">
@@ -72,11 +79,29 @@ async function load(){
   document.getElementById("list").innerHTML = html;
 }
 
+//
+// 🔁 SHOW/HIDE PARTIAL INPUT
+//
+window.togglePartial = function(id,i){
+
+  const mode = document.getElementById(`mode_${id}_${i}`).value;
+  const input = document.getElementById(`p_${id}_${i}`);
+
+  if(mode === "partial"){
+    input.style.display = "inline-block";
+  } else {
+    input.style.display = "none";
+  }
+};
+
+//
+// 🚀 MARK SYSTEM
+//
 window.mark = async function(subId,assignId,len){
 
   const aSnap = await getDocs(collection(db,"assignments"));
-  let assign = null;
 
+  let assign = null;
   aSnap.forEach(d=>{
     if(d.id === assignId) assign = d.data();
   });
@@ -87,13 +112,27 @@ window.mark = async function(subId,assignId,len){
 
   for(let i=0;i<len;i++){
 
-    const pass = document.getElementById(`p_${subId}_${i}`).checked;
-    const bonus = Number(document.getElementById(`b_${subId}_${i}`).value || 0);
-
+    const mode = document.getElementById(`mode_${subId}_${i}`).value;
     const base = qs[i].score;
 
-    if(pass){
-      total += base + bonus;
+    if(mode === "pass"){
+      total += base;
+    }
+
+    else if(mode === "fail"){
+      total += 0;
+    }
+
+    else if(mode === "partial"){
+      let val = Number(document.getElementById(`p_${subId}_${i}`).value || 0);
+
+      // 🚨 VALIDATION RULE (IMPORTANT)
+      if(val > base){
+        alert("Partial score cannot exceed question score");
+        return;
+      }
+
+      total += val;
     }
   }
 
@@ -103,7 +142,7 @@ window.mark = async function(subId,assignId,len){
     markedAt: Date.now()
   });
 
-  alert("Marked");
+  alert("Marked successfully");
   load();
 };
 
