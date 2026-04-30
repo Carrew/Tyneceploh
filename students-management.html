@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Create Student - TEF</title>
+</head>
+
+<body>
+
+<h2>Create Student</h2>
+
+<input id="name" placeholder="Student Name">
+<input id="class" placeholder="Class">
+
+<select id="status">
+  <option value="New">New</option>
+  <option value="Old">Old</option>
+</select>
+
+<button onclick="createStudent()">Create Student</button>
+
+<p id="result"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// CORE FUNCTIONS
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generatePin() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+function generateStudentId(count) {
+  return `TEF${String(count + 1).padStart(4, "0")}`;
+}
+
+window.createStudent = async function () {
+
+  const name = document.getElementById("name").value;
+  const className = document.getElementById("class").value;
+  const status = document.getElementById("status").value;
+
+  const snapshot = await getDocs(collection(db, "users"));
+  const studentCount = snapshot.docs.filter(d => d.data().role === "student").length;
+
+  const id = generateStudentId(studentCount);
+  const pin = generatePin();
+  const pinHash = await sha256(pin);
+
+  const user = {
+    id,
+    name,
+    class: className,
+    status,
+    role: "student",
+    pinHash,
+    createdAt: Date.now()
+  };
+
+  await addDoc(collection(db, "users"), user);
+
+  document.getElementById("result").innerHTML = `
+    Student Created<br>
+    ID: ${id}<br>
+    PIN: ${pin}
+  `;
+
+};
+
+</script>
+
+</body>
+</html>
