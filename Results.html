@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Results - TEF</title>
+</head>
+
+<body>
+
+<h2>My Results</h2>
+
+<div id="table"></div>
+
+<button onclick="logout()">Logout</button>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "student") {
+  window.location.href = "login.html";
+}
+
+const periods = [
+  "1st Period","2nd Period","3rd Period","Semester Exam",
+  "4th Period","5th Period","6th Period","Final Exam"
+];
+
+//
+// 📥 LOAD RESULTS
+//
+async function loadResults() {
+
+  const snap = await getDocs(collection(db, "results"));
+
+  const myResults = [];
+
+  snap.forEach(d => {
+    const data = d.data();
+    if (data.studentId === user.id) {
+      myResults.push(data);
+    }
+  });
+
+  buildTable(myResults);
+}
+
+//
+// 🧠 BUILD TABLE
+//
+function buildTable(results) {
+
+  const subjects = {};
+
+  // group by subject
+  results.forEach(r => {
+    if (!subjects[r.subject]) {
+      subjects[r.subject] = {};
+    }
+    subjects[r.subject][r.period] = r.score;
+  });
+
+  let html = `
+    <table border="1" cellpadding="10">
+      <tr>
+        <th>Subject</th>
+        ${periods.map(p => `<th>${p}</th>`).join("")}
+        <th>Average</th>
+      </tr>
+  `;
+
+  // rows
+  Object.keys(subjects).forEach(subject => {
+
+    let total = 0;
+    let count = 0;
+
+    html += `<tr><td>${subject}</td>`;
+
+    periods.forEach(p => {
+      const score = subjects[subject][p] ?? "-";
+      html += `<td>${score}</td>`;
+
+      if (score !== "-") {
+        total += score;
+        count++;
+      }
+    });
+
+    const avg = count ? (total / count).toFixed(2) : "-";
+
+    html += `<td>${avg}</td></tr>`;
+  });
+
+  html += "</table>";
+
+  document
