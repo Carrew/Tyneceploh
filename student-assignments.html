@@ -155,3 +155,123 @@ load();
 
 </body>
 </html>
+  // store submissions
+  sSnap.forEach(d=>{
+    const s = d.data();
+
+    if(s.studentId === user.id){
+      submittedMap[s.assignmentId] = true;
+      submissionsMap[s.assignmentId] = s;
+    }
+  });
+
+  let html = "";
+
+  aSnap.forEach(d=>{
+    const a = d.data();
+
+    if(a.class !== user.class) return;
+
+    const qs = Array.isArray(a.questions) ? a.questions : [];
+
+    const submission = submissionsMap[d.id];
+    const isSubmitted = !!submission;
+    const isMarked = submission?.status === "marked";
+
+    html += `
+      <div style="border:1px solid #ccc;padding:10px;margin:10px;">
+        <h3>${a.title}</h3>
+
+        ${qs.map((q,i)=>{
+
+          const studentAns = submission?.answers?.[i] || "-";
+
+          return `
+            <div style="margin-bottom:8px;">
+              <b>${q.q}</b><br>
+
+              Your Answer: ${studentAns}<br>
+              Max Score: ${q.score}<br>
+
+              ${renderStatus(submission, i)}
+            </div>
+          `;
+        }).join("")}
+
+        <hr>
+
+        ${
+          !isSubmitted
+          ? `<button onclick="submit('${d.id}',${qs.length})">Submit</button>`
+          : isMarked
+            ? `<b style="color:green">Marked - Score: ${submission.score}</b>`
+            : `<b>Submitted - Awaiting marking</b>`
+        }
+
+      </div>
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html || "No assignments";
+}
+
+//
+// 🎯 SHOW PASS / FAIL / PARTIAL RESULT
+//
+function renderStatus(submission, i){
+
+  if(!submission) return "";
+
+  if(submission.status !== "marked"){
+    return `<i>Pending review</i>`;
+  }
+
+  // optional future per-question breakdown (safe fallback)
+  return `<i style="color:green">Marked</i>`;
+}
+
+//
+// 🚀 SUBMIT
+//
+window.submit = async function(id,len){
+
+  if(submittedMap[id]){
+    alert("Already submitted");
+    return;
+  }
+
+  const answers = [];
+
+  for(let i=0;i<len;i++){
+    const v = document.getElementById(`${id}_${i}`)?.value;
+
+    if(!v){
+      alert("Fill all answers");
+      return;
+    }
+
+    answers.push(v.trim());
+  }
+
+  await addDoc(collection(db,"submissions"),{
+    assignmentId:id,
+    studentId:user.id,
+    studentName:user.name,
+    answers,
+    score:null,
+    status:"submitted",
+    createdAt:Date.now()
+  });
+
+  submittedMap[id] = true;
+
+  alert("Submitted");
+  load();
+};
+
+load();
+
+</script>
+
+</body>
+</html>
