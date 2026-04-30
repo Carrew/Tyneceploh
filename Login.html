@@ -6,10 +6,10 @@
 
 <body>
 
-<h2>Tyneceploh Login</h2>
+<h2>Login</h2>
 
-<input id="userId" placeholder="Enter ID (TEF0001 / TCH001)">
-<input id="pin" placeholder="Enter PIN" type="password">
+<input id="userId" placeholder="ID">
+<input id="pin" type="password" placeholder="PIN">
 
 <button onclick="login()">Login</button>
 
@@ -29,9 +29,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-//
-// 🔐 SHA-256 HASH FUNCTION
-//
 async function sha256(text) {
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
@@ -40,74 +37,57 @@ async function sha256(text) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-//
-// 🚀 LOGIN FUNCTION
-//
 window.login = async function () {
 
   const id = document.getElementById("userId").value.trim();
   const pin = document.getElementById("pin").value.trim();
   const msg = document.getElementById("msg");
 
-  if (!id || !pin) {
-    msg.innerText = "Fill all fields";
+  const snapshot = await getDocs(collection(db, "users"));
+
+  let user = null;
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (data.id === id) user = data;
+  });
+
+  if (!user) {
+    msg.innerText = "Invalid ID";
     return;
   }
 
-  try {
-    const snapshot = await getDocs(collection(db, "users"));
+  const hashed = await sha256(pin);
 
-    let userFound = null;
-
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.id === id) {
-        userFound = data;
-      }
-    });
-
-    if (!userFound) {
-      msg.innerText = "Invalid ID";
-      return;
-    }
-
-    const hashedInputPin = await sha256(pin);
-
-    if (hashedInputPin !== userFound.pinHash) {
-      msg.innerText = "Wrong PIN";
-      return;
-    }
-
-    // 💾 SESSION STORAGE
-    localStorage.setItem("user", JSON.stringify(userFound));
-
-    msg.innerText = "Login successful...";
-
-    // 🎯 ROLE REDIRECT
-    setTimeout(() => {
-
-      if (userFound.role === "student") {
-        window.location.href = "student-dashboard.html";
-      }
-
-      else if (userFound.role === "teacher") {
-        window.location.href = "teacher-dashboard.html";
-      }
-
-      else if (userFound.role === "admin") {
-        window.location.href = "admin-dashboard.html";
-      }
-
-      else {
-        window.location.href = "dashboard.html";
-      }
-
-    }, 800);
-
-  } catch (err) {
-    console.error(err);
-    msg.innerText = "Login error";
+  if (hashed !== user.pinHash) {
+    msg.innerText = "Wrong PIN";
+    return;
   }
+
+  localStorage.setItem("user", JSON.stringify(user));
+
+  msg.innerText = "Login success...";
+
+  setTimeout(() => {
+
+    if (user.role === "student") {
+      window.location.href = "student-dashboard.html";
+    }
+
+    else if (user.role === "teacher") {
+      window.location.href = "teacher-dashboard.html";
+    }
+
+    else if (user.role === "admin") {
+      window.location.href = "admin-dashboard.html";
+    }
+
+    else {
+      window.location.href = "dashboard.html";
+    }
+
+  }, 800);
+
 };
 
 </script>
