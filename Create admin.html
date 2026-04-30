@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Admin - TEF</title>
+</head>
+
+<body>
+
+<h2>Create New Admin</h2>
+
+<input id="name" placeholder="Admin Name">
+<input id="pin" placeholder="Temporary PIN">
+
+<button onclick="createAdmin()">Create Admin</button>
+
+<p id="result"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// session check
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.role !== "admin") {
+  window.location.href = "login.html";
+}
+
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generateAdminId(count) {
+  return `ADM${String(count + 1).padStart(3, "0")}`;
+}
+
+window.createAdmin = async function () {
+
+  const name = document.getElementById("name").value;
+  const pin = document.getElementById("pin").value;
+
+  const snapshot = await getDocs(collection(db, "users"));
+  const adminCount = snapshot.docs.filter(d => d.data().role === "admin").length;
+
+  const id = generateAdminId(adminCount);
+  const pinHash = await sha256(pin);
+
+  const admin = {
+    id,
+    name,
+    role: "admin",
+    pinHash,
+    createdAt: Date.now()
+  };
+
+  await addDoc(collection(db, "users"), admin);
+
+  document.getElementById("result").innerText =
+    `Admin Created → ID: ${id}, PIN: ${pin}`;
+};
+
+</script>
+
+</body>
+</html>
