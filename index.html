@@ -1,6 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    h1 {
+      color: white;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+    }
+
+    .login-btn {
+      display: inline-block;
+      padding: 18px 50px;
+      font-size: 1.5rem;
+      color: white;
+      background: #2563eb;
+      border: none;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: 0.3s ease;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .login-btn:hover {
+      background: #1d4ed8;
+      transform: scale(1.05);
+    }
+
+    .login-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+
 <body>
-<button href="login.html"> Login</button>
+  <div class="container">
+    <h1>Welcome</h1>
+    <a class="login-btn" href="login.html">Login</a>
+  </div>
 </body>
 </html>
