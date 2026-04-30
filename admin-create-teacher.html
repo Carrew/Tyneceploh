@@ -1,29 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Create Teacher - TEF</title>
+  <title>Teacher Management - TEF</title>
 </head>
 
 <body>
 
-<h2>Create Teacher</h2>
+<h2>Teacher Management (CRUD)</h2>
 
+<!-- CREATE / EDIT FORM -->
 <input id="name" placeholder="Teacher Name">
-<input id="classes" placeholder="Classes (e.g. JSS1, JSS2, JSS3)">
+<input id="classes" placeholder="Classes (e.g. JSS1, JSS2)">
 
 <select id="status">
   <option value="Active">Active</option>
   <option value="Inactive">Inactive</option>
 </select>
 
-<button onclick="createTeacher()">Create Teacher</button>
+<input type="hidden" id="editId">
 
-<p id="result"></p>
+<button onclick="saveTeacher()">Save Teacher</button>
+
+<hr>
+
+<!-- SEARCH -->
+<input id="search" placeholder="Search teacher..." oninput="renderTeachers()">
+
+<hr>
+
+<!-- LIST -->
+<div id="list"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -35,7 +46,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 //
-// 🔐 SHA-256 HASH
+// 🔐 SHA
 //
 async function sha256(text) {
   const encoder = new TextEncoder();
@@ -46,53 +57,148 @@ async function sha256(text) {
 }
 
 //
-// 🔑 PIN GENERATOR
-//
-function generatePin() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
-//
-// 🆔 TEACHER ID GENERATOR
+// 🆔 ID GENERATOR
 //
 function generateTeacherId(count) {
   return `TCH${String(count + 1).padStart(3, "0")}`;
 }
 
 //
-// 🚀 CREATE TEACHER
+// 🔑 PIN
 //
-window.createTeacher = async function () {
+function generatePin() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+let teachersCache = [];
+
+//
+// 📥 LOAD TEACHERS
+//
+async function loadTeachers() {
+  const snap = await getDocs(collection(db, "users"));
+
+  teachersCache = [];
+
+  snap.forEach(d => {
+    const data = d.data();
+    if (data.role === "teacher") {
+      teachersCache.push({ ...data, docId: d.id });
+    }
+  });
+
+  renderTeachers();
+}
+
+//
+// 🎨 RENDER
+//
+window.renderTeachers = function () {
+
+  const search = document.getElementById("search").value.toLowerCase();
+  const list = document.getElementById("list");
+
+  let filtered = teachersCache.filter(t =>
+    t.name.toLowerCase().includes(search) ||
+    t.id.toLowerCase().includes(search)
+  );
+
+  list.innerHTML = filtered.map(t => `
+    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+      <b>${t.id}</b> - ${t.name} <br>
+      Classes: ${(t.classes || []).join(", ")} <br>
+      Status: ${t.status}
+
+      <br><br>
+
+      <button onclick="editTeacher('${t.docId}', '${t.name}', '${(t.classes || []).join(", ")}', '${t.status}')">Edit</button>
+      <button onclick="deleteTeacher('${t.docId}')">Delete</button>
+    </div>
+  `).join("");
+
+};
+
+//
+// 💾 CREATE / UPDATE
+//
+window.saveTeacher = async function () {
 
   const name = document.getElementById("name").value;
-  const classes = document.getElementById("classes").value; // comma separated
+  const classesInput = document.getElementById("classes").value;
   const status = document.getElementById("status").value;
+  const editId = document.getElementById("editId").value;
 
-  const snapshot = await getDocs(collection(db, "users"));
-  const teacherCount = snapshot.docs.filter(d => d.data().role === "teacher").length;
+  if (!name || !classesInput) {
+    alert("Fill all fields");
+    return;
+  }
 
-  const id = generateTeacherId(teacherCount);
-  const pin = generatePin();
-  const pinHash = await sha256(pin);
+  const classesArray = classesInput.split(",").map(c => c.trim());
 
-  const user = {
-    id,
-    name,
-    classes: classes.split(",").map(c => c.trim()), // clean array
-    status,
-    role: "teacher",
-    pinHash,
-    createdAt: Date.now()
-  };
+  // CREATE
+  if (!editId) {
 
-  await addDoc(collection(db, "users"), user);
+    const snap = await getDocs(collection(db, "users"));
+    const count = snap.docs.filter(d => d.data().role === "teacher").length;
 
-  document.getElementById("result").innerHTML = `
-    Teacher Created <br>
-    ID: ${id} <br>
-    PIN: ${pin}
-  `;
+    const id = generateTeacherId(count);
+    const pin = generatePin();
+    const pinHash = await sha256(pin);
+
+    await addDoc(collection(db, "users"), {
+      id,
+      name,
+      classes: classesArray,
+      status,
+      role: "teacher",
+      pinHash,
+      createdAt: Date.now()
+    });
+
+    alert(`Teacher created\nID: ${id}\nPIN: ${pin}`);
+  }
+
+  // UPDATE
+  else {
+    const ref = doc(db, "users", editId);
+
+    await updateDoc(ref, {
+      name,
+      classes: classesArray,
+      status
+    });
+
+    document.getElementById("editId").value = "";
+  }
+
+  document.getElementById("name").value = "";
+  document.getElementById("classes").value = "";
+
+  loadTeachers();
 };
+
+//
+// ✏️ EDIT
+//
+window.editTeacher = function (id, name, classes, status) {
+  document.getElementById("editId").value = id;
+  document.getElementById("name").value = name;
+  document.getElementById("classes").value = classes;
+  document.getElementById("status").value = status;
+};
+
+//
+// ❌ DELETE
+//
+window.deleteTeacher = async function (id) {
+  await deleteDoc(doc(db, "users", id));
+  loadTeachers();
+};
+
+//
+// INIT
+//
+loadTeachers();
 
 </script>
 
