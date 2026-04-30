@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Security Dashboard</h2>
+
+<div id="info"></div>
+
+<hr>
+
+<h3>Security Actions</h3>
+
+<button onclick="go('staff-clock.html')">Clock In / Out</button>
+
+<br><br>
+<button onclick="logout()">Logout</button>
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "security"){
+  location.href = "login.html";
+}
+
+document.getElementById("info").innerHTML = `
+  <b>${user.name}</b><br>
+  ID: ${user.userId}
+`;
+
+function go(page){
+  location.href = page;
+}
+
+function logout(){
+  localStorage.removeItem("user");
+  location.href = "login.html";
+}
+
+</script>
+
+</body>
+</html>
