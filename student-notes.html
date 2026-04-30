@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Lessons - TEF</title>
+</head>
+
+<body>
+
+<h2>My Lessons</h2>
+
+<div id="lessons"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "student") {
+  window.location.href = "login.html";
+}
+
+//
+// 📥 LOAD LESSONS
+//
+async function loadLessons() {
+
+  const snap = await getDocs(collection(db, "lessons"));
+
+  const myLessons = [];
+
+  snap.forEach(d => {
+    const data = d.data();
+
+    if (
+      data.class?.trim().toLowerCase() ===
+      user.class?.trim().toLowerCase()
+    ) {
+      myLessons.push(data);
+    }
+  });
+
+  render(myLessons);
+}
+
+//
+// 🎨 RENDER
+//
+function render(lessons) {
+
+  const container = document.getElementById("lessons");
+
+  if (lessons.length === 0) {
+    container.innerHTML = "No lessons yet.";
+    return;
+  }
+
+  container.innerHTML = lessons.map(l => `
+    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+      <b>${l.subject}</b> - ${l.topic} <br>
+      <small>By ${l.teacherName}</small>
+
+      <p>${l.content}</p>
+    </div>
+  `).join("");
+}
+
+//
+// INIT
+//
+loadLessons();
+
+</script>
+
+</body>
+</html>
