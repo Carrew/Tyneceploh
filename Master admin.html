@@ -54,7 +54,7 @@ window.createAdmin = async function () {
   const pinHash = await sha256(pin);
 
   const admin = {
-    id,
+    userId,
     name,
     role: "admin",
     pinHash,
