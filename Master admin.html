@@ -29,14 +29,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// 🔐 SHA-256 PIN hash
 async function sha256(text) {
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+// 🆔 Admin ID generator
 function generateAdminId(count) {
   return `ADM${String(count + 1).padStart(3, "0")}`;
 }
@@ -47,23 +49,37 @@ window.createAdmin = async function () {
   const pin = document.getElementById("pin").value;
   const msg = document.getElementById("msg");
 
-  const snapshot = await getDocs(collection(db, "users"));
-  const adminCount = snapshot.docs.filter(d => d.data().role === "admin").length;
+  if (!name || !pin) {
+    msg.innerText = "Fill all fields first.";
+    return;
+  }
 
-  const id = generateAdminId(adminCount);
-  const pinHash = await sha256(pin);
+  try {
+    const snapshot = await getDocs(collection(db, "users"));
+    const adminCount = snapshot.docs.filter(d => d.data().role === "admin").length;
 
-  const admin = {
-    userId,
-    name,
-    role: "admin",
-    pinHash,
-    createdAt: Date.now()
-  };
+    const userId = generateAdminId(adminCount);
+    const pinHash = await sha256(pin);
 
-  await addDoc(collection(db, "users"), admin);
+    const admin = {
+      userId: userId,
+      name: name,
+      role: "admin",
+      pinHash: pinHash,
+      createdAt: Date.now()
+    };
 
-  msg.innerText = `Admin created: ${id}`;
+    await addDoc(collection(db, "users"), admin);
+
+    msg.innerText = `Admin created: ${userId}`;
+
+    document.getElementById("name").value = "";
+    document.getElementById("pin").value = "";
+
+  } catch (error) {
+    console.error(error);
+    msg.innerText = "Error creating admin. Check console.";
+  }
 };
 
 </script>
