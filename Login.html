@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TEF Login</title>
+</head>
+
+<body>
+
+<h2>Tyneceploh Login</h2>
+
+<input id="userId" placeholder="Enter ID (TEF0001 / TCH001)">
+<input id="pin" placeholder="Enter PIN" type="password">
+
+<button onclick="login()">Login</button>
+
+<p id="msg"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+//
+// 🔐 SHA-256 HASH FUNCTION
+//
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+//
+// 🚀 LOGIN FUNCTION
+//
+window.login = async function () {
+
+  const id = document.getElementById("userId").value.trim();
+  const pin = document.getElementById("pin").value.trim();
+  const msg = document.getElementById("msg");
+
+  if (!id || !pin) {
+    msg.innerText = "Fill all fields";
+    return;
+  }
+
+  try {
+    const snapshot = await getDocs(collection(db, "users"));
+
+    let userFound = null;
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.id === id) {
+        userFound = data;
+      }
+    });
+
+    if (!userFound) {
+      msg.innerText = "Invalid ID";
+      return;
+    }
+
+    const hashedInputPin = await sha256(pin);
+
+    if (hashedInputPin !== userFound.pinHash) {
+      msg.innerText = "Wrong PIN";
+      return;
+    }
+
+    // 💾 SESSION STORAGE
+    localStorage.setItem("user", JSON.stringify(userFound));
+
+    msg.innerText = "Login successful...";
+
+    // 🎯 ROLE REDIRECT
+    setTimeout(() => {
+
+      if (userFound.role === "student") {
+        window.location.href = "student-dashboard.html";
+      }
+
+      else if (userFound.role === "teacher") {
+        window.location.href = "teacher-dashboard.html";
+      }
+
+      else if (userFound.role === "admin") {
+        window.location.href = "admin-dashboard.html";
+      }
+
+      else {
+        window.location.href = "dashboard.html";
+      }
+
+    }, 800);
+
+  } catch (err) {
+    console.error(err);
+    msg.innerText = "Login error";
+  }
+};
+
+</script>
+
+</body>
+</html>
