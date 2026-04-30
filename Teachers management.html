@@ -9,7 +9,7 @@
 <h2>Create Teacher</h2>
 
 <input id="name" placeholder="Teacher Name">
-<input id="subject" placeholder="Subject">
+<input id="classes" placeholder="Classes (e.g. JSS1, JSS2, JSS3)">
 
 <select id="status">
   <option value="Active">Active</option>
@@ -34,7 +34,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// CORE FUNCTIONS
+//
+// 🔐 SHA-256 HASH
+//
 async function sha256(text) {
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
@@ -43,18 +45,27 @@ async function sha256(text) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+//
+// 🔑 PIN GENERATOR
+//
 function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
+//
+// 🆔 TEACHER ID GENERATOR
+//
 function generateTeacherId(count) {
   return `TCH${String(count + 1).padStart(3, "0")}`;
 }
 
+//
+// 🚀 CREATE TEACHER
+//
 window.createTeacher = async function () {
 
   const name = document.getElementById("name").value;
-  const subject = document.getElementById("subject").value;
+  const classes = document.getElementById("classes").value; // comma separated
   const status = document.getElementById("status").value;
 
   const snapshot = await getDocs(collection(db, "users"));
@@ -67,7 +78,7 @@ window.createTeacher = async function () {
   const user = {
     id,
     name,
-    subject,
+    classes: classes.split(",").map(c => c.trim()), // clean array
     status,
     role: "teacher",
     pinHash,
@@ -77,11 +88,10 @@ window.createTeacher = async function () {
   await addDoc(collection(db, "users"), user);
 
   document.getElementById("result").innerHTML = `
-    Teacher Created<br>
-    ID: ${id}<br>
+    Teacher Created <br>
+    ID: ${id} <br>
     PIN: ${pin}
   `;
-
 };
 
 </script>
