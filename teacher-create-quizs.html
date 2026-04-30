@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Create Quiz (MCQ)</h2>
+
+<select id="class"></select>
+<input id="title" placeholder="Quiz Title">
+
+<div id="questions"></div>
+
+<button onclick="addQ()">+ Add Question</button>
+<br><br>
+
+<button onclick="createQuiz()">Create Quiz</button>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "teacher") location.href="login.html";
+
+document.getElementById("class").innerHTML =
+  (user.classes || []).map(c=>`<option>${c}</option>`).join("");
+
+let count = 0;
+
+window.addQ = function(){
+  count++;
+
+  document.getElementById("questions").innerHTML += `
+    <div style="margin:10px 0;">
+      Q${count}: <input id="q${count}" placeholder="Question"><br>
+
+      A <input id="a${count}" placeholder="A">
+      B <input id="b${count}" placeholder="B">
+      C <input id="c${count}" placeholder="C">
+      D <input id="d${count}" placeholder="D"><br>
+
+      Correct Answer:
+      <select id="ans${count}">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+  `;
+};
+
+window.createQuiz = async function(){
+
+  const questions = [];
+
+  for(let i=1;i<=count;i++){
+
+    const q = document.getElementById(`q${i}`).value;
+
+    questions.push({
+      q,
+      options: [
+        document.getElementById(`a${i}`).value,
+        document.getElementById(`b${i}`).value,
+        document.getElementById(`c${i}`).value,
+        document.getElementById(`d${i}`).value
+      ],
+      answer: document.getElementById(`ans${i}`).value
+    });
+  }
+
+  await addDoc(collection(db,"quizzes"),{
+    teacherId:user.id,
+    class:document.getElementById("class").value,
+    title:document.getElementById("title").value,
+    questions,
+    createdAt:Date.now()
+  });
+
+  alert("Quiz created");
+};
+
+</script>
+
+</body>
+</html>
