@@ -42,16 +42,33 @@ const periods = [
 //
 async function loadResults() {
 
+  console.log("🔐 Logged in user:", user);
+
   const snap = await getDocs(collection(db, "results"));
 
   const myResults = [];
 
   snap.forEach(d => {
     const data = d.data();
-    if (data.studentId === user.id) {
+
+    console.log("📦 Checking result:", data);
+
+    const resultId = data.studentId?.toString().trim().toLowerCase();
+    const userId = user.id?.toString().trim().toLowerCase();
+
+    console.log("➡️ Compare:", resultId, "vs", userId);
+
+    if (resultId === userId) {
+      console.log("✅ MATCH FOUND");
       myResults.push(data);
     }
   });
+
+  console.log("📊 FINAL FILTERED RESULTS:", myResults);
+
+  // 🔍 DEBUG VIEW (uncomment if needed)
+  // document.getElementById("table").innerHTML =
+  //   "<pre>" + JSON.stringify(myResults, null, 2) + "</pre>";
 
   buildTable(myResults);
 }
@@ -61,9 +78,13 @@ async function loadResults() {
 //
 function buildTable(results) {
 
+  if (results.length === 0) {
+    document.getElementById("table").innerHTML = "<p>No results found.</p>";
+    return;
+  }
+
   const subjects = {};
 
-  // group by subject
   results.forEach(r => {
     if (!subjects[r.subject]) {
       subjects[r.subject] = {};
@@ -80,7 +101,6 @@ function buildTable(results) {
       </tr>
   `;
 
-  // rows
   Object.keys(subjects).forEach(subject => {
 
     let total = 0;
@@ -93,7 +113,7 @@ function buildTable(results) {
       html += `<td>${score}</td>`;
 
       if (score !== "-") {
-        total += score;
+        total += Number(score);
         count++;
       }
     });
@@ -105,4 +125,23 @@ function buildTable(results) {
 
   html += "</table>";
 
-  document
+  document.getElementById("table").innerHTML = html;
+}
+
+//
+// 🚪 LOGOUT
+//
+window.logout = function () {
+  localStorage.removeItem("user");
+  window.location.href = "login.html";
+};
+
+//
+// INIT
+//
+loadResults();
+
+</script>
+
+</body>
+</html>
