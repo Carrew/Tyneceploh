@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Create Security Staff</h2>
+
+<input id="name" placeholder="Full Name">
+<input id="shift" placeholder="Shift (Day/Night)">
+<input id="pin" placeholder="PIN (optional)">
+
+<button onclick="create()">Create Security</button>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+function genID(num){
+  return "SEC" + String(num).padStart(3,"0");
+}
+
+function genPIN(){
+  return Math.floor(1000 + Math.random()*9000).toString();
+}
+
+window.create = async function(){
+
+  const snap = await getDocs(collection(db,"users"));
+
+  let count = 0;
+
+  snap.forEach(d=>{
+    if(d.data().role === "security") count++;
+  });
+
+  const id = genID(count+1);
+  const pin = document.getElementById("pin").value || genPIN();
+
+  await addDoc(collection(db,"users"),{
+    userId:id,
+    name:document.getElementById("name").value,
+    shift:document.getElementById("shift").value,
+    pin,
+    role:"security",
+    status:"active",
+    createdAt:Date.now()
+  });
+
+  alert("Security created: " + id);
+};
+
+</script>
+
+</body>
+</html>
