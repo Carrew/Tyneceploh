@@ -1,115 +1,70 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>My Assignments</title>
-</head>
-
 <body>
 
 <h2>My Assignments</h2>
-
 <div id="list"></div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.role !== "student") location.href="login.html";
 
-if (!user || user.role !== "student") {
-  window.location.href = "login.html";
-}
+async function load(){
+  const snap = await getDocs(collection(db,"assignments"));
+  let html="";
 
-let assignments = [];
+  snap.forEach(d=>{
+    const a = d.data();
 
-//
-// LOAD
-//
-async function loadAssignments() {
+    if(a.class === user.class){
 
-  const snap = await getDocs(collection(db, "assignments"));
+      html += `<div>
+        <h3>${a.title}</h3>
+        ${a.questions.map((q,i)=>`
+          <p>${q.q}</p>
+          <input id="${d.id}_${i}">
+        `).join("")}
 
-  assignments = [];
-
-  snap.forEach(d => {
-    const data = d.data();
-
-    if (
-      data.class?.trim().toLowerCase() ===
-      user.class?.trim().toLowerCase()
-    ) {
-      assignments.push({ ...data, docId: d.id });
+        <button onclick="submit('${d.id}',${a.questions.length})">Submit</button>
+      </div>`;
     }
   });
 
-  render();
+  document.getElementById("list").innerHTML = html;
 }
 
-//
-// RENDER
-//
-function render() {
+window.submit = async function(id,len){
 
-  const container = document.getElementById("list");
+  const answers = [];
 
-  if (assignments.length === 0) {
-    container.innerHTML = "No assignments.";
-    return;
+  for(let i=0;i<len;i++){
+    answers.push(document.getElementById(`${id}_${i}`).value);
   }
 
-  container.innerHTML = assignments.map(a => `
-    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-      <b>${a.subject}</b><br>
-      ${a.question}<br>
-      <small>Due: ${a.dueDate || "N/A"}</small>
-
-      <br><br>
-
-      <textarea id="ans-${a.docId}" placeholder="Your answer"></textarea>
-      <br>
-      <button onclick="submitAnswer('${a.docId}')">Submit</button>
-    </div>
-  `).join("");
-}
-
-//
-// SUBMIT
-//
-window.submitAnswer = async function (id) {
-
-  const answer = document.getElementById(`ans-${id}`).value;
-
-  if (!answer) {
-    alert("Write answer");
-    return;
-  }
-
-  await addDoc(collection(db, "submissions"), {
-    assignmentId: id,
-    studentId: user.id,
-    studentName: user.name,
-    answer,
-    submittedAt: Date.now()
+  await addDoc(collection(db,"submissions"),{
+    assignmentId:id,
+    studentId:user.id,
+    studentName:user.name,
+    answers,
+    score:null,
+    status:"submitted",
+    createdAt:Date.now()
   });
 
   alert("Submitted");
 };
 
-//
-// INIT
-//
-loadAssignments();
-
+load();
 </script>
 
 </body>
