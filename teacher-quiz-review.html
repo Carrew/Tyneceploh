@@ -2,10 +2,11 @@
 <html>
 <body>
 
-<h2>Quiz Review Panel</h2>
+<h2>Quiz Review Dashboard</h2>
 
 <select id="quizSelect"></select>
 
+<div id="summary"></div>
 <div id="list"></div>
 
 <script type="module">
@@ -40,7 +41,6 @@ async function load(){
 
   qSnap.forEach(d=>{
     const q = d.data();
-
     if(q.teacherId === user.id){
       quizzes.push({id:d.id, ...q});
     }
@@ -57,30 +57,41 @@ async function load(){
 }
 
 //
-// 📊 RENDER TABLE
+// 📊 RENDER DASHBOARD
 //
 function render(){
 
-  const quizId = document.getElementById("quizSelect").value;
+  const id = document.getElementById("quizSelect").value;
 
-  const selectedQuiz = quizzes.find(q=>q.id === quizId);
+  const quiz = quizzes.find(q=>q.id === id);
+  const results = submissions.filter(s=>s.quizId === id);
 
-  const results = submissions.filter(s => s.quizId === quizId);
-
-  if(!selectedQuiz){
+  if(!quiz){
     document.getElementById("list").innerHTML = "No quiz selected";
     return;
   }
 
+  let totalStudents = results.length;
+
+  let avg = 0;
+
+  results.forEach(r=>{
+    avg += (r.score / r.total) * 100;
+  });
+
+  avg = totalStudents ? (avg / totalStudents).toFixed(1) : 0;
+
   let html = `
-    <h3>${selectedQuiz.title}</h3>
+    <h3>${quiz.title}</h3>
+    <p>Total Students: ${totalStudents}</p>
+    <p>Class Average: ${avg}%</p>
 
     <table border="1" cellpadding="8">
       <tr>
         <th>Student</th>
         <th>Score</th>
         <th>Total</th>
-        <th>Percentage</th>
+        <th>%</th>
       </tr>
   `;
 
@@ -98,18 +109,15 @@ function render(){
     `;
   });
 
-  html += "</table>";
-
-  html += `<br><h3>Detailed View</h3>`;
+  html += `</table><br><h3>Detailed View</h3>`;
 
   results.forEach(r=>{
 
     html += `
       <div style="border:1px solid #ccc;margin:10px;padding:10px;">
         <b>${r.studentName}</b><br>
-        Score: ${r.score}/${r.total}<br><br>
+        Score: ${r.score}/${r.total}<br>
 
-        Answers:
         <ul>
           ${r.answers.map((a,i)=>`
             <li>Q${i+1}: ${a}</li>
