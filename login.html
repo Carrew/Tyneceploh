@@ -1,14 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>TEF Login</title>
-</head>
-
 <body>
 
-<h2>Login</h2>
+<h2>TEF Login</h2>
 
-<input id="userId" placeholder="ID">
+<input id="userId" placeholder="User ID (TEF0001 / TCH001 / JAN001)">
 <input id="pin" type="password" placeholder="PIN">
 
 <button onclick="login()">Login</button>
@@ -20,74 +16,101 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
-};
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-async function sha256(text) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+function setMsg(text, error=false){
+  const el = document.getElementById("msg");
+  el.textContent = text;
+  el.style.color = error ? "red" : "green";
 }
 
-window.login = async function () {
+//
+// 🚀 LOGIN LOGIC
+//
+window.login = async function(){
 
-  const id = document.getElementById("userId").value.trim();
+  const userId = document.getElementById("userId").value.trim();
   const pin = document.getElementById("pin").value.trim();
-  const msg = document.getElementById("msg");
 
-  const snapshot = await getDocs(collection(db, "users"));
+  if(!userId || !pin){
+    setMsg("Fill all fields", true);
+    return;
+  }
 
-  let user = null;
+  setMsg("Checking...");
 
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    if (data.id === id) user = data;
+  const snap = await getDocs(collection(db,"users"));
+
+  let found = null;
+
+  snap.forEach(d=>{
+    const u = d.data();
+
+    if(
+      (u.userId || "").trim() === userId &&
+      (u.pin || "").trim() === pin
+    ){
+      found = u;
+    }
   });
 
-  if (!user) {
-    msg.innerText = "Invalid ID";
+  if(!found){
+    setMsg("Invalid login", true);
     return;
   }
 
-  const hashed = await sha256(pin);
-
-  if (hashed !== user.pinHash) {
-    msg.innerText = "Wrong PIN";
+  if(found.status && found.status !== "active"){
+    setMsg("Account inactive", true);
     return;
   }
 
-  localStorage.setItem("user", JSON.stringify(user));
+  // store session
+  localStorage.setItem("user", JSON.stringify(found));
 
-  msg.innerText = "Login success...";
+  setMsg("Login successful");
 
-  setTimeout(() => {
+  //
+  // 🎯 ROLE ROUTING
+  //
+  setTimeout(()=>{
 
-    if (user.role === "student") {
-      window.location.href = "student-dashboard.html";
+    switch(found.role){
+
+      case "student":
+        location.href = "student-dashboard.html";
+        break;
+
+      case "teacher":
+        location.href = "teacher-dashboard.html";
+        break;
+
+      case "admin":
+        location.href = "admin-dashboard.html";
+        break;
+
+      case "janitor":
+        location.href = "janitor-dashboard.html";
+        break;
+
+      case "security":
+        location.href = "security-dashboard.html";
+        break;
+
+      case "coordinator":
+        location.href = "coordinator-dashboard.html";
+        break;
+
+      default:
+        setMsg("Unknown role", true);
     }
 
-    else if (user.role === "teacher") {
-      window.location.href = "teacher-dashboard.html";
-    }
-
-    else if (user.role === "admin") {
-      window.location.href = "admin-dashboard.html";
-    }
-
-    else {
-      window.location.href = "dashboard.html";
-    }
-
-  }, 800);
-
+  },800);
 };
 
 </script>
