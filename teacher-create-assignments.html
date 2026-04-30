@@ -6,16 +6,17 @@
 
 <select id="class"></select>
 <input id="subject" placeholder="Subject">
-<input id="title" placeholder="Assignment Title">
+<input id="title" placeholder="Title">
 
 <div id="questions"></div>
 
-<button onclick="addQuestion()">Add Question</button>
+<button onclick="addQ()">+ Add Question</button>
 <br><br>
 
-<button onclick="createAssignment()">Create Assignment</button>
+<button onclick="create()">Create Assignment</button>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -24,53 +25,60 @@ const app = initializeApp({
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 });
+
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 if (!user || user.role !== "teacher") location.href="login.html";
 
-const classSelect = document.getElementById("class");
-classSelect.innerHTML = (user.classes||[]).map(c=>`<option>${c}</option>`);
+document.getElementById("class").innerHTML =
+  (user.classes || []).map(c=>`<option>${c}</option>`).join("");
 
-let qCount = 0;
+let count = 0;
 
-window.addQuestion = function(){
-  qCount++;
+window.addQ = function(){
+  count++;
+
   document.getElementById("questions").innerHTML += `
-    <div>
-      Q${qCount}: <input id="q${qCount}">
-      Score: <input id="s${qCount}" type="number">
+    <div style="margin:5px 0;">
+      Q${count}:
+      <input id="q${count}" placeholder="Question">
+      Score:
+      <input id="s${count}" type="number" style="width:60px">
     </div>
   `;
 };
 
-window.createAssignment = async function(){
+window.create = async function(){
 
   const questions = [];
   let total = 0;
 
-  for(let i=1;i<=qCount;i++){
+  for(let i=1;i<=count;i++){
     const q = document.getElementById(`q${i}`).value;
     const s = Number(document.getElementById(`s${i}`).value);
 
-    if(q && s){
-      questions.push({q, score:s});
-      total += s;
-    }
+    if(!q || !s) continue;
+
+    questions.push({ q, score:s });
+    total += s;
   }
 
   await addDoc(collection(db,"assignments"),{
     teacherId:user.id,
-    class:classSelect.value,
+    class:document.getElementById("class").value,
     subject:document.getElementById("subject").value,
     title:document.getElementById("title").value,
+
     questions,
-    totalScore:total,
-    createdAt:Date.now()
+    totalScore: total,
+
+    createdAt: Date.now()
   });
 
   alert("Assignment created");
 };
+
 </script>
 
 </body>
