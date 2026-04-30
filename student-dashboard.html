@@ -1,35 +1,46 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Student Dashboard - TEF</title>
-</head>
-
 <body>
 
 <h2>Student Dashboard</h2>
 
 <div id="info"></div>
 
+<hr>
+
+<h3>My Portal</h3>
+
+<button onclick="go('student-assignments.html')">Assignments</button>
+<button onclick="go('student-quiz.html')">Quizzes</button>
+<button onclick="go('student-results.html')">Results</button>
+<button onclick="go('student-notes.html')">Lessons</button>
+
+<br><br>
 <button onclick="logout()">Logout</button>
 
 <script>
-  const user = JSON.parse(localStorage.getItem("user"));
 
-  if (!user || user.role !== "student") {
-    window.location.href = "login.html";
-  }
+const user = JSON.parse(localStorage.getItem("user"));
 
-  document.getElementById("info").innerHTML = `
-    <p><b>Name:</b> ${user.name}</p>
-    <p><b>ID:</b> ${user.id}</p>
-    <p><b>Class:</b> ${user.class}</p>
-    <p><b>Status:</b> ${user.status}</p>
-  `;
+if(!user || user.role !== "student"){
+  location.href = "login.html";
+}
 
-  function logout() {
-    localStorage.removeItem("user");
-    window.location.href = "login.html";
-  }
+document.getElementById("info").innerHTML = `
+  <b>${user.name}</b><br>
+  ID: ${user.userId}<br>
+  Class: ${user.class}<br>
+`;
+
+function go(page){
+  location.href = page;
+}
+
+function logout(){
+  localStorage.removeItem("user");
+  location.href = "login.html";
+}
+
 </script>
 
 </body>
