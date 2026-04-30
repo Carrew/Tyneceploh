@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Dashboard - TEF</title>
+</head>
+
+<body>
+
+<h2>Teacher Dashboard</h2>
+
+<div id="info"></div>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user || user.role !== "teacher") {
+    window.location.href = "login.html";
+  }
+
+  document.getElementById("info").innerHTML = `
+    <p><b>Name:</b> ${user.name}</p>
+    <p><b>ID:</b> ${user.id}</p>
+    <p><b>Classes:</b> ${user.classes?.join(", ")}</p>
+    <p><b>Status:</b> ${user.status}</p>
+  `;
+
+  function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+  }
+</script>
+
+</body>
+</html>
