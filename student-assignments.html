@@ -15,107 +15,67 @@ const app = initializeApp({
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 });
+
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.role !== "student") location.href="login.html";
 
-if (!user || user.role !== "student") {
-  location.href = "login.html";
-}
+let submitted = {};
 
-let submittedMap = {}; // track submissions
-
-//
-// 📥 LOAD ASSIGNMENTS + SUBMISSIONS
-//
 async function load(){
 
-  console.log("🔐 User:", user);
+  const aSnap = await getDocs(collection(db,"assignments"));
+  const sSnap = await getDocs(collection(db,"submissions"));
 
-  const assignSnap = await getDocs(collection(db,"assignments"));
-  const subSnap = await getDocs(collection(db,"submissions"));
-
-  // build submission map (prevent duplicates)
-  subSnap.forEach(d=>{
+  sSnap.forEach(d=>{
     const s = d.data();
-    if (s.studentId === user.id) {
-      submittedMap[s.assignmentId] = true;
+    if(s.studentId === user.id){
+      submitted[s.assignmentId] = true;
     }
   });
 
   let html = "";
 
-  assignSnap.forEach(d => {
-
+  aSnap.forEach(d=>{
     const a = d.data();
 
-    console.log("📦 Assignment:", a);
+    if(a.class !== user.class) return;
 
-    // safe class check
-    const aClass = a.class?.trim().toLowerCase();
-    const uClass = user.class?.trim().toLowerCase();
+    const qs = Array.isArray(a.questions) ? a.questions : [];
 
-    if (aClass !== uClass) return;
-
-    // safe questions array
-    const questions = Array.isArray(a.questions) ? a.questions : [];
-
-    if (questions.length === 0) {
-      console.warn("⚠️ No questions found for assignment:", d.id);
-      return;
-    }
-
-    const alreadySubmitted = submittedMap[d.id];
+    const done = submitted[d.id];
 
     html += `
-      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-        <h3>${a.title || "Untitled Assignment"}</h3>
+      <div style="border:1px solid #ccc;padding:10px;margin:10px;">
+        <h3>${a.title}</h3>
 
-        ${questions.map((q,i)=>`
-          <p>${q.q || "No question text"}</p>
-          ${alreadySubmitted ? 
-            `<i>Submitted</i>` :
-            `<input id="${d.id}_${i}" placeholder="Your answer">`
-          }
+        ${qs.map((q,i)=>`
+          <p>${q.q}</p>
+          ${done ? "Submitted" : `<input id="${d.id}_${i}">`}
         `).join("")}
 
-        <br>
-
-        ${
-          alreadySubmitted
-          ? `<button disabled>Already Submitted</button>`
-          : `<button onclick="submit('${d.id}', ${questions.length})">Submit</button>`
+        ${done
+          ? `<button disabled>Done</button>`
+          : `<button onclick="submit('${d.id}',${qs.length})">Submit</button>`
         }
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML =
-    html || "<p>No assignments available.</p>";
+  document.getElementById("list").innerHTML = html;
 }
 
-//
-// 🚀 SUBMIT
-//
-window.submit = async function(id, len){
+window.submit = async function(id,len){
 
-  if (submittedMap[id]) {
-    alert("Already submitted");
-    return;
-  }
+  if(submitted[id]) return alert("Already submitted");
 
   const answers = [];
 
   for(let i=0;i<len;i++){
-    const el = document.getElementById(`${id}_${i}`);
-    const val = el?.value?.trim();
-
-    if (!val) {
-      alert("Answer all questions");
-      return;
-    }
-
-    answers.push(val);
+    const v = document.getElementById(`${id}_${i}`).value;
+    if(!v) return alert("Fill all answers");
+    answers.push(v);
   }
 
   await addDoc(collection(db,"submissions"),{
@@ -128,17 +88,13 @@ window.submit = async function(id, len){
     createdAt:Date.now()
   });
 
-  alert("Submitted successfully");
+  submitted[id] = true;
 
-  // update local state to prevent resubmit instantly
-  submittedMap[id] = true;
+  alert("Submitted");
 
   load();
 };
 
-//
-// INIT
-//
 load();
 
 </script>
