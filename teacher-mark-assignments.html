@@ -3,19 +3,12 @@
 <body>
 
 <h2>Mark Assignments</h2>
-
 <div id="list"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  updateDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -26,117 +19,94 @@ const app = initializeApp({
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.role !== "teacher") location.href="login.html";
 
-if (!user || user.role !== "teacher") {
-  location.href = "login.html";
-}
-
-let assignmentsMap = {};
-
-//
-// 📥 LOAD DATA
-//
 async function load(){
 
-  const assignSnap = await getDocs(collection(db,"assignments"));
-  const subSnap = await getDocs(collection(db,"submissions"));
+  const sSnap = await getDocs(collection(db,"submissions"));
+  const aSnap = await getDocs(collection(db,"assignments"));
 
-  // build assignment map
-  assignSnap.forEach(d=>{
-    const a = d.data();
-
-    if (a.teacherId === user.id) {
-      assignmentsMap[d.id] = a;
-    }
+  const assignments = {};
+  aSnap.forEach(d=>{
+    assignments[d.id] = d.data();
   });
 
   let html = "";
 
-  subSnap.forEach(d => {
-
+  sSnap.forEach(d=>{
     const s = d.data();
+    const a = assignments[s.assignmentId];
 
-    // only submissions for this teacher’s assignments
-    if (!assignmentsMap[s.assignmentId]) return;
+    if(!a) return;
 
-    const assignment = assignmentsMap[s.assignmentId];
-
-    const questions = Array.isArray(assignment.questions)
-      ? assignment.questions
-      : [];
-
-    const answers = Array.isArray(s.answers)
-      ? s.answers
-      : [];
-
-    const isMarked = s.status === "marked";
+    const qs = a.questions || [];
 
     html += `
-      <div style="border:1px solid #ccc; margin:15px; padding:15px;">
+      <div style="border:1px solid #ccc;padding:10px;margin:10px;">
+        <h3>${s.studentName}</h3>
 
-        <h3>${assignment.title || "Assignment"}</h3>
-        <p><b>Student:</b> ${s.studentName}</p>
+        ${qs.map((q,i)=>`
+          <div>
+            <b>${q.q}</b><br>
 
-        ${questions.map((q,i)=>`
-          <div style="margin-bottom:10px;">
-            <p><b>Q${i+1}:</b> ${q.q || "No question"}</p>
-            <p><b>Answer:</b> ${answers[i] || "-"}</p>
-            <p><b>Max Score:</b> ${q.score || 0}</p>
+            Student: ${s.answers[i] || "-"}<br>
+
+            <label>
+              <input type="checkbox" id="p_${d.id}_${i}">
+              Pass
+            </label>
+
+            Bonus:
+            <input type="number" id="b_${d.id}_${i}" style="width:60px" value="0">
           </div>
+          <hr>
         `).join("")}
 
-        <hr>
-
-        ${
-          isMarked
-          ? `<b>Final Score: ${s.score}</b>`
-          : `
-            <input id="score_${d.id}" type="number" placeholder="Enter total score">
-            <button onclick="mark('${d.id}', ${assignment.totalScore})">
-              Submit Score
-            </button>
-          `
-        }
-
+        <button onclick="mark('${d.id}','${s.assignmentId}',${qs.length})">
+          Submit Mark
+        </button>
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML =
-    html || "<p>No submissions found.</p>";
+  document.getElementById("list").innerHTML = html;
 }
 
-//
-// ✅ MARK
-//
-window.mark = async function(id, maxScore){
+window.mark = async function(subId,assignId,len){
 
-  const score = Number(document.getElementById(`score_${id}`).value);
+  const aSnap = await getDocs(collection(db,"assignments"));
+  let assign = null;
 
-  if (isNaN(score)) {
-    alert("Enter a valid score");
-    return;
-  }
-
-  if (score > maxScore) {
-    alert("Score cannot exceed total score");
-    return;
-  }
-
-  await updateDoc(doc(db,"submissions",id),{
-    score,
-    status:"marked",
-    markedAt:Date.now()
+  aSnap.forEach(d=>{
+    if(d.id === assignId) assign = d.data();
   });
 
-  alert("Marked successfully");
+  const qs = assign.questions;
 
+  let total = 0;
+
+  for(let i=0;i<len;i++){
+
+    const pass = document.getElementById(`p_${subId}_${i}`).checked;
+    const bonus = Number(document.getElementById(`b_${subId}_${i}`).value || 0);
+
+    const base = qs[i].score;
+
+    if(pass){
+      total += base + bonus;
+    }
+  }
+
+  await updateDoc(doc(db,"submissions",subId),{
+    score: total,
+    status: "marked",
+    markedAt: Date.now()
+  });
+
+  alert("Marked");
   load();
 };
 
-//
-// INIT
-//
 load();
 
 </script>
