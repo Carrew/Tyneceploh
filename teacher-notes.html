@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Notes - TEF</title>
+</head>
+
+<body>
+
+<h2>Create Lesson Note</h2>
+
+<select id="class"></select>
+
+<input id="subject" placeholder="Subject">
+<input id="topic" placeholder="Topic">
+
+<textarea id="content" placeholder="Write full lesson..." rows="8"></textarea>
+
+<br><br>
+
+<button onclick="submitLesson()">Send Lesson</button>
+
+<p id="msg"></p>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "teacher") {
+  window.location.href = "login.html";
+}
+
+//
+// 🎯 LOAD TEACHER CLASSES
+//
+const classSelect = document.getElementById("class");
+
+classSelect.innerHTML = (user.classes || []).map(c =>
+  `<option value="${c}">${c}</option>`
+).join("");
+
+//
+// 🚀 SUBMIT LESSON
+//
+window.submitLesson = async function () {
+
+  const className = document.getElementById("class").value;
+  const subject = document.getElementById("subject").value;
+  const topic = document.getElementById("topic").value;
+  const content = document.getElementById("content").value;
+
+  if (!className || !subject || !topic || !content) {
+    alert("Fill all fields");
+    return;
+  }
+
+  await addDoc(collection(db, "lessons"), {
+    teacherId: user.id,
+    teacherName: user.name,
+    class: className,
+
+    subject,
+    topic,
+    content,
+
+    createdAt: Date.now()
+  });
+
+  document.getElementById("msg").innerText = "Lesson sent";
+
+  document.getElementById("subject").value = "";
+  document.getElementById("topic").value = "";
+  document.getElementById("content").value = "";
+};
+
+</script>
+
+</body>
+</html>
