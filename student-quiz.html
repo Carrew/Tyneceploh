@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>My Quizzes</h2>
+<div id="list"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "student") location.href="login.html";
+
+let done = {};
+
+async function load(){
+
+  const qSnap = await getDocs(collection(db,"quizzes"));
+  const sSnap = await getDocs(collection(db,"quizSubmissions"));
+
+  sSnap.forEach(d=>{
+    const s = d.data();
+    if(s.studentId === user.id){
+      done[s.quizId] = true;
+    }
+  });
+
+  let html = "";
+
+  qSnap.forEach(d=>{
+    const q = d.data();
+
+    if(q.class !== user.class) return;
+
+    const finished = done[d.id];
+
+    html += `
+      <div style="border:1px solid #ccc;margin:10px;padding:10px;">
+        <h3>${q.title}</h3>
+
+        ${q.questions.map((x,i)=>`
+          <p>${x.q}</p>
+
+          ${x.options.map((o,idx)=>`
+            <label>
+              <input type="radio" name="${d.id}_${i}" value="${["A","B","C","D"][idx]}">
+              ${o}
+            </label><br>
+          `).join("")}
+        `).join("")}
+
+        ${finished
+          ? `<b>Already submitted</b>`
+          : `<button onclick="submit('${d.id}',${q.questions.length})">Submit</button>`
+        }
+      </div>
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html;
+}
+
+window.submit = async function(id,len){
+
+  let answers = [];
+
+  for(let i=0;i<len;i++){
+    const options = document.getElementsByName(`${id}_${i}`);
+
+    let selected = "";
+
+    options.forEach(o=>{
+      if(o.checked) selected = o.value;
+    });
+
+    if(!selected){
+      alert("Answer all questions");
+      return;
+    }
+
+    answers.push(selected);
+  }
+
+  // fetch quiz for correction
+  const snap = await getDocs(collection(db,"quizzes"));
+
+  let quiz = null;
+  snap.forEach(d=>{
+    if(d.id === id) quiz = d.data();
+  });
+
+  let score = 0;
+
+  quiz.questions.forEach((q,i)=>{
+    if(q.answer === answers[i]){
+      score++;
+    }
+  });
+
+  await addDoc(collection(db,"quizSubmissions"),{
+    quizId:id,
+    studentId:user.id,
+    studentName:user.name,
+    answers,
+    score,
+    total:quiz.questions.length,
+    createdAt:Date.now()
+  });
+
+  alert("Submitted: " + score + "/" + quiz.questions.length);
+
+  load();
+};
+
+load();
+
+</script>
+
+</body>
+</html>
