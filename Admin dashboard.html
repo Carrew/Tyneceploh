@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard - TEF</title>
+</head>
+
+<body>
+
+<h2>Admin Dashboard</h2>
+
+<div id="info"></div>
+
+<h3>Quick Actions</h3>
+
+<button onclick="go('admin-create-student.html')">Create Student</button>
+<button onclick="go('admin-create-teacher.html')">Create Teacher</button>
+
+<br><br>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user || user.role !== "admin") {
+    window.location.href = "login.html";
+  }
+
+  document.getElementById("info").innerHTML = `
+    <p><b>Name:</b> ${user.name}</p>
+    <p><b>ID:</b> ${user.id}</p>
+    <p><b>Role:</b> ${user.role}</p>
+  `;
+
+  function go(page) {
+    window.location.href = page;
+  }
+
+  function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+  }
+</script>
+
+</body>
+</html>
