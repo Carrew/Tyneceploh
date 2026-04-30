@@ -21,17 +21,28 @@ const db = getFirestore(app);
 const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "student") location.href="login.html";
 
-let done = {};
+let submittedMap = {};
+let quizMap = {};
 
+//
+// 📥 LOAD DATA
+//
 async function load(){
+
+  console.log("📌 Student:", user);
 
   const qSnap = await getDocs(collection(db,"quizzes"));
   const sSnap = await getDocs(collection(db,"quizSubmissions"));
 
+  submittedMap = {};
+  quizMap = {};
+
+  // submissions
   sSnap.forEach(d=>{
     const s = d.data();
     if(s.studentId === user.id){
-      done[s.quizId] = true;
+      submittedMap[s.quizId] = true;
+      quizMap[s.quizId] = s;
     }
   });
 
@@ -42,44 +53,64 @@ async function load(){
 
     if(q.class !== user.class) return;
 
-    const finished = done[d.id];
+    const qs = Array.isArray(q.questions) ? q.questions : [];
+
+    const submission = quizMap[d.id];
+    const done = !!submission;
 
     html += `
       <div style="border:1px solid #ccc;margin:10px;padding:10px;">
         <h3>${q.title}</h3>
+        <small>Total Score: ${q.totalScore || 0}</small>
+        <hr>
+    `;
 
-        ${q.questions.map((x,i)=>`
-          <p>${x.q}</p>
+    qs.forEach((x,i)=>{
+
+      html += `
+        <div style="margin-bottom:10px;">
+          <b>${x.q}</b><br>
 
           ${x.options.map((o,idx)=>`
             <label>
-              <input type="radio" name="${d.id}_${i}" value="${["A","B","C","D"][idx]}">
+              <input type="radio" name="${d.id}_${i}" value="${["A","B","C","D"][idx]}"
+              ${done ? "disabled" : ""}>
               ${o}
             </label><br>
           `).join("")}
-        `).join("")}
+        </div>
+      `;
+    });
 
-        ${finished
-          ? `<b>Already submitted</b>`
-          : `<button onclick="submit('${d.id}',${q.questions.length})">Submit</button>`
-        }
-      </div>
-    `;
+    html += done
+      ? `<b style="color:green">Score: ${submission.score}/${submission.total}</b>`
+      : `<button onclick="submitQuiz('${d.id}',${qs.length})">Submit Quiz</button>`;
+
+    html += `</div>`;
   });
 
-  document.getElementById("list").innerHTML = html;
+  document.getElementById("list").innerHTML = html || "No quizzes available";
 }
 
-window.submit = async function(id,len){
+//
+// 🚀 SUBMIT + AUTO MARK
+//
+window.submitQuiz = async function(id,len){
 
-  let answers = [];
+  if(submittedMap[id]){
+    alert("Already submitted");
+    return;
+  }
+
+  const answers = [];
 
   for(let i=0;i<len;i++){
-    const options = document.getElementsByName(`${id}_${i}`);
+
+    const opts = document.getElementsByName(`${id}_${i}`);
 
     let selected = "";
 
-    options.forEach(o=>{
+    opts.forEach(o=>{
       if(o.checked) selected = o.value;
     });
 
@@ -91,19 +122,24 @@ window.submit = async function(id,len){
     answers.push(selected);
   }
 
-  // fetch quiz for correction
+  // get quiz
   const snap = await getDocs(collection(db,"quizzes"));
 
   let quiz = null;
+
   snap.forEach(d=>{
     if(d.id === id) quiz = d.data();
   });
 
   let score = 0;
+  let total = 0;
 
   quiz.questions.forEach((q,i)=>{
+
+    total += q.score;
+
     if(q.answer === answers[i]){
-      score++;
+      score += q.score;
     }
   });
 
@@ -113,11 +149,13 @@ window.submit = async function(id,len){
     studentName:user.name,
     answers,
     score,
-    total:quiz.questions.length,
+    total,
     createdAt:Date.now()
   });
 
-  alert("Submitted: " + score + "/" + quiz.questions.length);
+  submittedMap[id] = true;
+
+  alert(`Score: ${score}/${total}`);
 
   load();
 };
