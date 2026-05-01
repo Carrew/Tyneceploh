@@ -2,14 +2,12 @@
 <html>
 <body>
 
-<h2>TEF Login</h2>
+<h2>Login</h2>
 
-<input id="userId" placeholder="User ID (TEF0001 / TCH001 / JAN001)">
+<input id="id" placeholder="User ID">
 <input id="pin" type="password" placeholder="PIN">
 
 <button onclick="login()">Login</button>
-
-<p id="msg"></p>
 
 <script type="module">
 
@@ -17,33 +15,22 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
 
 const db = getFirestore(app);
 
-function setMsg(text, error=false){
-  const el = document.getElementById("msg");
-  el.textContent = text;
-  el.style.color = error ? "red" : "green";
-}
-
-//
-// 🚀 LOGIN LOGIC
-//
 window.login = async function(){
 
-  const userId = document.getElementById("userId").value.trim();
+  const id = document.getElementById("id").value.trim().toUpperCase();
   const pin = document.getElementById("pin").value.trim();
 
-  if(!userId || !pin){
-    setMsg("Fill all fields", true);
+  if(!id || !pin){
+    alert("Enter ID and PIN");
     return;
   }
-
-  setMsg("Checking...");
 
   const snap = await getDocs(collection(db,"users"));
 
@@ -52,65 +39,63 @@ window.login = async function(){
   snap.forEach(d=>{
     const u = d.data();
 
-    if(
-      (u.userId || "").trim() === userId &&
-      (u.pin || "").trim() === pin
-    ){
-      found = u;
+    if(u.userId === id && u.pin === pin){
+      found = {
+        userId: u.userId,
+        name: u.name || "",
+        role: (u.role || "").toLowerCase(),
+        class: u.class || "",
+        classes: u.classes || [],
+        status: u.status || "active"
+      };
     }
   });
 
   if(!found){
-    setMsg("Invalid login", true);
+    alert("Invalid ID or PIN");
     return;
   }
 
-  if(found.status && found.status !== "active"){
-    setMsg("Account inactive", true);
+  if(found.status !== "active"){
+    alert("Account inactive");
     return;
   }
 
-  // store session
+  // save session
   localStorage.setItem("user", JSON.stringify(found));
 
-  setMsg("Login successful");
+  console.log("✅ Logged in:", found);
 
-  //
-  // 🎯 ROLE ROUTING
-  //
-  setTimeout(()=>{
+  // 🚀 ROLE ROUTING
+  switch(found.role){
 
-    switch(found.role){
+    case "admin":
+      location.href = "admin-dashboard.html";
+      break;
 
-      case "student":
-        location.href = "student-dashboard.html";
-        break;
+    case "teacher":
+      location.href = "teacher-dashboard.html";
+      break;
 
-      case "teacher":
-        location.href = "teacher-dashboard.html";
-        break;
+    case "student":
+      location.href = "student-dashboard.html";
+      break;
 
-      case "admin":
-        location.href = "admin-dashboard.html";
-        break;
+    case "janitor":
+      location.href = "janitor-dashboard.html";
+      break;
 
-      case "janitor":
-        location.href = "janitor-dashboard.html";
-        break;
+    case "security":
+      location.href = "security-dashboard.html";
+      break;
 
-      case "security":
-        location.href = "security-dashboard.html";
-        break;
+    case "coordinator":
+      location.href = "coordinator-dashboard.html";
+      break;
 
-      case "coordinator":
-        location.href = "coordinator-dashboard.html";
-        break;
-
-      default:
-        setMsg("Unknown role", true);
-    }
-
-  },800);
+    default:
+      alert("Unknown role");
+  }
 };
 
 </script>
