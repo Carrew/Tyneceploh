@@ -40,7 +40,7 @@ async function load(){
   // submissions
   sSnap.forEach(d=>{
     const s = d.data();
-    if(s.studentId === user.id){
+    if(s.studentId === user.userId){
       submittedMap[s.quizId] = true;
       quizMap[s.quizId] = s;
     }
@@ -145,7 +145,7 @@ window.submitQuiz = async function(id,len){
 
   await addDoc(collection(db,"quizSubmissions"),{
     quizId:id,
-    studentId:user.id,
+    studentId:user.userId,
     studentName:user.name,
     answers,
     score,
