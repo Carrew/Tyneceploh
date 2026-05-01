@@ -2,48 +2,46 @@
 <html>
 <body>
 
-<h2>Teacher Dashboard</h2>
-
-<div id="info"></div>
-
-<hr>
-
-<h3>Teaching Tools</h3>
-
-<button onclick="go('teacher-create-assignment.html')">Create Assignment</button>
-<button onclick="go('teacher-mark-assignment.html')">Mark Assignments</button>
-
-<button onclick="go('teacher-create-quiz.html')">Create Quiz</button>
-<button onclick="go('teacher-quiz-review.html')">Quiz Results</button>
-
-<button onclick="go('teacher-notes.html')">Send Lessons</button>
-
-<br><br>
-<button onclick="logout()">Logout</button>
-
 <script>
-
 const user = JSON.parse(localStorage.getItem("user"));
-
 if(!user || user.role !== "teacher"){
   location.href = "login.html";
 }
+</script>
 
-document.getElementById("info").innerHTML = `
-  <b>${user.name}</b><br>
-  ID: ${user.userId}<br>
-  Classes: ${(user.classes || []).join(", ")}
-`;
+<h2>Teacher Dashboard</h2>
+<p>Welcome, <b id="name"></b></p>
 
-function go(page){
-  location.href = page;
-}
+<div>
+  <h3>Academics</h3>
+  <button onclick="go('teacher-grade.html')">Submit Grades</button>
+  <button onclick="go('teacher-notes.html')">Send Notes</button>
+</div>
+
+<div>
+  <h3>Assignments</h3>
+  <button onclick="go('teacher-create-assignment.html')">Create</button>
+  <button onclick="go('teacher-mark-assignment.html')">Mark</button>
+</div>
+
+<div>
+  <h3>Quizzes</h3>
+  <button onclick="go('teacher-create-quiz.html')">Create Quiz</button>
+  <button onclick="go('teacher-quiz-review.html')">View Results</button>
+</div>
+
+<br>
+<button onclick="logout()">Logout</button>
+
+<script>
+document.getElementById("name").innerText = user.name;
+
+function go(p){ location.href = p; }
 
 function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
-
 </script>
 
 </body>
