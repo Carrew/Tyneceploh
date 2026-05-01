@@ -2,41 +2,33 @@
 <html>
 <body>
 
-<h2>Janitor Dashboard</h2>
-
-<div id="info"></div>
-
-<hr>
-
-<h3>Work Actions</h3>
-
-<button onclick="go('staff-clock.html')">Clock In / Out</button>
-
-<br><br>
-<button onclick="logout()">Logout</button>
-
 <script>
-
 const user = JSON.parse(localStorage.getItem("user"));
-
 if(!user || user.role !== "janitor"){
   location.href = "login.html";
 }
+</script>
 
-document.getElementById("info").innerHTML = `
-  <b>${user.name}</b><br>
-  ID: ${user.userId}
-`;
+<h2>Janitor Dashboard</h2>
+<p>Welcome, <b id="name"></b></p>
 
-function go(page){
-  location.href = page;
-}
+<div>
+  <h3>Work</h3>
+  <button onclick="go('staff-attendance.html')">Clock In / Out</button>
+</div>
+
+<br>
+<button onclick="logout()">Logout</button>
+
+<script>
+document.getElementById("name").innerText = user.name;
+
+function go(p){ location.href = p; }
 
 function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
-
 </script>
 
 </body>
