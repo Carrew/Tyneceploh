@@ -28,7 +28,8 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
-if (!user || user.role !== "student") {
+if (!user || user.role !== "student" || user.status !== "active") {
+  localStorage.removeItem("user");
   window.location.href = "login.html";
 }
 
@@ -54,7 +55,7 @@ async function loadResults() {
     console.log("📦 Checking result:", data);
 
     const resultId = data.studentId?.toString().trim().toLowerCase();
-    const userId = user.id?.toString().trim().toLowerCase();
+    const userId = user.userId?.toString().trim().toLowerCase();
 
     console.log("➡️ Compare:", resultId, "vs", userId);
 
