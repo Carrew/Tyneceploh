@@ -1,85 +1,63 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Create Master Admin - TEF</title>
-</head>
-
 <body>
 
-<h2>Master Admin Setup</h2>
+<h2>Create Master Admin</h2>
 
-<input id="name" placeholder="Admin Name">
-<input id="pin" placeholder="Create PIN" type="password">
+<input id="name" placeholder="Full Name">
+<input id="pin" placeholder="PIN (optional)">
 
-<button onclick="createAdmin()">Create Admin</button>
-
-<p id="msg"></p>
+<button onclick="create()">Create Admin</button>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
-};
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔐 SHA-256 PIN hash
-async function sha256(text) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+function genID(num){
+  return "ADM" + String(num).padStart(3,"0");
 }
 
-// 🆔 Admin ID generator
-function generateAdminId(count) {
-  return `ADM${String(count + 1).padStart(3, "0")}`;
+function genPIN(){
+  return Math.floor(1000 + Math.random()*9000).toString();
 }
 
-window.createAdmin = async function () {
+window.create = async function(){
 
-  const name = document.getElementById("name").value;
-  const pin = document.getElementById("pin").value;
-  const msg = document.getElementById("msg");
+  const snap = await getDocs(collection(db,"users"));
 
-  if (!name || !pin) {
-    msg.innerText = "Fill all fields first.";
+  let adminCount = 0;
+
+  snap.forEach(d=>{
+    if(d.data().role === "admin") adminCount++;
+  });
+
+  if(adminCount > 0){
+    alert("Admin already exists. Use add-admin page.");
     return;
   }
 
-  try {
-    const snapshot = await getDocs(collection(db, "users"));
-    const adminCount = snapshot.docs.filter(d => d.data().role === "admin").length;
+  const id = genID(1);
+  const pin = document.getElementById("pin").value || genPIN();
 
-    const userId = generateAdminId(adminCount);
-    const pinHash = await sha256(pin);
+  await addDoc(collection(db,"users"),{
+    userId:id,
+    name:document.getElementById("name").value,
+    pin,
+    role:"admin",
+    status:"active",
+    createdAt:Date.now()
+  });
 
-    const admin = {
-      userId: userId,
-      name: name,
-      role: "admin",
-      pinHash: pinHash,
-      createdAt: Date.now()
-    };
-
-    await addDoc(collection(db, "users"), admin);
-
-    msg.innerText = `Admin created: ${userId}`;
-
-    document.getElementById("name").value = "";
-    document.getElementById("pin").value = "";
-
-  } catch (error) {
-    console.error(error);
-    msg.innerText = "Error creating admin. Check console.";
-  }
+  alert("Master Admin Created\nID: "+id+"\nPIN: "+pin);
 };
 
 </script>
