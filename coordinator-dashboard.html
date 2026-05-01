@@ -2,42 +2,34 @@
 <html>
 <body>
 
-<h2>Coordinator Dashboard</h2>
-
-<div id="info"></div>
-
-<hr>
-
-<h3>Management</h3>
-
-<button onclick="go('admin-grade-approval.html')">Assist Grade Approval</button>
-<button onclick="go('reports.html')">View Reports</button>
-
-<br><br>
-<button onclick="logout()">Logout</button>
-
 <script>
-
 const user = JSON.parse(localStorage.getItem("user"));
-
 if(!user || user.role !== "coordinator"){
   location.href = "login.html";
 }
+</script>
 
-document.getElementById("info").innerHTML = `
-  <b>${user.name}</b><br>
-  ID: ${user.userId}
-`;
+<h2>Coordinator Dashboard</h2>
+<p>Welcome, <b id="name"></b></p>
 
-function go(page){
-  location.href = page;
-}
+<div>
+  <h3>Oversight</h3>
+  <button onclick="go('admin-results.html')">View Results</button>
+  <button onclick="go('teacher-quiz-review.html')">Quiz Reports</button>
+</div>
+
+<br>
+<button onclick="logout()">Logout</button>
+
+<script>
+document.getElementById("name").innerText = user.name;
+
+function go(p){ location.href = p; }
 
 function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
-
 </script>
 
 </body>
