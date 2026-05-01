@@ -65,7 +65,7 @@ window.create = async function(){
   }
 
   await addDoc(collection(db,"assignments"),{
-    teacherId:user.id,
+    teacherId:user.userId,
     class:document.getElementById("class").value,
     subject:document.getElementById("subject").value,
     title:document.getElementById("title").value,
