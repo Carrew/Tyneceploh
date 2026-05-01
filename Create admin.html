@@ -1,75 +1,65 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Create Admin - TEF</title>
-</head>
-
 <body>
 
-<h2>Create New Admin</h2>
+<h2>Add New Admin</h2>
 
-<input id="name" placeholder="Admin Name">
-<input id="pin" placeholder="Temporary PIN">
+<input id="name" placeholder="Full Name">
+<input id="pin" placeholder="PIN (optional)">
 
-<button onclick="createAdmin()">Create Admin</button>
-
-<p id="result"></p>
+<button onclick="create()">Create Admin</button>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
-};
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// session check
-const user = JSON.parse(localStorage.getItem("user"));
-if (!user || user.role !== "admin") {
-  window.location.href = "login.html";
+const currentUser = JSON.parse(localStorage.getItem("user"));
+
+if(!currentUser || currentUser.role !== "admin"){
+  alert("Unauthorized");
+  location.href = "login.html";
 }
 
-async function sha256(text) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+function genID(num){
+  return "ADM" + String(num).padStart(3,"0");
 }
 
-function generateAdminId(count) {
-  return `ADM${String(count + 1).padStart(3, "0")}`;
+function genPIN(){
+  return Math.floor(1000 + Math.random()*9000).toString();
 }
 
-window.createAdmin = async function () {
+window.create = async function(){
 
-  const name = document.getElementById("name").value;
-  const pin = document.getElementById("pin").value;
+  const snap = await getDocs(collection(db,"users"));
 
-  const snapshot = await getDocs(collection(db, "users"));
-  const adminCount = snapshot.docs.filter(d => d.data().role === "admin").length;
+  let count = 0;
 
-  const id = generateAdminId(adminCount);
-  const pinHash = await sha256(pin);
+  snap.forEach(d=>{
+    if(d.data().role === "admin") count++;
+  });
 
-  const admin = {
-    id,
-    name,
-    role: "admin",
-    pinHash,
-    createdAt: Date.now()
-  };
+  const id = genID(count+1);
+  const pin = document.getElementById("pin").value || genPIN();
 
-  await addDoc(collection(db, "users"), admin);
+  await addDoc(collection(db,"users"),{
+    userId:id,
+    name:document.getElementById("name").value,
+    pin,
+    role:"admin",
+    status:"active",
+    createdAt:Date.now()
+  });
 
-  document.getElementById("result").innerText =
-    `Admin Created → ID: ${id}, PIN: ${pin}`;
+  alert("Admin created\nID: "+id+"\nPIN: "+pin);
 };
 
 </script>
