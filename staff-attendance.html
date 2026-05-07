@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Staff Attendance</title>
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f4;
+    }
+
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      max-width:500px;
+      margin:auto;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    button{
+      padding:12px 20px;
+      margin-right:10px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .in{
+      background:#27ae60;
+      color:white;
+    }
+
+    .out{
+      background:#c0392b;
+      color:white;
+    }
+
+    .log{
+      margin-top:20px;
+      background:#fafafa;
+      padding:10px;
+      border-radius:6px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2>Clock In / Out</h2>
+
+  <p>
+    Welcome,
+    <b id="name"></b>
+  </p>
+
+  <p>
+    Role:
+    <b id="role"></b>
+  </p>
+
+  <button class="in" onclick="clockIn()">
+    Clock In
+  </button>
+
+  <button class="out" onclick="clockOut()">
+    Clock Out
+  </button>
+
+  <div class="log">
+    <h3>Today's Activity</h3>
+
+    <div id="logs">
+      Loading...
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+
+  authDomain:"tyneceploh.firebaseapp.com",
+
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(
+  !user ||
+  ![
+    "janitor",
+    "security",
+    "coordinator",
+    "teacher"
+  ].includes(user.role)
+){
+  location.href = "login.html";
+}
+
+document.getElementById("name").innerText =
+  user.name;
+
+document.getElementById("role").innerText =
+  user.role;
+
+//
+// DATE
+//
+function getToday(){
+
+  const d = new Date();
+
+  return d.toISOString().split("T")[0];
+}
+
+//
+// DETERMINE STATUS
+//
+function getAttendanceStatus(){
+
+  const now = new Date();
+
+  const hour = now.getHours();
+
+  // Example logic
+  if(hour <= 7){
+    return "on-time";
+  }
+
+  return "late";
+}
+
+//
+// CLOCK ACTION
+//
+async function save(type){
+
+  try{
+
+    await addDoc(
+      collection(db,"staffAttendance"),
+      {
+
+        userId:user.userId,
+
+        name:user.name,
+
+        role:user.role,
+
+        type,
+
+        time:Date.now(),
+
+        date:getToday(),
+
+        status:
+          type === "clock-in"
+          ? getAttendanceStatus()
+          : ""
+
+      }
+    );
+
+    alert(type + " successful");
+
+    loadLogs();
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Failed");
+  }
+}
+
+window.clockIn = function(){
+  save("clock-in");
+};
+
+window.clockOut = function(){
+  save("clock-out");
+};
+
+//
+// LOAD TODAY LOGS
+//
+async function loadLogs(){
+
+  const snap =
+    await getDocs(
+      collection(db,"staffAttendance")
+    );
+
+  let logs = [];
+
+  snap.forEach(d=>{
+
+    const a = d.data();
+
+    if(
+      a.userId === user.userId &&
+      a.date === getToday()
+    ){
+
+      logs.push(a);
+    }
+  });
+
+  logs.sort((a,b)=>a.time - b.time);
+
+  document.getElementById("logs").innerHTML =
+    logs.map(l=>`
+
+      <div style="
+        margin-bottom:10px;
+        border-bottom:1px solid #ddd;
+        padding-bottom:5px;
+      ">
+
+        <b>${l.type}</b>
+
+        <br>
+
+        ${new Date(l.time).toLocaleTimeString()}
+
+        ${
+          l.status
+          ? `<br>Status: ${l.status}`
+          : ""
+        }
+
+      </div>
+
+    `).join("")
+    ||
+    "No records today";
+}
+
+loadLogs();
+
+</script>
+
+</body>
+  </html>
