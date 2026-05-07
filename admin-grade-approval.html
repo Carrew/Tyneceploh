@@ -4,7 +4,6 @@
   <title>Grade Approval - TEF</title>
 
   <style>
-
     body{
       font-family:sans-serif;
       padding:20px;
@@ -53,12 +52,13 @@
     }
 
     .status{
-      display:inline-block;
       padding:5px 10px;
       border-radius:20px;
-      font-size:12px;
       color:white;
-      margin-top:8px;
+      display:inline-block;
+      margin-bottom:10px;
+      font-size:12px;
+      font-weight:bold;
     }
 
     .pending{
@@ -69,6 +69,14 @@
       background:#2980b9;
     }
 
+    .history-box{
+      margin-top:10px;
+      background:#fafafa;
+      padding:10px;
+      border-radius:5px;
+      border:1px solid #ddd;
+    }
+
   </style>
 </head>
 
@@ -77,16 +85,14 @@
 <h2>Grade Approval Queue</h2>
 
 <p>
-Review teacher-submitted grades before publishing
-to student results.
+Review teacher submitted grades and publish approved scores to official student results.
 </p>
 
 <div id="list">Loading submissions...</div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
@@ -94,27 +100,21 @@ import {
   getDocs,
   doc,
   updateDoc,
-  addDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  addDoc,
+  arrayUnion
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
-
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user =
-  JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
-//
-// 🔐 ADMIN SAFETY
-//
 if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
@@ -122,14 +122,13 @@ if(!user || user.role !== "admin"){
 let submissions = [];
 
 //
-// 📥 LOAD SUBMISSIONS
+// LOAD SUBMISSIONS
 //
 async function loadSubmissions(){
 
   try{
 
-    const snap =
-      await getDocs(collection(db,"gradeSubmissions"));
+    const snap = await getDocs(collection(db,"gradeSubmissions"));
 
     submissions = [];
 
@@ -137,7 +136,6 @@ async function loadSubmissions(){
 
       const data = d.data();
 
-      // ✅ LOAD BOTH
       if(
         data.status === "pending" ||
         data.status === "resubmitted"
@@ -162,131 +160,115 @@ async function loadSubmissions(){
 }
 
 //
-// 🖥 RENDER
+// RENDER PAGE
 //
 function render(){
 
-  const container =
-    document.getElementById("list");
+  const container = document.getElementById("list");
 
   if(submissions.length === 0){
 
     container.innerHTML =
-      "<p>No grades awaiting review.</p>";
+      "<p>No pending grades.</p>";
 
     return;
   }
 
-  container.innerHTML =
-    submissions.map(s=>`
+  container.innerHTML = submissions.map(s=>`
 
-      <div class="approval-card">
+    <div class="approval-card">
 
-        <div class="meta-info">
-
-          Submitted By:
-          <b>${s.teacherName || "Unknown"}</b>
-
-          <br>
-
-          Teacher ID:
-          ${s.teacherId || "-"}
-
-        </div>
-
-        <div class="status ${s.status}">
-          ${s.status.toUpperCase()}
-        </div>
-
-        <br><br>
-
-        <b>
-          ${s.studentName || "Unknown Student"}
-        </b>
-
-        (${s.studentId || "-"})
-
-        <br><br>
-
-        Class:
-        ${s.class || "-"}
-
-        <br>
-
-        Subject:
-        ${s.subject || "-"}
-
-        <br>
-
-        Period:
-        ${s.period || "-"}
-
-        <br><br>
-
-        <span style="
-          font-size:20px;
-          color:#2980b9;
-        ">
-          Score:
-          <b>${s.score || 0}</b>
-        </span>
-
-        ${
-          s.feedback
-          ?
-          `
-            <br><br>
-
-            <b style="color:red;">
-              Previous Feedback:
-            </b>
-
-            <p>${s.feedback}</p>
-          `
-          :
-          ""
-        }
-
-        <br>
-
-        <button
-          class="btn-approve"
-          onclick="approve('${s.docId}')"
-        >
-          ✅ Approve & Publish
-        </button>
-
-        <button
-          class="btn-reject"
-          onclick="reject('${s.docId}')"
-        >
-          ❌ Reject
-        </button>
-
-        <input
-          id="fb-${s.docId}"
-          placeholder="Reason for rejection"
-        >
-
+      <div class="
+        status
+        ${s.status === "resubmitted"
+          ? "resubmitted"
+          : "pending"}
+      ">
+        ${s.status.toUpperCase()}
       </div>
 
-    `).join("");
+      <div class="meta-info">
+        Submitted by:
+        ${s.teacherName}
+
+        (${s.teacherId})
+      </div>
+
+      <b>
+        ${s.studentName}
+        (${s.studentId})
+      </b>
+
+      <br><br>
+
+      Class: ${s.class}
+      <br>
+
+      Subject: ${s.subject}
+      <br>
+
+      Period: ${s.period}
+      <br><br>
+
+      <span style="
+        font-size:1.2em;
+        color:#2980b9;
+      ">
+        Score:
+        <b>${s.score}</b>
+      </span>
+
+      <br><br>
+
+      <button
+        class="btn-approve"
+        onclick="approve('${s.docId}')"
+      >
+        ✅ Approve & Publish
+      </button>
+
+      <button
+        class="btn-reject"
+        onclick="reject('${s.docId}')"
+      >
+        ❌ Reject
+      </button>
+
+      <input
+        id="fb-${s.docId}"
+        placeholder="Reason for rejection"
+      >
+
+      ${
+        s.feedback
+        ? `
+          <div class="history-box">
+            <b>Last Feedback:</b>
+            <br>
+            ${s.feedback}
+          </div>
+        `
+        : ""
+      }
+
+    </div>
+
+  `).join("");
 }
 
 //
-// ✅ APPROVE
+// APPROVE GRADE
 //
 window.approve = async function(id){
 
-  const sub =
-    submissions.find(s=>s.docId === id);
+  const sub = submissions.find(s=>s.docId === id);
 
   if(!sub) return;
 
   try{
 
     //
-    // 📄 PUBLISH RESULT
+    // ADD TO RESULTS
     //
     await addDoc(collection(db,"results"),{
 
@@ -301,14 +283,17 @@ window.approve = async function(id){
 
       score:sub.score,
 
-      approvedBy:user.userId || user.id,
+      teacherId:sub.teacherId,
+      teacherName:sub.teacherName,
+
+      approvedBy:user.userId,
+      approvedByName:user.name,
 
       approvedAt:Date.now()
-
     });
 
     //
-    // 📝 UPDATE WORKFLOW DOC
+    // UPDATE SUBMISSION
     //
     await updateDoc(
       doc(db,"gradeSubmissions",id),
@@ -320,17 +305,22 @@ window.approve = async function(id){
 
         reviewedAt:Date.now(),
 
-        reviewHistory:[
-          {
-            action:"approved",
-            by:user.name,
-            time:Date.now()
-          }
-        ]
+        feedback:"",
+
+        reviewHistory: arrayUnion({
+
+          action:"approved",
+
+          by:user.name,
+
+          byId:user.userId,
+
+          time:Date.now()
+        })
       }
     );
 
-    alert("Grade approved & published");
+    alert("Grade approved and published.");
 
     loadSubmissions();
 
@@ -338,12 +328,12 @@ window.approve = async function(id){
 
     console.error(err);
 
-    alert("Approval failed");
+    alert("Approval failed.");
   }
 };
 
 //
-// ❌ REJECT
+// REJECT GRADE
 //
 window.reject = async function(id){
 
@@ -355,7 +345,7 @@ window.reject = async function(id){
 
   if(!feedback){
 
-    alert("Provide rejection reason");
+    alert("Provide rejection feedback.");
 
     return;
   }
@@ -374,18 +364,22 @@ window.reject = async function(id){
 
         reviewedAt:Date.now(),
 
-        reviewHistory:[
-          {
-            action:"rejected",
-            by:user.name,
-            feedback,
-            time:Date.now()
-          }
-        ]
+        reviewHistory: arrayUnion({
+
+          action:"rejected",
+
+          by:user.name,
+
+          byId:user.userId,
+
+          feedback,
+
+          time:Date.now()
+        })
       }
     );
 
-    alert("Grade rejected");
+    alert("Grade rejected.");
 
     loadSubmissions();
 
@@ -393,7 +387,7 @@ window.reject = async function(id){
 
     console.error(err);
 
-    alert("Rejection failed");
+    alert("Rejection failed.");
   }
 };
 
