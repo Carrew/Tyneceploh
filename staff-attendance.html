@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Staff Attendance</title>
+  <title>Attendance Settings</title>
 
   <style>
-
     body{
       font-family:sans-serif;
       padding:20px;
@@ -14,74 +13,29 @@
     .card{
       background:white;
       padding:20px;
+      margin-bottom:20px;
       border-radius:10px;
-      max-width:500px;
-      margin:auto;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    input{
+      padding:10px;
+      width:100%;
+      margin-top:10px;
     }
 
     button{
-      padding:12px 20px;
-      margin-right:10px;
-      border:none;
-      border-radius:6px;
+      margin-top:10px;
+      padding:10px 20px;
       cursor:pointer;
-      font-weight:bold;
     }
-
-    .in{
-      background:#27ae60;
-      color:white;
-    }
-
-    .out{
-      background:#c0392b;
-      color:white;
-    }
-
-    .log{
-      margin-top:20px;
-      background:#fafafa;
-      padding:10px;
-      border-radius:6px;
-    }
-
   </style>
 </head>
 
 <body>
 
-<div class="card">
+<h2>Attendance Time Settings</h2>
 
-  <h2>Clock In / Out</h2>
-
-  <p>
-    Welcome,
-    <b id="name"></b>
-  </p>
-
-  <p>
-    Role:
-    <b id="role"></b>
-  </p>
-
-  <button class="in" onclick="clockIn()">
-    Clock In
-  </button>
-
-  <button class="out" onclick="clockOut()">
-    Clock Out
-  </button>
-
-  <div class="log">
-    <h3>Today's Activity</h3>
-
-    <div id="logs">
-      Loading...
-    </div>
-  </div>
-
-</div>
+<div id="settings"></div>
 
 <script type="module">
 
@@ -90,18 +44,15 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
-  collection,
-  addDoc,
-  getDocs
+  doc,
+  setDoc,
+  getDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-
   authDomain:"tyneceploh.firebaseapp.com",
-
   projectId:"tyneceploh"
 });
 
@@ -110,85 +61,101 @@ const db = getFirestore(app);
 const user =
   JSON.parse(localStorage.getItem("user"));
 
-if(
-  !user ||
-  ![
-    "janitor",
-    "security",
-    "coordinator",
-    "teacher"
-  ].includes(user.role)
-){
+if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
-document.getElementById("name").innerText =
-  user.name;
+const roles = [
+  "teacher",
+  "janitor",
+  "security",
+  "coordinator"
+];
 
-document.getElementById("role").innerText =
-  user.role;
+async function load(){
 
-//
-// DATE
-//
-function getToday(){
+  const container =
+    document.getElementById("settings");
 
-  const d = new Date();
+  container.innerHTML = "";
 
-  return d.toISOString().split("T")[0];
-}
+  for(const role of roles){
 
-//
-// DETERMINE STATUS
-//
-function getAttendanceStatus(){
+    const ref =
+      doc(db,"attendanceSettings",role);
 
-  const now = new Date();
+    const snap =
+      await getDoc(ref);
 
-  const hour = now.getHours();
+    const data =
+      snap.exists()
+      ? snap.data()
+      : {};
 
-  // Example logic
-  if(hour <= 7){
-    return "on-time";
+    container.innerHTML += `
+
+      <div class="card">
+
+        <h3>${role.toUpperCase()}</h3>
+
+        Clock In Time
+
+        <input
+          type="time"
+          id="in-${role}"
+          value="${data.clockInTime || ""}"
+        >
+
+        Clock Out Time
+
+        <input
+          type="time"
+          id="out-${role}"
+          value="${data.clockOutTime || ""}"
+        >
+
+        <button onclick="saveRole('${role}')">
+          Save
+        </button>
+
+      </div>
+    `;
   }
-
-  return "late";
 }
 
-//
-// CLOCK ACTION
-//
-async function save(type){
+window.saveRole = async function(role){
+
+  const clockInTime =
+    document
+      .getElementById(`in-${role}`)
+      .value;
+
+  const clockOutTime =
+    document
+      .getElementById(`out-${role}`)
+      .value;
+
+  if(!clockInTime || !clockOutTime){
+
+    alert("Fill all fields");
+
+    return;
+  }
 
   try{
 
-    await addDoc(
-      collection(db,"staffAttendance"),
+    await setDoc(
+      doc(db,"attendanceSettings",role),
       {
-
-        userId:user.userId,
-
-        name:user.name,
-
-        role:user.role,
-
-        type,
-
-        time:Date.now(),
-
-        date:getToday(),
-
-        status:
-          type === "clock-in"
-          ? getAttendanceStatus()
-          : ""
-
+        role,
+        clockInTime,
+        clockOutTime,
+        updatedAt:Date.now(),
+        updatedBy:user.name
       }
     );
 
-    alert(type + " successful");
-
-    loadLogs();
+    alert("Saved");
 
   }catch(err){
 
@@ -196,74 +163,11 @@ async function save(type){
 
     alert("Failed");
   }
-}
-
-window.clockIn = function(){
-  save("clock-in");
 };
 
-window.clockOut = function(){
-  save("clock-out");
-};
-
-//
-// LOAD TODAY LOGS
-//
-async function loadLogs(){
-
-  const snap =
-    await getDocs(
-      collection(db,"staffAttendance")
-    );
-
-  let logs = [];
-
-  snap.forEach(d=>{
-
-    const a = d.data();
-
-    if(
-      a.userId === user.userId &&
-      a.date === getToday()
-    ){
-
-      logs.push(a);
-    }
-  });
-
-  logs.sort((a,b)=>a.time - b.time);
-
-  document.getElementById("logs").innerHTML =
-    logs.map(l=>`
-
-      <div style="
-        margin-bottom:10px;
-        border-bottom:1px solid #ddd;
-        padding-bottom:5px;
-      ">
-
-        <b>${l.type}</b>
-
-        <br>
-
-        ${new Date(l.time).toLocaleTimeString()}
-
-        ${
-          l.status
-          ? `<br>Status: ${l.status}`
-          : ""
-        }
-
-      </div>
-
-    `).join("")
-    ||
-    "No records today";
-}
-
-loadLogs();
+load();
 
 </script>
 
 </body>
-  </html>
+</html>
