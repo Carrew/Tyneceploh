@@ -1,167 +1,166 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>My Quizzes - TEF</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+    .quiz-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .question-block { margin-bottom: 15px; padding: 10px; border-left: 3px solid #007bff; }
+    label { display: block; margin: 5px 0; cursor: pointer; padding: 5px; border-radius: 4px; }
+    label:hover { background: #f8f9fa; }
+    button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #218838; }
+    .result-banner { font-size: 1.2em; padding: 10px; background: #d4edda; color: #155724; border-radius: 5px; display: inline-block; }
+  </style>
+</head>
 <body>
 
 <h2>My Quizzes</h2>
-<div id="list"></div>
+<div id="list">Loading quizzes...</div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
 
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if(!user || user.role !== "student") location.href="login.html";
+if(!user || user.role !== "student") location.href = "login.html";
 
 let submittedMap = {};
-let quizMap = {};
+let submissionDataMap = {};
+let localQuizzes = [];
 
-//
-// 📥 LOAD DATA
-//
-async function load(){
-
-  console.log("📌 Student:", user);
-
-  const qSnap = await getDocs(collection(db,"quizzes"));
-  const sSnap = await getDocs(collection(db,"quizSubmissions"));
+async function load() {
+  const qSnap = await getDocs(collection(db, "quizzes"));
+  const sSnap = await getDocs(collection(db, "quizSubmissions"));
 
   submittedMap = {};
-  quizMap = {};
+  submissionDataMap = {};
+  localQuizzes = [];
 
-  // submissions
-  sSnap.forEach(d=>{
+  // Map submissions to this specific student
+  sSnap.forEach(d => {
     const s = d.data();
-    if(s.studentId === user.userId){
+    if(s.studentId === user.userId) {
       submittedMap[s.quizId] = true;
-      quizMap[s.quizId] = s;
+      submissionDataMap[s.quizId] = s;
     }
   });
 
   let html = "";
+  let count = 0;
 
-  qSnap.forEach(d=>{
+  qSnap.forEach(d => {
     const q = d.data();
-
     if(q.class !== user.class) return;
 
+    count++;
+    const qId = d.id;
+    localQuizzes.push({ id: qId, ...q }); // Cache for submission logic
+    
     const qs = Array.isArray(q.questions) ? q.questions : [];
-
-    const submission = quizMap[d.id];
-    const done = !!submission;
+    const sub = submissionDataMap[qId];
+    const done = !!sub;
 
     html += `
-      <div style="border:1px solid #ccc;margin:10px;padding:10px;">
+      <div class="quiz-card">
         <h3>${q.title}</h3>
-        <small>Total Score: ${q.totalScore || 0}</small>
+        <p style="color: #666;">Points Available: ${q.totalScore || 0}</p>
         <hr>
     `;
 
-    qs.forEach((x,i)=>{
+    qs.forEach((x, i) => {
+      const studentAnswer = done ? sub.answers[i] : null;
 
       html += `
-        <div style="margin-bottom:10px;">
-          <b>${x.q}</b><br>
-
-          ${x.options.map((o,idx)=>`
-            <label>
-              <input type="radio" name="${d.id}_${i}" value="${["A","B","C","D"][idx]}"
-              ${done ? "disabled" : ""}>
-              ${o}
-            </label><br>
-          `).join("")}
+        <div class="question-block">
+          <p><b>Q${i+1}: ${x.q}</b></p>
+          ${x.options.map((o, idx) => {
+            const val = ["A", "B", "C", "D"][idx];
+            // Check if this option was the one selected by the student
+            const isChecked = studentAnswer === val ? "checked" : "";
+            
+            return `
+              <label>
+                <input type="radio" name="${qId}_${i}" value="${val}" 
+                ${done ? "disabled" : ""} ${isChecked}>
+                ${val}. ${o}
+              </label>
+            `;
+          }).join("")}
         </div>
       `;
     });
 
-    html += done
-      ? `<b style="color:green">Score: ${submission.score}/${submission.total}</b>`
-      : `<button onclick="submitQuiz('${d.id}',${qs.length})">Submit Quiz</button>`;
+    if (done) {
+      html += `<div class="result-banner">Completed: Score ${sub.score} / ${sub.total}</div>`;
+    } else {
+      html += `<button onclick="submitQuiz('${qId}', ${qs.length})">Submit Answers</button>`;
+    }
 
     html += `</div>`;
   });
 
-  document.getElementById("list").innerHTML = html || "No quizzes available";
+  document.getElementById("list").innerHTML = count === 0 ? "No quizzes assigned to your class." : html;
 }
 
-//
-// 🚀 SUBMIT + AUTO MARK
-//
-window.submitQuiz = async function(id,len){
-
-  if(submittedMap[id]){
-    alert("Already submitted");
-    return;
-  }
+window.submitQuiz = async function(id, len) {
+  if (submittedMap[id]) return;
 
   const answers = [];
-
-  for(let i=0;i<len;i++){
-
+  for (let i = 0; i < len; i++) {
     const opts = document.getElementsByName(`${id}_${i}`);
-
     let selected = "";
+    opts.forEach(o => { if (o.checked) selected = o.value; });
 
-    opts.forEach(o=>{
-      if(o.checked) selected = o.value;
-    });
-
-    if(!selected){
-      alert("Answer all questions");
+    if (!selected) {
+      alert("Please answer all questions before submitting.");
       return;
     }
-
     answers.push(selected);
   }
 
-  // get quiz
-  const snap = await getDocs(collection(db,"quizzes"));
+  // Find the quiz from our local cache instead of another database call
+  const quiz = localQuizzes.find(q => q.id === id);
+  if (!quiz) return;
 
-  let quiz = null;
+  let studentScore = 0;
+  let totalPossible = 0;
 
-  snap.forEach(d=>{
-    if(d.id === id) quiz = d.data();
-  });
-
-  let score = 0;
-  let total = 0;
-
-  quiz.questions.forEach((q,i)=>{
-
-    total += q.score;
-
-    if(q.answer === answers[i]){
-      score += q.score;
+  quiz.questions.forEach((q, i) => {
+    totalPossible += (q.score || 0);
+    if (q.answer === answers[i]) {
+      studentScore += (q.score || 0);
     }
   });
 
-  await addDoc(collection(db,"quizSubmissions"),{
-    quizId:id,
-    studentId:user.userId,
-    studentName:user.name,
-    answers,
-    score,
-    total,
-    createdAt:Date.now()
-  });
+  try {
+    await addDoc(collection(db, "quizSubmissions"), {
+      quizId: id,
+      studentId: user.userId,
+      studentName: user.name,
+      answers: answers,
+      score: studentScore,
+      total: totalPossible,
+      createdAt: Date.now()
+    });
 
-  submittedMap[id] = true;
-
-  alert(`Score: ${score}/${total}`);
-
-  load();
+    alert(`Quiz Submitted! Your Score: ${studentScore} / ${totalPossible}`);
+    load();
+  } catch (error) {
+    console.error("Quiz Error:", error);
+    alert("Error saving quiz results.");
+  }
 };
 
 load();
-
 </script>
 
 </body>
