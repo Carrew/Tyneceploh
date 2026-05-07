@@ -1,66 +1,55 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Setup - TEF</title>
+</head>
 <body>
 
-<h2>Create Master Admin</h2>
+<h2>Initialize Master Admin</h2>
+<p>This page only works when no administrators exist in the system.</p>
 
 <input id="name" placeholder="Full Name">
 <input id="pin" placeholder="PIN (optional)">
-
-<button onclick="create()">Create Admin</button>
+<button onclick="create()">Initialize System</button>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
-
 const db = getFirestore(app);
 
-function genID(num){
-  return "ADM" + String(num).padStart(3,"0");
-}
-
-function genPIN(){
-  return Math.floor(1000 + Math.random()*9000).toString();
-}
-
 window.create = async function(){
+  const name = document.getElementById("name").value.trim();
+  if(!name) return alert("Name is required");
 
-  const snap = await getDocs(collection(db,"users"));
+  // Check if ANY admin already exists
+  const q = query(collection(db, "users"), where("role", "==", "admin"));
+  const snap = await getDocs(q);
 
-  let adminCount = 0;
-
-  snap.forEach(d=>{
-    if(d.data().role === "admin") adminCount++;
-  });
-
-  if(adminCount > 0){
-    alert("Admin already exists. Use add-admin page.");
+  if(!snap.empty){
+    alert("Security Block: An administrator already exists. Please login and use the 'Add Admin' page instead.");
     return;
   }
 
-  const id = genID(1);
-  const pin = document.getElementById("pin").value || genPIN();
+  const id = "ADM001";
+  const pin = document.getElementById("pin").value || Math.floor(1000 + Math.random()*9000).toString();
 
-  await addDoc(collection(db,"users"),{
-    userId:id,
-    name:document.getElementById("name").value,
-    pin,
-    role:"admin",
-    status:"active",
-    createdAt:Date.now()
+  await addDoc(collection(db, "users"), {
+    userId: id,
+    name: name,
+    pin: pin,
+    role: "admin",
+    status: "active",
+    createdAt: Date.now()
   });
 
-  alert("Master Admin Created\nID: "+id+"\nPIN: "+pin);
+  alert(`System Initialized!\nID: ${id}\nPIN: ${pin}\n\nSAVE THESE CREDENTIALS!`);
 };
-
 </script>
-
 </body>
 </html>
