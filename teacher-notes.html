@@ -2,22 +2,28 @@
 <html>
 <head>
   <title>Teacher Notes - TEF</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, select, textarea { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+    button:hover { background: #0056b3; }
+    #msg { color: green; font-weight: bold; }
+  </style>
 </head>
 
 <body>
 
 <h2>Create Lesson Note</h2>
 
+<label>Target Class:</label>
 <select id="class"></select>
 
-<input id="subject" placeholder="Subject">
-<input id="topic" placeholder="Topic">
+<input id="subject" placeholder="Subject (e.g., Microbiology)">
+<input id="topic" placeholder="Topic (e.g., Bacterial Cell Structure)">
 
-<textarea id="content" placeholder="Write full lesson..." rows="8"></textarea>
+<textarea id="content" placeholder="Type your lesson notes here..." rows="12"></textarea>
 
-<br><br>
-
-<button onclick="submitLesson()">Send Lesson</button>
+<button onclick="submitLesson()">Publish Lesson</button>
 
 <p id="msg"></p>
 
@@ -37,51 +43,55 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
+// Ensure the user is logged in as a teacher
 if (!user || user.role !== "teacher") {
   window.location.href = "login.html";
 }
 
-//
-// 🎯 LOAD TEACHER CLASSES
-//
+// 🎯 Load the specific classes this teacher is assigned to
 const classSelect = document.getElementById("class");
-
 classSelect.innerHTML = (user.classes || []).map(c =>
   `<option value="${c}">${c}</option>`
 ).join("");
 
-//
-// 🚀 SUBMIT LESSON
-//
+// 🚀 SUBMIT LESSON TO FIRESTORE
 window.submitLesson = async function () {
 
   const className = document.getElementById("class").value;
-  const subject = document.getElementById("subject").value;
-  const topic = document.getElementById("topic").value;
-  const content = document.getElementById("content").value;
+  const subject = document.getElementById("subject").value.trim();
+  const topic = document.getElementById("topic").value.trim();
+  const content = document.getElementById("content").value.trim();
 
   if (!className || !subject || !topic || !content) {
-    alert("Fill all fields");
+    alert("Please fill in all fields before sending.");
     return;
   }
 
-  await addDoc(collection(db, "lessons"), {
-    teacherId: user.id,
-    teacherName: user.name,
-    class: className,
+  try {
+    await addDoc(collection(db, "lessons"), {
+      teacherId: user.id,   // Matches the userId from our login fix
+      teacherName: user.name,
+      class: className,
+      subject: subject,
+      topic: topic,
+      content: content,
+      createdAt: Date.now()
+    });
 
-    subject,
-    topic,
-    content,
+    document.getElementById("msg").innerText = "✅ Lesson published successfully!";
+    
+    // Clear the form
+    document.getElementById("subject").value = "";
+    document.getElementById("topic").value = "";
+    document.getElementById("content").value = "";
+    
+    // Reset message after 3 seconds
+    setTimeout(() => { document.getElementById("msg").innerText = ""; }, 3000);
 
-    createdAt: Date.now()
-  });
-
-  document.getElementById("msg").innerText = "Lesson sent";
-
-  document.getElementById("subject").value = "";
-  document.getElementById("topic").value = "";
-  document.getElementById("content").value = "";
+  } catch (error) {
+    console.error("Error saving lesson:", error);
+    alert("Failed to send lesson. Check your connection.");
+  }
 };
 
 </script>
