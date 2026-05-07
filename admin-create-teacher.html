@@ -8,13 +8,12 @@
 
 <h2>Teacher Management (CRUD)</h2>
 
-<!-- CREATE / EDIT FORM -->
 <input id="name" placeholder="Teacher Name">
 <input id="classes" placeholder="Classes (e.g. JSS1, JSS2)">
 
 <select id="status">
-  <option value="Active">Active</option>
-  <option value="Inactive">Inactive</option>
+  <option value="active">Active</option>
+  <option value="inactive">Inactive</option>
 </select>
 
 <input type="hidden" id="editId">
@@ -23,12 +22,10 @@
 
 <hr>
 
-<!-- SEARCH -->
 <input id="search" placeholder="Search teacher..." oninput="renderTeachers()">
 
 <hr>
 
-<!-- LIST -->
 <div id="list"></div>
 
 <script type="module">
@@ -45,39 +42,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-//
-// 🔐 SHA
-//
-async function sha256(text) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-//
 // 🆔 ID GENERATOR
-//
 function generateTeacherId(count) {
   return `TCH${String(count + 1).padStart(3, "0")}`;
 }
 
-//
-// 🔑 PIN
-//
+// 🔑 PIN GENERATOR
 function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 let teachersCache = [];
 
-//
 // 📥 LOAD TEACHERS
-//
 async function loadTeachers() {
   const snap = await getDocs(collection(db, "users"));
-
   teachersCache = [];
 
   snap.forEach(d => {
@@ -85,7 +64,7 @@ async function loadTeachers() {
     if (data.role === "teacher") {
       teachersCache.push({
         ...data,
-        userId: data.userId || data.id, // fallback for old data
+        userId: data.userId,
         docId: d.id
       });
     }
@@ -94,11 +73,8 @@ async function loadTeachers() {
   renderTeachers();
 }
 
-//
 // 🎨 RENDER
-//
 window.renderTeachers = function () {
-
   const search = document.getElementById("search").value.toLowerCase();
   const list = document.getElementById("list");
 
@@ -108,10 +84,10 @@ window.renderTeachers = function () {
   );
 
   list.innerHTML = filtered.map(t => `
-    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-      <b>${t.userId}</b> - ${t.name} <br>
-      Classes: ${(t.classes || []).join(", ")} <br>
-      Status: ${t.status}
+    <div style="border:1px solid #ccc; margin:10px; padding:10px; border-radius: 8px;">
+      <b>ID: ${t.userId}</b> - ${t.name} <br>
+      Classes: <span style="color: green;">${(t.classes || []).join(", ")}</span> <br>
+      Status: <b>${t.status}</b>
 
       <br><br>
 
@@ -119,14 +95,10 @@ window.renderTeachers = function () {
       <button onclick="deleteTeacher('${t.docId}')">Delete</button>
     </div>
   `).join("");
-
 };
 
-//
-// 💾 CREATE / UPDATE
-//
+// 💾 SAVE (CREATE / UPDATE)
 window.saveTeacher = async function () {
-
   const name = document.getElementById("name").value;
   const classesInput = document.getElementById("classes").value;
   const status = document.getElementById("status").value;
@@ -137,53 +109,44 @@ window.saveTeacher = async function () {
     return;
   }
 
-  const classesArray = classesInput.split(",").map(c => c.trim());
+  // Convert comma-string to clean Array
+  const classesArray = classesInput.split(",").map(c => c.trim()).filter(c => c !== "");
 
-  // CREATE
   if (!editId) {
-
+    // CREATE
     const snap = await getDocs(collection(db, "users"));
     const count = snap.docs.filter(d => d.data().role === "teacher").length;
 
     const userId = generateTeacherId(count);
     const pin = generatePin();
-    const pinHash = await sha256(pin);
 
     await addDoc(collection(db, "users"), {
-      userId,
-      name,
+      userId: userId,
+      pin: pin,           // MATCHES LOGIN: Plaintext
+      name: name,
       classes: classesArray,
-      status,
+      status: status,     // lowercase "active" or "inactive"
       role: "teacher",
-      pinHash,
       createdAt: Date.now()
     });
 
-    alert(`Teacher created\nID: ${userId}\nPIN: ${pin}`);
-  }
-
-  // UPDATE
-  else {
+    alert(`Teacher created!\nID: ${userId}\nPIN: ${pin}`);
+  } else {
+    // UPDATE
     const ref = doc(db, "users", editId);
-
     await updateDoc(ref, {
-      name,
+      name: name,
       classes: classesArray,
-      status
+      status: status
     });
-
     document.getElementById("editId").value = "";
   }
 
   document.getElementById("name").value = "";
   document.getElementById("classes").value = "";
-
   loadTeachers();
 };
 
-//
-// ✏️ EDIT
-//
 window.editTeacher = function (id, name, classes, status) {
   document.getElementById("editId").value = id;
   document.getElementById("name").value = name;
@@ -191,20 +154,15 @@ window.editTeacher = function (id, name, classes, status) {
   document.getElementById("status").value = status;
 };
 
-//
-// ❌ DELETE
-//
 window.deleteTeacher = async function (id) {
-  await deleteDoc(doc(db, "users", id));
-  loadTeachers();
+  if(confirm("Delete this teacher record?")) {
+    await deleteDoc(doc(db, "users", id));
+    loadTeachers();
+  }
 };
 
-//
-// INIT
-//
 loadTeachers();
 
 </script>
-
 </body>
 </html>
