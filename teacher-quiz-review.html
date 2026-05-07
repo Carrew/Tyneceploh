@@ -1,126 +1,140 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Quiz Review - TEF</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { background-color: #f2f2f2; }
+    .student-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 15px 0; background: #fff; }
+    .score-high { color: green; font-weight: bold; }
+    .score-low { color: red; font-weight: bold; }
+  </style>
+</head>
 <body>
 
 <h2>Quiz Review Dashboard</h2>
 
+<label>Select Quiz:</label>
 <select id="quizSelect"></select>
+
+<hr>
 
 <div id="summary"></div>
 <div id="list"></div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
 
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if(!user || user.role !== "teacher") location.href="login.html";
+if(!user || user.role !== "teacher") location.href = "login.html";
 
 let quizzes = [];
 let submissions = [];
 
-//
-// 📥 LOAD DATA
-//
-async function load(){
-
-  const qSnap = await getDocs(collection(db,"quizzes"));
-  const sSnap = await getDocs(collection(db,"quizSubmissions"));
+async function load() {
+  const qSnap = await getDocs(collection(db, "quizzes"));
+  const sSnap = await getDocs(collection(db, "quizSubmissions"));
 
   quizzes = [];
   submissions = [];
 
-  qSnap.forEach(d=>{
+  qSnap.forEach(d => {
     const q = d.data();
-    if(q.teacherId === user.id){
-      quizzes.push({id:d.id, ...q});
+    // Use user.id (which contains the userId) to filter
+    if(q.teacherId === user.id) {
+      quizzes.push({ id: d.id, ...q });
     }
   });
 
-  sSnap.forEach(d=>{
-    submissions.push({id:d.id, ...d.data()});
+  sSnap.forEach(d => {
+    submissions.push({ id: d.id, ...d.data() });
   });
 
-  document.getElementById("quizSelect").innerHTML =
-    quizzes.map(q=>`<option value="${q.id}">${q.title}</option>`).join("");
+  const select = document.getElementById("quizSelect");
+  select.innerHTML = quizzes.map(q => `<option value="${q.id}">${q.title}</option>`).join("");
 
-  render();
+  // Initial render after data is fetched
+  if (quizzes.length > 0) render();
+  else document.getElementById("list").innerHTML = "No quizzes found for your account.";
 }
 
-//
-// 📊 RENDER DASHBOARD
-//
-function render(){
+function render() {
+  const quizId = document.getElementById("quizSelect").value;
+  const quiz = quizzes.find(q => q.id === quizId);
+  const results = submissions.filter(s => s.quizId === quizId);
 
-  const id = document.getElementById("quizSelect").value;
-
-  const quiz = quizzes.find(q=>q.id === id);
-  const results = submissions.filter(s=>s.quizId === id);
-
-  if(!quiz){
-    document.getElementById("list").innerHTML = "No quiz selected";
+  if(!quiz) {
+    document.getElementById("list").innerHTML = "Select a quiz to view results.";
     return;
   }
 
   let totalStudents = results.length;
+  let totalClassPoints = 0;
 
-  let avg = 0;
-
-  results.forEach(r=>{
-    avg += (r.score / r.total) * 100;
+  results.forEach(r => {
+    const total = r.total || 1; // Prevent division by zero
+    totalClassPoints += (r.score / total) * 100;
   });
 
-  avg = totalStudents ? (avg / totalStudents).toFixed(1) : 0;
+  const classAvg = totalStudents ? (totalClassPoints / totalStudents).toFixed(1) : 0;
 
   let html = `
-    <h3>${quiz.title}</h3>
-    <p>Total Students: ${totalStudents}</p>
-    <p>Class Average: ${avg}%</p>
+    <div style="background:#eef; padding:15px; border-radius:5px;">
+        <h3>Analytics: ${quiz.title}</h3>
+        <p><b>Total Submissions:</b> ${totalStudents}</p>
+        <p><b>Class Average:</b> ${classAvg}%</p>
+    </div>
 
-    <table border="1" cellpadding="8">
-      <tr>
-        <th>Student</th>
-        <th>Score</th>
-        <th>Total</th>
-        <th>%</th>
-      </tr>
+    <table border="1" cellpadding="10">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Score</th>
+          <th>Total Available</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
   `;
 
-  results.forEach(r=>{
-
-    const percent = ((r.score / r.total) * 100).toFixed(1);
+  results.forEach(r => {
+    const total = r.total || 1;
+    const percent = ((r.score / total) * 100).toFixed(1);
+    const scoreClass = percent >= 50 ? "score-high" : "score-low";
 
     html += `
       <tr>
         <td>${r.studentName}</td>
         <td>${r.score}</td>
-        <td>${r.total}</td>
-        <td>${percent}%</td>
+        <td>${total}</td>
+        <td class="${scoreClass}">${percent}%</td>
       </tr>
     `;
   });
 
-  html += `</table><br><h3>Detailed View</h3>`;
+  html += `</tbody></table><br><h3>Detailed Student Answers</h3>`;
 
-  results.forEach(r=>{
-
+  results.forEach(r => {
     html += `
-      <div style="border:1px solid #ccc;margin:10px;padding:10px;">
-        <b>${r.studentName}</b><br>
-        Score: ${r.score}/${r.total}<br>
-
-        <ul>
-          ${r.answers.map((a,i)=>`
-            <li>Q${i+1}: ${a}</li>
+      <div class="student-card">
+        <b>${r.studentName} (${r.studentId})</b><br>
+        <span style="font-size: 0.9em; color: #555;">Submitted: ${new Date(r.createdAt).toLocaleString()}</span>
+        <hr>
+        <ul style="list-style-type: none; padding-left: 0;">
+          ${(r.answers || []).map((a, i) => `
+            <li style="margin-bottom:5px;">
+                <b>Q${i+1}:</b> Selected [${a}]
+            </li>
           `).join("")}
         </ul>
       </div>
@@ -130,10 +144,9 @@ function render(){
   document.getElementById("list").innerHTML = html;
 }
 
-document.getElementById("quizSelect").addEventListener("change",render);
+document.getElementById("quizSelect").addEventListener("change", render);
 
 load();
-
 </script>
 
 </body>
