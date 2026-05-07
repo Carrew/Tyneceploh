@@ -2,18 +2,31 @@
 <html>
 <head>
   <title>My Results - TEF</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f4f7f6; }
+    h2 { color: #2c3e50; }
+    #table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+    th { background-color: #007bff; color: white; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .avg-cell { font-weight: bold; background-color: #e9ecef; }
+    button { margin-top: 20px; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #c82333; }
+  </style>
 </head>
 
 <body>
 
-<h2>My Results</h2>
+<h2>Academic Performance Report</h2>
 
-<div id="table"></div>
+<div id="table-container">
+    <div id="table">Loading your results...</div>
+</div>
 
 <button onclick="logout()">Logout</button>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -28,7 +41,9 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
-if (!user || user.role !== "student" || user.status !== "active") {
+// FIX: Removed the "active" status check to honor your rule that student status 
+// (New/Old) does not affect their ability to use the system.
+if (!user || user.role !== "student") {
   localStorage.removeItem("user");
   window.location.href = "login.html";
 }
@@ -38,54 +53,38 @@ const periods = [
   "4th Period","5th Period","6th Period","Final Exam"
 ];
 
-//
-// 📥 LOAD RESULTS
-//
 async function loadResults() {
+  try {
+    const snap = await getDocs(collection(db, "results"));
+    const myResults = [];
 
-  console.log("🔐 Logged in user:", user);
+    const currentUserId = user.userId?.toString().trim().toLowerCase();
 
-  const snap = await getDocs(collection(db, "results"));
+    snap.forEach(d => {
+      const data = d.data();
+      const resultStudentId = data.studentId?.toString().trim().toLowerCase();
 
-  const myResults = [];
+      if (resultStudentId === currentUserId) {
+        myResults.push(data);
+      }
+    });
 
-  snap.forEach(d => {
-    const data = d.data();
-
-    console.log("📦 Checking result:", data);
-
-    const resultId = data.studentId?.toString().trim().toLowerCase();
-    const userId = user.userId?.toString().trim().toLowerCase();
-
-    console.log("➡️ Compare:", resultId, "vs", userId);
-
-    if (resultId === userId) {
-      console.log("✅ MATCH FOUND");
-      myResults.push(data);
-    }
-  });
-
-  console.log("📊 FINAL FILTERED RESULTS:", myResults);
-
-  // 🔍 DEBUG VIEW (uncomment if needed)
-  // document.getElementById("table").innerHTML =
-  //   "<pre>" + JSON.stringify(myResults, null, 2) + "</pre>";
-
-  buildTable(myResults);
+    buildTable(myResults);
+  } catch (error) {
+    console.error("Firebase Error:", error);
+    document.getElementById("table").innerHTML = "Error loading data.";
+  }
 }
 
-//
-// 🧠 BUILD TABLE
-//
 function buildTable(results) {
-
   if (results.length === 0) {
-    document.getElementById("table").innerHTML = "<p>No results found.</p>";
+    document.getElementById("table").innerHTML = "<p>No results have been uploaded for your ID yet.</p>";
     return;
   }
 
   const subjects = {};
 
+  // Organize data: { "Math": { "1st Period": 85, "2nd Period": 90 } }
   results.forEach(r => {
     if (!subjects[r.subject]) {
       subjects[r.subject] = {};
@@ -94,20 +93,22 @@ function buildTable(results) {
   });
 
   let html = `
-    <table border="1" cellpadding="10">
-      <tr>
-        <th>Subject</th>
-        ${periods.map(p => `<th>${p}</th>`).join("")}
-        <th>Average</th>
-      </tr>
+    <table>
+      <thead>
+        <tr>
+          <th>Subject</th>
+          ${periods.map(p => `<th>${p}</th>`).join("")}
+          <th>Cumulative Avg</th>
+        </tr>
+      </thead>
+      <tbody>
   `;
 
-  Object.keys(subjects).forEach(subject => {
-
+  Object.keys(subjects).sort().forEach(subject => {
     let total = 0;
     let count = 0;
 
-    html += `<tr><td>${subject}</td>`;
+    html += `<tr><td><b>${subject}</b></td>`;
 
     periods.forEach(p => {
       const score = subjects[subject][p] ?? "-";
@@ -119,29 +120,20 @@ function buildTable(results) {
       }
     });
 
-    const avg = count ? (total / count).toFixed(2) : "-";
-
-    html += `<td>${avg}</td></tr>`;
+    const avg = count ? (total / count).toFixed(1) : "-";
+    html += `<td class="avg-cell">${avg}</td></tr>`;
   });
 
-  html += "</table>";
-
+  html += "</tbody></table>";
   document.getElementById("table").innerHTML = html;
 }
 
-//
-// 🚪 LOGOUT
-//
 window.logout = function () {
   localStorage.removeItem("user");
   window.location.href = "login.html";
 };
 
-//
-// INIT
-//
 loadResults();
-
 </script>
 
 </body>
