@@ -1,153 +1,148 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Mark Assignments - TEF</title>
+</head>
 <body>
 
-<h2>Mark Assignments</h2>
+<h2>Mark Student Submissions</h2>
 <div id="list"></div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
 
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if (!user || user.role !== "teacher") location.href="login.html";
+if (!user || user.role !== "teacher") location.href = "login.html";
 
-async function load(){
+// Global cache to avoid re-fetching assignments during marking
+let assignmentsCache = {};
 
-  const sSnap = await getDocs(collection(db,"submissions"));
-  const aSnap = await getDocs(collection(db,"assignments"));
+async function load() {
+  const sSnap = await getDocs(collection(db, "submissions"));
+  const aSnap = await getDocs(collection(db, "assignments"));
 
-  const assignments = {};
-  aSnap.forEach(d=>{
-    assignments[d.id] = d.data();
+  // Reset and fill assignment cache
+  assignmentsCache = {};
+  aSnap.forEach(d => {
+    assignmentsCache[d.id] = d.data();
   });
 
   let html = "";
+  let count = 0;
 
-  sSnap.forEach(d=>{
+  sSnap.forEach(d => {
     const s = d.data();
-    const a = assignments[s.assignmentId];
+    const a = assignmentsCache[s.assignmentId];
 
-    if(!a) return;
+    // 🔒 SECURITY FILTER: Only show submissions for THIS teacher's assignments
+    // and only show those that haven't been marked yet
+    if (!a || a.teacherId !== user.id || s.status === "marked") return;
 
+    count++;
     const qs = a.questions || [];
 
     html += `
-      <div style="border:1px solid #ccc;padding:10px;margin:10px;">
-        <h3>${s.studentName}</h3>
+      <div style="border:1px solid #444; padding:15px; margin:15px; border-radius:10px; background:#f9f9f9;">
+        <div style="display:flex; justify-content:between; align-items:center;">
+            <h3>${s.studentName} (${s.studentId})</h3>
+            <span style="margin-left:auto; color:#666;">Assignment: ${a.title}</span>
+        </div>
+        <hr>
 
-        ${qs.map((q,i)=>`
-          <div style="margin-bottom:10px;">
-            <b>${q.q}</b><br>
+        ${qs.map((q, i) => `
+          <div style="margin-bottom:15px; padding:10px; background:white; border-radius:5px;">
+            <p><b>Q${i+1}: ${q.q}</b></p>
+            <p style="color:#2c3e50;">Student Answer: <i style="background:#fff3cd; padding:2px 5px;">${s.answers[i] || "No Answer"}</i></p>
 
-            Student Answer: ${s.answers[i] || "-"}<br>
-
-            <!-- MODE -->
+            <label>Grade:</label>
             <select id="mode_${d.id}_${i}" onchange="togglePartial('${d.id}',${i})">
-              <option value="pass">Pass</option>
-              <option value="fail">Fail</option>
+              <option value="fail">Fail (0)</option>
+              <option value="pass">Pass (${q.score})</option>
               <option value="partial">Partial</option>
             </select>
 
-            <!-- PARTIAL INPUT -->
             <input 
               id="p_${d.id}_${i}" 
               type="number" 
-              placeholder="Score"
-              style="width:80px; display:none;"
+              placeholder="0"
+              style="width:60px; display:none;"
+              max="${q.score}"
             >
-            / ${q.score}
+            <span style="color:#888;"> / ${q.score} Points</span>
           </div>
         `).join("")}
 
-        <button onclick="mark('${d.id}','${s.assignmentId}',${qs.length})">
-          Submit Mark
+        <button 
+            onclick="mark('${d.id}','${s.assignmentId}',${qs.length})"
+            style="background:#27ae60; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;"
+        >
+          Submit Marks
         </button>
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML = html;
+  document.getElementById("list").innerHTML = count === 0 ? "<p>No pending submissions to mark.</p>" : html;
 }
 
-//
-// 🔁 SHOW/HIDE PARTIAL INPUT
-//
-window.togglePartial = function(id,i){
-
+window.togglePartial = function(id, i) {
   const mode = document.getElementById(`mode_${id}_${i}`).value;
   const input = document.getElementById(`p_${id}_${i}`);
-
-  if(mode === "partial"){
-    input.style.display = "inline-block";
-  } else {
-    input.style.display = "none";
-  }
+  input.style.display = (mode === "partial") ? "inline-block" : "none";
 };
 
-//
-// 🚀 MARK SYSTEM
-//
-window.mark = async function(subId,assignId,len){
-
-  const aSnap = await getDocs(collection(db,"assignments"));
-
-  let assign = null;
-  aSnap.forEach(d=>{
-    if(d.id === assignId) assign = d.data();
-  });
+window.mark = async function(subId, assignId, len) {
+  // Use the cache instead of fetching the whole assignment collection again
+  const assign = assignmentsCache[assignId];
+  if (!assign) return;
 
   const qs = assign.questions;
+  let totalCalculated = 0;
 
-  let total = 0;
-
-  for(let i=0;i<len;i++){
-
+  for (let i = 0; i < len; i++) {
     const mode = document.getElementById(`mode_${subId}_${i}`).value;
-    const base = qs[i].score;
+    const maxScore = qs[i].score;
 
-    if(mode === "pass"){
-      total += base;
-    }
-
-    else if(mode === "fail"){
-      total += 0;
-    }
-
-    else if(mode === "partial"){
+    if (mode === "pass") {
+      totalCalculated += maxScore;
+    } else if (mode === "partial") {
       let val = Number(document.getElementById(`p_${subId}_${i}`).value || 0);
 
-      // 🚨 VALIDATION RULE (IMPORTANT)
-      if(val > base){
-        alert("Partial score cannot exceed question score");
+      if (val > maxScore) {
+        alert(`Question ${i+1}: Partial score (${val}) cannot exceed max score (${maxScore})`);
         return;
       }
-
-      total += val;
+      totalCalculated += val;
     }
   }
 
-  await updateDoc(doc(db,"submissions",subId),{
-    score: total,
-    status: "marked",
-    markedAt: Date.now()
-  });
+  try {
+    await updateDoc(doc(db, "submissions", subId), {
+      score: totalCalculated,
+      status: "marked",
+      markedBy: user.name,
+      markedAt: Date.now()
+    });
 
-  alert("Marked successfully");
-  load();
+    alert(`Marks submitted! Total Score: ${totalCalculated} / ${assign.totalScore}`);
+    load(); // Refresh the list
+  } catch (error) {
+    console.error("Error updating marks:", error);
+    alert("Error saving marks.");
+  }
 };
 
+// Initial load
 load();
-
 </script>
 
 </body>
