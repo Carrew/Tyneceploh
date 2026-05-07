@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Attendance</title>
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f4;
+    }
+
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      max-width:600px;
+      margin:auto;
+    }
+
+    input{
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+    }
+
+    button{
+      margin-top:15px;
+      padding:12px 20px;
+      cursor:pointer;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2>Edit Attendance</h2>
+
+  Clock In
+
+  <input type="time" id="clockIn">
+
+  Clock Out
+
+  <input type="time" id="clockOut">
+
+  Violations
+  (comma separated)
+
+  <input
+    id="violations"
+    placeholder="Late Clock In"
+  >
+
+  <button onclick="save()">
+    Save Changes
+  </button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  updateDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "admin"){
+  location.href = "login.html";
+}
+
+const params =
+  new URLSearchParams(location.search);
+
+const id = params.get("id");
+
+const ref =
+  doc(db,"attendanceRecords",id);
+
+async function load(){
+
+  const snap =
+    await getDoc(ref);
+
+  if(!snap.exists()){
+
+    alert("Record not found");
+
+    return;
+  }
+
+  const d = snap.data();
+
+  document.getElementById("clockIn").value =
+    d.clockInReadable || "";
+
+  document.getElementById("clockOut").value =
+    d.clockOutReadable || "";
+
+  document.getElementById("violations").value =
+    d.violations.join(", ");
+}
+
+window.save = async function(){
+
+  const clockIn =
+    document
+      .getElementById("clockIn")
+      .value;
+
+  const clockOut =
+    document
+      .getElementById("clockOut")
+      .value;
+
+  const violations =
+    document
+      .getElementById("violations")
+      .value
+      .split(",")
+      .map(v=>v.trim())
+      .filter(v=>v);
+
+  try{
+
+    await updateDoc(ref,{
+
+      clockInReadable:clockIn,
+
+      clockOutReadable:clockOut,
+
+      violations,
+
+      manuallyEdited:true,
+
+      editedBy:user.name,
+
+      editedAt:Date.now()
+    });
+
+    alert("Attendance updated");
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Failed");
+  }
+};
+
+load();
+
+</script>
+
+</body>
+</html>
