@@ -2,152 +2,398 @@
 <html>
 <head>
   <title>Grade Approval - TEF</title>
+
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-    .approval-card { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #f39c12; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .meta-info { color: #666; font-size: 0.9em; margin-bottom: 10px; }
-    button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
-    .btn-approve { background: #27ae60; color: white; margin-right: 10px; }
-    .btn-reject { background: #c0392b; color: white; }
-    input { width: 100%; margin-top: 10px; padding: 8px; box-sizing: border-box; }
+
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f4;
+    }
+
+    .approval-card{
+      background:white;
+      padding:15px;
+      margin-bottom:15px;
+      border-radius:8px;
+      border-left:5px solid #f39c12;
+      box-shadow:0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .meta-info{
+      color:#666;
+      font-size:0.9em;
+      margin-bottom:10px;
+    }
+
+    button{
+      padding:8px 15px;
+      cursor:pointer;
+      border:none;
+      border-radius:4px;
+      font-weight:bold;
+    }
+
+    .btn-approve{
+      background:#27ae60;
+      color:white;
+      margin-right:10px;
+    }
+
+    .btn-reject{
+      background:#c0392b;
+      color:white;
+    }
+
+    input{
+      width:100%;
+      margin-top:10px;
+      padding:8px;
+      box-sizing:border-box;
+    }
+
+    .status{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:20px;
+      font-size:12px;
+      color:white;
+      margin-top:8px;
+    }
+
+    .pending{
+      background:#f39c12;
+    }
+
+    .resubmitted{
+      background:#2980b9;
+    }
+
   </style>
 </head>
 
 <body>
 
 <h2>Grade Approval Queue</h2>
-<p>Review and publish teacher-submitted grades to student report cards.</p>
+
+<p>
+Review teacher-submitted grades before publishing
+to student results.
+</p>
 
 <div id="list">Loading submissions...</div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  addDoc 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  addDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
+
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
+const user =
+  JSON.parse(localStorage.getItem("user"));
 
-// Safety check: Only admins should see this page
-if (!user || user.role !== "admin") {
-  window.location.href = "login.html";
+//
+// 🔐 ADMIN SAFETY
+//
+if(!user || user.role !== "admin"){
+  location.href = "login.html";
 }
 
 let submissions = [];
 
-async function loadSubmissions() {
-  try {
-    const snap = await getDocs(collection(db, "gradeSubmissions"));
+//
+// 📥 LOAD SUBMISSIONS
+//
+async function loadSubmissions(){
+
+  try{
+
+    const snap =
+      await getDocs(collection(db,"gradeSubmissions"));
+
     submissions = [];
 
-    snap.forEach(d => {
+    snap.forEach(d=>{
+
       const data = d.data();
-      // Only load items that are currently pending
-      if (data.status === "pending") {
-        submissions.push({ ...data, docId: d.id });
+
+      // ✅ LOAD BOTH
+      if(
+        data.status === "pending" ||
+        data.status === "resubmitted"
+      ){
+
+        submissions.push({
+          ...data,
+          docId:d.id
+        });
       }
     });
 
     render();
-  } catch (error) {
-    console.error("Load Error:", error);
-    document.getElementById("list").innerHTML = "Error accessing database.";
+
+  }catch(error){
+
+    console.error("LOAD ERROR:",error);
+
+    document.getElementById("list").innerHTML =
+      "Failed to load submissions.";
   }
 }
 
-function render() {
-  const container = document.getElementById("list");
+//
+// 🖥 RENDER
+//
+function render(){
 
-  if (submissions.length === 0) {
-    container.innerHTML = "<p>No pending grades to review.</p>";
+  const container =
+    document.getElementById("list");
+
+  if(submissions.length === 0){
+
+    container.innerHTML =
+      "<p>No grades awaiting review.</p>";
+
     return;
   }
 
-  container.innerHTML = submissions.map(s => `
-    <div class="approval-card">
-      <div class="meta-info">Submitted by: ${s.teacherName} | Teacher ID: ${s.teacherId}</div>
-      <b>Student: ${s.studentName} (${s.studentId})</b><br>
-      Class: ${s.class} | Subject: ${s.subject} | Period: ${s.period}<br>
-      <span style="font-size: 1.2em; color: #2980b9;">Score: <b>${s.score}</b></span>
+  container.innerHTML =
+    submissions.map(s=>`
 
-      <br><br>
+      <div class="approval-card">
 
-      <button class="btn-approve" onclick="approve('${s.docId}')">✅ Approve & Publish</button>
-      <button class="btn-reject" onclick="reject('${s.docId}')">❌ Reject</button>
+        <div class="meta-info">
 
-      <input id="fb-${s.docId}" placeholder="Reason for rejection (Required if rejecting)">
-    </div>
-  `).join("");
+          Submitted By:
+          <b>${s.teacherName || "Unknown"}</b>
+
+          <br>
+
+          Teacher ID:
+          ${s.teacherId || "-"}
+
+        </div>
+
+        <div class="status ${s.status}">
+          ${s.status.toUpperCase()}
+        </div>
+
+        <br><br>
+
+        <b>
+          ${s.studentName || "Unknown Student"}
+        </b>
+
+        (${s.studentId || "-"})
+
+        <br><br>
+
+        Class:
+        ${s.class || "-"}
+
+        <br>
+
+        Subject:
+        ${s.subject || "-"}
+
+        <br>
+
+        Period:
+        ${s.period || "-"}
+
+        <br><br>
+
+        <span style="
+          font-size:20px;
+          color:#2980b9;
+        ">
+          Score:
+          <b>${s.score || 0}</b>
+        </span>
+
+        ${
+          s.feedback
+          ?
+          `
+            <br><br>
+
+            <b style="color:red;">
+              Previous Feedback:
+            </b>
+
+            <p>${s.feedback}</p>
+          `
+          :
+          ""
+        }
+
+        <br>
+
+        <button
+          class="btn-approve"
+          onclick="approve('${s.docId}')"
+        >
+          ✅ Approve & Publish
+        </button>
+
+        <button
+          class="btn-reject"
+          onclick="reject('${s.docId}')"
+        >
+          ❌ Reject
+        </button>
+
+        <input
+          id="fb-${s.docId}"
+          placeholder="Reason for rejection"
+        >
+
+      </div>
+
+    `).join("");
 }
 
-// ✅ MOVE GRADE TO OFFICIAL RESULTS
-window.approve = async function (id) {
-  const sub = submissions.find(s => s.docId === id);
-  if (!sub) return;
+//
+// ✅ APPROVE
+//
+window.approve = async function(id){
 
-  try {
-    // 1. Add to the 'results' collection (This is what students see)
-    await addDoc(collection(db, "results"), {
-      studentId: sub.studentId,
-      studentName: sub.studentName,
-      class: sub.class,
-      subject: sub.subject,
-      period: sub.period,
-      score: sub.score,
-      approvedBy: user.id, // Standardized admin ID from login
-      approvedAt: Date.now()
+  const sub =
+    submissions.find(s=>s.docId === id);
+
+  if(!sub) return;
+
+  try{
+
+    //
+    // 📄 PUBLISH RESULT
+    //
+    await addDoc(collection(db,"results"),{
+
+      studentId:sub.studentId,
+      studentName:sub.studentName,
+
+      class:sub.class,
+
+      subject:sub.subject,
+
+      period:sub.period,
+
+      score:sub.score,
+
+      approvedBy:user.userId || user.id,
+
+      approvedAt:Date.now()
+
     });
 
-    // 2. Mark the original submission as approved so it disappears from the queue
-    await updateDoc(doc(db, "gradeSubmissions", id), {
-      status: "approved",
-      reviewedBy: user.name,
-      reviewedAt: Date.now()
-    });
+    //
+    // 📝 UPDATE WORKFLOW DOC
+    //
+    await updateDoc(
+      doc(db,"gradeSubmissions",id),
+      {
 
-    alert("Grade approved and published!");
+        status:"approved",
+
+        reviewedBy:user.name,
+
+        reviewedAt:Date.now(),
+
+        reviewHistory:[
+          {
+            action:"approved",
+            by:user.name,
+            time:Date.now()
+          }
+        ]
+      }
+    );
+
+    alert("Grade approved & published");
+
     loadSubmissions();
-  } catch (err) {
-    alert("Approval failed. Check database permissions.");
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Approval failed");
   }
 };
 
-// ❌ REJECT GRADE BACK TO TEACHER
-window.reject = async function (id) {
-  const feedback = document.getElementById(`fb-${id}`).value.trim();
+//
+// ❌ REJECT
+//
+window.reject = async function(id){
 
-  if (!feedback) {
-    alert("Please provide a reason/feedback for the rejection.");
+  const feedback =
+    document
+      .getElementById(`fb-${id}`)
+      .value
+      .trim();
+
+  if(!feedback){
+
+    alert("Provide rejection reason");
+
     return;
   }
 
-  try {
-    await updateDoc(doc(db, "gradeSubmissions", id), {
-      status: "rejected",
-      feedback: feedback,
-      reviewedBy: user.name,
-      reviewedAt: Date.now()
-    });
+  try{
 
-    alert("Grade rejected.");
+    await updateDoc(
+      doc(db,"gradeSubmissions",id),
+      {
+
+        status:"rejected",
+
+        feedback,
+
+        reviewedBy:user.name,
+
+        reviewedAt:Date.now(),
+
+        reviewHistory:[
+          {
+            action:"rejected",
+            by:user.name,
+            feedback,
+            time:Date.now()
+          }
+        ]
+      }
+    );
+
+    alert("Grade rejected");
+
     loadSubmissions();
-  } catch (err) {
-    alert("Rejection failed.");
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Rejection failed");
   }
 };
 
