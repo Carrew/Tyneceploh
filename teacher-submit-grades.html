@@ -3,13 +3,11 @@
 <head>
   <title>Submit Grades - TEF</title>
 </head>
-
 <body>
 
 <h2>Submit Grades</h2>
 
 <select id="student"></select>
-
 <input id="subject" placeholder="Subject">
 
 <select id="period">
@@ -24,13 +22,10 @@
 </select>
 
 <input id="score" type="number" placeholder="Score">
-
 <button onclick="submitGrade()">Submit</button>
-
 <p id="msg"></p>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -45,84 +40,74 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
+// Safety check: redirect if not a teacher
 if (!user || user.role !== "teacher") {
   window.location.href = "login.html";
 }
 
-//
-// 📥 LOAD ONLY TEACHER'S STUDENTS
-//
 async function loadStudents() {
-
   const snap = await getDocs(collection(db, "users"));
-
   const students = [];
 
   snap.forEach(d => {
     const data = d.data();
-
-    if (
-      data.role === "student" &&
-      user.classes?.includes(data.class)
-    ) {
+    // Filter: must be a student and belong to one of the teacher's assigned classes
+    if (data.role === "student" && user.classes?.includes(data.class)) {
       students.push(data);
     }
   });
 
   const select = document.getElementById("student");
-
   select.innerHTML = students.map(s =>
-    `<option value="${s.id}|${s.name}|${s.class}">
+    // Using s.userId to ensure the ID matches your database schema
+    `<option value="${s.userId}|${s.name}|${s.class}">
       ${s.name} (${s.class})
     </option>`
   ).join("");
 }
 
-//
-// 🚀 SUBMIT GRADE
-//
 window.submitGrade = async function () {
-
   const studentVal = document.getElementById("student").value;
   const subject = document.getElementById("subject").value;
   const period = document.getElementById("period").value;
   const score = Number(document.getElementById("score").value);
 
-  const [studentId, studentName, studentClass] = studentVal.split("|");
-
-  if (!subject || !score) {
-    alert("Fill all fields");
+  if (!studentVal) {
+    alert("No student selected");
     return;
   }
 
-  await addDoc(collection(db, "gradeSubmissions"), {
-    teacherId: user.id,
-    teacherName: user.name,
+  const [studentId, studentName, studentClass] = studentVal.split("|");
 
-    studentId,
-    studentName,
-    class: studentClass,
+  if (!subject || isNaN(score)) {
+    alert("Fill all fields correctly");
+    return;
+  }
 
-    subject,
-    period,
-    score,
+  try {
+    await addDoc(collection(db, "gradeSubmissions"), {
+      teacherId: user.id,
+      teacherName: user.name,
+      studentId: studentId,
+      studentName: studentName,
+      class: studentClass,
+      subject: subject,
+      period: period,
+      score: score,
+      status: "pending",
+      feedback: "",
+      createdAt: Date.now()
+    });
 
-    status: "pending",
-    feedback: "",
-
-    createdAt: Date.now()
-  });
-
-  document.getElementById("msg").innerText = "Grade submitted (pending approval)";
-
-  document.getElementById("score").value = "";
+    document.getElementById("msg").innerText = "Grade submitted (pending approval)";
+    document.getElementById("score").value = "";
+  } catch (error) {
+    console.error("Error submitting grade:", error);
+    alert("Submission failed. Check console for details.");
+  }
 };
 
-//
-// INIT
-//
 loadStudents();
-
 </script>
 
 </body>
