@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Staff Attendance</title>
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f4;
+    }
+
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      max-width:600px;
+      margin:auto;
+    }
+
+    button{
+      padding:12px 20px;
+      margin-right:10px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .in{
+      background:#27ae60;
+      color:white;
+    }
+
+    .out{
+      background:#c0392b;
+      color:white;
+    }
+
+    .status{
+      margin-top:20px;
+      background:#fafafa;
+      padding:15px;
+      border-radius:8px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2>Clock In / Out</h2>
+
+  <p>
+    Welcome
+    <b id="name"></b>
+  </p>
+
+  <button class="in" onclick="clockIn()">
+    Clock In
+  </button>
+
+  <button class="out" onclick="clockOut()">
+    Clock Out
+  </button>
+
+  <div class="status" id="statusBox">
+    Loading...
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(
+  !user ||
+  ![
+    "teacher",
+    "janitor",
+    "security",
+    "coordinator"
+  ].includes(user.role)
+){
+  location.href = "login.html";
+}
+
+document.getElementById("name").innerText =
+  user.name;
+
+function today(){
+
+  return new Date()
+    .toISOString()
+    .split("T")[0];
+}
+
+function recordId(){
+
+  return `${today()}_${user.userId}`;
+}
+
+async function getSettings(){
+
+  const snap =
+    await getDoc(
+      doc(
+        db,
+        "attendanceSettings",
+        user.role
+      )
+    );
+
+  return snap.exists()
+    ? snap.data()
+    : null;
+}
+
+function currentTime(){
+
+  const d = new Date();
+
+  return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+
+function detectLate(now, official){
+
+  return now > official;
+}
+
+window.clockIn = async function(){
+
+  const ref =
+    doc(
+      db,
+      "attendanceRecords",
+      recordId()
+    );
+
+  const existing =
+    await getDoc(ref);
+
+  if(existing.exists()){
+
+    const data = existing.data();
+
+    if(data.clockIn){
+
+      alert("Already clocked in today");
+
+      return;
+    }
+  }
+
+  const settings =
+    await getSettings();
+
+  if(!settings){
+
+    alert("No attendance settings");
+
+    return;
+  }
+
+  const now = currentTime();
+
+  const violations = [];
+
+  let status = "on-time";
+
+  if(
+    detectLate(
+      now,
+      settings.clockInTime
+    )
+  ){
+
+    status = "late";
+
+    violations.push(
+      "Late Clock In"
+    );
+  }
+
+  const payload = {
+
+    date:today(),
+
+    userId:user.userId,
+
+    name:user.name,
+
+    role:user.role,
+
+    clockIn:Date.now(),
+
+    clockInReadable:now,
+
+    clockOut:null,
+
+    clockOutReadable:"",
+
+    clockInStatus:status,
+
+    clockOutStatus:"",
+
+    violations,
+
+    manuallyEdited:false
+  };
+
+  try{
+
+    await setDoc(ref,payload,{merge:true});
+
+    alert("Clocked In");
+
+    loadStatus();
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Failed");
+  }
+};
+
+window.clockOut = async function(){
+
+  const ref =
+    doc(
+      db,
+      "attendanceRecords",
+      recordId()
+    );
+
+  const snap =
+    await getDoc(ref);
+
+  if(!snap.exists()){
+
+    alert("Clock in first");
+
+    return;
+  }
+
+  const data = snap.data();
+
+  if(data.clockOut){
+
+    alert("Already clocked out");
+
+    return;
+  }
+
+  const settings =
+    await getSettings();
+
+  const now = currentTime();
+
+  let status = "normal";
+
+  let violations =
+    data.violations || [];
+
+  if(now < settings.clockOutTime){
+
+    status = "early";
+
+    violations.push(
+      "Early Clock Out"
+    );
+  }
+
+  try{
+
+    await updateDoc(ref,{
+
+      clockOut:Date.now(),
+
+      clockOutReadable:now,
+
+      clockOutStatus:status,
+
+      violations
+    });
+
+    alert("Clocked Out");
+
+    loadStatus();
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Failed");
+  }
+};
+
+async function loadStatus(){
+
+  const ref =
+    doc(
+      db,
+      "attendanceRecords",
+      recordId()
+    );
+
+  const snap =
+    await getDoc(ref);
+
+  const box =
+    document.getElementById("statusBox");
+
+  if(!snap.exists()){
+
+    box.innerHTML =
+      "No attendance record today.";
+
+    return;
+  }
+
+  const d = snap.data();
+
+  box.innerHTML = `
+
+    <b>Clock In:</b>
+    ${d.clockInReadable || "-"}
+
+    <br><br>
+
+    <b>Clock Out:</b>
+    ${d.clockOutReadable || "-"}
+
+    <br><br>
+
+    <b>Violations:</b>
+
+    <br>
+
+    ${
+      d.violations.length
+      ? d.violations.join(", ")
+      : "None"
+    }
+  `;
+}
+
+loadStatus();
+
+</script>
+
+</body>
+</html>
