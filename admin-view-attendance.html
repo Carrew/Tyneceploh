@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attendance Admin View</title>
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f4;
+    }
+
+    .top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+    }
+
+    .card{
+      background:white;
+      padding:15px;
+      margin-bottom:15px;
+      border-radius:10px;
+      border-left:5px solid #3498db;
+    }
+
+    .late{
+      border-left-color:#e67e22;
+    }
+
+    .danger{
+      border-left-color:#c0392b;
+    }
+
+    button{
+      padding:8px 14px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .edit{
+      background:#2980b9;
+      color:white;
+    }
+
+    .summary{
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      margin-bottom:20px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="top">
+
+  <h2>Daily Attendance Report</h2>
+
+  <input type="date" id="datePicker">
+
+</div>
+
+<div class="summary" id="summary">
+  Loading summary...
+</div>
+
+<div id="list">
+  Loading attendance...
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "admin"){
+  location.href = "login.html";
+}
+
+const datePicker =
+  document.getElementById("datePicker");
+
+datePicker.value =
+  new Date().toISOString().split("T")[0];
+
+datePicker.addEventListener(
+  "change",
+  load
+);
+
+let records = [];
+
+async function load(){
+
+  const selectedDate =
+    datePicker.value;
+
+  const snap =
+    await getDocs(
+      collection(db,"attendanceRecords")
+    );
+
+  records = [];
+
+  snap.forEach(d=>{
+
+    const data = d.data();
+
+    if(data.date === selectedDate){
+
+      records.push({
+        ...data,
+        docId:d.id
+      });
+    }
+  });
+
+  render();
+}
+
+function render(){
+
+  const list =
+    document.getElementById("list");
+
+  const summary =
+    document.getElementById("summary");
+
+  if(records.length === 0){
+
+    list.innerHTML =
+      "No attendance records.";
+
+    summary.innerHTML =
+      "No records found.";
+
+    return;
+  }
+
+  const lateCount =
+    records.filter(r=>
+      r.violations.includes(
+        "Late Clock In"
+      )
+    ).length;
+
+  const earlyCount =
+    records.filter(r=>
+      r.violations.includes(
+        "Early Clock Out"
+      )
+    ).length;
+
+  summary.innerHTML = `
+
+    <b>Total Staff:</b>
+    ${records.length}
+
+    <br><br>
+
+    <b>Late Clock Ins:</b>
+    ${lateCount}
+
+    <br><br>
+
+    <b>Early Clock Outs:</b>
+    ${earlyCount}
+  `;
+
+  list.innerHTML =
+    records.map(r=>{
+
+      let cls = "card";
+
+      if(r.violations.length){
+        cls += " late";
+      }
+
+      if(
+        r.violations.includes(
+          "Missing Clock Out"
+        )
+      ){
+        cls += " danger";
+      }
+
+      return `
+
+        <div class="${cls}">
+
+          <h3>
+            ${r.name}
+          </h3>
+
+          <b>Role:</b>
+          ${r.role}
+
+          <br><br>
+
+          <b>Clock In:</b>
+          ${r.clockInReadable || "-"}
+
+          <br><br>
+
+          <b>Clock Out:</b>
+          ${r.clockOutReadable || "-"}
+
+          <br><br>
+
+          <b>Violations:</b>
+
+          <br>
+
+          ${
+            r.violations.length
+            ? r.violations.join(", ")
+            : "None"
+          }
+
+          <br><br>
+
+          <button
+            class="edit"
+            onclick="edit('${r.docId}')"
+          >
+            Edit
+          </button>
+
+        </div>
+      `;
+    }).join("");
+}
+
+window.edit = function(id){
+
+  location.href =
+    `attendance-edit.html?id=${id}`;
+};
+
+load();
+
+</script>
+
+</body>
+  </html>
