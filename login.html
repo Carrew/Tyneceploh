@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Login - TEF System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
 <body>
 
 <h2>Login</h2>
@@ -24,29 +28,32 @@ const db = getFirestore(app);
 
 window.login = async function(){
 
-  const id = document.getElementById("id").value.trim().toUpperCase();
-  const pin = document.getElementById("pin").value.trim();
+  const idInput = document.getElementById("id").value.trim().toUpperCase();
+  const pinInput = document.getElementById("pin").value.trim();
 
-  if(!id || !pin){
+  if(!idInput || !pinInput){
     alert("Enter ID and PIN");
     return;
   }
 
-  const snap = await getDocs(collection(db,"users"));
+  // Note: For large databases, use a Firestore query instead of fetching all docs
+  const snap = await getDocs(collection(db, "users"));
 
   let found = null;
 
-  snap.forEach(d=>{
+  snap.forEach(d => {
     const u = d.data();
 
-    if(u.userId === id && u.pin === pin){
+    // Check matching ID and PIN (Plaintext)
+    if(u.userId === idInput && u.pin === pinInput){
       found = {
+        id: u.userId,         // Mapping userId to 'id' for use in other pages
         userId: u.userId,
         name: u.name || "",
         role: (u.role || "").toLowerCase(),
         class: u.class || "",
         classes: u.classes || [],
-        status: u.status || "active"
+        status: u.status || ""
       };
     }
   });
@@ -56,19 +63,21 @@ window.login = async function(){
     return;
   }
 
-  if(found.status !== "active"){
-    alert("Account inactive");
+  // --- 🚀 STATUS LOGIC UPDATE ---
+  // If the user is NOT a student, they MUST be "active" to log in.
+  // If the user IS a student, we ignore the status (New/Old) and let them in.
+  if(found.role !== "student" && found.status !== "active"){
+    alert("Account restricted. Please contact administration.");
     return;
   }
 
-  // save session
+  // Save the user object to localStorage for session management
   localStorage.setItem("user", JSON.stringify(found));
 
-  console.log("✅ Logged in:", found);
+  console.log("✅ Logged in successfully as:", found.role);
 
-  // 🚀 ROLE ROUTING
+  // --- 🚀 ROLE ROUTING ---
   switch(found.role){
-
     case "admin":
       location.href = "admin-dashboard.html";
       break;
@@ -94,7 +103,8 @@ window.login = async function(){
       break;
 
     default:
-      alert("Unknown role");
+      alert("Role not recognized. Redirecting to home.");
+      location.href = "index.html";
   }
 };
 
