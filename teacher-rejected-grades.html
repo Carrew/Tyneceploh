@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rejected Grades</title>
+</head>
+<body>
+
+<h2>Rejected Grades</h2>
+
+<div id="list">Loading...</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "teacher"){
+  location.href = "login.html";
+}
+
+let rejected = [];
+
+async function load(){
+
+  const snap = await getDocs(collection(db,"gradeSubmissions"));
+
+  rejected = [];
+
+  snap.forEach(d=>{
+
+    const g = d.data();
+
+    if(
+      g.teacherId === user.userId &&
+      g.status === "rejected"
+    ){
+
+      rejected.push({
+        ...g,
+        docId:d.id
+      });
+    }
+  });
+
+  render();
+}
+
+function render(){
+
+  const div = document.getElementById("list");
+
+  if(rejected.length === 0){
+    div.innerHTML = "No rejected grades";
+    return;
+  }
+
+  div.innerHTML = rejected.map(g=>`
+
+    <div style="
+      border:1px solid #ccc;
+      padding:15px;
+      margin-bottom:15px;
+      background:white;
+    ">
+
+      <h3>${g.studentName}</h3>
+
+      Subject:
+      <input id="subject-${g.docId}" value="${g.subject}">
+
+      <br><br>
+
+      Score:
+      <input id="score-${g.docId}" value="${g.score}" type="number">
+
+      <br><br>
+
+      <b style="color:red;">
+        Feedback:
+      </b>
+
+      <p>${g.feedback || "No feedback"}</p>
+
+      <button onclick="resubmit('${g.docId}')">
+        Resubmit
+      </button>
+
+    </div>
+
+  `).join("");
+}
+
+window.resubmit = async function(id){
+
+  const subject =
+    document.getElementById(`subject-${id}`).value.trim();
+
+  const score =
+    Number(document.getElementById(`score-${id}`).value);
+
+  if(!subject){
+    alert("Subject required");
+    return;
+  }
+
+  try{
+
+    await updateDoc(doc(db,"gradeSubmissions",id),{
+
+      subject,
+      score,
+
+      status:"resubmitted",
+
+      resubmittedAt:Date.now(),
+
+      feedback:""
+
+    });
+
+    alert("Grade resubmitted");
+
+    load();
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Failed to resubmit");
+  }
+};
+
+load();
+
+</script>
+
+</body>
+</html>
