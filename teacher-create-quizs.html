@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Create Quiz - TEF</title>
+</head>
 <body>
 
 <h2>Create Quiz (Weighted MCQ)</h2>
 
+<label>Target Class:</label>
 <select id="class"></select>
-<input id="title" placeholder="Quiz Title">
+<br><br>
+<input id="title" placeholder="Quiz Title" style="width: 300px;">
 
-<div id="questions"></div>
+<div id="questions" style="margin-top: 20px;"></div>
 
 <button onclick="addQ()">+ Add Question</button>
 <br><br>
@@ -20,37 +25,40 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
 
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if(!user || user.role !== "teacher") location.href="login.html";
+if(!user || user.role !== "teacher") {
+  location.href = "login.html";
+}
 
+// Populate the class dropdown based on teacher's classes
 document.getElementById("class").innerHTML =
-  (user.classes || []).map(c=>`<option>${c}</option>`).join("");
+  (user.classes || []).map(c => `<option value="${c}">${c}</option>`).join("");
 
 let count = 0;
 
 window.addQ = function(){
-
   count++;
+  const container = document.getElementById("questions");
 
-  document.getElementById("questions").innerHTML += `
-    <div style="margin:10px 0;">
-      <b>Q${count}</b><br>
+  // FIX: Using insertAdjacentHTML prevents the loss of previously typed data
+  const qHtml = `
+    <div id="quiz-row-${count}" style="margin:15px 0; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+      <b>Question ${count}</b><br>
+      <input id="q${count}" placeholder="Enter question text" style="width: 80%; margin-bottom: 10px;"><br>
 
-      <input id="q${count}" placeholder="Question"><br>
+      A <input id="a${count}" placeholder="Option A">
+      B <input id="b${count}" placeholder="Option B"><br>
+      C <input id="c${count}" placeholder="Option C">
+      D <input id="d${count}" placeholder="Option D"><br><br>
 
-      A <input id="a${count}">
-      B <input id="b${count}">
-      C <input id="c${count}">
-      D <input id="d${count}"><br>
-
-      Correct:
+      Correct Answer:
       <select id="ans${count}">
         <option value="A">A</option>
         <option value="B">B</option>
@@ -58,51 +66,75 @@ window.addQ = function(){
         <option value="D">D</option>
       </select>
 
-      Score:
-      <input id="s${count}" type="number" style="width:60px" value="1">
+      Points:
+      <input id="s${count}" type="number" style="width:50px" value="1">
     </div>
   `;
+  
+  container.insertAdjacentHTML('beforeend', qHtml);
 };
 
 window.createQuiz = async function(){
+  const title = document.getElementById("title").value.trim();
+  const selectedClass = document.getElementById("class").value;
+
+  if(!title || count === 0) {
+    alert("Please enter a title and add at least one question.");
+    return;
+  }
 
   const questions = [];
   let total = 0;
 
-  for(let i=1;i<=count;i++){
-
-    const q = document.getElementById(`q${i}`).value;
-    const a = document.getElementById(`a${i}`).value;
-    const b = document.getElementById(`b${i}`).value;
-    const c = document.getElementById(`c${i}`).value;
-    const d = document.getElementById(`d${i}`).value;
+  for(let i=1; i<=count; i++){
+    const q = document.getElementById(`q${i}`).value.trim();
+    const a = document.getElementById(`a${i}`).value.trim();
+    const b = document.getElementById(`b${i}`).value.trim();
+    const c = document.getElementById(`c${i}`).value.trim();
+    const d = document.getElementById(`d${i}`).value.trim();
 
     const ans = document.getElementById(`ans${i}`).value;
     const score = Number(document.getElementById(`s${i}`).value || 0);
 
+    // Basic validation: skip incomplete questions
     if(!q || !a || !b || !c || !d) continue;
 
     questions.push({
       q,
-      options:[a,b,c,d],
-      answer:ans,
-      score
+      options: [a, b, c, d],
+      answer: ans,
+      score: score
     });
 
     total += score;
   }
 
-  await addDoc(collection(db,"quizzes"),{
-    teacherId:user.id,
-    class:document.getElementById("class").value,
-    title:document.getElementById("title").value,
-    questions,
-    totalScore: total,
-    createdAt:Date.now()
-  });
+  if(questions.length === 0) {
+    alert("No valid questions found. Ensure all fields are filled.");
+    return;
+  }
 
-  alert("Quiz created with total score: " + total);
+  try {
+    await addDoc(collection(db, "quizzes"), {
+      teacherId: user.id, // Consistent with login.userId mapping
+      teacherName: user.name,
+      class: selectedClass,
+      title: title,
+      questions: questions,
+      totalScore: total,
+      createdAt: Date.now()
+    });
+
+    alert("Quiz created! Total points: " + total);
+    location.reload(); // Reset page for next quiz
+  } catch (err) {
+    console.error("Firebase Error:", err);
+    alert("Failed to save quiz.");
+  }
 };
+
+// Start with one question displayed
+addQ();
 
 </script>
 
