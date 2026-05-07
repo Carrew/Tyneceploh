@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attendance Analytics</title>
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f4;
+    }
+
+    .box{
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      margin-bottom:20px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2>Attendance Analytics</h2>
+
+<div id="analytics">
+  Loading...
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "admin"){
+  location.href = "login.html";
+}
+
+async function load(){
+
+  const snap =
+    await getDocs(
+      collection(db,"attendanceRecords")
+    );
+
+  let total = 0;
+
+  let late = 0;
+
+  let early = 0;
+
+  let edited = 0;
+
+  const roleStats = {};
+
+  snap.forEach(d=>{
+
+    const r = d.data();
+
+    total++;
+
+    if(
+      r.violations.includes(
+        "Late Clock In"
+      )
+    ){
+      late++;
+    }
+
+    if(
+      r.violations.includes(
+        "Early Clock Out"
+      )
+    ){
+      early++;
+    }
+
+    if(r.manuallyEdited){
+      edited++;
+    }
+
+    if(!roleStats[r.role]){
+      roleStats[r.role] = 0;
+    }
+
+    roleStats[r.role]++;
+  });
+
+  document.getElementById(
+    "analytics"
+  ).innerHTML = `
+
+    <div class="box">
+
+      <h3>Overall</h3>
+
+      Total Records:
+      ${total}
+
+      <br><br>
+
+      Late Clock Ins:
+      ${late}
+
+      <br><br>
+
+      Early Clock Outs:
+      ${early}
+
+      <br><br>
+
+      Manually Edited:
+      ${edited}
+
+    </div>
+
+    <div class="box">
+
+      <h3>By Role</h3>
+
+      ${
+        Object.entries(roleStats)
+        .map(([role,count])=>`
+
+          ${role}: ${count}
+
+          <br><br>
+
+        `).join("")
+      }
+
+    </div>
+  `;
+}
+
+load();
+
+</script>
+
+</body>
+</html>
