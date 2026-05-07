@@ -2,13 +2,31 @@
 <html>
 <head>
   <title>My Lessons - TEF</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    .lesson-card { 
+      background: white; 
+      border: 1px solid #ddd; 
+      border-radius: 8px; 
+      padding: 20px; 
+      margin-bottom: 20px; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .lesson-header { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 15px; }
+    .lesson-content { 
+      white-space: pre-wrap; /* Keeps line breaks from the teacher's textarea */
+      line-height: 1.6;
+      color: #333;
+    }
+    .meta { font-size: 0.85em; color: #666; }
+  </style>
 </head>
 
 <body>
 
-<h2>My Lessons</h2>
+<h2>My Classroom Lessons</h2>
 
-<div id="lessons"></div>
+<div id="lessons">Loading lessons...</div>
 
 <script type="module">
 
@@ -26,58 +44,63 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
+// Verification: Redirect if session is invalid or user is not a student
 if (!user || user.role !== "student") {
   window.location.href = "login.html";
 }
 
-//
-// 📥 LOAD LESSONS
-//
 async function loadLessons() {
+  try {
+    const snap = await getDocs(collection(db, "lessons"));
+    const myLessons = [];
 
-  const snap = await getDocs(collection(db, "lessons"));
+    // Filter logic to match student's specific class
+    snap.forEach(d => {
+      const data = d.data();
+      if (
+        data.class?.trim().toLowerCase() ===
+        user.class?.trim().toLowerCase()
+      ) {
+        myLessons.push(data);
+      }
+    });
 
-  const myLessons = [];
+    // Sort by newest first
+    myLessons.sort((a, b) => b.createdAt - a.createdAt);
 
-  snap.forEach(d => {
-    const data = d.data();
-
-    if (
-      data.class?.trim().toLowerCase() ===
-      user.class?.trim().toLowerCase()
-    ) {
-      myLessons.push(data);
-    }
-  });
-
-  render(myLessons);
+    render(myLessons);
+  } catch (error) {
+    console.error("Error loading lessons:", error);
+    document.getElementById("lessons").innerHTML = "Error loading lessons. Please try again.";
+  }
 }
 
-//
-// 🎨 RENDER
-//
 function render(lessons) {
-
   const container = document.getElementById("lessons");
 
   if (lessons.length === 0) {
-    container.innerHTML = "No lessons yet.";
+    container.innerHTML = "<p>No lessons posted for your class yet.</p>";
     return;
   }
 
   container.innerHTML = lessons.map(l => `
-    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-      <b>${l.subject}</b> - ${l.topic} <br>
-      <small>By ${l.teacherName}</small>
-
-      <p>${l.content}</p>
+    <div class="lesson-card">
+      <div class="lesson-header">
+        <b style="font-size: 1.2em;">${l.subject}</b><br>
+        <span style="color: #007bff;">Topic: ${l.topic}</span>
+      </div>
+      
+      <div class="lesson-content">${l.content}</div>
+      
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+      <div class="meta">
+        Posted by: <b>Teacher ${l.teacherName || 'Unknown'}</b><br>
+        Date: ${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : 'N/A'}
+      </div>
     </div>
   `).join("");
 }
 
-//
-// INIT
-//
 loadLessons();
 
 </script>
