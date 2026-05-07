@@ -1,156 +1,147 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>My Assignments - TEF</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+    .card { border: 1px solid #ddd; padding: 15px; margin: 15px 0; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .q-box { margin-bottom: 15px; padding: 10px; border-left: 4px solid #007bff; background: #fdfdfd; }
+    input[type="text"] { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .status-tag { font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+  </style>
+</head>
 <body>
 
 <h2>My Assignments</h2>
-<div id="list"></div>
+<div id="list">Loading assignments...</div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
 
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if (!user || user.role !== "student") location.href="login.html";
+if (!user || user.role !== "student") location.href = "login.html";
 
 let submittedMap = {};
-let submissionsMap = {};
+let assignmentsCache = [];
 
-//
-// 📥 LOAD EVERYTHING
-//
-async function load(){
-
-  const aSnap = await getDocs(collection(db,"assignments"));
-  const sSnap = await getDocs(collection(db,"submissions"));
+async function load() {
+  const aSnap = await getDocs(collection(db, "assignments"));
+  const sSnap = await getDocs(collection(db, "submissions"));
 
   submittedMap = {};
-  submissionsMap = {};
+  const mySubmissions = {};
 
-  // store submissions
-  sSnap.forEach(d=>{
+  // Map submissions to assignments for this specific student
+  sSnap.forEach(d => {
     const s = d.data();
-
-    if(s.studentId === user.userId){
+    if (s.studentId === user.userId) {
       submittedMap[s.assignmentId] = true;
-      submissionsMap[s.assignmentId] = s;
+      mySubmissions[s.assignmentId] = s;
     }
   });
 
   let html = "";
+  let count = 0;
 
-  aSnap.forEach(d=>{
+  aSnap.forEach(d => {
     const a = d.data();
+    // Only show assignments for the student's specific class
+    if (a.class !== user.class) return;
 
-    if(a.class !== user.class) return;
-
+    count++;
+    const aId = d.id;
     const qs = Array.isArray(a.questions) ? a.questions : [];
-
-    const submission = submissionsMap[d.id];
-    const isSubmitted = !!submission;
-    const isMarked = submission?.status === "marked";
+    const sub = mySubmissions[aId];
+    const isSubmitted = !!sub;
+    const isMarked = sub?.status === "marked";
 
     html += `
-      <div style="border:1px solid #ccc;padding:10px;margin:10px;">
-        <h3>${a.title}</h3>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between;">
+            <h3>${a.title}</h3>
+            <small>${a.subject}</small>
+        </div>
+        <hr>
 
-        ${qs.map((q,i)=>{
-
-          const studentAns = submission?.answers?.[i] || "-";
-
+        ${qs.map((q, i) => {
+          const studentAns = sub?.answers?.[i] || "";
+          
           return `
-            <div style="margin-bottom:8px;">
-              <b>${q.q}</b><br>
-
-              Your Answer: ${studentAns}<br>
-              Max Score: ${q.score}<br>
-
-              ${renderStatus(submission, i)}
+            <div class="q-box">
+              <b>Q${i+1}: ${q.q}</b> <small>(${q.score} pts)</small><br>
+              
+              ${!isSubmitted 
+                ? `<input type="text" id="ans_${aId}_${i}" placeholder="Type your answer here...">`
+                : `<p style="margin-top:5px; color:#555;"><b>Your Answer:</b> ${studentAns}</p>`
+              }
             </div>
           `;
         }).join("")}
 
-        <hr>
-
-        ${
-          !isSubmitted
-          ? `<button onclick="submit('${d.id}',${qs.length})">Submit</button>`
-          : isMarked
-            ? `<b style="color:green">Marked - Score: ${submission.score}</b>`
-            : `<b>Submitted - Awaiting marking</b>`
-        }
-
+        <div style="margin-top:15px; text-align:right;">
+          ${
+            !isSubmitted
+            ? `<button onclick="submitAssignment('${aId}', ${qs.length})">Submit Assignment</button>`
+            : isMarked
+              ? `<span class="status-tag" style="background:#d4edda; color:#155724;">Marked - Score: ${sub.score} / ${a.totalScore}</span>`
+              : `<span class="status-tag" style="background:#fff3cd; color:#856404;">Submitted - Awaiting Grade</span>`
+          }
+        </div>
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML = html || "No assignments";
+  document.getElementById("list").innerHTML = count === 0 ? "No assignments found for your class." : html;
 }
 
-//
-// 🎯 SHOW PASS / FAIL / PARTIAL RESULT
-//
-function renderStatus(submission, i){
-
-  if(!submission) return "";
-
-  if(submission.status !== "marked"){
-    return `<i>Pending review</i>`;
-  }
-
-  // optional future per-question breakdown (safe fallback)
-  return `<i style="color:green">Marked</i>`;
-}
-
-//
-// 🚀 SUBMIT
-//
-window.submit = async function(id,len){
-
-  if(submittedMap[id]){
-    alert("Already submitted");
-    return;
-  }
+window.submitAssignment = async function(id, len) {
+  if (submittedMap[id]) return;
 
   const answers = [];
+  for (let i = 0; i < len; i++) {
+    const input = document.getElementById(`ans_${id}_${i}`);
+    const val = input ? input.value.trim() : "";
 
-  for(let i=0;i<len;i++){
-    const v = document.getElementById(`${id}_${i}`)?.value;
-
-    if(!v){
-      alert("Fill all answers");
+    if (!val) {
+      alert("Please answer all questions before submitting.");
       return;
     }
-
-    answers.push(v.trim());
+    answers.push(val);
   }
 
-  await addDoc(collection(db,"submissions"),{
-    assignmentId:id,
-    studentId:user.userId,,
-    studentName:user.name,
-    answers,
-    score:null,
-    status:"submitted",
-    createdAt:Date.now()
-  });
+  if (!confirm("Are you sure you want to submit? You cannot edit after submitting.")) return;
 
-  submittedMap[id] = true;
+  try {
+    await addDoc(collection(db, "submissions"), {
+      assignmentId: id,
+      studentId: user.userId, // Matches our database identity logic
+      studentName: user.name,
+      answers: answers,
+      score: 0,
+      status: "submitted",
+      createdAt: Date.now()
+    });
 
-  alert("Submitted");
-  load();
+    alert("Assignment submitted successfully!");
+    load();
+  } catch (error) {
+    console.error("Submission Error:", error);
+    alert("Error submitting assignment.");
+  }
 };
 
 load();
-
 </script>
 
 </body>
