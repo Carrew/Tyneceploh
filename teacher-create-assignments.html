@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Create Assignment - TEF</title>
+</head>
 <body>
 
 <h2>Create Assignment</h2>
 
+<label>Class:</label>
 <select id="class"></select>
+<br><br>
 <input id="subject" placeholder="Subject">
 <input id="title" placeholder="Title">
 
-<div id="questions"></div>
+<div id="questions" style="margin-top: 20px;"></div>
 
 <button onclick="addQ()">+ Add Question</button>
 <br><br>
@@ -16,68 +21,94 @@
 <button onclick="create()">Create Assignment</button>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
 
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if (!user || user.role !== "teacher") location.href="login.html";
+if (!user || user.role !== "teacher") {
+  location.href = "login.html";
+}
 
+// Load teacher's assigned classes into dropdown
 document.getElementById("class").innerHTML =
-  (user.classes || []).map(c=>`<option>${c}</option>`).join("");
+  (user.classes || []).map(c => `<option value="${c}">${c}</option>`).join("");
 
 let count = 0;
 
-window.addQ = function(){
+window.addQ = function() {
   count++;
-
-  document.getElementById("questions").innerHTML += `
-    <div style="margin:5px 0;">
-      Q${count}:
-      <input id="q${count}" placeholder="Question">
+  const container = document.getElementById("questions");
+  
+  // FIX: Use insertAdjacentHTML so existing inputs don't get cleared/wiped
+  const qHtml = `
+    <div id="row${count}" style="margin:10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+      <b>Q${count}:</b>
+      <input id="q${count}" placeholder="Question" style="width: 250px;">
       Score:
-      <input id="s${count}" type="number" style="width:60px">
+      <input id="s${count}" type="number" style="width:60px" value="5">
     </div>
   `;
+  container.insertAdjacentHTML('beforeend', qHtml);
 };
 
-window.create = async function(){
+window.create = async function() {
+  const subject = document.getElementById("subject").value;
+  const title = document.getElementById("title").value;
+  const className = document.getElementById("class").value;
+
+  if (!subject || !title || count === 0) {
+    alert("Please fill in subject, title, and add at least one question.");
+    return;
+  }
 
   const questions = [];
   let total = 0;
 
-  for(let i=1;i<=count;i++){
-    const q = document.getElementById(`q${i}`).value;
-    const s = Number(document.getElementById(`s${i}`).value);
+  for (let i = 1; i <= count; i++) {
+    const qEl = document.getElementById(`q${i}`);
+    const sEl = document.getElementById(`s${i}`);
 
-    if(!q || !s) continue;
+    if (qEl && sEl) {
+      const q = qEl.value.trim();
+      const s = Number(sEl.value);
 
-    questions.push({ q, score:s });
-    total += s;
+      if (q && s) {
+        questions.push({ q, score: s });
+        total += s;
+      }
+    }
   }
 
-  await addDoc(collection(db,"assignments"),{
-    teacherId:user.userId,
-    class:document.getElementById("class").value,
-    subject:document.getElementById("subject").value,
-    title:document.getElementById("title").value,
+  try {
+    await addDoc(collection(db, "assignments"), {
+      teacherId: user.id, // Consistent with your login mapping (userId -> id)
+      teacherName: user.name,
+      class: className,
+      subject: subject,
+      title: title,
+      questions: questions,
+      totalScore: total,
+      createdAt: Date.now()
+    });
 
-    questions,
-    totalScore: total,
-
-    createdAt: Date.now()
-  });
-
-  alert("Assignment created");
+    alert("Assignment created successfully!");
+    location.reload(); // Clear form for next assignment
+  } catch (e) {
+    console.error("Error adding document: ", e);
+    alert("Error saving assignment.");
+  }
 };
+
+// Start with one question automatically
+addQ();
 
 </script>
 
