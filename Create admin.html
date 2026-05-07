@@ -1,68 +1,83 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Manage Admins - TEF</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .admin-list { margin-top: 20px; border-top: 2px solid #ccc; padding-top: 20px; }
+    .card { border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; }
+  </style>
+</head>
 <body>
 
-<h2>Add New Admin</h2>
+<h2>Add New Administrator</h2>
 
-<input id="name" placeholder="Full Name">
-<input id="pin" placeholder="PIN (optional)">
+<input id="newName" placeholder="Full Name">
+<input id="newPin" placeholder="PIN (optional)">
+<button onclick="addNewAdmin()">Create Admin</button>
 
-<button onclick="create()">Create Admin</button>
+<div class="admin-list">
+  <h3>Existing Administrators</h3>
+  <div id="displayList"></div>
+</div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 });
-
 const db = getFirestore(app);
 
 const currentUser = JSON.parse(localStorage.getItem("user"));
-
 if(!currentUser || currentUser.role !== "admin"){
-  alert("Unauthorized");
   location.href = "login.html";
 }
 
-function genID(num){
-  return "ADM" + String(num).padStart(3,"0");
+async function loadAdmins() {
+  const q = query(collection(db, "users"), where("role", "==", "admin"));
+  const snap = await getDocs(q);
+  const listDiv = document.getElementById("displayList");
+  
+  let admins = [];
+  snap.forEach(d => admins.push(d.data()));
+  
+  listDiv.innerHTML = admins.map(a => `
+    <div class="card">
+      <b>${a.name}</b> (ID: ${a.userId}) <br>
+      Status: ${a.status}
+    </div>
+  `).join("");
+
+  return admins.length;
 }
 
-function genPIN(){
-  return Math.floor(1000 + Math.random()*9000).toString();
-}
+window.addNewAdmin = async function(){
+  const name = document.getElementById("newName").value.trim();
+  if(!name) return alert("Enter a name");
 
-window.create = async function(){
+  const currentCount = await loadAdmins();
+  const nextId = "ADM" + String(currentCount + 1).padStart(3, "0");
+  const pin = document.getElementById("newPin").value || Math.floor(1000 + Math.random()*9000).toString();
 
-  const snap = await getDocs(collection(db,"users"));
-
-  let count = 0;
-
-  snap.forEach(d=>{
-    if(d.data().role === "admin") count++;
+  await addDoc(collection(db, "users"), {
+    userId: nextId,
+    name: name,
+    pin: pin,
+    role: "admin",
+    status: "active",
+    createdAt: Date.now()
   });
 
-  const id = genID(count+1);
-  const pin = document.getElementById("pin").value || genPIN();
-
-  await addDoc(collection(db,"users"),{
-    userId:id,
-    name:document.getElementById("name").value,
-    pin,
-    role:"admin",
-    status:"active",
-    createdAt:Date.now()
-  });
-
-  alert("Admin created\nID: "+id+"\nPIN: "+pin);
+  alert(`New Admin Created!\nID: ${nextId}\nPIN: ${pin}`);
+  document.getElementById("newName").value = "";
+  loadAdmins();
 };
 
+loadAdmins();
 </script>
-
 </body>
 </html>
