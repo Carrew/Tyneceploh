@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Student Management - TEF</title>
-</head>
-
+<head><title>Student Management - TEF</title></head>
 <body>
 
 <h2>Student Management (CRUD)</h2>
@@ -12,26 +9,20 @@
 <input id="class" placeholder="Class">
 
 <select id="status">
-  <option value="active">Active</option>
-  <option value="inactive">Inactive</option>
+  <option value="New">New</option>
+  <option value="Old">Old</option>
 </select>
 
 <input type="hidden" id="editId">
-
 <button onclick="saveStudent()">Save Student</button>
 
 <hr>
-
-<input id="search" placeholder="Search student..." oninput="renderStudents()">
-
+<input id="search" placeholder="Search by Name or ID..." oninput="renderStudents()">
 <hr>
 
 <div id="list"></div>
 
-<p id="msg"></p>
-
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -44,37 +35,28 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🆔 ID GENERATOR
 function generateId(count) {
   return `TEF${String(count + 1).padStart(4, "0")}`;
 }
 
-// 🔑 PIN GENERATOR
 function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 let studentsCache = [];
 
-// 📥 LOAD STUDENTS
 async function loadStudents() {
   const snap = await getDocs(collection(db, "users"));
   studentsCache = [];
-
   snap.forEach(d => {
     const data = d.data();
     if (data.role === "student") {
-      studentsCache.push({
-        ...data,
-        userId: data.userId, 
-        docId: d.id // The Firebase internal ID
-      });
+      studentsCache.push({ ...data, docId: d.id });
     }
   });
   renderStudents();
 }
 
-// 🎨 RENDER
 window.renderStudents = function () {
   const search = document.getElementById("search").value.toLowerCase();
   const list = document.getElementById("list");
@@ -85,10 +67,9 @@ window.renderStudents = function () {
   );
 
   list.innerHTML = filtered.map(s => `
-    <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-      <b>ID: ${s.userId}</b> - ${s.name} <br>
-      Class: ${s.class} <br>
-      Status: ${s.status}
+    <div style="border:1px solid #ddd; margin:10px; padding:10px; border-radius:8px;">
+      <b>ID: ${s.userId}</b> | <b>${s.name}</b><br>
+      Class: ${s.class} | Status: <span style="color:blue">${s.status}</span>
       <br><br>
       <button onclick="editStudent('${s.docId}', '${s.name}', '${s.class}', '${s.status}')">Edit</button>
       <button onclick="deleteStudent('${s.docId}')">Delete</button>
@@ -96,42 +77,33 @@ window.renderStudents = function () {
   `).join("");
 };
 
-// 💾 SAVE (CREATE / UPDATE)
 window.saveStudent = async function () {
   const name = document.getElementById("name").value;
   const className = document.getElementById("class").value;
   const status = document.getElementById("status").value;
   const editId = document.getElementById("editId").value;
 
-  if (!name || !className) {
-    alert("Fill all fields");
-    return;
-  }
+  if (!name || !className) { alert("Fill all fields"); return; }
 
   if (!editId) {
-    // CREATE NEW STUDENT
     const snap = await getDocs(collection(db, "users"));
-    // Count all users to generate next ID
     const count = snap.docs.length; 
-
     const userId = generateId(count);
     const pin = generatePin();
 
     await addDoc(collection(db, "users"), {
       userId: userId,
-      pin: pin, // MATCHES LOGIN: Saving as 'pin' instead of 'pinHash'
+      pin: pin,
       name: name,
       class: className,
-      status: status,
+      status: status, // "New" or "Old"
       role: "student",
       createdAt: Date.now()
     });
 
-    alert(`Student Created!\nID: ${userId}\nPIN: ${pin}`);
+    alert(`Student Saved!\nID: ${userId}\nPIN: ${pin}`);
   } else {
-    // UPDATE EXISTING
-    const ref = doc(db, "users", editId);
-    await updateDoc(ref, {
+    await updateDoc(doc(db, "users", editId), {
       name: name,
       class: className,
       status: status
@@ -144,15 +116,15 @@ window.saveStudent = async function () {
   loadStudents();
 };
 
-window.editStudent = function (id, name, className, status) {
+window.editStudent = (id, name, className, status) => {
   document.getElementById("editId").value = id;
   document.getElementById("name").value = name;
   document.getElementById("class").value = className;
   document.getElementById("status").value = status;
 };
 
-window.deleteStudent = async function (id) {
-  if(confirm("Delete this student?")) {
+window.deleteStudent = async (id) => {
+  if(confirm("Delete student?")) {
     await deleteDoc(doc(db, "users", id));
     loadStudents();
   }
