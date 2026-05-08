@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TEF QR Manager</title>
+
+  <style>
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f4;
+    }
+
+    .card{
+      background:white;
+      padding:15px;
+      margin-bottom:15px;
+      border-radius:10px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    button{
+      padding:10px 14px;
+      margin-right:8px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .create{
+      background:#27ae60;
+      color:white;
+    }
+
+    .print{
+      background:#2980b9;
+      color:white;
+    }
+
+    .disable{
+      background:#c0392b;
+      color:white;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2>QR Attendance Control Panel</h2>
+
+<button class="create" onclick="createQR('clock-in')">
+  Create / Reset Clock-In QR
+</button>
+
+<button class="create" onclick="createQR('clock-out')">
+  Create / Reset Clock-Out QR
+</button>
+
+<div id="list"></div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "admin"){
+  location.href="login.html";
+}
+
+//
+// CREATE OR RESET QR
+//
+window.createQR = async function(type){
+
+  const id =
+    type === "clock-in"
+    ? "QR_CLOCK_IN"
+    : "QR_CLOCK_OUT";
+
+  const code =
+    `TEF-${type.toUpperCase()}-${Date.now()}`;
+
+  try{
+
+    await setDoc(doc(db,"attendanceQR",id),{
+
+      id,
+      type,
+
+      code,
+
+      active:true,
+
+      createdAt:Date.now(),
+
+      createdBy:user.userId
+
+    });
+
+    alert(type + " QR created/reset");
+
+    load();
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Failed");
+  }
+};
+
+//
+// DISABLE QR
+//
+window.disableQR = async function(id){
+
+  await updateDoc(
+    doc(db,"attendanceQR",id),
+    { active:false }
+  );
+
+  load();
+};
+
+//
+// LOAD QR LIST
+//
+async function load(){
+
+  const snap =
+    await getDocs(
+      collection(db,"attendanceQR")
+    );
+
+  const list =
+    document.getElementById("list");
+
+  list.innerHTML = "";
+
+  snap.forEach(d=>{
+
+    const q = d.data();
+
+    list.innerHTML += `
+
+      <div class="card">
+
+        <h3>${q.type}</h3>
+
+        <p>
+          Code:
+          <b>${q.code}</b>
+        </p>
+
+        <p>
+          Status:
+          ${
+            q.active
+            ? "ACTIVE"
+            : "DISABLED"
+          }
+        </p>
+
+        <button class="print"
+          onclick="window.print()">
+          Reprint QR
+        </button>
+
+        <button class="disable"
+          onclick="disableQR('${q.id}')">
+          Disable
+        </button>
+
+      </div>
+    `;
+  });
+}
+
+load();
+
+</script>
+
+</body>
+  </html>
