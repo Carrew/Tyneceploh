@@ -2,60 +2,28 @@
 <html>
 <head>
   <title>TEF Live Attendance Scan</title>
-
   <script src="https://unpkg.com/html5-qrcode"></script>
-
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f4f4f4;
-      text-align: center;
-      padding: 20px;
-    }
-
-    #reader {
-      width: 320px;
-      margin: auto;
-      border-radius: 10px;
-      overflow: hidden;
-      background: white;
-    }
-
-    .status {
-      margin-top: 20px;
-      font-weight: bold;
-      padding: 10px;
-      border-radius: 5px;
-    }
-
+    body { font-family: sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
+    #reader { width: 320px; margin: auto; border-radius: 10px; overflow: hidden; background: white; border: 2px solid #ccc; }
+    .status { margin-top: 20px; font-weight: bold; padding: 15px; border-radius: 8px; min-height: 20px; }
     .ok { color: #155724; background: #d4edda; border: 1px solid #c3e6cb; }
     .bad { color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; }
+    .info { color: #0c5460; background: #d1ecf1; border: 1px solid #bee5eb; }
   </style>
 </head>
 
 <body>
 
 <h2>Scan to Clock In / Out</h2>
-
 <div id="reader"></div>
-
-<div class="status" id="status">
-  Waiting for scan...
-</div>
+<div class="status" id="status">Waiting for scan...</div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { initializeApp } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import { 
-  getFirestore, 
-  addDoc, 
-  collection 
-} 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// --- Configuration & Init ---
+// --- Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
@@ -65,138 +33,111 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Check Session
 const user = JSON.parse(localStorage.getItem("user"));
-if (!user) {
-  console.warn("No user found in localStorage. Redirecting to login...");
-  location.href = "login.html";
-}
+if (!user) { location.href = "login.html"; }
 
 // Device ID Generation
-function deviceId() {
-  return btoa(
-    navigator.userAgent + 
-    screen.width + 
-    screen.height
-  );
-}
-const device = deviceId();
+const device = btoa(navigator.userAgent + screen.width + screen.height);
 
-// Helper: Get GPS Location with explicit error handling
+// --- Haversine Distance Formula (Meters) ---
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // Earth radius in meters
+  const p1 = lat1 * Math.PI / 180;
+  const p2 = lat2 * Math.PI / 180;
+  const dp = (lat2 - lat1) * Math.PI / 180;
+  const dl = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(dp / 2) * Math.sin(dp / 2) +
+            Math.cos(p1) * Math.cos(p2) *
+            Math.sin(dl / 2) * Math.sin(dl / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// --- GPS Handler ---
 async function getLocation() {
   return new Promise((res, rej) => {
-    if (!navigator.geolocation) {
-      rej(new Error("Geolocation is not supported by your browser"));
-    }
     navigator.geolocation.getCurrentPosition(
       pos => res(pos.coords),
       err => {
-        let msg = "Location error";
-        if (err.code === 1) msg = "Location permission denied";
-        else if (err.code === 2) msg = "Position unavailable";
-        else if (err.code === 3) msg = "Location request timed out";
-        rej(new Error(msg));
+        let m = "Location Error: ";
+        if (err.code === 1) m += "Permission Denied";
+        else if (err.code === 3) m += "Timeout (Try moving outdoors)";
+        else m += "Signal lost";
+        rej(new Error(m));
       },
-      { enableHighAccuracy: true, timeout: 30000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   });
 }
 
-// --- Scanner Logic ---
+// --- Scanner Init ---
 const scanner = new Html5Qrcode("reader");
-
 scanner.start(
   { facingMode: "environment" },
   { fps: 10, qrbox: 250 },
   async (qrText) => {
     scanner.pause();
-    console.log("QR Scanned:", qrText);
+    await processScan(qrText);
+    setTimeout(() => scanner.resume(), 3000);
+  }
+).catch(err => show("Camera Error: " + err, "bad"));
+
+// --- Primary Logic ---
+async function processScan(qrText) {
+  try {
+    let qr;
+    try { qr = JSON.parse(qrText); } catch(e) { throw new Error("Invalid QR Data"); }
+
+    show("Acquiring precise GPS...", "info");
+    const coords = await getLocation();
+
+    // TARGET COORDINATES
+    const target = { lat: 6.2531493, lng: -10.6729734 };
     
-    try {
-      await processScan(qrText);
-    } catch (e) {
-      console.error("Internal Process Error:", e);
-      show(e.message, "bad");
+    const distance = getDistance(coords.latitude, coords.longitude, target.lat, target.lng);
+    const accuracy = coords.accuracy;
+
+    console.log(`Dist: ${distance.toFixed(1)}m, Acc: ${accuracy.toFixed(1)}m`);
+
+    // RULE 1: BOUNDARY (Allowed 150m for drift)
+    if (distance > 150) {
+      throw new Error(`Too far: ${Math.round(distance)}m from target. (Accuracy: ±${Math.round(accuracy)}m)`);
     }
 
-    // Resume scanning after 3 seconds
-    setTimeout(() => {
-      console.log("Scanner ready for next scan.");
-      scanner.resume();
-    }, 3000);
-  }
-).catch(err => {
-  console.error("Camera Initialization Failed:", err);
-  show("Camera Error: " + err, "bad");
-});
+    // RULE 2: DEVICE LOCK
+    if (user.primaryDevice && user.primaryDevice !== device) {
+      throw new Error("Device mismatch. Use your registered phone.");
+    }
 
-async function processScan(qrText) {
-  // 1. Validate QR Data
-  let qr;
-  try {
-    qr = JSON.parse(qrText);
-  } catch (e) {
-    throw new Error("Invalid QR format (Not JSON)");
-  }
+    // SUCCESS: UPLOAD
+    show("Verifying with server...", "info");
+    await addDoc(collection(db, "attendanceRecords"), {
+      userId: user.userId,
+      name: user.name,
+      role: user.role || "staff",
+      type: qr.type || "scan",
+      time: Date.now(),
+      device,
+      distance: Math.round(distance),
+      coords: { lat: coords.latitude, lng: coords.longitude, acc: accuracy },
+      status: "valid"
+    });
 
-  // 2. Get Geolocation
-  show("Verifying location...", "status");
-  const coords = await getLocation();
-  
-  const school = { lat: 6.2531493, lng: -10.6729734 };
+    show("Attendance Recorded Successfully!", "ok");
 
-  const distance = Math.sqrt(
-    Math.pow(coords.latitude - school.lat, 2) + 
-    Math.pow(coords.longitude - school.lng, 2)
-  ) * 111000;
-
-  console.log(`User is ${distance.toFixed(2)}m from target.`);
-
-  // 3. Apply Rules
-  if (distance > 40000) {
-    throw new Error(`Outside campus boundary (${Math.round(distance)}m away)`);
-  }
-
-  if (user.primaryDevice && user.primaryDevice !== device) {
-    throw new Error("Device mismatch: This account is locked to another phone");
-  }
-
-  // 4. Record to Database
-  const record = {
-    userId: user.userId,
-    name: user.name,
-    role: user.role,
-    type: qr.type || "unknown",
-    time: Date.now(),
-    device,
-    location: {
-      lat: coords.latitude,
-      lng: coords.longitude,
-      accuracy: coords.accuracy
-    },
-    status: "valid"
-  };
-
-  try {
-    show("Saving to cloud...", "status");
-    await addDoc(collection(db, "attendanceRecords"), record);
-    console.log("Record saved successfully");
-    show("Attendance recorded successfully", "ok");
-  } catch (dbErr) {
-    console.error("Firestore Save Error:", dbErr);
-    throw new Error("Cloud save failed: Check internet connection");
+  } catch (err) {
+    console.error(err);
+    show(err.message, "bad");
   }
 }
 
-// UI Helper
 function show(msg, type) {
   const el = document.getElementById("status");
   el.textContent = msg;
-  // Clear old classes except 'status'
-  el.className = "status " + (type === "ok" || type === "bad" ? type : "");
+  el.className = "status " + type;
 }
 
 </script>
-
 </body>
 </html>
