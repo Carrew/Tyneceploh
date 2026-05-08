@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TEF Live Attendance Scan</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      text-align:center;
+      padding:20px;
+    }
+
+    #reader{
+      width:320px;
+      margin:auto;
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    .status{
+      margin-top:20px;
+      font-weight:bold;
+    }
+
+    .ok{ color:green; }
+    .bad{ color:red; }
+
+  </style>
+</head>
+
+<body>
+
+<h2>Scan to Clock In / Out</h2>
+
+<div id="reader"></div>
+
+<div class="status" id="status">
+  Waiting for scan...
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  addDoc,
+  collection
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+  location.href="login.html";
+}
+
+function deviceId(){
+
+  return btoa(
+    navigator.userAgent +
+    screen.width +
+    screen.height
+  );
+}
+
+const device = deviceId();
+
+async function getLocation(){
+
+  return new Promise((res,rej)=>{
+
+    navigator.geolocation.getCurrentPosition(
+      pos=>res(pos.coords),
+      err=>rej(err)
+    );
+
+  });
+}
+
+const scanner =
+  new Html5Qrcode("reader");
+
+scanner.start(
+  { facingMode:"environment" },
+  { fps:10, qrbox:250 },
+
+  async (qrText)=>{
+
+    scanner.pause();
+
+    try{
+
+      await processScan(qrText);
+
+    }catch(e){
+
+      show("Scan failed","bad");
+
+    }
+
+    setTimeout(()=>{
+
+      scanner.resume();
+
+    },3000);
+
+  }
+
+);
+
+async function processScan(qrText){
+
+  const qr = JSON.parse(qrText);
+
+  const coords = await getLocation();
+
+  const school = {
+    lat:6.3000,
+    lng:-10.8000
+  };
+
+  const distance =
+    Math.sqrt(
+      Math.pow(coords.latitude - school.lat,2) +
+      Math.pow(coords.longitude - school.lng,2)
+    ) * 111000;
+
+  let flags = [];
+
+  // GPS RULE (BLOCK)
+  if(distance > 120){
+
+    return show(
+      "You must be on campus",
+      "bad"
+    );
+  }
+
+  // DEVICE RULE (BLOCK)
+  if(
+    user.primaryDevice &&
+    user.primaryDevice !== device
+  ){
+
+    return show(
+      "Device not allowed",
+      "bad"
+    );
+  }
+
+  // CLOCK LOGIC
+  const record = {
+    userId:user.userId,
+    name:user.name,
+    role:user.role,
+
+    type:qr.type,
+
+    time:Date.now(),
+
+    device,
+    location:coords,
+
+    flags,
+    status:"valid"
+  };
+
+  await addDoc(
+    collection(db,"attendanceRecords"),
+    record
+  );
+
+  show("Attendance recorded","ok");
+
+}
+
+function show(msg,type){
+
+  const el =
+    document.getElementById("status");
+
+  el.textContent = msg;
+
+  el.className =
+    "status " + type;
+}
+
+</script>
+
+</body>
+</html>
