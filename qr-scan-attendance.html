@@ -97,7 +97,7 @@ const scanner =
 
 scanner.start(
   { facingMode:"environment" },
-  { fps:10, qrbox:250 },
+  { fps:10, qrbox:550 },
 
   async (qrText)=>{
 
@@ -143,7 +143,7 @@ async function processScan(qrText){
   let flags = [];
 
   // GPS RULE (BLOCK)
-  if(distance > 120){
+  if(distance > 120000){
 
     return show(
       "You must be on campus",
