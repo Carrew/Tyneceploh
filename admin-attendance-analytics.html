@@ -21,229 +21,351 @@
 
     input{
       padding:10px;
-      margin:5px;
     }
 
     button{
       padding:10px 14px;
       border:none;
       border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
       background:#2980b9;
       color:white;
+      cursor:pointer;
+      font-weight:bold;
     }
 
-    .grid{
+    .summary-grid{
       display:grid;
-      grid-template-columns:1fr;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
       gap:15px;
+      margin-bottom:20px;
     }
 
-    .card{
+    .summary-card{
       background:white;
       padding:15px;
       border-radius:10px;
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      text-align:center;
     }
 
-    .present{ color:green; font-weight:bold; }
-    .late{ color:orange; font-weight:bold; }
-    .absent{ color:red; font-weight:bold; }
-    .flag{ color:#c0392b; font-weight:bold; }
+    .summary-card h3{
+      margin:0;
+      font-size:28px;
+    }
+
+    .table-wrap{
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      overflow:auto;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
 
     table{
       width:100%;
       border-collapse:collapse;
-      margin-top:10px;
     }
 
-    th,td{
+    th, td{
       border:1px solid #ddd;
       padding:8px;
-      font-size:13px;
       text-align:center;
+      font-size:13px;
     }
 
     th{
       background:#eee;
+    }
+
+    .late{
+      color:#e67e22;
+      font-weight:bold;
+    }
+
+    .early{
+      color:#3498db;
+      font-weight:bold;
+    }
+
+    .overtime{
+      color:#27ae60;
+      font-weight:bold;
+    }
+
+    .missing{
+      color:#c0392b;
+      font-weight:bold;
     }
   </style>
 </head>
 
 <body>
 
-<h2>Daily Attendance Sheet</h2>
+<h2>Daily Attendance Report</h2>
 
 <div class="top">
   <input type="date" id="date">
-  <button onclick="loadSheet()">Generate</button>
+  <button onclick="loadAttendance()">
+    Load Report
+  </button>
 </div>
 
-<div id="summary" class="card"></div>
+<div class="summary-grid">
 
-<div class="card">
-  <h3>Attendance List</h3>
+  <div class="summary-card">
+    <p>Present</p>
+    <h3 id="presentCount">0</h3>
+  </div>
+
+  <div class="summary-card">
+    <p>Late</p>
+    <h3 id="lateCount">0</h3>
+  </div>
+
+  <div class="summary-card">
+    <p>Early Arrivals</p>
+    <h3 id="earlyCount">0</h3>
+  </div>
+
+  <div class="summary-card">
+    <p>Missing Clock-Out</p>
+    <h3 id="missingCount">0</h3>
+  </div>
+
+</div>
+
+<div class="table-wrap">
+
   <table>
+
     <thead>
       <tr>
         <th>Name</th>
         <th>Role</th>
         <th>Clock-In</th>
+        <th>Clock-In Status</th>
         <th>Clock-Out</th>
-        <th>Status</th>
-        <th>Flags</th>
+        <th>Clock-Out Status</th>
+        <th>Work Duration</th>
       </tr>
     </thead>
 
-    <tbody id="list"></tbody>
+    <tbody id="tbody"></tbody>
+
   </table>
+
 </div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
-  getDocs,
-  collection
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp({
+const firebaseConfig = {
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
-});
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
 if(!user || user.role !== "admin"){
-  location.href="login.html";
+  location.href = "login.html";
 }
 
-window.loadSheet = async function(){
+//
+// FORMAT TIME
+//
+function formatTime(ts){
 
-  const date = document.getElementById("date").value;
+  if(!ts) return "-";
+
+  return new Date(ts)
+    .toLocaleTimeString();
+
+}
+
+//
+// WORK DURATION
+//
+function workDuration(inTime,outTime){
+
+  if(!inTime || !outTime){
+    return "-";
+  }
+
+  const diff =
+    outTime - inTime;
+
+  const hrs =
+    Math.floor(diff / 3600000);
+
+  const mins =
+    Math.floor(
+      (diff % 3600000) / 60000
+    );
+
+  return `${hrs}h ${mins}m`;
+
+}
+
+//
+// LOAD REPORT
+//
+window.loadAttendance = async function(){
+
+  const date =
+    document.getElementById("date").value;
 
   if(!date){
     alert("Select date");
     return;
   }
 
-  const snap = await getDocs(collection(db,"attendanceRecords"));
+  const snap =
+    await getDocs(
+      collection(db,"attendanceDaily")
+    );
 
-  const map = {};
-
-  snap.forEach(d => {
-
-    const r = d.data();
-
-    if(r.date !== date) return;
-
-    if(!map[r.userId]){
-
-      map[r.userId] = {
-        name:r.name,
-        role:r.role,
-        clockIn:null,
-        clockOut:null,
-        flags:[]
-      };
-
-    }
-
-    if(r.type === "clock-in"){
-      map[r.userId].clockIn = r.time;
-    }
-
-    if(r.type === "clock-out"){
-      map[r.userId].clockOut = r.time;
-    }
-
-    if(r.flags?.length){
-      map[r.userId].flags.push(...r.flags);
-    }
-
-  });
-
-  const rows = Object.values(map);
-
-  render(rows);
-
-  renderSummary(rows);
-
-};
-
-function render(data){
-
-  const tbody = document.getElementById("list");
-
-  tbody.innerHTML = "";
-
-  data.forEach(u => {
-
-    let status = "ABSENT";
-
-    if(u.clockIn){
-      status = "PRESENT";
-    }
-
-    if(u.flags.includes("LATE_CLOCK_IN")){
-      status = "LATE";
-    }
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${u.name}</td>
-        <td>${u.role}</td>
-
-        <td>
-          ${u.clockIn ? new Date(u.clockIn).toLocaleTimeString() : "-"}
-        </td>
-
-        <td>
-          ${u.clockOut ? new Date(u.clockOut).toLocaleTimeString() : "-"}
-        </td>
-
-        <td class="${status.toLowerCase()}">
-          ${status}
-        </td>
-
-        <td class="flag">
-          ${u.flags.join(", ") || "-"}
-        </td>
-      </tr>
-    `;
-
-  });
-
-}
-
-function renderSummary(data){
+  const rows = [];
 
   let present = 0;
   let late = 0;
-  let absent = 0;
+  let early = 0;
+  let missing = 0;
 
-  data.forEach(u => {
+  snap.forEach(d => {
 
-    if(!u.clockIn){
-      absent++;
-    }else if(u.flags.includes("LATE_CLOCK_IN")){
+    const data = d.data();
+
+    if(data.date !== date) return;
+
+    present++;
+
+    if(
+      data.clockIn?.status === "LATE"
+    ){
       late++;
-    }else{
-      present++;
     }
+
+    if(
+      data.clockIn?.status === "EARLY"
+    ){
+      early++;
+    }
+
+    if(!data.clockOut){
+      missing++;
+    }
+
+    rows.push(`
+      <tr>
+
+        <td>${data.name}</td>
+
+        <td>${data.role}</td>
+
+        <td>
+          ${
+            formatTime(
+              data.clockIn?.time
+            )
+          }
+        </td>
+
+        <td class="
+          ${
+            data.clockIn?.status === "LATE"
+            ? "late"
+            : data.clockIn?.status === "EARLY"
+            ? "early"
+            : ""
+          }
+        ">
+          ${
+            data.clockIn?.status || "-"
+          }
+
+          ${
+            data.clockIn?.minutes
+            ? `(${data.clockIn.minutes} mins)`
+            : ""
+          }
+        </td>
+
+        <td>
+          ${
+            formatTime(
+              data.clockOut?.time
+            )
+          }
+        </td>
+
+        <td class="
+          ${
+            data.clockOut?.status === "OVERTIME"
+            ? "overtime"
+            : data.clockOut?.status === "EARLY_EXIT"
+            ? "late"
+            : ""
+          }
+        ">
+          ${
+            data.clockOut?.status || "-"
+          }
+
+          ${
+            data.clockOut?.minutes
+            ? `(${data.clockOut.minutes} mins)`
+            : ""
+          }
+        </td>
+
+        <td class="
+          ${
+            !data.clockOut
+            ? "missing"
+            : ""
+          }
+        ">
+          ${
+            workDuration(
+              data.clockIn?.time,
+              data.clockOut?.time
+            )
+          }
+        </td>
+
+      </tr>
+    `);
 
   });
 
-  document.getElementById("summary").innerHTML = `
-    <h3>Summary</h3>
-    <p>Present: <b>${present}</b></p>
-    <p>Late: <b>${late}</b></p>
-    <p>Absent: <b>${absent}</b></p>
-  `;
+  document.getElementById("tbody")
+    .innerHTML = rows.join("");
+
+  document.getElementById("presentCount")
+    .textContent = present;
+
+  document.getElementById("lateCount")
+    .textContent = late;
+
+  document.getElementById("earlyCount")
+    .textContent = early;
+
+  document.getElementById("missingCount")
+    .textContent = missing;
 
 }
 
