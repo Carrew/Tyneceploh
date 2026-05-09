@@ -2,50 +2,37 @@
 <html>
 <head>
   <title>TEF Live Attendance Scan</title>
+
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-    body {
-      font-family: sans-serif;
-      background: #f4f4f4;
-      text-align: center;
-      padding: 20px;
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      text-align:center;
+      padding:20px;
     }
 
-    #reader {
-      width: 320px;
-      margin: auto;
-      border-radius: 10px;
-      overflow: hidden;
-      background: white;
-      border: 2px solid #ccc;
+    #reader{
+      width:320px;
+      margin:auto;
+      border-radius:10px;
+      overflow:hidden;
+      background:white;
+      border:2px solid #ccc;
     }
 
-    .status {
-      margin-top: 20px;
-      font-weight: bold;
-      padding: 15px;
-      border-radius: 8px;
-      min-height: 20px;
+    .status{
+      margin-top:20px;
+      padding:15px;
+      border-radius:8px;
+      font-weight:bold;
+      min-height:20px;
     }
 
-    .ok {
-      color: #155724;
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-    }
-
-    .bad {
-      color: #721c24;
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-    }
-
-    .info {
-      color: #0c5460;
-      background: #d1ecf1;
-      border: 1px solid #bee5eb;
-    }
+    .ok{ background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+    .bad{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+    .info{ background:#d1ecf1; color:#0c5460; border:1px solid #bee5eb; }
   </style>
 </head>
 
@@ -54,27 +41,32 @@
 <h2>Scan to Clock In / Out</h2>
 
 <div id="reader"></div>
-<div class="status info" id="status">Waiting for scan...</div>
+<div id="status" class="status info">Waiting for scan...</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, addDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  addDoc,
+  collection,
+  getDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
-};
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if (!user) location.href = "login.html";
+if(!user) location.href="login.html";
 
 
-// 🧠 DEVICE FINGERPRINT (same logic as admin system)
+// DEVICE ID
 const device = btoa(
   navigator.userAgent +
   screen.width +
@@ -83,77 +75,79 @@ const device = btoa(
 );
 
 
-// 📍 DISTANCE CALCULATION (Haversine)
-function getDistance(lat1, lon1, lat2, lon2) {
+// GPS DISTANCE
+function getDistance(lat1, lon1, lat2, lon2){
   const R = 6371e3;
-  const p1 = lat1 * Math.PI / 180;
-  const p2 = lat2 * Math.PI / 180;
-  const dp = (lat2 - lat1) * Math.PI / 180;
-  const dl = (lon2 - lon1) * Math.PI / 180;
+
+  const p1 = lat1 * Math.PI/180;
+  const p2 = lat2 * Math.PI/180;
+
+  const dp = (lat2-lat1)*Math.PI/180;
+  const dl = (lon2-lon1)*Math.PI/180;
 
   const a =
-    Math.sin(dp/2) * Math.sin(dp/2) +
-    Math.cos(p1) * Math.cos(p2) *
-    Math.sin(dl/2) * Math.sin(dl/2);
+    Math.sin(dp/2)**2 +
+    Math.cos(p1)*Math.cos(p2)*
+    Math.sin(dl/2)**2;
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 
-// 📍 GPS
-function getLocation() {
-  return new Promise((res, rej) => {
+// LOCATION
+function getLocation(){
+  return new Promise((res,rej)=>{
     navigator.geolocation.getCurrentPosition(
-      pos => res(pos.coords),
-      err => rej(new Error("Location permission required"))
+      p=>res(p.coords),
+      e=>rej(e)
     );
   });
 }
 
 
-// 📷 SCANNER
+// LOAD RULES
+async function getRules(role){
+  const snap = await getDoc(doc(db,"attendanceRules",role));
+  return snap.exists() ? snap.data() : null;
+}
+
+
+// QR SCANNER
 const scanner = new Html5Qrcode("reader");
 
 scanner.start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
+  { facingMode:"environment" },
+  { fps:10, qrbox:250 },
 
-  async (qrText) => {
+  async (qrText)=>{
     scanner.pause();
-    await processScan(qrText);
-    setTimeout(() => scanner.resume(), 3000);
+    await handleScan(qrText);
+    setTimeout(()=>scanner.resume(),3000);
   }
 
-).catch(err => show("Camera Error: " + err, "bad"));
+);
 
 
-// ⚙️ CORE LOGIC
-async function processScan(qrText) {
+// MAIN LOGIC
+async function handleScan(qrText){
 
-  try {
+  try{
 
     let qr;
 
-    try {
+    try{
       qr = JSON.parse(qrText);
-    } catch (e) {
-      throw new Error("Invalid QR format");
+    }catch{
+      throw new Error("Invalid QR");
     }
 
-    if (!qr.token || !qr.type) {
-      throw new Error("Invalid QR data");
-    }
+    const rules = await getRules(user.role);
 
     show("Checking location...", "info");
 
     const coords = await getLocation();
 
-    // SCHOOL LOCATION
-    const school = {
-      lat: 6.249763,
-      lng: -10.675790
-    };
+    const school = { lat:6.249763, lng:-10.675790 };
 
     const distance = getDistance(
       coords.latitude,
@@ -162,71 +156,83 @@ async function processScan(qrText) {
       school.lng
     );
 
-    // 🚫 GPS BLOCK RULE
-    if (distance > 150) {
-      throw new Error(
-        `Outside campus (${Math.round(distance)}m)`
-      );
+    // 🚫 GPS BLOCK (HARD RULE)
+    if(distance > 150){
+      throw new Error("You are outside campus");
     }
 
-    // 🚫 DEVICE BLOCK RULE
-    if (user.primaryDevice && user.primaryDevice !== device) {
-      throw new Error("Device not registered for attendance");
+    // 🚫 DEVICE BLOCK (HARD RULE)
+    if(user.primaryDevice && user.primaryDevice !== device){
+      throw new Error("Device not authorized");
     }
 
-    // OPTIONAL: FIRST DEVICE LOCK
-    if (!user.primaryDevice) {
-      user.primaryDevice = device;
+    // 🧠 TIME RULE CHECK
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+
+    const time = `${hour}:${minute}`;
+
+    let flags = [];
+
+    if(qr.type === "clock-in" && rules){
+
+      if(time > rules.clockInEnd){
+        flags.push("LATE_CLOCK_IN");
+      }
+
     }
 
-    // 🧠 BUILD RECORD
+    if(qr.type === "clock-out" && rules){
+
+      if(time < rules.clockOutStart){
+        flags.push("EARLY_CLOCK_OUT");
+      }
+
+    }
+
+    // BUILD RECORD
     const record = {
-      userId: user.userId,
-      name: user.name,
-      role: user.role || "staff",
+      userId:user.userId,
+      name:user.name,
+      role:user.role,
 
-      type: qr.type, // clock-in / clock-out
+      type:qr.type,
 
-      time: Date.now(),
+      time:Date.now(),
+      date:new Date().toISOString().split("T")[0],
 
       device,
 
-      location: {
-        lat: coords.latitude,
-        lng: coords.longitude,
-        accuracy: coords.accuracy
+      location:{
+        lat:coords.latitude,
+        lng:coords.longitude,
+        accuracy:coords.accuracy
       },
 
-      distance: Math.round(distance),
+      distance:Math.round(distance),
 
-      flags: [],
-
-      status: "valid"
+      flags,
+      status: flags.length ? "flagged" : "valid"
     };
 
-    // 🔴 LATE FLAG (NOT BLOCKED)
-    const hour = new Date().getHours();
-    if (qr.type === "clock-in" && hour > 8) {
-      record.flags.push("LATE_CLOCK_IN");
-      record.status = "flagged";
-    }
-
     await addDoc(
-      collection(db, "attendanceRecords"),
+      collection(db,"attendanceRecords"),
       record
     );
 
     show("Attendance recorded", "ok");
 
-  } catch (err) {
+  }catch(err){
     console.error(err);
     show(err.message, "bad");
   }
+
 }
 
 
 // UI
-function show(msg, type) {
+function show(msg,type){
   const el = document.getElementById("status");
   el.textContent = msg;
   el.className = "status " + type;
