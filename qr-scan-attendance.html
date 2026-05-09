@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF Live Attendance Scan</title>
+  <title>TEF Attendance Scan</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -16,9 +16,9 @@
     #reader{
       width:320px;
       margin:auto;
+      background:white;
       border-radius:10px;
       overflow:hidden;
-      background:white;
       border:2px solid #ccc;
     }
 
@@ -30,108 +30,152 @@
       min-height:20px;
     }
 
-    .ok{ background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
-    .bad{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
-    .info{ background:#d1ecf1; color:#0c5460; border:1px solid #bee5eb; }
+    .ok{
+      background:#d4edda;
+      color:#155724;
+    }
+
+    .bad{
+      background:#f8d7da;
+      color:#721c24;
+    }
+
+    .info{
+      background:#d1ecf1;
+      color:#0c5460;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>Scan to Clock In / Out</h2>
+<h2>TEF Attendance Scan</h2>
 
 <div id="reader"></div>
-<div id="status" class="status info">Waiting for scan...</div>
+
+<div id="status" class="status info">
+  Waiting for scan...
+</div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
-  addDoc,
-  collection,
+  doc,
   getDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  setDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp({
+const firebaseConfig = {
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
-});
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
-if(!user) location.href="login.html";
+const user =
+  JSON.parse(localStorage.getItem("user"));
 
+if(!user){
+  location.href = "login.html";
+}
 
+//
+// STUDENTS BLOCKED
+//
+if(user.role === "student"){
+  alert("Students do not use attendance");
+  location.href = "login.html";
+}
+
+//
 // DEVICE ID
-const device = btoa(
+//
+const deviceId = btoa(
   navigator.userAgent +
   screen.width +
-  screen.height +
-  Intl.DateTimeFormat().resolvedOptions().timeZone
+  screen.height
 );
 
-
-// GPS DISTANCE
+//
+// GPS
+//
 function getDistance(lat1, lon1, lat2, lon2){
+
   const R = 6371e3;
 
-  const p1 = lat1 * Math.PI/180;
-  const p2 = lat2 * Math.PI/180;
+  const p1 = lat1 * Math.PI / 180;
+  const p2 = lat2 * Math.PI / 180;
 
-  const dp = (lat2-lat1)*Math.PI/180;
-  const dl = (lon2-lon1)*Math.PI/180;
+  const dp = (lat2-lat1) * Math.PI/180;
+  const dl = (lon2-lon1) * Math.PI/180;
 
   const a =
     Math.sin(dp/2)**2 +
-    Math.cos(p1)*Math.cos(p2)*
+    Math.cos(p1) *
+    Math.cos(p2) *
     Math.sin(dl/2)**2;
 
-  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-
-// LOCATION
-function getLocation(){
-  return new Promise((res,rej)=>{
-    navigator.geolocation.getCurrentPosition(
-      p=>res(p.coords),
-      e=>rej(e)
+  return R * 2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1-a)
     );
+}
+
+//
+// LOCATION
+//
+function getLocation(){
+
+  return new Promise((res,rej)=>{
+
+    navigator.geolocation.getCurrentPosition(
+      p => res(p.coords),
+      e => rej(e),
+      {
+        enableHighAccuracy:true,
+        timeout:15000,
+        maximumAge:0
+      }
+    );
+
   });
+
 }
 
+//
+// MINUTES DIFFERENCE
+//
+function minutesDiff(actual, expected){
 
-// LOAD RULES
-async function getRules(role){
-  const snap = await getDoc(doc(db,"attendanceRules",role));
-  return snap.exists() ? snap.data() : null;
+  const [eh, em] = expected.split(":").map(Number);
+
+  const expectedMinutes =
+    eh * 60 + em;
+
+  const actualMinutes =
+    actual.getHours() * 60 +
+    actual.getMinutes();
+
+  return actualMinutes - expectedMinutes;
+
 }
 
-
-// QR SCANNER
-const scanner = new Html5Qrcode("reader");
-
-scanner.start(
-  { facingMode:"environment" },
-  { fps:10, qrbox:250 },
-
-  async (qrText)=>{
-    scanner.pause();
-    await handleScan(qrText);
-    setTimeout(()=>scanner.resume(),3000);
-  }
-
-);
-
-
-// MAIN LOGIC
-async function handleScan(qrText){
+//
+// MAIN SCAN LOGIC
+//
+async function processScan(qrText){
 
   try{
+
+    show("Checking QR...", "info");
 
     let qr;
 
@@ -141,13 +185,34 @@ async function handleScan(qrText){
       throw new Error("Invalid QR");
     }
 
-    const rules = await getRules(user.role);
+    //
+    // VERIFY QR
+    //
+    const qrSnap = await getDoc(
+      doc(db,"attendanceSystem","mainQR")
+    );
 
-    show("Checking location...", "info");
+    if(!qrSnap.exists()){
+      throw new Error("QR system unavailable");
+    }
+
+    const systemQR = qrSnap.data();
+
+    if(systemQR.token !== qr.token){
+      throw new Error("Expired QR");
+    }
+
+    //
+    // GPS
+    //
+    show("Checking GPS...", "info");
 
     const coords = await getLocation();
 
-    const school = { lat:6.249763, lng:-10.675790 };
+    const school = {
+      lat:6.249763,
+      lng:-10.675790
+    };
 
     const distance = getDistance(
       coords.latitude,
@@ -156,87 +221,214 @@ async function handleScan(qrText){
       school.lng
     );
 
-    // 🚫 GPS BLOCK (HARD RULE)
     if(distance > 150){
-      throw new Error("You are outside campus");
+      throw new Error(
+        "Outside school campus"
+      );
     }
 
-    // 🚫 DEVICE BLOCK (HARD RULE)
-    if(user.primaryDevice && user.primaryDevice !== device){
-      throw new Error("Device not authorized");
+    //
+    // DEVICE
+    //
+    if(
+      user.primaryDevice &&
+      user.primaryDevice !== deviceId
+    ){
+      throw new Error(
+        "Unauthorized device"
+      );
     }
 
-    // 🧠 TIME RULE CHECK
-    const now = new Date();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-
-    const time = `${hour}:${minute}`;
-
-    let flags = [];
-
-    if(qr.type === "clock-in" && rules){
-
-      if(time > rules.clockInEnd){
-        flags.push("LATE_CLOCK_IN");
-      }
-
-    }
-
-    if(qr.type === "clock-out" && rules){
-
-      if(time < rules.clockOutStart){
-        flags.push("EARLY_CLOCK_OUT");
-      }
-
-    }
-
-    // BUILD RECORD
-    const record = {
-      userId:user.userId,
-      name:user.name,
-      role:user.role,
-
-      type:qr.type,
-
-      time:Date.now(),
-      date:new Date().toISOString().split("T")[0],
-
-      device,
-
-      location:{
-        lat:coords.latitude,
-        lng:coords.longitude,
-        accuracy:coords.accuracy
-      },
-
-      distance:Math.round(distance),
-
-      flags,
-      status: flags.length ? "flagged" : "valid"
-    };
-
-    await addDoc(
-      collection(db,"attendanceRecords"),
-      record
+    //
+    // GET RULES
+    //
+    const rulesSnap = await getDoc(
+      doc(db,"attendanceRules",user.role)
     );
 
-    show("Attendance recorded", "ok");
+    if(!rulesSnap.exists()){
+      throw new Error(
+        "No attendance rules for role"
+      );
+    }
 
-  }catch(err){
+    const rules = rulesSnap.data();
+
+    //
+    // DAILY DOC
+    //
+    const today =
+      new Date().toISOString().split("T")[0];
+
+    const dailyId =
+      user.userId + "_" + today;
+
+    const dailyRef =
+      doc(db,"attendanceDaily",dailyId);
+
+    const dailySnap =
+      await getDoc(dailyRef);
+
+    const now = new Date();
+
+    //
+    // CLOCK-IN
+    //
+    if(!dailySnap.exists()){
+
+      const diff =
+        minutesDiff(
+          now,
+          rules.expectedClockIn
+        );
+
+      let status = "ON_TIME";
+
+      if(diff > 0){
+        status = "LATE";
+      }
+
+      if(diff < 0){
+        status = "EARLY";
+      }
+
+      await setDoc(dailyRef,{
+
+        userId:user.userId,
+        name:user.name,
+        role:user.role,
+
+        date:today,
+
+        clockIn:{
+          time:Date.now(),
+          status,
+          minutes:Math.abs(diff)
+        },
+
+        clockOut:null,
+
+        location:{
+          lat:coords.latitude,
+          lng:coords.longitude
+        },
+
+        deviceId,
+
+        createdAt:Date.now()
+
+      });
+
+      show(
+        `Clocked In (${status})`,
+        "ok"
+      );
+
+      return;
+
+    }
+
+    //
+    // CLOCK-OUT
+    //
+    const dailyData =
+      dailySnap.data();
+
+    if(dailyData.clockOut){
+
+      throw new Error(
+        "Attendance already completed today"
+      );
+
+    }
+
+    const diff =
+      minutesDiff(
+        now,
+        rules.expectedClockOut
+      );
+
+    let status = "ON_TIME";
+
+    if(diff > 0){
+      status = "OVERTIME";
+    }
+
+    if(diff < 0){
+      status = "EARLY_EXIT";
+    }
+
+    await setDoc(dailyRef,{
+
+      ...dailyData,
+
+      clockOut:{
+        time:Date.now(),
+        status,
+        minutes:Math.abs(diff)
+      }
+
+    });
+
+    show(
+      `Clocked Out (${status})`,
+      "ok"
+    );
+
+  }
+
+  catch(err){
+
     console.error(err);
+
     show(err.message, "bad");
+
   }
 
 }
 
-
+//
 // UI
+//
 function show(msg,type){
-  const el = document.getElementById("status");
+
+  const el =
+    document.getElementById("status");
+
   el.textContent = msg;
-  el.className = "status " + type;
+
+  el.className =
+    "status " + type;
+
 }
+
+//
+// START CAMERA
+//
+const scanner =
+  new Html5Qrcode("reader");
+
+scanner.start(
+  { facingMode:"environment" },
+  {
+    fps:10,
+    qrbox:250
+  },
+
+  async(qrText)=>{
+
+    scanner.pause();
+
+    await processScan(qrText);
+
+    setTimeout(
+      ()=>scanner.resume(),
+      3000
+    );
+
+  }
+
+);
 
 </script>
 
