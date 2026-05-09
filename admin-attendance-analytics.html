@@ -1,45 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Attendance Analytics</title>
+  <title>TEF Daily Attendance Sheet</title>
 
   <style>
-
     body{
       font-family:sans-serif;
-      padding:20px;
       background:#f4f4f4;
+      padding:20px;
     }
 
-    .box{
-      background:white;
-      padding:20px;
-      border-radius:10px;
+    h2{
+      text-align:center;
+    }
+
+    .top{
+      text-align:center;
       margin-bottom:20px;
     }
 
+    input{
+      padding:10px;
+      margin:5px;
+    }
+
+    button{
+      padding:10px 14px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      background:#2980b9;
+      color:white;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:15px;
+    }
+
+    .card{
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .present{ color:green; font-weight:bold; }
+    .late{ color:orange; font-weight:bold; }
+    .absent{ color:red; font-weight:bold; }
+    .flag{ color:#c0392b; font-weight:bold; }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+
+    th,td{
+      border:1px solid #ddd;
+      padding:8px;
+      font-size:13px;
+      text-align:center;
+    }
+
+    th{
+      background:#eee;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>Attendance Analytics</h2>
+<h2>Daily Attendance Sheet</h2>
 
-<div id="analytics">
-  Loading...
+<div class="top">
+  <input type="date" id="date">
+  <button onclick="loadSheet()">Generate</button>
+</div>
+
+<div id="summary" class="card"></div>
+
+<div class="card">
+  <h3>Attendance List</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Clock-In</th>
+        <th>Clock-Out</th>
+        <th>Status</th>
+        <th>Flags</th>
+      </tr>
+    </thead>
+
+    <tbody id="list"></tbody>
+  </table>
 </div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
-  collection,
-  getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  getDocs,
+  collection
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -49,111 +117,135 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const user =
-  JSON.parse(localStorage.getItem("user"));
-
+const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "admin"){
-  location.href = "login.html";
+  location.href="login.html";
 }
 
-async function load(){
+window.loadSheet = async function(){
 
-  const snap =
-    await getDocs(
-      collection(db,"attendanceRecords")
-    );
+  const date = document.getElementById("date").value;
 
-  let total = 0;
+  if(!date){
+    alert("Select date");
+    return;
+  }
 
-  let late = 0;
+  const snap = await getDocs(collection(db,"attendanceRecords"));
 
-  let early = 0;
+  const map = {};
 
-  let edited = 0;
-
-  const roleStats = {};
-
-  snap.forEach(d=>{
+  snap.forEach(d => {
 
     const r = d.data();
 
-    total++;
+    if(r.date !== date) return;
 
-    if(
-      r.violations.includes(
-        "Late Clock In"
-      )
-    ){
-      late++;
+    if(!map[r.userId]){
+
+      map[r.userId] = {
+        name:r.name,
+        role:r.role,
+        clockIn:null,
+        clockOut:null,
+        flags:[]
+      };
+
     }
 
-    if(
-      r.violations.includes(
-        "Early Clock Out"
-      )
-    ){
-      early++;
+    if(r.type === "clock-in"){
+      map[r.userId].clockIn = r.time;
     }
 
-    if(r.manuallyEdited){
-      edited++;
+    if(r.type === "clock-out"){
+      map[r.userId].clockOut = r.time;
     }
 
-    if(!roleStats[r.role]){
-      roleStats[r.role] = 0;
+    if(r.flags?.length){
+      map[r.userId].flags.push(...r.flags);
     }
 
-    roleStats[r.role]++;
   });
 
-  document.getElementById(
-    "analytics"
-  ).innerHTML = `
+  const rows = Object.values(map);
 
-    <div class="box">
+  render(rows);
 
-      <h3>Overall</h3>
+  renderSummary(rows);
 
-      Total Records:
-      ${total}
+};
 
-      <br><br>
+function render(data){
 
-      Late Clock Ins:
-      ${late}
+  const tbody = document.getElementById("list");
 
-      <br><br>
+  tbody.innerHTML = "";
 
-      Early Clock Outs:
-      ${early}
+  data.forEach(u => {
 
-      <br><br>
+    let status = "ABSENT";
 
-      Manually Edited:
-      ${edited}
+    if(u.clockIn){
+      status = "PRESENT";
+    }
 
-    </div>
+    if(u.flags.includes("LATE_CLOCK_IN")){
+      status = "LATE";
+    }
 
-    <div class="box">
+    tbody.innerHTML += `
+      <tr>
+        <td>${u.name}</td>
+        <td>${u.role}</td>
 
-      <h3>By Role</h3>
+        <td>
+          ${u.clockIn ? new Date(u.clockIn).toLocaleTimeString() : "-"}
+        </td>
 
-      ${
-        Object.entries(roleStats)
-        .map(([role,count])=>`
+        <td>
+          ${u.clockOut ? new Date(u.clockOut).toLocaleTimeString() : "-"}
+        </td>
 
-          ${role}: ${count}
+        <td class="${status.toLowerCase()}">
+          ${status}
+        </td>
 
-          <br><br>
+        <td class="flag">
+          ${u.flags.join(", ") || "-"}
+        </td>
+      </tr>
+    `;
 
-        `).join("")
-      }
+  });
 
-    </div>
-  `;
 }
 
-load();
+function renderSummary(data){
+
+  let present = 0;
+  let late = 0;
+  let absent = 0;
+
+  data.forEach(u => {
+
+    if(!u.clockIn){
+      absent++;
+    }else if(u.flags.includes("LATE_CLOCK_IN")){
+      late++;
+    }else{
+      present++;
+    }
+
+  });
+
+  document.getElementById("summary").innerHTML = `
+    <h3>Summary</h3>
+    <p>Present: <b>${present}</b></p>
+    <p>Late: <b>${late}</b></p>
+    <p>Absent: <b>${absent}</b></p>
+  `;
+
+}
 
 </script>
 
