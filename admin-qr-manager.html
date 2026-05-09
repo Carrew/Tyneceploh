@@ -1,122 +1,149 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF QR Control Center</title>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>TEF Attendance Control Center</title>
 
   <style>
-
     body{
       font-family:sans-serif;
       background:#f4f4f4;
       padding:20px;
     }
 
-    h2{
-      text-align:center;
-    }
+    h2{ text-align:center; }
 
-    .top{
-      text-align:center;
-      margin-bottom:20px;
-    }
-
-    button{
-      padding:10px 14px;
-      margin:5px;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
-    }
-
-    .create{
-      background:#27ae60;
-      color:white;
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
     }
 
     .card{
       background:white;
       padding:15px;
-      margin-bottom:20px;
       border-radius:12px;
       box-shadow:0 2px 10px rgba(0,0,0,0.1);
-      display:flex;
-      gap:20px;
-      align-items:center;
-      flex-wrap:wrap;
     }
 
-    .info{
-      flex:1;
+    input, select{
+      width:100%;
+      padding:8px;
+      margin:5px 0;
     }
 
-    .qr{
+    button{
       padding:10px;
-      background:#fff;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      margin-top:10px;
+    }
+
+    .green{ background:#27ae60; color:white; }
+    .blue{ background:#2980b9; color:white; }
+    .red{ background:#c0392b; color:white; }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+
+    th,td{
       border:1px solid #ddd;
-      border-radius:10px;
+      padding:8px;
+      font-size:13px;
+      text-align:center;
     }
 
-    .actions{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
+    th{
+      background:#eee;
     }
 
-    .print{
-      background:#2980b9;
-      color:white;
+    .flag{
+      color:red;
+      font-weight:bold;
     }
-
-    .disable{
-      background:#c0392b;
-      color:white;
-    }
-
-    .download{
-      background:#8e44ad;
-      color:white;
-    }
-
   </style>
 </head>
 
 <body>
 
-<h2>QR Attendance Control Center</h2>
+<h2>Attendance Control Center</h2>
 
-<div class="top">
+<div class="grid">
 
-  <button class="create"
-    onclick="createQR('clock-in')">
-    Create / Reset Clock-In QR
-  </button>
+  <!-- QR CONTROL -->
+  <div class="card">
+    <h3>QR Management</h3>
 
-  <button class="create"
-    onclick="createQR('clock-out')">
-    Create / Reset Clock-Out QR
-  </button>
+    <button class="green" onclick="createQR('clock-in')">
+      Generate Clock-In QR
+    </button>
+
+    <button class="green" onclick="createQR('clock-out')">
+      Generate Clock-Out QR
+    </button>
+
+    <div id="qrStatus"></div>
+  </div>
+
+  <!-- RULES -->
+  <div class="card">
+    <h3>Role Time Rules</h3>
+
+    <select id="role">
+      <option>teacher</option>
+      <option>student</option>
+      <option>security</option>
+      <option>janitor</option>
+      <option>coordinator</option>
+    </select>
+
+    <input id="inStart" placeholder="Clock-In Start (07:00)">
+    <input id="inEnd" placeholder="Clock-In End (08:30)">
+    <input id="outStart" placeholder="Clock-Out Start (15:00)">
+    <input id="outEnd" placeholder="Clock-Out End (17:00)">
+
+    <button class="blue" onclick="saveRules()">
+      Save Rules
+    </button>
+
+  </div>
 
 </div>
 
-<div id="list"></div>
+<!-- LIVE LOGS -->
+<div class="card" style="margin-top:20px;">
+  <h3>Live Attendance Logs</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Type</th>
+        <th>Time</th>
+        <th>Flags</th>
+      </tr>
+    </thead>
+
+    <tbody id="logs"></tbody>
+  </table>
+</div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
-  doc,
   setDoc,
-  getDocs,
+  doc,
   collection,
-  updateDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  getDocs,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -126,170 +153,80 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const user =
-  JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "admin"){
   location.href="login.html";
 }
 
 //
-// CREATE QR
+// QR GENERATION
 //
 window.createQR = async function(type){
 
-  const id =
-    type === "clock-in"
-    ? "QR_CLOCK_IN"
-    : "QR_CLOCK_OUT";
+  const code = `TEF-${type}-${Date.now()}`;
 
-  const code =
-    `TEF-${type.toUpperCase()}-${Date.now()}`;
-
-  await setDoc(doc(db,"attendanceQR",id),{
-
-    id,
+  await setDoc(doc(db,"attendanceQR",type),{
     type,
     code,
     active:true,
-    createdAt:Date.now(),
-    createdBy:user.userId
+    createdAt:Date.now()
+  });
+
+  document.getElementById("qrStatus").innerHTML =
+    `${type} QR updated`;
+
+};
+
+//
+// SAVE RULES
+//
+window.saveRules = async function(){
+
+  const role = document.getElementById("role").value;
+
+  await setDoc(doc(db,"attendanceRules",role),{
+    role,
+    clockInStart: inStart.value,
+    clockInEnd: inEnd.value,
+    clockOutStart: outStart.value,
+    clockOutEnd: outEnd.value
+  });
+
+  alert("Rules saved for " + role);
+
+};
+
+//
+// LIVE LOGS
+//
+const logsRef = collection(db,"attendanceRecords");
+
+onSnapshot(logsRef, snap => {
+
+  const rows = [];
+
+  snap.forEach(d => {
+    const r = d.data();
+
+    rows.push(`
+      <tr>
+        <td>${r.name}</td>
+        <td>${r.role}</td>
+        <td>${r.type}</td>
+        <td>${new Date(r.time).toLocaleTimeString()}</td>
+        <td class="flag">
+          ${(r.flags || []).join(", ")}
+        </td>
+      </tr>
+    `);
 
   });
 
-  load();
+  document.getElementById("logs").innerHTML =
+    rows.join("");
 
-};
-
-//
-// DISABLE QR
-//
-window.disableQR = async function(id){
-
-  await updateDoc(
-    doc(db,"attendanceQR",id),
-    { active:false }
-  );
-
-  load();
-
-};
-
-//
-// DOWNLOAD QR AS IMAGE
-//
-window.downloadQR = function(id){
-
-  const canvas =
-    document.querySelector(
-      `#qr-${id} canvas`
-    );
-
-  const link =
-    document.createElement("a");
-
-  link.download =
-    id + ".png";
-
-  link.href =
-    canvas.toDataURL();
-
-  link.click();
-
-};
-
-//
-// LOAD QR LIST
-//
-async function load(){
-
-  const snap =
-    await getDocs(
-      collection(db,"attendanceQR")
-    );
-
-  const list =
-    document.getElementById("list");
-
-  list.innerHTML = "";
-
-  snap.forEach(d=>{
-
-    const q = d.data();
-
-    const cardId =
-      "qr-" + q.id;
-
-    list.innerHTML += `
-
-      <div class="card">
-
-        <div class="info">
-
-          <h3>
-            ${q.type.toUpperCase()}
-          </h3>
-
-          <p>
-            Code:
-            <b>${q.code}</b>
-          </p>
-
-          <p>
-            Status:
-            ${
-              q.active
-              ? "ACTIVE"
-              : "DISABLED"
-            }
-          </p>
-
-        </div>
-
-        <div class="qr" id="${cardId}">
-        </div>
-
-        <div class="actions">
-
-          <button class="print"
-            onclick="window.print()">
-            Reprint
-          </button>
-
-          <button class="download"
-            onclick="downloadQR('${q.id}')">
-            Download
-          </button>
-
-          <button class="disable"
-            onclick="disableQR('${q.id}')">
-            Disable
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
-    // Generate QR IMAGE
-    new QRCode(
-      document.getElementById(cardId),
-      {
-        text: JSON.stringify({
-          type: q.type,
-          token: q.code
-        }),
-        width: 150,
-        height: 150
-      }
-    );
-
-  });
-
-}
-
-load();
+});
 
 </script>
 
