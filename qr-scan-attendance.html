@@ -3,27 +3,64 @@
 <head>
   <title>TEF Live Attendance Scan</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
+
   <style>
-    body { font-family: sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
-    #reader { width: 320px; margin: auto; border-radius: 10px; overflow: hidden; background: white; border: 2px solid #ccc; }
-    .status { margin-top: 20px; font-weight: bold; padding: 15px; border-radius: 8px; min-height: 20px; }
-    .ok { color: #155724; background: #d4edda; border: 1px solid #c3e6cb; }
-    .bad { color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; }
-    .info { color: #0c5460; background: #d1ecf1; border: 1px solid #bee5eb; }
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #reader {
+      width: 320px;
+      margin: auto;
+      border-radius: 10px;
+      overflow: hidden;
+      background: white;
+      border: 2px solid #ccc;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 8px;
+      min-height: 20px;
+    }
+
+    .ok {
+      color: #155724;
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+    }
+
+    .bad {
+      color: #721c24;
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
+
+    .info {
+      color: #0c5460;
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+    }
   </style>
 </head>
 
 <body>
 
 <h2>Scan to Clock In / Out</h2>
+
 <div id="reader"></div>
-<div class="status" id="status">Waiting for scan...</div>
+<div class="status info" id="status">Waiting for scan...</div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- Configuration ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, addDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
@@ -34,97 +71,152 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
-if (!user) { location.href = "login.html"; }
+if (!user) location.href = "login.html";
 
-// Device ID Generation
-const device = btoa(navigator.userAgent + screen.width + screen.height);
 
-// --- Haversine Distance Formula (Meters) ---
+// 🧠 DEVICE FINGERPRINT (same logic as admin system)
+const device = btoa(
+  navigator.userAgent +
+  screen.width +
+  screen.height +
+  Intl.DateTimeFormat().resolvedOptions().timeZone
+);
+
+
+// 📍 DISTANCE CALCULATION (Haversine)
 function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371e3; // Earth radius in meters
+  const R = 6371e3;
   const p1 = lat1 * Math.PI / 180;
   const p2 = lat2 * Math.PI / 180;
   const dp = (lat2 - lat1) * Math.PI / 180;
   const dl = (lon2 - lon1) * Math.PI / 180;
 
-  const a = Math.sin(dp / 2) * Math.sin(dp / 2) +
-            Math.cos(p1) * Math.cos(p2) *
-            Math.sin(dl / 2) * Math.sin(dl / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const a =
+    Math.sin(dp/2) * Math.sin(dp/2) +
+    Math.cos(p1) * Math.cos(p2) *
+    Math.sin(dl/2) * Math.sin(dl/2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
 }
 
-// --- GPS Handler ---
-async function getLocation() {
+
+// 📍 GPS
+function getLocation() {
   return new Promise((res, rej) => {
     navigator.geolocation.getCurrentPosition(
       pos => res(pos.coords),
-      err => {
-        let m = "Location Error: ";
-        if (err.code === 1) m += "Permission Denied";
-        else if (err.code === 3) m += "Timeout (Try moving outdoors)";
-        else m += "Signal lost";
-        rej(new Error(m));
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      err => rej(new Error("Location permission required"))
     );
   });
 }
 
-// --- Scanner Init ---
+
+// 📷 SCANNER
 const scanner = new Html5Qrcode("reader");
+
 scanner.start(
   { facingMode: "environment" },
   { fps: 10, qrbox: 250 },
+
   async (qrText) => {
     scanner.pause();
     await processScan(qrText);
     setTimeout(() => scanner.resume(), 3000);
   }
+
 ).catch(err => show("Camera Error: " + err, "bad"));
 
-// --- Primary Logic ---
-async function processScan(qrText) {
-  try {
-    let qr;
-    try { qr = JSON.parse(qrText); } catch(e) { throw new Error("Invalid QR Data"); }
 
-    show("Acquiring precise GPS...", "info");
+// ⚙️ CORE LOGIC
+async function processScan(qrText) {
+
+  try {
+
+    let qr;
+
+    try {
+      qr = JSON.parse(qrText);
+    } catch (e) {
+      throw new Error("Invalid QR format");
+    }
+
+    if (!qr.token || !qr.type) {
+      throw new Error("Invalid QR data");
+    }
+
+    show("Checking location...", "info");
+
     const coords = await getLocation();
 
-    // TARGET COORDINATES
-    const target = { lat: 6.249763, lng: -10.675790 };
-    
-    const distance = getDistance(coords.latitude, coords.longitude, target.lat, target.lng);
-    const accuracy = coords.accuracy;
+    // SCHOOL LOCATION
+    const school = {
+      lat: 6.249763,
+      lng: -10.675790
+    };
 
-    console.log(`Dist: ${distance.toFixed(1)}m, Acc: ${accuracy.toFixed(1)}m`);
+    const distance = getDistance(
+      coords.latitude,
+      coords.longitude,
+      school.lat,
+      school.lng
+    );
 
-    // RULE 1: BOUNDARY (Allowed 150m for drift)
+    // 🚫 GPS BLOCK RULE
     if (distance > 150) {
-      throw new Error(`Too far: ${Math.round(distance)}m from target. (Accuracy: ±${Math.round(accuracy)}m)`);
+      throw new Error(
+        `Outside campus (${Math.round(distance)}m)`
+      );
     }
 
-    // RULE 2: DEVICE LOCK
+    // 🚫 DEVICE BLOCK RULE
     if (user.primaryDevice && user.primaryDevice !== device) {
-      throw new Error("Device mismatch. Use your registered phone.");
+      throw new Error("Device not registered for attendance");
     }
 
-    // SUCCESS: UPLOAD
-    show("Verifying with server...", "info");
-    await addDoc(collection(db, "attendanceRecords"), {
+    // OPTIONAL: FIRST DEVICE LOCK
+    if (!user.primaryDevice) {
+      user.primaryDevice = device;
+    }
+
+    // 🧠 BUILD RECORD
+    const record = {
       userId: user.userId,
       name: user.name,
       role: user.role || "staff",
-      type: qr.type || "scan",
-      time: Date.now(),
-      device,
-      distance: Math.round(distance),
-      coords: { lat: coords.latitude, lng: coords.longitude, acc: accuracy },
-      status: "valid"
-    });
 
-    show("Attendance Recorded Successfully!", "ok");
+      type: qr.type, // clock-in / clock-out
+
+      time: Date.now(),
+
+      device,
+
+      location: {
+        lat: coords.latitude,
+        lng: coords.longitude,
+        accuracy: coords.accuracy
+      },
+
+      distance: Math.round(distance),
+
+      flags: [],
+
+      status: "valid"
+    };
+
+    // 🔴 LATE FLAG (NOT BLOCKED)
+    const hour = new Date().getHours();
+    if (qr.type === "clock-in" && hour > 8) {
+      record.flags.push("LATE_CLOCK_IN");
+      record.status = "flagged";
+    }
+
+    await addDoc(
+      collection(db, "attendanceRecords"),
+      record
+    );
+
+    show("Attendance recorded", "ok");
 
   } catch (err) {
     console.error(err);
@@ -132,6 +224,8 @@ async function processScan(qrText) {
   }
 }
 
+
+// UI
 function show(msg, type) {
   const el = document.getElementById("status");
   el.textContent = msg;
@@ -139,5 +233,6 @@ function show(msg, type) {
 }
 
 </script>
+
 </body>
 </html>
