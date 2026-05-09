@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF Attendance Control Center</title>
+  <title>TEF Attendance Control</title>
 
-  <!-- QR Library -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <style>
@@ -27,23 +26,23 @@
       background:white;
       padding:20px;
       border-radius:12px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.1);
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
 
     input, select{
       width:100%;
       padding:10px;
-      margin-top:10px;
+      margin-top:8px;
       box-sizing:border-box;
     }
 
     button{
-      padding:10px 14px;
+      padding:10px;
       border:none;
       border-radius:6px;
       cursor:pointer;
-      font-weight:bold;
       margin-top:10px;
+      font-weight:bold;
     }
 
     .green{
@@ -56,7 +55,7 @@
       color:white;
     }
 
-    #qrCanvas{
+    #qrcode{
       margin-top:20px;
       text-align:center;
     }
@@ -64,10 +63,10 @@
     table{
       width:100%;
       border-collapse:collapse;
-      margin-top:15px;
+      margin-top:10px;
     }
 
-    th,td{
+    th, td{
       border:1px solid #ddd;
       padding:8px;
       text-align:center;
@@ -78,8 +77,13 @@
       background:#eee;
     }
 
-    .flag{
-      color:red;
+    .late{
+      color:#e67e22;
+      font-weight:bold;
+    }
+
+    .good{
+      color:#27ae60;
       font-weight:bold;
     }
   </style>
@@ -91,43 +95,34 @@
 
 <div class="grid">
 
-  <!-- QR SECTION -->
+  <!-- QR -->
   <div class="card">
 
-    <h3>Global Attendance QR</h3>
+    <h3>Attendance QR</h3>
 
-    <p>
-      One QR is used for all staff attendance scanning.
-      Students are excluded.
-    </p>
-
-    <button class="green" onclick="createQR()">
+    <button class="green" onclick="generateQR()">
       Generate / Refresh QR
     </button>
 
-    <div id="qrStatus"></div>
-
-    <div id="qrCanvas"></div>
+    <div id="qrcode"></div>
 
   </div>
 
   <!-- RULES -->
   <div class="card">
 
-    <h3>Attendance Rules</h3>
+    <h3>Role Expected Times</h3>
 
     <select id="role">
-      <option value="teacher">teacher</option>
-      <option value="security">security</option>
-      <option value="janitor">janitor</option>
-      <option value="coordinator">coordinator</option>
-      <option value="admin">admin</option>
+      <option value="teacher">Teacher</option>
+      <option value="security">Security</option>
+      <option value="janitor">Janitor</option>
+      <option value="coordinator">Coordinator</option>
+      <option value="admin">Admin</option>
     </select>
 
-    <input id="inStart" placeholder="Clock-In Start (07:00)">
-    <input id="inEnd" placeholder="Clock-In End (08:00)">
-    <input id="outStart" placeholder="Clock-Out Start (15:00)">
-    <input id="outEnd" placeholder="Clock-Out End (17:00)">
+    <input type="time" id="clockIn">
+    <input type="time" id="clockOut">
 
     <button class="blue" onclick="saveRules()">
       Save Rules
@@ -137,10 +132,10 @@
 
 </div>
 
-<!-- LIVE LOGS -->
+<!-- LIVE -->
 <div class="card" style="margin-top:20px;">
 
-  <h3>Live Attendance Logs</h3>
+  <h3>Live Attendance</h3>
 
   <table>
 
@@ -148,10 +143,9 @@
       <tr>
         <th>Name</th>
         <th>Role</th>
-        <th>Action</th>
-        <th>Time</th>
+        <th>Clock-In</th>
+        <th>Clock-Out</th>
         <th>Status</th>
-        <th>Flags</th>
       </tr>
     </thead>
 
@@ -173,12 +167,13 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
@@ -187,36 +182,26 @@ if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
+//
+// QR GENERATOR
+//
+window.generateQR = async function(){
 
-// GENERATE GLOBAL QR
-window.createQR = async function(){
-
-  const sessionId = "TEF_ATTENDANCE_" + Date.now();
-
-  const payload = {
-    session: sessionId,
-    type: "attendance",
-    createdAt: Date.now(),
-    expires: Date.now() + (5 * 60 * 1000)
+  const qrData = {
+    type:"attendance",
+    token:"TEF-" + Date.now()
   };
 
-  // SAVE TO FIREBASE
   await setDoc(
-    doc(db,"attendanceQR","global"),
-    {
-      active:true,
-      payload
-    }
+    doc(db,"attendanceSystem","mainQR"),
+    qrData
   );
 
-  // DRAW QR
-  document.getElementById("qrCanvas").innerHTML = "";
+  document.getElementById("qrcode").innerHTML = "";
 
   QRCode.toCanvas(
-    JSON.stringify(payload),
-    {
-      width:250
-    },
+    JSON.stringify(qrData),
+    { width:250 },
     function(err, canvas){
 
       if(err){
@@ -224,87 +209,108 @@ window.createQR = async function(){
         return;
       }
 
-      document.getElementById("qrCanvas").appendChild(canvas);
+      document.getElementById("qrcode")
+        .appendChild(canvas);
 
     }
   );
 
-  document.getElementById("qrStatus").innerHTML =
-    "QR Generated Successfully (Valid for 5 minutes)";
 };
 
 
-
+//
 // SAVE RULES
+//
 window.saveRules = async function(){
 
   const role = document.getElementById("role").value;
+
+  const expectedClockIn =
+    document.getElementById("clockIn").value;
+
+  const expectedClockOut =
+    document.getElementById("clockOut").value;
 
   await setDoc(
     doc(db,"attendanceRules",role),
     {
       role,
-
-      clockInStart:
-        document.getElementById("inStart").value,
-
-      clockInEnd:
-        document.getElementById("inEnd").value,
-
-      clockOutStart:
-        document.getElementById("outStart").value,
-
-      clockOutEnd:
-        document.getElementById("outEnd").value
+      expectedClockIn,
+      expectedClockOut,
+      updatedAt:Date.now()
     }
   );
 
-  alert("Rules saved successfully.");
+  alert("Rules saved");
 
 };
 
 
+//
+// LIVE ATTENDANCE
+//
+const today =
+  new Date().toISOString().split("T")[0];
 
-// LIVE LOGS
-const logsRef = collection(db,"attendanceRecords");
+onSnapshot(
+  collection(db,"attendanceDaily"),
+  snap => {
 
-onSnapshot(logsRef, snap => {
+    const rows = [];
 
-  let html = "";
+    snap.forEach(d => {
 
-  snap.forEach(d => {
+      const r = d.data();
 
-    const r = d.data();
+      if(r.date !== today) return;
 
-    html += `
-      <tr>
+      rows.push(`
+        <tr>
 
-        <td>${r.name || "-"}</td>
+          <td>${r.name}</td>
 
-        <td>${r.role || "-"}</td>
+          <td>${r.role}</td>
 
-        <td>${r.type || "-"}</td>
+          <td>
+            ${
+              r.clockIn?.time
+              ? new Date(r.clockIn.time)
+                  .toLocaleTimeString()
+              : "-"
+            }
+          </td>
 
-        <td>
-          ${new Date(r.time).toLocaleTimeString()}
-        </td>
+          <td>
+            ${
+              r.clockOut?.time
+              ? new Date(r.clockOut.time)
+                  .toLocaleTimeString()
+              : "-"
+            }
+          </td>
 
-        <td>
-          ${r.status || "-"}
-        </td>
+          <td class="${
+            r.clockIn?.status === "LATE"
+            ? "late"
+            : "good"
+          }">
 
-        <td class="flag">
-          ${(r.flags || []).join(", ") || "-"}
-        </td>
+            ${
+              r.clockIn?.status || "PRESENT"
+            }
 
-      </tr>
-    `;
+          </td>
 
-  });
+        </tr>
+      `);
 
-  document.getElementById("logs").innerHTML = html;
+    });
 
-});
+    document.getElementById("logs")
+      .innerHTML = rows.join("");
+
+  }
+);
 
 </script>
 
