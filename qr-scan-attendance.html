@@ -221,7 +221,7 @@ async function processScan(qrText){
       school.lng
     );
 
-    if(distance > 150){
+    if(distance > 250){
       throw new Error(
         "Outside school campus"
       );
