@@ -3,6 +3,9 @@
 <head>
   <title>TEF Attendance Control Center</title>
 
+  <!-- QR Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
   <style>
     body{
       font-family:sans-serif;
@@ -10,7 +13,9 @@
       padding:20px;
     }
 
-    h2{ text-align:center; }
+    h2{
+      text-align:center;
+    }
 
     .grid{
       display:grid;
@@ -20,19 +25,20 @@
 
     .card{
       background:white;
-      padding:15px;
+      padding:20px;
       border-radius:12px;
       box-shadow:0 2px 10px rgba(0,0,0,0.1);
     }
 
     input, select{
       width:100%;
-      padding:8px;
-      margin:5px 0;
+      padding:10px;
+      margin-top:10px;
+      box-sizing:border-box;
     }
 
     button{
-      padding:10px;
+      padding:10px 14px;
       border:none;
       border-radius:6px;
       cursor:pointer;
@@ -40,21 +46,32 @@
       margin-top:10px;
     }
 
-    .green{ background:#27ae60; color:white; }
-    .blue{ background:#2980b9; color:white; }
-    .red{ background:#c0392b; color:white; }
+    .green{
+      background:#27ae60;
+      color:white;
+    }
+
+    .blue{
+      background:#2980b9;
+      color:white;
+    }
+
+    #qrCanvas{
+      margin-top:20px;
+      text-align:center;
+    }
 
     table{
       width:100%;
       border-collapse:collapse;
-      margin-top:10px;
+      margin-top:15px;
     }
 
     th,td{
       border:1px solid #ddd;
       padding:8px;
-      font-size:13px;
       text-align:center;
+      font-size:13px;
     }
 
     th{
@@ -74,35 +91,41 @@
 
 <div class="grid">
 
-  <!-- QR CONTROL -->
+  <!-- QR SECTION -->
   <div class="card">
-    <h3>QR Management</h3>
 
-    <button class="green" onclick="createQR('clock-in')">
-      Generate Clock-In QR
-    </button>
+    <h3>Global Attendance QR</h3>
 
-    <button class="green" onclick="createQR('clock-out')">
-      Generate Clock-Out QR
+    <p>
+      One QR is used for all staff attendance scanning.
+      Students are excluded.
+    </p>
+
+    <button class="green" onclick="createQR()">
+      Generate / Refresh QR
     </button>
 
     <div id="qrStatus"></div>
+
+    <div id="qrCanvas"></div>
+
   </div>
 
   <!-- RULES -->
   <div class="card">
-    <h3>Role Time Rules</h3>
+
+    <h3>Attendance Rules</h3>
 
     <select id="role">
-      <option>teacher</option>
-      <option>student</option>
-      <option>security</option>
-      <option>janitor</option>
-      <option>coordinator</option>
+      <option value="teacher">teacher</option>
+      <option value="security">security</option>
+      <option value="janitor">janitor</option>
+      <option value="coordinator">coordinator</option>
+      <option value="admin">admin</option>
     </select>
 
     <input id="inStart" placeholder="Clock-In Start (07:00)">
-    <input id="inEnd" placeholder="Clock-In End (08:30)">
+    <input id="inEnd" placeholder="Clock-In End (08:00)">
     <input id="outStart" placeholder="Clock-Out Start (15:00)">
     <input id="outEnd" placeholder="Clock-Out End (17:00)">
 
@@ -116,32 +139,37 @@
 
 <!-- LIVE LOGS -->
 <div class="card" style="margin-top:20px;">
+
   <h3>Live Attendance Logs</h3>
 
   <table>
+
     <thead>
       <tr>
         <th>Name</th>
         <th>Role</th>
-        <th>Type</th>
+        <th>Action</th>
         <th>Time</th>
+        <th>Status</th>
         <th>Flags</th>
       </tr>
     </thead>
 
     <tbody id="logs"></tbody>
+
   </table>
+
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   setDoc,
   doc,
   collection,
-  getDocs,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -156,75 +184,125 @@ const db = getFirestore(app);
 const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "admin"){
-  location.href="login.html";
+  location.href = "login.html";
 }
 
-//
-// QR GENERATION
-//
-window.createQR = async function(type){
 
-  const code = `TEF-${type}-${Date.now()}`;
+// GENERATE GLOBAL QR
+window.createQR = async function(){
 
-  await setDoc(doc(db,"attendanceQR",type),{
-    type,
-    code,
-    active:true,
-    createdAt:Date.now()
-  });
+  const sessionId = "TEF_ATTENDANCE_" + Date.now();
+
+  const payload = {
+    session: sessionId,
+    type: "attendance",
+    createdAt: Date.now(),
+    expires: Date.now() + (5 * 60 * 1000)
+  };
+
+  // SAVE TO FIREBASE
+  await setDoc(
+    doc(db,"attendanceQR","global"),
+    {
+      active:true,
+      payload
+    }
+  );
+
+  // DRAW QR
+  document.getElementById("qrCanvas").innerHTML = "";
+
+  QRCode.toCanvas(
+    JSON.stringify(payload),
+    {
+      width:250
+    },
+    function(err, canvas){
+
+      if(err){
+        console.error(err);
+        return;
+      }
+
+      document.getElementById("qrCanvas").appendChild(canvas);
+
+    }
+  );
 
   document.getElementById("qrStatus").innerHTML =
-    `${type} QR updated`;
-
+    "QR Generated Successfully (Valid for 5 minutes)";
 };
 
-//
+
+
 // SAVE RULES
-//
 window.saveRules = async function(){
 
   const role = document.getElementById("role").value;
 
-  await setDoc(doc(db,"attendanceRules",role),{
-    role,
-    clockInStart: inStart.value,
-    clockInEnd: inEnd.value,
-    clockOutStart: outStart.value,
-    clockOutEnd: outEnd.value
-  });
+  await setDoc(
+    doc(db,"attendanceRules",role),
+    {
+      role,
 
-  alert("Rules saved for " + role);
+      clockInStart:
+        document.getElementById("inStart").value,
+
+      clockInEnd:
+        document.getElementById("inEnd").value,
+
+      clockOutStart:
+        document.getElementById("outStart").value,
+
+      clockOutEnd:
+        document.getElementById("outEnd").value
+    }
+  );
+
+  alert("Rules saved successfully.");
 
 };
 
-//
+
+
 // LIVE LOGS
-//
 const logsRef = collection(db,"attendanceRecords");
 
 onSnapshot(logsRef, snap => {
 
-  const rows = [];
+  let html = "";
 
   snap.forEach(d => {
+
     const r = d.data();
 
-    rows.push(`
+    html += `
       <tr>
-        <td>${r.name}</td>
-        <td>${r.role}</td>
-        <td>${r.type}</td>
-        <td>${new Date(r.time).toLocaleTimeString()}</td>
-        <td class="flag">
-          ${(r.flags || []).join(", ")}
+
+        <td>${r.name || "-"}</td>
+
+        <td>${r.role || "-"}</td>
+
+        <td>${r.type || "-"}</td>
+
+        <td>
+          ${new Date(r.time).toLocaleTimeString()}
         </td>
+
+        <td>
+          ${r.status || "-"}
+        </td>
+
+        <td class="flag">
+          ${(r.flags || []).join(", ") || "-"}
+        </td>
+
       </tr>
-    `);
+    `;
 
   });
 
-  document.getElementById("logs").innerHTML =
-    rows.join("");
+  document.getElementById("logs").innerHTML = html;
 
 });
 
