@@ -1,435 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF Daily Attendance Sheet</title>
+<title>Attendance Report</title>
 
-  <style>
-    body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
-    }
-
-    h2{
-      text-align:center;
-      margin-bottom:20px;
-    }
-
-    .topbar{
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      margin-bottom:20px;
-      flex-wrap:wrap;
-    }
-
-    input, button{
-      padding:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
-    }
-
-    button{
-      background:#2980b9;
-      color:white;
-      border:none;
-      cursor:pointer;
-      font-weight:bold;
-    }
-
-    .summary{
-      display:grid;
-      grid-template-columns:
-      repeat(auto-fit,minmax(180px,1fr));
-      gap:15px;
-      margin-bottom:20px;
-    }
-
-    .card{
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      text-align:center;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .card h3{
-      margin:0;
-      font-size:30px;
-    }
-
-    .table-wrap{
-      background:white;
-      padding:15px;
-      border-radius:12px;
-      overflow:auto;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-    }
-
-    th, td{
-      border:1px solid #ddd;
-      padding:8px;
-      text-align:center;
-      font-size:13px;
-    }
-
-    th{
-      background:#eee;
-    }
-
-    .late{
-      color:#e67e22;
-      font-weight:bold;
-    }
-
-    .early{
-      color:#3498db;
-      font-weight:bold;
-    }
-
-    .overtime{
-      color:#27ae60;
-      font-weight:bold;
-    }
-
-    .danger{
-      color:#c0392b;
-      font-weight:bold;
-    }
-
-  </style>
+<style>
+body{font-family:sans-serif;background:#f4f4f4;padding:20px}
+table{width:100%;background:#fff;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#eee}
+</style>
 </head>
 
 <body>
 
-<h2>Daily Attendance Report</h2>
+<h2>Daily Report</h2>
 
-<div class="topbar">
-
-  <input type="date" id="date">
-
-  <button onclick="loadAttendance()">
-    Load Report
-  </button>
-
-</div>
-
-<!-- SUMMARY -->
-
-<div class="summary">
-
-  <div class="card">
-    <p>Total Present</p>
-    <h3 id="presentCount">0</h3>
-  </div>
-
-  <div class="card">
-    <p>Late Arrivals</p>
-    <h3 id="lateCount">0</h3>
-  </div>
-
-  <div class="card">
-    <p>Early Arrivals</p>
-    <h3 id="earlyCount">0</h3>
-  </div>
-
-  <div class="card">
-    <p>Missing Clock-Out</p>
-    <h3 id="missingCount">0</h3>
-  </div>
-
-</div>
-
-<!-- TABLE -->
-
-<div class="table-wrap">
+<input type="date" id="date">
+<button onclick="load()">Load</button>
 
 <table>
-
-  <thead>
-
-    <tr>
-      <th>Name</th>
-      <th>Role</th>
-      <th>Clock-In</th>
-      <th>In Status</th>
-      <th>Clock-Out</th>
-      <th>Out Status</th>
-      <th>Worked</th>
-      <th>Device</th>
-    </tr>
-
-  </thead>
-
-  <tbody id="tbody"></tbody>
-
+<thead>
+<tr>
+<th>Name</th><th>In</th><th>Status</th><th>Out</th><th>Work</th>
+</tr>
+</thead>
+<tbody id="t"></tbody>
 </table>
 
-</div>
-
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+const app=initializeApp({
+apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+projectId:"tyneceploh"
+});
 
-import {
-  getFirestore,
-  collection,
-  getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const db=getFirestore(app);
 
-const firebaseConfig = {
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+window.load=async()=>{
+const d=date.value;
+const snap=await getDocs(collection(db,"attendanceDaily"));
+let rows="";
+snap.forEach(x=>{
+const v=x.data();
+if(v.date!==d)return;
+
+rows+=`
+<tr>
+<td>${v.name}</td>
+<td>${v.clockIn?new Date(v.clockIn.time).toLocaleTimeString():"-"}</td>
+<td>${v.clockIn?.status||"-"}</td>
+<td>${v.clockOut?new Date(v.clockOut.time).toLocaleTimeString():"-"}</td>
+<td>${v.clockOut?((v.clockOut.time-v.clockIn.time)/3600000).toFixed(1)+"h":"-"}</td>
+</tr>`;
+});
+t.innerHTML=rows;
 };
-
-const app =
-  initializeApp(firebaseConfig);
-
-const db =
-  getFirestore(app);
-
-const user =
-  JSON.parse(localStorage.getItem("user"));
-
-if(!user || user.role !== "admin"){
-  location.href = "login.html";
-}
-
-//
-// FORMAT TIME
-//
-function formatTime(timestamp){
-
-  if(!timestamp) return "-";
-
-  return new Date(timestamp)
-    .toLocaleTimeString();
-
-}
-
-//
-// WORK DURATION
-//
-function calculateDuration(start,end){
-
-  if(!start || !end){
-    return "-";
-  }
-
-  const diff = end - start;
-
-  const hours =
-    Math.floor(diff / 3600000);
-
-  const mins =
-    Math.floor(
-      (diff % 3600000) / 60000
-    );
-
-  return `${hours}h ${mins}m`;
-
-}
-
-//
-// LOAD ATTENDANCE
-//
-window.loadAttendance = async function(){
-
-  const date =
-    document.getElementById("date").value;
-
-  if(!date){
-
-    alert("Select a date");
-
-    return;
-
-  }
-
-  const snap =
-    await getDocs(
-      collection(db,"attendanceDaily")
-    );
-
-  let rows = [];
-
-  let present = 0;
-  let late = 0;
-  let early = 0;
-  let missing = 0;
-
-  snap.forEach(d => {
-
-    const data = d.data();
-
-    if(data.date !== date) return;
-
-    present++;
-
-    //
-    // SUMMARY
-    //
-    if(
-      data.clockIn?.status === "LATE"
-    ){
-      late++;
-    }
-
-    if(
-      data.clockIn?.status === "EARLY"
-    ){
-      early++;
-    }
-
-    if(!data.clockOut){
-      missing++;
-    }
-
-    //
-    // ROW
-    //
-    rows.push(`
-
-      <tr>
-
-        <td>${data.name}</td>
-
-        <td>${data.role}</td>
-
-        <td>
-          ${
-            formatTime(
-              data.clockIn?.time
-            )
-          }
-        </td>
-
-        <td class="
-          ${
-            data.clockIn?.status === "LATE"
-            ? "late"
-
-            : data.clockIn?.status === "EARLY"
-            ? "early"
-
-            : ""
-          }
-        ">
-
-          ${
-            data.clockIn?.status || "-"
-          }
-
-          ${
-            data.clockIn?.minutes
-            ? `(${data.clockIn.minutes} mins)`
-            : ""
-          }
-
-        </td>
-
-        <td>
-          ${
-            formatTime(
-              data.clockOut?.time
-            )
-          }
-        </td>
-
-        <td class="
-          ${
-            data.clockOut?.status === "OVERTIME"
-            ? "overtime"
-
-            : data.clockOut?.status === "EARLY_EXIT"
-            ? "danger"
-
-            : ""
-          }
-        ">
-
-          ${
-            data.clockOut?.status || "-"
-          }
-
-          ${
-            data.clockOut?.minutes
-            ? `(${data.clockOut.minutes} mins)`
-            : ""
-          }
-
-        </td>
-
-        <td class="
-          ${
-            !data.clockOut
-            ? "danger"
-            : ""
-          }
-        ">
-
-          ${
-            calculateDuration(
-              data.clockIn?.time,
-              data.clockOut?.time
-            )
-          }
-
-        </td>
-
-        <td style="font-size:11px;">
-          ${
-            data.deviceId
-            ? data.deviceId.substring(0,15)
-            : "-"
-          }
-        </td>
-
-      </tr>
-
-    `);
-
-  });
-
-  //
-  // UPDATE TABLE
-  //
-  document.getElementById("tbody")
-    .innerHTML = rows.join("");
-
-  //
-  // UPDATE SUMMARY
-  //
-  document.getElementById("presentCount")
-    .textContent = present;
-
-  document.getElementById("lateCount")
-    .textContent = late;
-
-  document.getElementById("earlyCount")
-    .textContent = early;
-
-  document.getElementById("missingCount")
-    .textContent = missing;
-
-};
-
-//
-// AUTO TODAY
-//
-document.getElementById("date").value =
-  new Date().toISOString().split("T")[0];
-
-loadAttendance();
-
 </script>
 
 </body>
