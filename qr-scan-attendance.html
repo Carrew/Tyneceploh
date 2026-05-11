@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF Attendance Scan</title>
+  <title>TEF QR Attendance Scan</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -9,23 +9,27 @@
     body{
       font-family:sans-serif;
       background:#f4f4f4;
-      text-align:center;
       padding:20px;
+      text-align:center;
+    }
+
+    h2{
+      margin-bottom:20px;
     }
 
     #reader{
       width:320px;
       margin:auto;
-      background:white;
-      border-radius:10px;
+      border-radius:12px;
       overflow:hidden;
+      background:white;
       border:2px solid #ccc;
     }
 
     .status{
       margin-top:20px;
       padding:15px;
-      border-radius:8px;
+      border-radius:10px;
       font-weight:bold;
       min-height:20px;
     }
@@ -44,17 +48,22 @@
       background:#d1ecf1;
       color:#0c5460;
     }
+
+    .warn{
+      background:#fff3cd;
+      color:#856404;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>TEF Attendance Scan</h2>
+<h2>TEF Attendance Scanner</h2>
 
 <div id="reader"></div>
 
-<div id="status" class="status info">
-  Waiting for scan...
+<div class="status info" id="status">
+  Waiting for QR Scan...
 </div>
 
 <script type="module">
@@ -66,14 +75,15 @@ import {
   getFirestore,
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  updateDoc
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -104,294 +114,7 @@ const deviceId = btoa(
 );
 
 //
-// GPS
-//
-function getDistance(lat1, lon1, lat2, lon2){
-
-  const R = 6371e3;
-
-  const p1 = lat1 * Math.PI / 180;
-  const p2 = lat2 * Math.PI / 180;
-
-  const dp = (lat2-lat1) * Math.PI/180;
-  const dl = (lon2-lon1) * Math.PI/180;
-
-  const a =
-    Math.sin(dp/2)**2 +
-    Math.cos(p1) *
-    Math.cos(p2) *
-    Math.sin(dl/2)**2;
-
-  return R * 2 *
-    Math.atan2(
-      Math.sqrt(a),
-      Math.sqrt(1-a)
-    );
-}
-
-//
-// LOCATION
-//
-function getLocation(){
-
-  return new Promise((res,rej)=>{
-
-    navigator.geolocation.getCurrentPosition(
-      p => res(p.coords),
-      e => rej(e),
-      {
-        enableHighAccuracy:true,
-        timeout:30000,
-        maximumAge:0
-      }
-    );
-
-  });
-
-}
-
-//
-// MINUTES DIFFERENCE
-//
-function minutesDiff(actual, expected){
-
-  const [eh, em] = expected.split(":").map(Number);
-
-  const expectedMinutes =
-    eh * 60 + em;
-
-  const actualMinutes =
-    actual.getHours() * 60 +
-    actual.getMinutes();
-
-  return actualMinutes - expectedMinutes;
-
-}
-
-//
-// MAIN SCAN LOGIC
-//
-async function processScan(qrText){
-
-  try{
-
-    show("Checking QR...", "info");
-
-    let qr;
-
-    try{
-      qr = JSON.parse(qrText);
-    }catch{
-      throw new Error("Invalid QR");
-    }
-
-    //
-    // VERIFY QR
-    //
-    const qrSnap = await getDoc(
-      doc(db,"attendanceSystem","mainQR")
-    );
-
-    if(!qrSnap.exists()){
-      throw new Error("QR system unavailable");
-    }
-
-    const systemQR = qrSnap.data();
-
-    if(systemQR.token !== qr.token){
-      throw new Error("Expired QR");
-    }
-
-    //
-    // GPS
-    //
-    show("Checking GPS...", "info");
-
-    const coords = await getLocation();
-
-    const school = {
-      lat:6.2413053,
-      lng:-10.6809767
-    };
-
-    const distance = getDistance(
-      coords.latitude,
-      coords.longitude,
-      school.lat,
-      school.lng
-    );
-
-    // Explicitly showing distance in logs/status if needed
-    console.log("Calculated Distance:", distance);
-
-    if(distance > 200){
-      throw new Error(
-        `Outside school campus (${Math.round(distance)}m away)`
-      );
-    }
-
-    //
-    // DEVICE
-    //
-    if(
-      user.primaryDevice &&
-      user.primaryDevice !== deviceId
-    ){
-      throw new Error(
-        "Unauthorized device"
-      );
-    }
-
-    //
-    // GET RULES
-    //
-    const rulesSnap = await getDoc(
-      doc(db,"attendanceRules",user.role)
-    );
-
-    if(!rulesSnap.exists()){
-      throw new Error(
-        "No attendance rules for role"
-      );
-    }
-
-    const rules = rulesSnap.data();
-
-    //
-    // DAILY DOC
-    //
-    const today =
-      new Date().toISOString().split("T")[0];
-
-    const dailyId =
-      user.userId + "_" + today;
-
-    const dailyRef =
-      doc(db,"attendanceDaily",dailyId);
-
-    const dailySnap =
-      await getDoc(dailyRef);
-
-    const now = new Date();
-
-    //
-    // CLOCK-IN
-    //
-    if(!dailySnap.exists()){
-
-      const diff =
-        minutesDiff(
-          now,
-          rules.expectedClockIn
-        );
-
-      let status = "ON_TIME";
-
-      if(diff > 0){
-        status = "LATE";
-      }
-
-      if(diff < 0){
-        status = "EARLY";
-      }
-
-      await setDoc(dailyRef,{
-
-        userId:user.userId,
-        name:user.name,
-        role:user.role,
-
-        date:today,
-
-        clockIn:{
-          time:Date.now(),
-          status,
-          minutes:Math.abs(diff)
-        },
-
-        clockOut:null,
-
-        location:{
-          lat:coords.latitude,
-          lng:coords.longitude
-        },
-
-        deviceId,
-
-        createdAt:Date.now()
-
-      });
-
-      show(
-        `Clocked In (${status}) - ${Math.round(distance)}m`,
-        "ok"
-      );
-
-      return;
-
-    }
-
-    //
-    // CLOCK-OUT
-    //
-    const dailyData =
-      dailySnap.data();
-
-    if(dailyData.clockOut){
-
-      throw new Error(
-        "Attendance already completed today"
-      );
-
-    }
-
-    const diff =
-      minutesDiff(
-        now,
-        rules.expectedClockOut
-      );
-
-    let status = "ON_TIME";
-
-    if(diff > 0){
-      status = "OVERTIME";
-    }
-
-    if(diff < 0){
-      status = "EARLY_EXIT";
-    }
-
-    await setDoc(dailyRef,{
-
-      ...dailyData,
-
-      clockOut:{
-        time:Date.now(),
-        status,
-        minutes:Math.abs(diff)
-      }
-
-    });
-
-    show(
-      `Clocked Out (${status}) - ${Math.round(distance)}m`,
-      "ok"
-    );
-
-  }
-
-  catch(err){
-
-    console.error(err);
-
-    show(err.message, "bad");
-
-  }
-
-}
-
-//
-// UI
+// STATUS UI
 //
 function show(msg,type){
 
@@ -406,6 +129,310 @@ function show(msg,type){
 }
 
 //
+// MINUTE DIFFERENCE
+//
+function getMinutesDifference(now,timeString){
+
+  const [h,m] =
+    timeString.split(":").map(Number);
+
+  const targetMinutes =
+    (h * 60) + m;
+
+  const currentMinutes =
+    (now.getHours() * 60) +
+    now.getMinutes();
+
+  return currentMinutes - targetMinutes;
+
+}
+
+//
+// FIND USER COLLECTION
+//
+async function getUserRef(){
+
+  const collections = [
+    "teachers",
+    "janitors",
+    "security",
+    "coordinators",
+    "admins"
+  ];
+
+  for(const col of collections){
+
+    const ref =
+      doc(db,col,user.userId);
+
+    const snap =
+      await getDoc(ref);
+
+    if(snap.exists()){
+
+      return {
+        ref,
+        data:snap.data(),
+        collection:col
+      };
+
+    }
+
+  }
+
+  return null;
+
+}
+
+//
+// PROCESS SCAN
+//
+async function processScan(qrText){
+
+  try{
+
+    show("Verifying QR...", "info");
+
+    //
+    // VALIDATE QR JSON
+    //
+    let qr;
+
+    try{
+      qr = JSON.parse(qrText);
+    }catch{
+      throw new Error("Invalid QR");
+    }
+
+    //
+    // GET ACTIVE QR
+    //
+    const qrRef =
+      doc(db,"attendanceSystem","mainQR");
+
+    const qrSnap =
+      await getDoc(qrRef);
+
+    if(!qrSnap.exists()){
+      throw new Error("QR unavailable");
+    }
+
+    const activeQR =
+      qrSnap.data();
+
+    //
+    // TOKEN CHECK
+    //
+    if(activeQR.token !== qr.token){
+      throw new Error("QR mismatch");
+    }
+
+    //
+    // EXPIRATION CHECK
+    //
+    if(Date.now() > activeQR.expiresAt){
+      throw new Error("QR expired");
+    }
+
+    //
+    // USER LOOKUP
+    //
+    const userData =
+      await getUserRef();
+
+    if(!userData){
+      throw new Error("User record missing");
+    }
+
+    //
+    // DEVICE LOCK
+    //
+    if(
+      userData.data.primaryDevice &&
+      userData.data.primaryDevice !== deviceId
+    ){
+      throw new Error(
+        "This device is not authorized"
+      );
+    }
+
+    //
+    // FIRST DEVICE AUTO REGISTER
+    //
+    if(!userData.data.primaryDevice){
+
+      await updateDoc(
+        userData.ref,
+        {
+          primaryDevice:deviceId
+        }
+      );
+
+    }
+
+    //
+    // SETTINGS
+    //
+    const settingsRef =
+      doc(
+        db,
+        "attendanceSettings",
+        user.userId
+      );
+
+    const settingsSnap =
+      await getDoc(settingsRef);
+
+    if(!settingsSnap.exists()){
+      throw new Error(
+        "Attendance settings missing"
+      );
+    }
+
+    const settings =
+      settingsSnap.data();
+
+    //
+    // DAILY RECORD
+    //
+    const today =
+      new Date()
+      .toISOString()
+      .split("T")[0];
+
+    const attendanceId =
+      user.userId + "_" + today;
+
+    const attendanceRef =
+      doc(
+        db,
+        "attendanceDaily",
+        attendanceId
+      );
+
+    const attendanceSnap =
+      await getDoc(attendanceRef);
+
+    const now = new Date();
+
+    //
+    // CLOCK IN
+    //
+    if(!attendanceSnap.exists()){
+
+      const diff =
+        getMinutesDifference(
+          now,
+          settings.expectedClockIn
+        );
+
+      let status = "ON_TIME";
+
+      if(diff > settings.graceMinutes){
+        status = "LATE";
+      }
+
+      if(diff < 0){
+        status = "EARLY";
+      }
+
+      await setDoc(
+        attendanceRef,
+        {
+
+          userId:user.userId,
+          name:user.name,
+          role:user.role,
+
+          date:today,
+
+          deviceId,
+
+          clockIn:{
+            time:Date.now(),
+            status,
+            minutes:Math.abs(diff)
+          },
+
+          clockOut:null,
+
+          createdAt:Date.now()
+
+        }
+      );
+
+      show(
+        `Clock-In Successful (${status})`,
+        status === "LATE"
+        ? "warn"
+        : "ok"
+      );
+
+      return;
+
+    }
+
+    //
+    // CLOCK OUT
+    //
+    const attendance =
+      attendanceSnap.data();
+
+    if(attendance.clockOut){
+
+      throw new Error(
+        "Attendance already completed today"
+      );
+
+    }
+
+    const diff =
+      getMinutesDifference(
+        now,
+        settings.expectedClockOut
+      );
+
+    let status = "ON_TIME";
+
+    if(diff < 0){
+      status = "EARLY_EXIT";
+    }
+
+    if(diff > 0){
+      status = "OVERTIME";
+    }
+
+    await updateDoc(
+      attendanceRef,
+      {
+
+        clockOut:{
+          time:Date.now(),
+          status,
+          minutes:Math.abs(diff)
+        }
+
+      }
+    );
+
+    show(
+      `Clock-Out Successful (${status})`,
+      "ok"
+    );
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    show(err.message,"bad");
+
+  }
+
+}
+
+//
 // START CAMERA
 //
 const scanner =
@@ -413,6 +440,7 @@ const scanner =
 
 scanner.start(
   { facingMode:"environment" },
+
   {
     fps:10,
     qrbox:250
@@ -431,7 +459,16 @@ scanner.start(
 
   }
 
-);
+).catch(err=>{
+
+  console.error(err);
+
+  show(
+    "Camera access denied",
+    "bad"
+  );
+
+});
 
 </script>
 
