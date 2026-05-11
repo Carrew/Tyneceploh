@@ -12,51 +12,56 @@
 
     h2{
       text-align:center;
-    }
-
-    .top{
-      text-align:center;
       margin-bottom:20px;
     }
 
-    input{
+    .topbar{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
+
+    input, button{
       padding:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
     }
 
     button{
-      padding:10px 14px;
-      border:none;
-      border-radius:6px;
       background:#2980b9;
       color:white;
+      border:none;
       cursor:pointer;
       font-weight:bold;
     }
 
-    .summary-grid{
+    .summary{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      grid-template-columns:
+      repeat(auto-fit,minmax(180px,1fr));
       gap:15px;
       margin-bottom:20px;
     }
 
-    .summary-card{
+    .card{
       background:white;
-      padding:15px;
-      border-radius:10px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      padding:20px;
+      border-radius:12px;
       text-align:center;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
 
-    .summary-card h3{
+    .card h3{
       margin:0;
-      font-size:28px;
+      font-size:30px;
     }
 
     .table-wrap{
       background:white;
       padding:15px;
-      border-radius:10px;
+      border-radius:12px;
       overflow:auto;
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
@@ -92,10 +97,11 @@
       font-weight:bold;
     }
 
-    .missing{
+    .danger{
       color:#c0392b;
       font-weight:bold;
     }
+
   </style>
 </head>
 
@@ -103,56 +109,66 @@
 
 <h2>Daily Attendance Report</h2>
 
-<div class="top">
+<div class="topbar">
+
   <input type="date" id="date">
+
   <button onclick="loadAttendance()">
     Load Report
   </button>
+
 </div>
 
-<div class="summary-grid">
+<!-- SUMMARY -->
 
-  <div class="summary-card">
-    <p>Present</p>
+<div class="summary">
+
+  <div class="card">
+    <p>Total Present</p>
     <h3 id="presentCount">0</h3>
   </div>
 
-  <div class="summary-card">
-    <p>Late</p>
+  <div class="card">
+    <p>Late Arrivals</p>
     <h3 id="lateCount">0</h3>
   </div>
 
-  <div class="summary-card">
+  <div class="card">
     <p>Early Arrivals</p>
     <h3 id="earlyCount">0</h3>
   </div>
 
-  <div class="summary-card">
+  <div class="card">
     <p>Missing Clock-Out</p>
     <h3 id="missingCount">0</h3>
   </div>
 
 </div>
 
+<!-- TABLE -->
+
 <div class="table-wrap">
 
-  <table>
+<table>
 
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Role</th>
-        <th>Clock-In</th>
-        <th>Clock-In Status</th>
-        <th>Clock-Out</th>
-        <th>Clock-Out Status</th>
-        <th>Work Duration</th>
-      </tr>
-    </thead>
+  <thead>
 
-    <tbody id="tbody"></tbody>
+    <tr>
+      <th>Name</th>
+      <th>Role</th>
+      <th>Clock-In</th>
+      <th>In Status</th>
+      <th>Clock-Out</th>
+      <th>Out Status</th>
+      <th>Worked</th>
+      <th>Device</th>
+    </tr>
 
-  </table>
+  </thead>
+
+  <tbody id="tbody"></tbody>
+
+</table>
 
 </div>
 
@@ -174,8 +190,11 @@ const firebaseConfig = {
   projectId:"tyneceploh"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app =
+  initializeApp(firebaseConfig);
+
+const db =
+  getFirestore(app);
 
 const user =
   JSON.parse(localStorage.getItem("user"));
@@ -187,11 +206,11 @@ if(!user || user.role !== "admin"){
 //
 // FORMAT TIME
 //
-function formatTime(ts){
+function formatTime(timestamp){
 
-  if(!ts) return "-";
+  if(!timestamp) return "-";
 
-  return new Date(ts)
+  return new Date(timestamp)
     .toLocaleTimeString();
 
 }
@@ -199,16 +218,15 @@ function formatTime(ts){
 //
 // WORK DURATION
 //
-function workDuration(inTime,outTime){
+function calculateDuration(start,end){
 
-  if(!inTime || !outTime){
+  if(!start || !end){
     return "-";
   }
 
-  const diff =
-    outTime - inTime;
+  const diff = end - start;
 
-  const hrs =
+  const hours =
     Math.floor(diff / 3600000);
 
   const mins =
@@ -216,12 +234,12 @@ function workDuration(inTime,outTime){
       (diff % 3600000) / 60000
     );
 
-  return `${hrs}h ${mins}m`;
+  return `${hours}h ${mins}m`;
 
 }
 
 //
-// LOAD REPORT
+// LOAD ATTENDANCE
 //
 window.loadAttendance = async function(){
 
@@ -229,8 +247,11 @@ window.loadAttendance = async function(){
     document.getElementById("date").value;
 
   if(!date){
-    alert("Select date");
+
+    alert("Select a date");
+
     return;
+
   }
 
   const snap =
@@ -238,7 +259,7 @@ window.loadAttendance = async function(){
       collection(db,"attendanceDaily")
     );
 
-  const rows = [];
+  let rows = [];
 
   let present = 0;
   let late = 0;
@@ -253,6 +274,9 @@ window.loadAttendance = async function(){
 
     present++;
 
+    //
+    // SUMMARY
+    //
     if(
       data.clockIn?.status === "LATE"
     ){
@@ -269,7 +293,11 @@ window.loadAttendance = async function(){
       missing++;
     }
 
+    //
+    // ROW
+    //
     rows.push(`
+
       <tr>
 
         <td>${data.name}</td>
@@ -288,11 +316,14 @@ window.loadAttendance = async function(){
           ${
             data.clockIn?.status === "LATE"
             ? "late"
+
             : data.clockIn?.status === "EARLY"
             ? "early"
+
             : ""
           }
         ">
+
           ${
             data.clockIn?.status || "-"
           }
@@ -302,6 +333,7 @@ window.loadAttendance = async function(){
             ? `(${data.clockIn.minutes} mins)`
             : ""
           }
+
         </td>
 
         <td>
@@ -316,11 +348,14 @@ window.loadAttendance = async function(){
           ${
             data.clockOut?.status === "OVERTIME"
             ? "overtime"
+
             : data.clockOut?.status === "EARLY_EXIT"
-            ? "late"
+            ? "danger"
+
             : ""
           }
         ">
+
           ${
             data.clockOut?.status || "-"
           }
@@ -330,31 +365,49 @@ window.loadAttendance = async function(){
             ? `(${data.clockOut.minutes} mins)`
             : ""
           }
+
         </td>
 
         <td class="
           ${
             !data.clockOut
-            ? "missing"
+            ? "danger"
             : ""
           }
         ">
+
           ${
-            workDuration(
+            calculateDuration(
               data.clockIn?.time,
               data.clockOut?.time
             )
           }
+
+        </td>
+
+        <td style="font-size:11px;">
+          ${
+            data.deviceId
+            ? data.deviceId.substring(0,15)
+            : "-"
+          }
         </td>
 
       </tr>
+
     `);
 
   });
 
+  //
+  // UPDATE TABLE
+  //
   document.getElementById("tbody")
     .innerHTML = rows.join("");
 
+  //
+  // UPDATE SUMMARY
+  //
   document.getElementById("presentCount")
     .textContent = present;
 
@@ -367,7 +420,15 @@ window.loadAttendance = async function(){
   document.getElementById("missingCount")
     .textContent = missing;
 
-}
+};
+
+//
+// AUTO TODAY
+//
+document.getElementById("date").value =
+  new Date().toISOString().split("T")[0];
+
+loadAttendance();
 
 </script>
 
