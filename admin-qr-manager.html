@@ -32,7 +32,7 @@
     input, select{
       width:100%;
       padding:10px;
-      margin-top:8px;
+      margin-top:10px;
       box-sizing:border-box;
     }
 
@@ -55,9 +55,9 @@
       color:white;
     }
 
-    #qrcode{
-      margin-top:20px;
-      text-align:center;
+    .red{
+      background:#c0392b;
+      color:white;
     }
 
     table{
@@ -77,55 +77,63 @@
       background:#eee;
     }
 
-    .late{
-      color:#e67e22;
-      font-weight:bold;
-    }
-
-    .good{
-      color:#27ae60;
-      font-weight:bold;
+    #qrcode{
+      text-align:center;
+      margin-top:15px;
     }
   </style>
 </head>
 
 <body>
 
-<h2>Attendance Control Center</h2>
+<h2>TEF Attendance Control</h2>
 
 <div class="grid">
 
   <!-- QR -->
   <div class="card">
 
-    <h3>Attendance QR</h3>
+    <h3>Attendance QR Manager</h3>
+
+    <label>QR Validity (Hours)</label>
+    <input type="number" id="hours" value="6">
 
     <button class="green" onclick="generateQR()">
-      Generate / Refresh QR
+      Generate New QR
+    </button>
+
+    <button class="blue" onclick="loadExistingQR()">
+      Reprint Existing QR
     </button>
 
     <div id="qrcode"></div>
+
+    <p id="qrInfo"></p>
 
   </div>
 
   <!-- RULES -->
   <div class="card">
 
-    <h3>Role Expected Times</h3>
+    <h3>Individual Attendance Settings</h3>
 
-    <select id="role">
-      <option value="teacher">Teacher</option>
-      <option value="security">Security</option>
-      <option value="janitor">Janitor</option>
-      <option value="coordinator">Coordinator</option>
-      <option value="admin">Admin</option>
-    </select>
+    <select id="staff"></select>
 
+    <label>Expected Clock-In</label>
     <input type="time" id="clockIn">
+
+    <label>Expected Clock-Out</label>
     <input type="time" id="clockOut">
 
-    <button class="blue" onclick="saveRules()">
-      Save Rules
+    <label>Grace Minutes</label>
+    <input type="number" id="grace" value="10">
+
+    <button class="green" onclick="saveSettings()">
+      Save Settings
+    </button>
+
+    <button class="red" onclick="resetDevice()">
+      Reset Attendance Device
     </button>
 
   </div>
@@ -135,7 +143,7 @@
 <!-- LIVE -->
 <div class="card" style="margin-top:20px;">
 
-  <h3>Live Attendance</h3>
+  <h3>Today's Attendance</h3>
 
   <table>
 
@@ -144,8 +152,8 @@
         <th>Name</th>
         <th>Role</th>
         <th>Clock-In</th>
-        <th>Clock-Out</th>
         <th>Status</th>
+        <th>Clock-Out</th>
       </tr>
     </thead>
 
@@ -157,39 +165,103 @@
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
-  setDoc,
   doc,
+  setDoc,
+  getDoc,
+  getDocs,
   collection,
+  updateDoc,
   onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
+const user =
+  JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
 //
-// QR GENERATOR
+// LOAD STAFF
+//
+async function loadStaff(){
+
+  const select =
+    document.getElementById("staff");
+
+  select.innerHTML = "";
+
+  const collections = [
+    "teachers",
+    "janitors",
+    "security",
+    "coordinators",
+    "admins"
+  ];
+
+  for(const col of collections){
+
+    const snap =
+      await getDocs(collection(db,col));
+
+    snap.forEach(d => {
+
+      const data = d.data();
+
+      const option =
+        document.createElement("option");
+
+      option.value = data.userId;
+
+      option.textContent =
+        `${data.name} (${data.role})`;
+
+      select.appendChild(option);
+
+    });
+
+  }
+
+}
+
+//
+// GENERATE QR
 //
 window.generateQR = async function(){
 
+  const hours =
+    Number(
+      document.getElementById("hours").value
+    );
+
+  const now = Date.now();
+
   const qrData = {
-    type:"attendance",
-    token:"TEF-" + Date.now()
+
+    token:"TEF-" + now,
+
+    createdAt:now,
+
+    expiresAt:
+      now + (hours * 60 * 60 * 1000),
+
+    active:true
+
   };
 
   await setDoc(
@@ -197,11 +269,45 @@ window.generateQR = async function(){
     qrData
   );
 
-  document.getElementById("qrcode").innerHTML = "";
+  renderQR(qrData);
+
+  alert("QR generated");
+
+};
+
+//
+// REPRINT EXISTING
+//
+window.loadExistingQR = async function(){
+
+  const snap = await getDoc(
+    doc(db,"attendanceSystem","mainQR")
+  );
+
+  if(!snap.exists()){
+
+    alert("No QR found");
+
+    return;
+
+  }
+
+  renderQR(snap.data());
+
+};
+
+//
+// RENDER QR
+//
+function renderQR(data){
+
+  document.getElementById("qrcode")
+    .innerHTML = "";
 
   QRCode.toCanvas(
-    JSON.stringify(qrData),
+    JSON.stringify(data),
     { width:250 },
+
     function(err, canvas){
 
       if(err){
@@ -213,17 +319,26 @@ window.generateQR = async function(){
         .appendChild(canvas);
 
     }
+
   );
 
-};
+  const expiry =
+    new Date(data.expiresAt)
+      .toLocaleString();
 
+  document.getElementById("qrInfo")
+    .innerHTML =
+      `<b>Expires:</b> ${expiry}`;
+
+}
 
 //
-// SAVE RULES
+// SAVE SETTINGS
 //
-window.saveRules = async function(){
+window.saveSettings = async function(){
 
-  const role = document.getElementById("role").value;
+  const userId =
+    document.getElementById("staff").value;
 
   const expectedClockIn =
     document.getElementById("clockIn").value;
@@ -231,20 +346,65 @@ window.saveRules = async function(){
   const expectedClockOut =
     document.getElementById("clockOut").value;
 
+  const graceMinutes =
+    Number(
+      document.getElementById("grace").value
+    );
+
   await setDoc(
-    doc(db,"attendanceRules",role),
+    doc(db,"attendanceSettings",userId),
     {
-      role,
+      userId,
       expectedClockIn,
       expectedClockOut,
+      graceMinutes,
       updatedAt:Date.now()
     }
   );
 
-  alert("Rules saved");
+  alert("Attendance settings saved");
 
 };
 
+//
+// RESET DEVICE
+//
+window.resetDevice = async function(){
+
+  const userId =
+    document.getElementById("staff").value;
+
+  const collections = [
+    "teachers",
+    "janitors",
+    "security",
+    "coordinators",
+    "admins"
+  ];
+
+  for(const col of collections){
+
+    const ref = doc(db,col,userId);
+
+    const snap = await getDoc(ref);
+
+    if(snap.exists()){
+
+      await updateDoc(ref,{
+        primaryDevice:null
+      });
+
+      alert("Device reset successful");
+
+      return;
+
+    }
+
+  }
+
+  alert("User not found");
+
+};
 
 //
 // LIVE ATTENDANCE
@@ -260,21 +420,21 @@ onSnapshot(
 
     snap.forEach(d => {
 
-      const r = d.data();
+      const data = d.data();
 
-      if(r.date !== today) return;
+      if(data.date !== today) return;
 
       rows.push(`
         <tr>
 
-          <td>${r.name}</td>
+          <td>${data.name}</td>
 
-          <td>${r.role}</td>
+          <td>${data.role}</td>
 
           <td>
             ${
-              r.clockIn?.time
-              ? new Date(r.clockIn.time)
+              data.clockIn
+              ? new Date(data.clockIn.time)
                   .toLocaleTimeString()
               : "-"
             }
@@ -282,23 +442,17 @@ onSnapshot(
 
           <td>
             ${
-              r.clockOut?.time
-              ? new Date(r.clockOut.time)
-                  .toLocaleTimeString()
-              : "-"
+              data.clockIn?.status || "-"
             }
           </td>
 
-          <td class="${
-            r.clockIn?.status === "LATE"
-            ? "late"
-            : "good"
-          }">
-
+          <td>
             ${
-              r.clockIn?.status || "PRESENT"
+              data.clockOut
+              ? new Date(data.clockOut.time)
+                  .toLocaleTimeString()
+              : "-"
             }
-
           </td>
 
         </tr>
@@ -311,6 +465,8 @@ onSnapshot(
 
   }
 );
+
+loadStaff();
 
 </script>
 
