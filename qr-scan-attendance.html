@@ -210,8 +210,8 @@ async function processScan(qrText){
     const coords = await getLocation();
 
     const school = {
-      lat:6.2494875,
-      lng:-10.6762912
+      lat:6.2413053,
+      lng:-10.6809767
     };
 
     const distance = getDistance(
@@ -221,7 +221,7 @@ async function processScan(qrText){
       school.lng
     );
 
-    if(distance > 25550){
+    if(distance > 150){
       throw new Error(
         "Outside school campus"
       );
