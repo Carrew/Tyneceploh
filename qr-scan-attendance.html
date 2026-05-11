@@ -1,475 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF QR Attendance Scan</title>
+<title>Scan Attendance</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
-
-  <style>
-    body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
-      text-align:center;
-    }
-
-    h2{
-      margin-bottom:20px;
-    }
-
-    #reader{
-      width:320px;
-      margin:auto;
-      border-radius:12px;
-      overflow:hidden;
-      background:white;
-      border:2px solid #ccc;
-    }
-
-    .status{
-      margin-top:20px;
-      padding:15px;
-      border-radius:10px;
-      font-weight:bold;
-      min-height:20px;
-    }
-
-    .ok{
-      background:#d4edda;
-      color:#155724;
-    }
-
-    .bad{
-      background:#f8d7da;
-      color:#721c24;
-    }
-
-    .info{
-      background:#d1ecf1;
-      color:#0c5460;
-    }
-
-    .warn{
-      background:#fff3cd;
-      color:#856404;
-    }
-  </style>
+<style>
+body{font-family:sans-serif;background:#f4f4f4;text-align:center;padding:20px}
+#reader{width:320px;margin:auto;background:#fff;border-radius:10px}
+.status{margin-top:20px;padding:15px;border-radius:10px}
+.ok{background:#d4edda}
+.bad{background:#f8d7da}
+.info{background:#d1ecf1}
+</style>
 </head>
 
 <body>
 
-<h2>TEF Attendance Scanner</h2>
-
+<h2>Attendance Scan</h2>
 <div id="reader"></div>
-
-<div class="status info" id="status">
-  Waiting for QR Scan...
-</div>
+<div id="status" class="status info">Waiting...</div>
 
 <script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const user =
-  JSON.parse(localStorage.getItem("user"));
-
-if(!user){
-  location.href = "login.html";
-}
-
-//
-// STUDENTS BLOCKED
-//
-if(user.role === "student"){
-  alert("Students do not use attendance");
-  location.href = "login.html";
-}
-
-//
-// DEVICE ID
-//
-const deviceId = btoa(
-  navigator.userAgent +
-  screen.width +
-  screen.height
-);
-
-//
-// STATUS UI
-//
-function show(msg,type){
-
-  const el =
-    document.getElementById("status");
-
-  el.textContent = msg;
-
-  el.className =
-    "status " + type;
-
-}
-
-//
-// MINUTE DIFFERENCE
-//
-function getMinutesDifference(now,timeString){
-
-  const [h,m] =
-    timeString.split(":").map(Number);
-
-  const targetMinutes =
-    (h * 60) + m;
-
-  const currentMinutes =
-    (now.getHours() * 60) +
-    now.getMinutes();
-
-  return currentMinutes - targetMinutes;
-
-}
-
-//
-// FIND USER COLLECTION
-//
-async function getUserRef(){
-
-  const collections = [
-    "teachers",
-    "janitors",
-    "security",
-    "coordinators",
-    "admins"
-  ];
-
-  for(const col of collections){
-
-    const ref =
-      doc(db,col,user.userId);
-
-    const snap =
-      await getDoc(ref);
-
-    if(snap.exists()){
-
-      return {
-        ref,
-        data:snap.data(),
-        collection:col
-      };
-
-    }
-
-  }
-
-  return null;
-
-}
-
-//
-// PROCESS SCAN
-//
-async function processScan(qrText){
-
-  try{
-
-    show("Verifying QR...", "info");
-
-    //
-    // VALIDATE QR JSON
-    //
-    let qr;
-
-    try{
-      qr = JSON.parse(qrText);
-    }catch{
-      throw new Error("Invalid QR");
-    }
-
-    //
-    // GET ACTIVE QR
-    //
-    const qrRef =
-      doc(db,"attendanceSystem","mainQR");
-
-    const qrSnap =
-      await getDoc(qrRef);
-
-    if(!qrSnap.exists()){
-      throw new Error("QR unavailable");
-    }
-
-    const activeQR =
-      qrSnap.data();
-
-    //
-    // TOKEN CHECK
-    //
-    if(activeQR.token !== qr.token){
-      throw new Error("QR mismatch");
-    }
-
-    //
-    // EXPIRATION CHECK
-    //
-    if(Date.now() > activeQR.expiresAt){
-      throw new Error("QR expired");
-    }
-
-    //
-    // USER LOOKUP
-    //
-    const userData =
-      await getUserRef();
-
-    if(!userData){
-      throw new Error("User record missing");
-    }
-
-    //
-    // DEVICE LOCK
-    //
-    if(
-      userData.data.primaryDevice &&
-      userData.data.primaryDevice !== deviceId
-    ){
-      throw new Error(
-        "This device is not authorized"
-      );
-    }
-
-    //
-    // FIRST DEVICE AUTO REGISTER
-    //
-    if(!userData.data.primaryDevice){
-
-      await updateDoc(
-        userData.ref,
-        {
-          primaryDevice:deviceId
-        }
-      );
-
-    }
-
-    //
-    // SETTINGS
-    //
-    const settingsRef =
-      doc(
-        db,
-        "attendanceSettings",
-        user.userId
-      );
-
-    const settingsSnap =
-      await getDoc(settingsRef);
-
-    if(!settingsSnap.exists()){
-      throw new Error(
-        "Attendance settings missing"
-      );
-    }
-
-    const settings =
-      settingsSnap.data();
-
-    //
-    // DAILY RECORD
-    //
-    const today =
-      new Date()
-      .toISOString()
-      .split("T")[0];
-
-    const attendanceId =
-      user.userId + "_" + today;
-
-    const attendanceRef =
-      doc(
-        db,
-        "attendanceDaily",
-        attendanceId
-      );
-
-    const attendanceSnap =
-      await getDoc(attendanceRef);
-
-    const now = new Date();
-
-    //
-    // CLOCK IN
-    //
-    if(!attendanceSnap.exists()){
-
-      const diff =
-        getMinutesDifference(
-          now,
-          settings.expectedClockIn
-        );
-
-      let status = "ON_TIME";
-
-      if(diff > settings.graceMinutes){
-        status = "LATE";
-      }
-
-      if(diff < 0){
-        status = "EARLY";
-      }
-
-      await setDoc(
-        attendanceRef,
-        {
-
-          userId:user.userId,
-          name:user.name,
-          role:user.role,
-
-          date:today,
-
-          deviceId,
-
-          clockIn:{
-            time:Date.now(),
-            status,
-            minutes:Math.abs(diff)
-          },
-
-          clockOut:null,
-
-          createdAt:Date.now()
-
-        }
-      );
-
-      show(
-        `Clock-In Successful (${status})`,
-        status === "LATE"
-        ? "warn"
-        : "ok"
-      );
-
-      return;
-
-    }
-
-    //
-    // CLOCK OUT
-    //
-    const attendance =
-      attendanceSnap.data();
-
-    if(attendance.clockOut){
-
-      throw new Error(
-        "Attendance already completed today"
-      );
-
-    }
-
-    const diff =
-      getMinutesDifference(
-        now,
-        settings.expectedClockOut
-      );
-
-    let status = "ON_TIME";
-
-    if(diff < 0){
-      status = "EARLY_EXIT";
-    }
-
-    if(diff > 0){
-      status = "OVERTIME";
-    }
-
-    await updateDoc(
-      attendanceRef,
-      {
-
-        clockOut:{
-          time:Date.now(),
-          status,
-          minutes:Math.abs(diff)
-        }
-
-      }
-    );
-
-    show(
-      `Clock-Out Successful (${status})`,
-      "ok"
-    );
-
-  }
-
-  catch(err){
-
-    console.error(err);
-
-    show(err.message,"bad");
-
-  }
-
-}
-
-//
-// START CAMERA
-//
-const scanner =
-  new Html5Qrcode("reader");
-
-scanner.start(
-  { facingMode:"environment" },
-
-  {
-    fps:10,
-    qrbox:250
-  },
-
-  async(qrText)=>{
-
-    scanner.pause();
-
-    await processScan(qrText);
-
-    setTimeout(
-      ()=>scanner.resume(),
-      3000
-    );
-
-  }
-
-).catch(err=>{
-
-  console.error(err);
-
-  show(
-    "Camera access denied",
-    "bad"
-  );
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app=initializeApp({
+apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+projectId:"tyneceploh"
 });
 
+const db=getFirestore(app);
+const user=JSON.parse(localStorage.getItem("user"));
+if(!user)location.href="login.html";
+
+const device=btoa(navigator.userAgent+screen.width);
+
+function status(msg,type){
+statusBox.innerText=msg;
+statusBox.className="status "+type;
+}
+
+async function run(qrText){
+try{
+const qr=JSON.parse(qrText);
+const active=await getDoc(doc(db,"attendanceSystem","mainQR"));
+if(!active.exists()||active.data().token!==qr.token) throw new Error("Invalid QR");
+if(Date.now()>qr.expiresAt) throw new Error("Expired QR");
+
+const ref=doc(db,"attendanceDaily",user.userId+"_"+new Date().toISOString().split("T")[0]);
+const snap=await getDoc(ref);
+
+if(!snap.exists()){
+await setDoc(ref,{
+userId:user.userId,
+name:user.name,
+role:user.role,
+clockIn:{time:Date.now(),status:"ON_TIME"},
+deviceId:device,
+date:new Date().toISOString().split("T")[0]
+});
+status("Clocked In","ok");
+return;
+}
+
+if(snap.data().clockOut){
+throw new Error("Already done today");
+}
+
+await updateDoc(ref,{
+clockOut:{time:Date.now(),status:"DONE"}
+});
+status("Clocked Out","ok");
+
+}catch(e){
+status(e.message,"bad");
+}
+}
+
+const scanner=new Html5Qrcode("reader");
+scanner.start({facingMode:"environment"},{fps:10,qrbox:250},run);
 </script>
 
 </body>
