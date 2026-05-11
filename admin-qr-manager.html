@@ -1,473 +1,148 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF Attendance Control</title>
+<title>TEF Attendance Control</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-  <style>
-    body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
-    }
-
-    h2{
-      text-align:center;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:20px;
-    }
-
-    .card{
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    input, select{
-      width:100%;
-      padding:10px;
-      margin-top:10px;
-      box-sizing:border-box;
-    }
-
-    button{
-      padding:10px;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      margin-top:10px;
-      font-weight:bold;
-    }
-
-    .green{
-      background:#27ae60;
-      color:white;
-    }
-
-    .blue{
-      background:#2980b9;
-      color:white;
-    }
-
-    .red{
-      background:#c0392b;
-      color:white;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-    }
-
-    th, td{
-      border:1px solid #ddd;
-      padding:8px;
-      text-align:center;
-      font-size:13px;
-    }
-
-    th{
-      background:#eee;
-    }
-
-    #qrcode{
-      text-align:center;
-      margin-top:15px;
-    }
-  </style>
+<style>
+body{font-family:sans-serif;background:#f4f4f4;padding:20px}
+h2{text-align:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+input,select{width:100%;padding:10px;margin-top:10px}
+button{padding:10px;border:none;border-radius:6px;margin-top:10px;cursor:pointer;font-weight:bold}
+.green{background:#27ae60;color:#fff}
+.blue{background:#2980b9;color:#fff}
+.red{background:#c0392b;color:#fff}
+#qr{text-align:center;margin-top:15px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center;font-size:13px}
+th{background:#eee}
+</style>
 </head>
 
 <body>
 
-<h2>TEF Attendance Control</h2>
+<h2>Attendance Admin Control</h2>
 
 <div class="grid">
 
-  <!-- QR -->
-  <div class="card">
+<div class="card">
+<h3>QR Generator</h3>
 
-    <h3>Attendance QR Manager</h3>
+<input type="number" id="hours" value="6">
 
-    <label>QR Validity (Hours)</label>
-    <input type="number" id="hours" value="6">
+<button class="green" onclick="generateQR()">Generate QR</button>
+<button class="blue" onclick="reprintQR()">Reprint QR</button>
 
-    <button class="green" onclick="generateQR()">
-      Generate New QR
-    </button>
+<div id="qr"></div>
+<p id="info"></p>
+</div>
 
-    <button class="blue" onclick="loadExistingQR()">
-      Reprint Existing QR
-    </button>
+<div class="card">
+<h3>Staff Settings</h3>
 
-    <div id="qrcode"></div>
+<select id="staff"></select>
 
-    <p id="qrInfo"></p>
+<input type="time" id="in">
+<input type="time" id="out">
+<input type="number" id="grace" value="10">
 
-  </div>
-
-  <!-- RULES -->
-  <div class="card">
-
-    <h3>Individual Attendance Settings</h3>
-
-    <select id="staff"></select>
-
-    <label>Expected Clock-In</label>
-    <input type="time" id="clockIn">
-
-    <label>Expected Clock-Out</label>
-    <input type="time" id="clockOut">
-
-    <label>Grace Minutes</label>
-    <input type="number" id="grace" value="10">
-
-    <button class="green" onclick="saveSettings()">
-      Save Settings
-    </button>
-
-    <button class="red" onclick="resetDevice()">
-      Reset Attendance Device
-    </button>
-
-  </div>
+<button class="green" onclick="save()">Save</button>
+<button class="red" onclick="resetDevice()">Reset Device</button>
 
 </div>
 
-<!-- LIVE -->
-<div class="card" style="margin-top:20px;">
+</div>
 
-  <h3>Today's Attendance</h3>
-
-  <table>
-
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Role</th>
-        <th>Clock-In</th>
-        <th>Status</th>
-        <th>Clock-Out</th>
-      </tr>
-    </thead>
-
-    <tbody id="logs"></tbody>
-
-  </table>
-
+<div class="card" style="margin-top:20px">
+<h3>Live Attendance</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Role</th><th>In</th><th>Status</th><th>Out</th></tr>
+</thead>
+<tbody id="log"></tbody>
+</table>
 </div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+const firebaseConfig={
+apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+authDomain:"tyneceploh.firebaseapp.com",
+projectId:"tyneceploh"
+};
 
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  collection,
-  updateDoc,
-  onSnapshot
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+const user=JSON.parse(localStorage.getItem("user"));
+if(!user||user.role!=="admin") location.href="login.html";
+
+window.generateQR=async()=>{
+const h=Number(hours.value);
+const now=Date.now();
+
+const qr={
+token:"TEF-"+now,
+createdAt:now,
+expiresAt:now+(h*3600000)
+};
+
+await setDoc(doc(db,"attendanceSystem","mainQR"),qr);
+
+QRCode.toCanvas(JSON.stringify(qr),{width:220},(e,c)=>{
+if(!e){qr.innerCanvas=c;document.getElementById("qr").innerHTML="";document.getElementById("qr").appendChild(c);}
+});
+
+info.innerText="Expires: "+new Date(qr.expiresAt).toLocaleString();
+};
+
+window.reprintQR=async()=>{
+const d=await getDoc(doc(db,"attendanceSystem","mainQR"));
+if(d.exists()){
+QRCode.toCanvas(JSON.stringify(d.data()),{width:220},(e,c)=>{
+document.getElementById("qr").innerHTML="";document.getElementById("qr").appendChild(c);
+});
 }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const user =
-  JSON.parse(localStorage.getItem("user"));
-
-if(!user || user.role !== "admin"){
-  location.href = "login.html";
-}
-
-//
-// LOAD STAFF
-//
-async function loadStaff(){
-
-  const select =
-    document.getElementById("staff");
-
-  select.innerHTML = "";
-
-  const collections = [
-    "teachers",
-    "janitors",
-    "security",
-    "coordinators",
-    "admins"
-  ];
-
-  for(const col of collections){
-
-    const snap =
-      await getDocs(collection(db,col));
-
-    snap.forEach(d => {
-
-      const data = d.data();
-
-      const option =
-        document.createElement("option");
-
-      option.value = data.userId;
-
-      option.textContent =
-        `${data.name} (${data.role})`;
-
-      select.appendChild(option);
-
-    });
-
-  }
-
-}
-
-//
-// GENERATE QR
-//
-window.generateQR = async function(){
-
-  const hours =
-    Number(
-      document.getElementById("hours").value
-    );
-
-  const now = Date.now();
-
-  const qrData = {
-
-    token:"TEF-" + now,
-
-    createdAt:now,
-
-    expiresAt:
-      now + (hours * 60 * 60 * 1000),
-
-    active:true
-
-  };
-
-  await setDoc(
-    doc(db,"attendanceSystem","mainQR"),
-    qrData
-  );
-
-  renderQR(qrData);
-
-  alert("QR generated");
-
+window.save=async()=>{
+await setDoc(doc(db,"attendanceSettings",staff.value),{
+userId:staff.value,
+expectedClockIn:in.value,
+expectedClockOut:out.value,
+graceMinutes:Number(grace.value)
+});
+alert("Saved");
 };
 
-//
-// REPRINT EXISTING
-//
-window.loadExistingQR = async function(){
-
-  const snap = await getDoc(
-    doc(db,"attendanceSystem","mainQR")
-  );
-
-  if(!snap.exists()){
-
-    alert("No QR found");
-
-    return;
-
-  }
-
-  renderQR(snap.data());
-
+window.resetDevice=async()=>{
+const ref=doc(db,"teachers",staff.value);
+await updateDoc(ref,{primaryDevice:null});
+alert("Device reset");
 };
 
-//
-// RENDER QR
-//
-function renderQR(data){
+onSnapshot(collection(db,"attendanceDaily"),snap=>{
+let rows="";
+snap.forEach(d=>{
+const x=d.data();
+if(x.date!==new Date().toISOString().split("T")[0])return;
 
-  document.getElementById("qrcode")
-    .innerHTML = "";
-
-  QRCode.toCanvas(
-    JSON.stringify(data),
-    { width:250 },
-
-    function(err, canvas){
-
-      if(err){
-        console.error(err);
-        return;
-      }
-
-      document.getElementById("qrcode")
-        .appendChild(canvas);
-
-    }
-
-  );
-
-  const expiry =
-    new Date(data.expiresAt)
-      .toLocaleString();
-
-  document.getElementById("qrInfo")
-    .innerHTML =
-      `<b>Expires:</b> ${expiry}`;
-
-}
-
-//
-// SAVE SETTINGS
-//
-window.saveSettings = async function(){
-
-  const userId =
-    document.getElementById("staff").value;
-
-  const expectedClockIn =
-    document.getElementById("clockIn").value;
-
-  const expectedClockOut =
-    document.getElementById("clockOut").value;
-
-  const graceMinutes =
-    Number(
-      document.getElementById("grace").value
-    );
-
-  await setDoc(
-    doc(db,"attendanceSettings",userId),
-    {
-      userId,
-      expectedClockIn,
-      expectedClockOut,
-      graceMinutes,
-      updatedAt:Date.now()
-    }
-  );
-
-  alert("Attendance settings saved");
-
-};
-
-//
-// RESET DEVICE
-//
-window.resetDevice = async function(){
-
-  const userId =
-    document.getElementById("staff").value;
-
-  const collections = [
-    "teachers",
-    "janitors",
-    "security",
-    "coordinators",
-    "admins"
-  ];
-
-  for(const col of collections){
-
-    const ref = doc(db,col,userId);
-
-    const snap = await getDoc(ref);
-
-    if(snap.exists()){
-
-      await updateDoc(ref,{
-        primaryDevice:null
-      });
-
-      alert("Device reset successful");
-
-      return;
-
-    }
-
-  }
-
-  alert("User not found");
-
-};
-
-//
-// LIVE ATTENDANCE
-//
-const today =
-  new Date().toISOString().split("T")[0];
-
-onSnapshot(
-  collection(db,"attendanceDaily"),
-  snap => {
-
-    const rows = [];
-
-    snap.forEach(d => {
-
-      const data = d.data();
-
-      if(data.date !== today) return;
-
-      rows.push(`
-        <tr>
-
-          <td>${data.name}</td>
-
-          <td>${data.role}</td>
-
-          <td>
-            ${
-              data.clockIn
-              ? new Date(data.clockIn.time)
-                  .toLocaleTimeString()
-              : "-"
-            }
-          </td>
-
-          <td>
-            ${
-              data.clockIn?.status || "-"
-            }
-          </td>
-
-          <td>
-            ${
-              data.clockOut
-              ? new Date(data.clockOut.time)
-                  .toLocaleTimeString()
-              : "-"
-            }
-          </td>
-
-        </tr>
-      `);
-
-    });
-
-    document.getElementById("logs")
-      .innerHTML = rows.join("");
-
-  }
-);
-
-loadStaff();
-
+rows+=`
+<tr>
+<td>${x.name}</td>
+<td>${x.role}</td>
+<td>${x.clockIn?new Date(x.clockIn.time).toLocaleTimeString():"-"}</td>
+<td>${x.clockIn?.status||"-"}</td>
+<td>${x.clockOut?new Date(x.clockOut.time).toLocaleTimeString():"-"}</td>
+</tr>`;
+});
+log.innerHTML=rows;
+});
 </script>
 
 </body>
