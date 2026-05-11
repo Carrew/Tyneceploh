@@ -224,7 +224,7 @@ async function processScan(qrText){
     // Explicitly showing distance in logs/status if needed
     console.log("Calculated Distance:", distance);
 
-    if(distance > 150){
+    if(distance > 200){
       throw new Error(
         `Outside school campus (${Math.round(distance)}m away)`
       );
