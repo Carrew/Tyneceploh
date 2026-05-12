@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Board</title>
+  <title>Honor Board - TEF</title>
 
   <style>
     body{
@@ -28,15 +28,21 @@
       border-radius:10px;
     }
 
+    .title{
+      text-align:center;
+      font-weight:bold;
+      margin-bottom:10px;
+    }
+
     .student{
       border-bottom:1px solid #eee;
       padding:6px;
     }
 
-    .title{
+    .empty{
       text-align:center;
-      font-weight:bold;
-      margin-bottom:10px;
+      color:#777;
+      margin-top:20px;
     }
   </style>
 </head>
@@ -45,10 +51,10 @@
 
 <h2>Honor Board</h2>
 
-<select id="classBox"></select>
-<select id="periodBox"></select>
+<select id="datasetBox"></select>
+<button onclick="load()">Load Honor List</button>
 
-<button onclick="load()">Load</button>
+<div id="empty" class="empty"></div>
 
 <div class="grid">
 
@@ -82,46 +88,63 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-async function loadOptions(){
+// 🔥 ONLY LOAD SAVED HONOR DATASETS
+async function loadDatasets(){
 
   const snap = await getDocs(collection(db,"honorResults"));
 
-  classBox.innerHTML="";
-  periodBox.innerHTML="";
+  datasetBox.innerHTML = "";
 
   snap.forEach(d=>{
-    const [cls,per] = d.id.split("_");
-    classBox.innerHTML += `<option>${cls}</option>`;
-    periodBox.innerHTML += `<option>${per}</option>`;
+    datasetBox.innerHTML += `<option value="${d.id}">${d.id}</option>`;
   });
+
+  if(snap.empty){
+    empty.innerText = "No honor lists generated yet.";
+  }
 
 }
 
-loadOptions();
+loadDatasets();
 
+// 🧠 PURE RENDER ONLY
 window.load = async function(){
 
-  const cls = classBox.value;
-  const per = periodBox.value;
+  const id = datasetBox.value;
 
-  const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
+  if(!id){
+    empty.innerText = "No dataset selected.";
+    return;
+  }
+
+  const snap = await getDoc(doc(db,"honorResults",id));
 
   p.innerHTML = pr.innerHTML = h.innerHTML = "";
+  empty.innerText = "";
 
   if(!snap.exists()){
-    alert("No honor data found");
+    empty.innerText = "Selected honor list not found.";
     return;
   }
 
   const data = snap.data().results;
 
+  if(!data || data.length === 0){
+    empty.innerText = "This honor list is empty.";
+    return;
+  }
+
   data.forEach(s=>{
 
-    const el = `<div class="student">${s.name} - ${s.average.toFixed(1)}</div>`;
+    const el = `
+      <div class="student">
+        ${s.name} - ${Number(s.average).toFixed(1)}
+      </div>
+    `;
 
-    if(s.category==="proprietor") p.innerHTML+=el;
-    if(s.category==="principal") pr.innerHTML+=el;
-    if(s.category==="honor") h.innerHTML+=el;
+    if(s.category === "proprietor") p.innerHTML += el;
+    if(s.category === "principal") pr.innerHTML += el;
+    if(s.category === "honor") h.innerHTML += el;
 
   });
 
