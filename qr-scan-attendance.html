@@ -22,6 +22,7 @@
       background:white;
       border-radius:12px;
       overflow:hidden;
+      border:2px solid #ddd;
     }
 
     .status{
@@ -29,6 +30,7 @@
       padding:15px;
       border-radius:10px;
       font-weight:bold;
+      min-height:20px;
     }
 
     .ok{
@@ -51,7 +53,7 @@
 
 <body>
 
-<h2>Attendance Scanner</h2>
+<h2>TEF Attendance Scanner</h2>
 
 <div id="reader"></div>
 
@@ -69,10 +71,15 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc
+  updateDoc,
+  collection,
+  getDocs
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+//
+// FIREBASE
+//
 const firebaseConfig = {
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
@@ -85,13 +92,23 @@ const app =
 const db =
   getFirestore(app);
 
+//
+// USER
+//
 const user =
   JSON.parse(localStorage.getItem("user"));
 
 if(!user){
+
+  alert("Login required");
+
   location.href = "login.html";
+
 }
 
+//
+// STUDENTS BLOCKED
+//
 if(user.role === "student"){
 
   alert("Students do not use attendance");
@@ -100,6 +117,11 @@ if(user.role === "student"){
 
 }
 
+console.log("Logged User:", user);
+
+//
+// DEVICE ID
+//
 const deviceId =
   btoa(
     navigator.userAgent +
@@ -107,6 +129,11 @@ const deviceId =
     screen.height
   );
 
+console.log("Device ID:", deviceId);
+
+//
+// STATUS
+//
 function show(msg,type){
 
   const el =
@@ -119,6 +146,9 @@ function show(msg,type){
 
 }
 
+//
+// TIME DIFFERENCE
+//
 function getMinutesDifference(now,timeString){
 
   if(!timeString) return 0;
@@ -137,11 +167,16 @@ function getMinutesDifference(now,timeString){
 
 }
 
+//
+// MAIN PROCESS
+//
 async function processScan(qrText){
 
   try{
 
-    show("Verifying QR...","info");
+    show("Checking QR...","info");
+
+    console.log("QR RAW:", qrText);
 
     //
     // PARSE QR
@@ -152,11 +187,17 @@ async function processScan(qrText){
 
       qr = JSON.parse(qrText);
 
-    }catch{
+    }
+
+    catch(e){
+
+      console.error(e);
 
       throw new Error("Invalid QR");
 
     }
+
+    console.log("QR Parsed:", qr);
 
     //
     // ACTIVE QR
@@ -168,19 +209,27 @@ async function processScan(qrText){
 
     if(!qrSnap.exists()){
 
-      throw new Error("QR unavailable");
+      throw new Error("QR not found");
 
     }
 
     const activeQR =
       qrSnap.data();
 
+    console.log("Active QR:", activeQR);
+
+    //
+    // TOKEN MATCH
+    //
     if(activeQR.token !== qr.token){
 
       throw new Error("QR mismatch");
 
     }
 
+    //
+    // EXPIRY
+    //
     if(Date.now() > activeQR.expiresAt){
 
       throw new Error("QR expired");
@@ -188,25 +237,53 @@ async function processScan(qrText){
     }
 
     //
-    // USER
+    // FIND USER
     //
-    const userRef =
-      doc(db,"users",user.userId);
+    show("Loading user...","info");
 
-    const userSnap =
-      await getDoc(userRef);
+    const usersSnap =
+      await getDocs(
+        collection(db,"users")
+      );
 
-    if(!userSnap.exists()){
+    let userDocId = null;
+
+    let userData = null;
+
+    usersSnap.forEach(docSnap => {
+
+      const u =
+        docSnap.data();
+
+      console.log("Checking user:", u);
+
+      if(u.userId === user.userId){
+
+        userDocId =
+          docSnap.id;
+
+        userData =
+          u;
+
+      }
+
+    });
+
+    //
+    // USER NOT FOUND
+    //
+    if(!userData){
+
+      console.error("No user found");
 
       throw new Error("User missing");
 
     }
 
-    const userData =
-      userSnap.data();
+    console.log("Matched User:", userData);
 
     //
-    // DEVICE LOCK
+    // DEVICE CHECK
     //
     if(
       userData.primaryDevice &&
@@ -220,15 +297,26 @@ async function processScan(qrText){
     }
 
     //
-    // FIRST DEVICE REGISTER
+    // REGISTER FIRST DEVICE
     //
     if(!userData.primaryDevice){
 
+      console.log(
+        "Registering first device"
+      );
+
       await updateDoc(
-        userRef,
+
+        doc(
+          db,
+          "users",
+          userDocId
+        ),
+
         {
           primaryDevice:deviceId
         }
+
       );
 
     }
@@ -256,14 +344,19 @@ async function processScan(qrText){
     const settings =
       settingsSnap.data();
 
+    console.log("Settings:", settings);
+
     //
-    // TODAY RECORD
+    // TODAY
     //
     const today =
       new Date()
       .toISOString()
       .split("T")[0];
 
+    //
+    // DAILY DOC
+    //
     const attendanceRef =
       doc(
         db,
@@ -274,6 +367,9 @@ async function processScan(qrText){
     const attendanceSnap =
       await getDoc(attendanceRef);
 
+    //
+    // CURRENT TIME
+    //
     const now =
       new Date();
 
@@ -281,6 +377,8 @@ async function processScan(qrText){
     // CLOCK IN
     //
     if(!attendanceSnap.exists()){
+
+      console.log("Clocking In");
 
       const diff =
         getMinutesDifference(
@@ -303,11 +401,15 @@ async function processScan(qrText){
       }
 
       await setDoc(
+
         attendanceRef,
+
         {
 
           userId:user.userId,
+
           name:user.name,
+
           role:user.role,
 
           date:today,
@@ -315,9 +417,14 @@ async function processScan(qrText){
           deviceId,
 
           clockIn:{
+
             time:Date.now(),
+
             status,
-            minutes:Math.abs(diff)
+
+            minutes:
+              Math.abs(diff)
+
           },
 
           clockOut:null,
@@ -325,10 +432,13 @@ async function processScan(qrText){
           createdAt:Date.now()
 
         }
+
       );
 
+      console.log("Clock In Saved");
+
       show(
-        `Clock In Successful (${status})`,
+        `Clock In Success (${status})`,
         "ok"
       );
 
@@ -342,7 +452,7 @@ async function processScan(qrText){
     if(attendanceSnap.data().clockOut){
 
       throw new Error(
-        "Attendance completed already"
+        "Attendance already completed"
       );
 
     }
@@ -350,6 +460,8 @@ async function processScan(qrText){
     //
     // CLOCK OUT
     //
+    console.log("Clocking Out");
+
     const diff =
       getMinutesDifference(
         now,
@@ -371,20 +483,30 @@ async function processScan(qrText){
     }
 
     await updateDoc(
+
       attendanceRef,
+
       {
 
         clockOut:{
+
           time:Date.now(),
+
           status,
-          minutes:Math.abs(diff)
+
+          minutes:
+            Math.abs(diff)
+
         }
 
       }
+
     );
 
+    console.log("Clock Out Saved");
+
     show(
-      `Clock Out Successful (${status})`,
+      `Clock Out Success (${status})`,
       "ok"
     );
 
@@ -392,7 +514,7 @@ async function processScan(qrText){
 
   catch(err){
 
-    console.error(err);
+    console.error("SCAN ERROR:", err);
 
     show(err.message,"bad");
 
@@ -428,12 +550,14 @@ scanner.start(
 
   }
 
-).catch(err=>{
+)
 
-  console.error(err);
+.catch(err=>{
+
+  console.error("Camera Error:", err);
 
   show(
-    "Camera error",
+    "Camera access failed",
     "bad"
   );
 
