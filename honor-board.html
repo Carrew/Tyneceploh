@@ -2,12 +2,18 @@
 <html>
 <head>
   <title>Honor Board - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body{
       font-family:sans-serif;
       background:#f4f4f4;
       padding:20px;
+    }
+
+    .wrap{
+      max-width:800px;
+      margin:auto;
     }
 
     select,button{
@@ -17,7 +23,7 @@
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
       gap:15px;
       margin-top:20px;
     }
@@ -29,48 +35,55 @@
     }
 
     .title{
-      text-align:center;
       font-weight:bold;
+      text-align:center;
       margin-bottom:10px;
     }
 
     .student{
-      border-bottom:1px solid #eee;
       padding:6px;
+      border-bottom:1px solid #eee;
+      font-size:14px;
     }
 
-    .empty{
+    .msg{
       text-align:center;
-      color:#777;
       margin-top:20px;
+      color:#666;
     }
+
   </style>
 </head>
 
 <body>
 
-<h2>Honor Board</h2>
+<div class="wrap">
 
-<select id="datasetBox"></select>
-<button onclick="load()">Load Honor List</button>
+  <h2>Honor Board</h2>
 
-<div id="empty" class="empty"></div>
+  <select id="listBox"></select>
 
-<div class="grid">
+  <button onclick="loadBoard()">Load</button>
 
-  <div class="card">
-    <div class="title">Proprietor</div>
-    <div id="p"></div>
-  </div>
+  <div id="msg" class="msg">Loading generated lists...</div>
 
-  <div class="card">
-    <div class="title">Principal</div>
-    <div id="pr"></div>
-  </div>
+  <div class="grid">
 
-  <div class="card">
-    <div class="title">Honor</div>
-    <div id="h"></div>
+    <div class="card">
+      <div class="title">Proprietor</div>
+      <div id="p"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Principal</div>
+      <div id="pr"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Honor</div>
+      <div id="h"></div>
+    </div>
+
   </div>
 
 </div>
@@ -78,7 +91,13 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, getDocs, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  getDocs,
+  collection,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -88,65 +107,67 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-// 🔥 ONLY LOAD SAVED HONOR DATASETS
-async function loadDatasets(){
+let availableLists = [];
+
+// 🔥 ONLY LOAD EXISTING GENERATED HONOR LISTS
+async function loadLists(){
 
   const snap = await getDocs(collection(db,"honorResults"));
 
-  datasetBox.innerHTML = "";
+  availableLists = [];
 
   snap.forEach(d=>{
-    datasetBox.innerHTML += `<option value="${d.id}">${d.id}</option>`;
+    availableLists.push(d.id);
   });
 
-  if(snap.empty){
-    empty.innerText = "No honor lists generated yet.";
+  if(availableLists.length === 0){
+    msg.innerText = "No honor lists generated yet.";
+    return;
   }
+
+  listBox.innerHTML = availableLists
+    .map(id=>`<option value="${id}">${id}</option>`)
+    .join("");
+
+  msg.innerText = "Select a generated list";
 
 }
 
-loadDatasets();
+loadLists();
 
-// 🧠 PURE RENDER ONLY
-window.load = async function(){
+window.loadBoard = async function(){
 
-  const id = datasetBox.value;
+  const id = listBox.value;
 
   if(!id){
-    empty.innerText = "No dataset selected.";
+    msg.innerText = "No list selected";
     return;
   }
 
   const snap = await getDoc(doc(db,"honorResults",id));
 
-  p.innerHTML = pr.innerHTML = h.innerHTML = "";
-  empty.innerText = "";
-
   if(!snap.exists()){
-    empty.innerText = "Selected honor list not found.";
+    msg.innerText = "This list no longer exists";
     return;
   }
 
   const data = snap.data().results;
 
-  if(!data || data.length === 0){
-    empty.innerText = "This honor list is empty.";
-    return;
-  }
+  p.innerHTML = "";
+  pr.innerHTML = "";
+  h.innerHTML = "";
 
   data.forEach(s=>{
 
-    const el = `
-      <div class="student">
-        ${s.name} - ${Number(s.average).toFixed(1)}
-      </div>
-    `;
+    const el = `<div class="student">${s.name} - ${s.average.toFixed(1)}</div>`;
 
     if(s.category === "proprietor") p.innerHTML += el;
     if(s.category === "principal") pr.innerHTML += el;
     if(s.category === "honor") h.innerHTML += el;
 
   });
+
+  msg.innerText = `Loaded: ${id}`;
 
 };
 
