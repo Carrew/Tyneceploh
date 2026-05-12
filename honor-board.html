@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Honor Board - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    h2{
+      text-align:center;
+      margin-bottom:20px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-bottom:20px;
+    }
+
+    select,button{
+      padding:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
+
+    button{
+      background:#27ae60;
+      color:white;
+      border:none;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:15px;
+    }
+
+    .card{
+      background:white;
+      padding:15px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .title{
+      font-weight:bold;
+      margin-bottom:10px;
+      text-align:center;
+    }
+
+    .proprietor{ border-top:5px solid #2ecc71; }
+    .principal{ border-top:5px solid #3498db; }
+    .honor{ border-top:5px solid #f39c12; }
+    .fail{ border-top:5px solid #e74c3c; }
+
+    .student{
+      padding:6px;
+      border-bottom:1px solid #eee;
+      font-size:14px;
+    }
+
+    .small{
+      font-size:12px;
+      color:#666;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2>Honor Roll Board</h2>
+
+<div class="controls">
+
+  <select id="classSelect">
+    <option value="JSS1">JSS1</option>
+    <option value="JSS2">JSS2</option>
+    <option value="SS1">SS1</option>
+    <option value="SS2">SS2</option>
+  </select>
+
+  <select id="periodSelect">
+    <option value="1">1st Semester</option>
+    <option value="2">2nd Semester</option>
+  </select>
+
+  <button onclick="loadBoard()">
+    Load Honor Board
+  </button>
+
+</div>
+
+<div class="grid">
+
+  <div class="card proprietor">
+    <div class="title">Proprietor List (90–100)</div>
+    <div id="proprietor"></div>
+  </div>
+
+  <div class="card principal">
+    <div class="title">Principal List (85–89.9)</div>
+    <div id="principal"></div>
+  </div>
+
+  <div class="card honor">
+    <div class="title">Honor Roll (80–84.9)</div>
+    <div id="honor"></div>
+  </div>
+
+  <div class="card fail">
+    <div class="title">Disqualified (Red Mark)</div>
+    <div id="fail"></div>
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+  location.href = "login.html";
+}
+
+window.loadBoard = async function(){
+
+  const cls = document.getElementById("classSelect").value;
+  const period = document.getElementById("periodSelect").value;
+
+  const snap = await getDoc(
+    doc(db,"honorResults",cls+"_"+period)
+  );
+
+  if(!snap.exists()){
+    alert("No honor data found. Generate first.");
+    return;
+  }
+
+  const data = snap.data().results;
+
+  // RESET UI
+  document.getElementById("proprietor").innerHTML = "";
+  document.getElementById("principal").innerHTML = "";
+  document.getElementById("honor").innerHTML = "";
+  document.getElementById("fail").innerHTML = "";
+
+  data.forEach(s=>{
+
+    const el = `
+      <div class="student">
+        <b>${s.name}</b>
+        <div class="small">
+          Avg: ${s.average}
+        </div>
+      </div>
+    `;
+
+    if(s.category === "proprietor"){
+      document.getElementById("proprietor").innerHTML += el;
+    }
+
+    else if(s.category === "principal"){
+      document.getElementById("principal").innerHTML += el;
+    }
+
+    else if(s.category === "honor"){
+      document.getElementById("honor").innerHTML += el;
+    }
+
+    else{
+      document.getElementById("fail").innerHTML += el;
+    }
+
+  });
+
+};
+
+loadBoard();
+
+</script>
+
+</body>
+</html>
