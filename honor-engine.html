@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Engine - Generate Lists</title>
+  <title>Honor Engine - TEF</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -11,7 +11,7 @@
       padding:20px;
     }
 
-    .card{
+    .box{
       max-width:600px;
       margin:auto;
       background:white;
@@ -22,29 +22,25 @@
 
     select,button{
       width:100%;
-      padding:12px;
+      padding:10px;
       margin-top:10px;
       border-radius:6px;
       border:1px solid #ccc;
     }
 
     button{
-      border:none;
       background:#27ae60;
       color:white;
       font-weight:bold;
+      border:none;
       cursor:pointer;
     }
 
-    .log{
-      margin-top:15px;
+    .info{
       font-size:13px;
-      color:#444;
-      background:#fafafa;
-      padding:10px;
-      border-radius:6px;
+      color:#666;
+      margin-top:10px;
     }
-
   </style>
 </head>
 
@@ -52,36 +48,24 @@
 
 <h2 style="text-align:center;">Honor Engine Generator</h2>
 
-<div class="card">
+<div class="box">
 
-  <label>Class</label>
-  <select id="class">
-    <option>JSS1</option>
-    <option>JSS2</option>
-    <option>SS1</option>
-    <option>SS2</option>
-  </select>
+  <label>Select Class</label>
+  <select id="classBox"></select>
 
-  <label>Period</label>
-  <select id="period">
-    <option value="1">1st Semester</option>
-    <option value="2">2nd Semester</option>
-  </select>
+  <label>Select Period</label>
+  <select id="periodBox"></select>
 
-  <button onclick="generate()">
-    Generate Honor List
-  </button>
+  <button onclick="generate()">Generate Honor List</button>
 
-  <div class="log" id="log">
-    Waiting for action...
-  </div>
+  <div class="info" id="info">Loading system data...</div>
 
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -92,155 +76,103 @@ const app = initializeApp({
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "admin") location.href="login.html";
 
-if(!user || user.role !== "admin"){
-  location.href="login.html";
-}
+// 🔥 load students + build dropdowns dynamically
+let classes = new Set();
+let periods = new Set(["1","2","3"]);
 
-//
-// LOAD RULES
-//
-async function getRules(){
-  const snap = await getDoc(doc(db,"honorRules","main"));
-  return snap.exists() ? snap.data() : null;
-}
-
-//
-// LOAD STUDENTS
-//
-async function getStudents(){
+async function loadMeta(){
 
   const snap = await getDocs(collection(db,"users"));
-
-  const students = [];
 
   snap.forEach(d=>{
     const u = d.data();
     if(u.role === "student"){
-      students.push(u);
+      classes.add(u.class);
     }
   });
 
-  return students;
+  classBox.innerHTML = [...classes].map(c=>`<option>${c}</option>`).join("");
+  periodBox.innerHTML = [...periods].map(p=>`<option>${p}</option>`).join("");
+
+  info.innerText = "Ready to generate";
+
 }
 
-//
-// LOAD APPROVED RESULTS
-//
-async function getResults(){
+loadMeta();
 
-  const snap = await getDocs(collection(db,"results"));
+// 🧠 ENGINE
+window.generate = async function(){
+
+  const cls = classBox.value;
+  const per = periodBox.value;
+
+  const studentsSnap = await getDocs(collection(db,"users"));
+  const resultsSnap = await getDocs(collection(db,"results"));
+
+  const students = {};
+  studentsSnap.forEach(d=>{
+    const u = d.data();
+    if(u.role==="student") students[u.userId]=u;
+  });
 
   const results = [];
 
-  snap.forEach(d=>{
-    results.push(d.data());
-  });
+  resultsSnap.forEach(d=>{
+    const r = d.data();
 
-  return results;
-}
+    if(!students[r.studentId]) return;
+    if(students[r.studentId].class !== cls) return;
+    if(r.period !== per) return;
 
-//
-// ENGINE
-//
-window.generate = async function(){
-
-  const cls = document.getElementById("class").value;
-  const per = document.getElementById("period").value;
-
-  log("Loading data...");
-
-  const rules = await getRules();
-  const students = await getStudents();
-  const results = await getResults();
-
-  if(!rules){
-    log("No rules found");
-    return;
-  }
-
-  const map = {};
-
-  students.forEach(s=>{
-    if(s.class !== cls) return;
-    map[s.userId] = s;
+    results.push(r);
   });
 
   const grouped = {};
 
-  for(const id in map){
+  Object.keys(students).forEach(id=>{
 
-    const s = map[id];
+    const s = students[id];
 
-    const r = results.filter(x =>
-      x.studentId === id &&
-      x.period === per
-    );
+    if(s.class !== cls) return;
 
-    if(r.length === 0) continue;
+    const sr = results.filter(r=>r.studentId===id);
+
+    if(sr.length === 0) return;
 
     let total = 0;
-    let disq = false;
 
-    r.forEach(x=>{
-
-      const score = Number(x.score);
-
-      total += score;
-
-      if(
-        rules.disqualifyOnRedMark &&
-        score <= rules.redMarkLimit
-      ){
-        disq = true;
-      }
-
+    sr.forEach(r=>{
+      total += Number(r.score);
     });
 
-    const avg = total / r.length;
+    const avg = total / sr.length;
 
-    let category = "NONE";
+    let category = "fail";
 
-    if(disq){
-      category = "DISQUALIFIED";
-    }else{
-
-      for(const b of rules.bands){
-        if(avg >= b.min && avg <= b.max){
-          category = b.name;
-        }
-      }
-
-    }
+    if(avg >= 90) category="proprietor";
+    else if(avg >= 85) category="principal";
+    else if(avg >= 80) category="honor";
 
     grouped[id] = {
-      studentId:id,
       name:s.name,
-      class:s.class,
       average:avg,
-      category,
-      period:per
+      category
     };
 
-  }
+  });
 
-  await setDoc(
-    doc(db,"honorResults",cls+"_"+per),
-    {
-      class:cls,
-      period:per,
-      results:Object.values(grouped),
-      generatedAt:Date.now()
-    }
-  );
+  await setDoc(doc(db,"honorResults",cls+"_"+per),{
+    class:cls,
+    period:per,
+    results:Object.values(grouped),
+    generatedAt:Date.now()
+  });
 
-  log("Honor list generated successfully");
+  alert("Honor list generated successfully");
 
 };
-
-function log(msg){
-  document.getElementById("log").innerText = msg;
-}
 
 </script>
 
