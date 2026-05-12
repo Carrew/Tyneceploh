@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Board - TEF</title>
+  <title>Honor Board</title>
 
   <style>
     body{
@@ -29,9 +29,9 @@
     }
 
     .title{
-      text-align:center;
       font-weight:bold;
       margin-bottom:10px;
+      text-align:center;
     }
 
     .student{
@@ -39,11 +39,6 @@
       border-bottom:1px solid #eee;
     }
 
-    .empty{
-      text-align:center;
-      margin-top:40px;
-      color:#666;
-    }
   </style>
 </head>
 
@@ -54,9 +49,7 @@
 <select id="classBox"></select>
 <select id="periodBox"></select>
 
-<button onclick="load()">Load Honor List</button>
-
-<div id="empty" class="empty"></div>
+<button onclick="load()">Load</button>
 
 <div class="grid">
 
@@ -79,8 +72,17 @@
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, getDocs, collection, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  getDocs,
+  collection,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -94,15 +96,17 @@ async function loadOptions(){
 
   const snap = await getDocs(collection(db,"honorResults"));
 
-  const set = new Set();
+  const opts = [];
 
   snap.forEach(d=>{
-    const id = d.id.split("_")[0];
-    set.add(id);
+    opts.push(d.id);
   });
 
-  classBox.innerHTML = [...set].map(c=>`<option>${c}</option>`).join("");
-  periodBox.innerHTML = [1,2,3].map(p=>`<option>${p}</option>`).join("");
+  classBox.innerHTML = [...new Set(opts.map(o=>o.split("_")[0]))]
+    .map(c=>`<option>${c}</option>`).join("");
+
+  periodBox.innerHTML = [...new Set(opts.map(o=>o.split("_")[1]))]
+    .map(p=>`<option>${p}</option>`).join("");
 
 }
 
@@ -116,17 +120,16 @@ window.load = async function(){
   const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
 
   p.innerHTML = pr.innerHTML = h.innerHTML = "";
-  empty.innerText = "";
 
   if(!snap.exists()){
-    empty.innerText = "No honor list generated yet for this selection.";
+    alert("No honor data yet");
     return;
   }
 
   const data = snap.data().results;
 
   if(!data || data.length === 0){
-    empty.innerText = "Honor list is empty.";
+    alert("No eligible students");
     return;
   }
 
