@@ -43,13 +43,13 @@
     }
 
     button{
-      padding:10px;
+      width:100%;
+      padding:12px;
+      margin-top:10px;
       border:none;
       border-radius:6px;
-      margin-top:10px;
       cursor:pointer;
       font-weight:bold;
-      width:100%;
     }
 
     .green{
@@ -68,25 +68,14 @@
     }
 
     #qr{
+      margin-top:20px;
       text-align:center;
-      margin-top:15px;
     }
 
-    table{
-      width:100%;
-      border-collapse:collapse;
+    #info{
+      text-align:center;
       margin-top:10px;
-    }
-
-    th,td{
-      border:1px solid #ddd;
-      padding:8px;
-      text-align:center;
-      font-size:13px;
-    }
-
-    th{
-      background:#eee;
+      font-weight:bold;
     }
 
     @media(max-width:768px){
@@ -106,77 +95,93 @@
 
 <div class="grid">
 
+  <!-- QR SECTION -->
   <div class="card">
 
-    <h3>QR Generator</h3>
+    <h3>QR Management</h3>
 
     <label>QR Valid Hours</label>
-    <input type="number" id="hours" value="6">
 
-    <button class="green" onclick="generateQR()">
+    <input
+      type="number"
+      id="hours"
+      value="6"
+    >
+
+    <button
+      class="green"
+      onclick="generateQR()"
+    >
       Generate New QR
     </button>
 
-    <button class="blue" onclick="reprintQR()">
-      Reprint Current QR
+    <button
+      class="blue"
+      onclick="reprintQR()"
+    >
+      Reprint Existing QR
     </button>
 
     <div id="qr"></div>
 
-    <p id="info"></p>
+    <div id="info"></div>
 
   </div>
 
+  <!-- SETTINGS -->
   <div class="card">
 
-    <h3>Staff Settings</h3>
+    <h3>Staff Attendance Settings</h3>
 
     <select id="staff">
-      <option>Loading users...</option>
+      <option value="">
+        Loading Users...
+      </option>
     </select>
 
-    <label>Expected Clock In</label>
-    <input type="time" id="clockIn">
+    <label>
+      Expected Clock In
+    </label>
 
-    <label>Expected Clock Out</label>
-    <input type="time" id="clockOut">
+    <input
+      type="time"
+      id="clockIn"
+    >
 
-    <label>Grace Minutes</label>
-    <input type="number" id="grace" value="10">
+    <label>
+      Expected Clock Out
+    </label>
 
-    <button class="green" onclick="saveSettings()">
+    <input
+      type="time"
+      id="clockOut"
+    >
+
+    <label>
+      Grace Minutes
+    </label>
+
+    <input
+      type="number"
+      id="grace"
+      value="10"
+    >
+
+    <button
+      class="green"
+      onclick="saveSettings()"
+    >
       Save Settings
     </button>
 
-    <button class="red" onclick="resetDevice()">
-      Reset Device
+    <button
+      class="red"
+      onclick="resetDevice()"
+    >
+      Reset Device Lock
     </button>
 
   </div>
-
-</div>
-
-<div class="card" style="margin-top:20px;">
-
-  <h3>Today's Attendance</h3>
-
-  <table>
-
-    <thead>
-
-      <tr>
-        <th>Name</th>
-        <th>Role</th>
-        <th>Clock In</th>
-        <th>Status</th>
-        <th>Clock Out</th>
-      </tr>
-
-    </thead>
-
-    <tbody id="attendanceBody"></tbody>
-
-  </table>
 
 </div>
 
@@ -186,31 +191,51 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
+
   getFirestore,
   doc,
   setDoc,
   getDoc,
   getDocs,
   collection,
-  updateDoc,
-  onSnapshot
+  updateDoc
+
 }
+
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+//
+// FIREBASE
+//
 const firebaseConfig = {
+
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
+
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app =
+  initializeApp(firebaseConfig);
 
+const db =
+  getFirestore(app);
+
+//
+// USER CHECK
+//
 const user =
-  JSON.parse(localStorage.getItem("user"));
+  JSON.parse(
+    localStorage.getItem("user")
+  );
 
-if(!user || user.role !== "admin"){
+if(
+  !user ||
+  user.role !== "admin"
+){
+
   location.href = "login.html";
+
 }
 
 //
@@ -222,7 +247,9 @@ async function loadStaffUsers(){
     document.getElementById("staff");
 
   select.innerHTML =
-    `<option value="">Select Staff</option>`;
+    `<option value="">
+      Select Staff
+    </option>`;
 
   try{
 
@@ -236,9 +263,13 @@ async function loadStaffUsers(){
       const u =
         docSnap.data();
 
+      //
+      // EXCLUDE STUDENTS
+      //
       if(
         u.role &&
-        u.role.toLowerCase() !== "student"
+        u.role.toLowerCase()
+        !== "student"
       ){
 
         const option =
@@ -248,7 +279,9 @@ async function loadStaffUsers(){
           u.userId;
 
         option.textContent =
-          `${u.name} (${u.userId}) - ${u.role}`;
+          `${u.name}
+          (${u.userId})
+          - ${u.role}`;
 
         select.appendChild(option);
 
@@ -262,7 +295,9 @@ async function loadStaffUsers(){
 
     console.error(err);
 
-    alert("Failed loading users");
+    alert(
+      "Failed loading users"
+    );
 
   }
 
@@ -271,56 +306,211 @@ async function loadStaffUsers(){
 loadStaffUsers();
 
 //
+// AUTO LOAD SETTINGS
+//
+document
+.getElementById("staff")
+.addEventListener(
+
+  "change",
+
+  async function(){
+
+    const userId =
+      this.value;
+
+    if(!userId) return;
+
+    try{
+
+      const settingsRef =
+        doc(
+          db,
+          "attendanceSettings",
+          userId
+        );
+
+      const settingsSnap =
+        await getDoc(settingsRef);
+
+      //
+      // SETTINGS EXIST
+      //
+      if(settingsSnap.exists()){
+
+        const s =
+          settingsSnap.data();
+
+        document
+        .getElementById("clockIn")
+        .value =
+          s.expectedClockIn || "";
+
+        document
+        .getElementById("clockOut")
+        .value =
+          s.expectedClockOut || "";
+
+        document
+        .getElementById("grace")
+        .value =
+          s.graceMinutes || 10;
+
+        console.log(
+          "Loaded Settings:",
+          s
+        );
+
+      }
+
+      //
+      // NO SETTINGS
+      //
+      else{
+
+        document
+        .getElementById("clockIn")
+        .value = "";
+
+        document
+        .getElementById("clockOut")
+        .value = "";
+
+        document
+        .getElementById("grace")
+        .value = 10;
+
+        console.log(
+          "No settings found"
+        );
+
+      }
+
+    }
+
+    catch(err){
+
+      console.error(
+        "Load Settings Error:",
+        err
+      );
+
+      alert(
+        "Failed loading settings"
+      );
+
+    }
+
+  }
+
+);
+
+//
 // GENERATE QR
 //
-window.generateQR = async function(){
+window.generateQR =
+async function(){
 
-  const hours =
-    Number(
-      document.getElementById("hours").value
+  try{
+
+    const hours =
+      Number(
+        document
+        .getElementById("hours")
+        .value
+      );
+
+    const now =
+      Date.now();
+
+    const qrData = {
+
+      token:
+        "TEF-" + now,
+
+      createdAt:
+        now,
+
+      expiresAt:
+        now +
+        (hours * 3600000)
+
+    };
+
+    await setDoc(
+
+      doc(
+        db,
+        "attendanceSystem",
+        "mainQR"
+      ),
+
+      qrData
+
     );
 
-  const now = Date.now();
+    renderQR(qrData);
 
-  const qrData = {
+    alert(
+      "QR generated successfully"
+    );
 
-    token:"TEF-"+now,
+  }
 
-    createdAt:now,
+  catch(err){
 
-    expiresAt:
-      now + (hours * 3600000)
+    console.error(err);
 
-  };
+    alert(
+      "QR generation failed"
+    );
 
-  await setDoc(
-    doc(db,"attendanceSystem","mainQR"),
-    qrData
-  );
-
-  renderQR(qrData);
+  }
 
 };
 
 //
 // REPRINT QR
 //
-window.reprintQR = async function(){
+window.reprintQR =
+async function(){
 
-  const snap =
-    await getDoc(
-      doc(db,"attendanceSystem","mainQR")
+  try{
+
+    const snap =
+      await getDoc(
+        doc(
+          db,
+          "attendanceSystem",
+          "mainQR"
+        )
+      );
+
+    if(!snap.exists()){
+
+      alert(
+        "No QR available"
+      );
+
+      return;
+
+    }
+
+    renderQR(
+      snap.data()
     );
-
-  if(!snap.exists()){
-
-    alert("No QR exists");
-
-    return;
 
   }
 
-  renderQR(snap.data());
+  catch(err){
+
+    console.error(err);
+
+    alert(
+      "Failed loading QR"
+    );
+
+  }
 
 };
 
@@ -330,85 +520,63 @@ window.reprintQR = async function(){
 function renderQR(data){
 
   QRCode.toCanvas(
+
     JSON.stringify(data),
-    { width:220 },
+
+    {
+      width:220
+    },
 
     (err,canvas)=>{
 
       if(err){
+
         console.error(err);
+
         return;
+
       }
 
       const qr =
-        document.getElementById("qr");
+        document
+        .getElementById("qr");
 
       qr.innerHTML = "";
 
       qr.appendChild(canvas);
 
     }
+
   );
 
-  document.getElementById("info")
-    .innerText =
+  document
+  .getElementById("info")
+  .innerText =
+
     "Expires: " +
-    new Date(data.expiresAt)
-    .toLocaleString();
+
+    new Date(
+      data.expiresAt
+    ).toLocaleString();
 
 }
 
 //
 // SAVE SETTINGS
 //
-window.saveSettings = async function(){
+window.saveSettings =
+async function(){
 
   const userId =
-    document.getElementById("staff").value;
+    document
+    .getElementById("staff")
+    .value;
 
   if(!userId){
 
-    alert("Select user");
-
-    return;
-
-  }
-
-  await setDoc(
-    doc(db,"attendanceSettings",userId),
-    {
-
-      userId,
-
-      expectedClockIn:
-        document.getElementById("clockIn").value,
-
-      expectedClockOut:
-        document.getElementById("clockOut").value,
-
-      graceMinutes:
-        Number(
-          document.getElementById("grace").value
-        )
-
-    }
-  );
-
-  alert("Settings saved");
-
-};
-
-//
-// RESET DEVICE
-//
-window.resetDevice = async function(){
-
-  const userId =
-    document.getElementById("staff").value;
-
-  if(!userId){
-
-    alert("Select user");
+    alert(
+      "Select staff"
+    );
 
     return;
 
@@ -416,14 +584,45 @@ window.resetDevice = async function(){
 
   try{
 
-    await updateDoc(
-      doc(db,"users",userId),
+    await setDoc(
+
+      doc(
+        db,
+        "attendanceSettings",
+        userId
+      ),
+
       {
-        primaryDevice:null
+
+        userId,
+
+        expectedClockIn:
+
+          document
+          .getElementById("clockIn")
+          .value,
+
+        expectedClockOut:
+
+          document
+          .getElementById("clockOut")
+          .value,
+
+        graceMinutes:
+
+          Number(
+            document
+            .getElementById("grace")
+            .value
+          )
+
       }
+
     );
 
-    alert("Device reset");
+    alert(
+      "Settings saved"
+    );
 
   }
 
@@ -431,77 +630,104 @@ window.resetDevice = async function(){
 
     console.error(err);
 
-    alert("Reset failed");
+    alert(
+      "Failed saving settings"
+    );
 
   }
 
 };
 
 //
-// LIVE ATTENDANCE
+// RESET DEVICE
 //
-onSnapshot(
-  collection(db,"attendanceDaily"),
+window.resetDevice =
+async function(){
 
-  (snap)=>{
+  const userId =
+    document
+    .getElementById("staff")
+    .value;
 
-    let rows = "";
+  if(!userId){
 
-    const today =
-      new Date()
-      .toISOString()
-      .split("T")[0];
+    alert(
+      "Select user"
+    );
 
-    snap.forEach(docSnap => {
-
-      const x =
-        docSnap.data();
-
-      if(x.date !== today) return;
-
-      rows += `
-
-        <tr>
-
-          <td>${x.name}</td>
-
-          <td>${x.role}</td>
-
-          <td>
-            ${
-              x.clockIn
-              ? new Date(x.clockIn.time)
-                .toLocaleTimeString()
-              : "-"
-            }
-          </td>
-
-          <td>
-            ${x.clockIn?.status || "-"}
-          </td>
-
-          <td>
-            ${
-              x.clockOut
-              ? new Date(x.clockOut.time)
-                .toLocaleTimeString()
-              : "-"
-            }
-          </td>
-
-        </tr>
-
-      `;
-
-    });
-
-    document.getElementById(
-      "attendanceBody"
-    ).innerHTML = rows;
+    return;
 
   }
 
-);
+  try{
+
+    const snap =
+      await getDocs(
+        collection(db,"users")
+      );
+
+    let docId = null;
+
+    snap.forEach(docSnap => {
+
+      const u =
+        docSnap.data();
+
+      if(u.userId === userId){
+
+        docId =
+          docSnap.id;
+
+      }
+
+    });
+
+    if(!docId){
+
+      alert(
+        "User not found"
+      );
+
+      return;
+
+    }
+
+    await updateDoc(
+
+      doc(
+        db,
+        "users",
+        docId
+      ),
+
+      {
+        primaryDevice:null
+      }
+
+    );
+
+    alert(
+      "Device reset successful"
+    );
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    alert(
+      "Reset failed"
+    );
+
+  }
+
+};
+
+//
+// LOAD EXISTING QR
+//
+reprintQR();
 
 </script>
 
