@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Subject Honor Board - TEF</title>
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    select,button{
+      padding:10px;
+      margin:5px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:15px;
+      margin-top:20px;
+    }
+
+    .card{
+      background:white;
+      padding:15px;
+      border-radius:10px;
+    }
+
+    .title{
+      font-weight:bold;
+      text-align:center;
+      margin-bottom:10px;
+    }
+
+    .row{
+      padding:8px;
+      border-bottom:1px solid #eee;
+    }
+
+    .empty{
+      text-align:center;
+      color:#888;
+      font-size:13px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2>Subject Honor Board</h2>
+
+<select id="classBox"></select>
+<select id="periodBox"></select>
+
+<button onclick="load()">Load</button>
+
+<div class="grid">
+  <div class="card">
+    <div class="title">Subject Champions</div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, getDocs, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+// --------------------
+// LOAD OPTIONS
+// --------------------
+async function loadOptions(){
+
+  const snap = await getDocs(collection(db,"subjectHonors"));
+
+  const keys = [];
+
+  snap.forEach(d=>{
+    keys.push(d.id);
+  });
+
+  const classes = [...new Set(keys.map(k=>k.split("_")[0]))];
+  const periods = [...new Set(keys.map(k=>k.split("_")[1]))];
+
+  classBox.innerHTML = classes.map(c=>`<option>${c}</option>`).join("");
+  periodBox.innerHTML = periods.map(p=>`<option>${p}</option>`).join("");
+
+}
+
+loadOptions();
+
+// --------------------
+// LOAD BOARD
+// --------------------
+window.load = async function(){
+
+  const cls = classBox.value;
+  const per = periodBox.value;
+
+  const snap = await getDoc(doc(db,"subjectHonors",cls+"_"+per));
+
+  list.innerHTML = "";
+
+  if(!snap.exists()){
+    list.innerHTML = `<div class="empty">No subject honors generated yet</div>`;
+    return;
+  }
+
+  const data = snap.data().results;
+
+  if(!data || data.length === 0){
+    list.innerHTML = `<div class="empty">No winners yet</div>`;
+    return;
+  }
+
+  data.forEach(s=>{
+    list.innerHTML += `
+      <div class="row">
+        <b>${s.subject}</b><br>
+        ${s.studentName} — <b>${s.score}</b>
+      </div>
+    `;
+  });
+
+};
+
+</script>
+
+</body>
+</html>
