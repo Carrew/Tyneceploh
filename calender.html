@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TEF School Calendar</title>
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <style>
+
+    body{
+      margin:0;
+      padding:20px;
+      font-family:sans-serif;
+      background:#f4f4f4;
+    }
+
+    .container{
+      max-width:1100px;
+      margin:auto;
+    }
+
+    .topbar{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      margin-bottom:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    h1{
+      margin-top:0;
+    }
+
+    select,
+    input{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      box-sizing:border-box;
+    }
+
+    .event-card{
+      background:white;
+      border-radius:12px;
+      padding:18px;
+      margin-bottom:15px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+      border-left:7px solid #3498db;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:5px 12px;
+      border-radius:20px;
+      color:white;
+      font-size:12px;
+      font-weight:bold;
+      margin-top:8px;
+    }
+
+    .Holiday{
+      background:#e74c3c;
+    }
+
+    .Exam{
+      background:#8e44ad;
+    }
+
+    .Sports{
+      background:#27ae60;
+    }
+
+    .Meeting{
+      background:#2980b9;
+    }
+
+    .Academic{
+      background:#f39c12;
+    }
+
+    .Deadline{
+      background:#d35400;
+    }
+
+    .Celebration{
+      background:#16a085;
+    }
+
+    .Emergency{
+      background:#2c3e50;
+    }
+
+    .Other{
+      background:#7f8c8d;
+    }
+
+    .empty{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      text-align:center;
+      color:#666;
+    }
+
+    .meta{
+      color:#666;
+      font-size:14px;
+      margin-top:10px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- TOP FILTERS -->
+
+  <div class="topbar">
+
+    <h1>TEF School Calendar</h1>
+
+    <input
+      id="searchBox"
+      placeholder="Search events..."
+      oninput="renderEvents()"
+    >
+
+    <select id="categoryBox"
+            onchange="renderEvents()">
+
+      <option value="all">
+        All Categories
+      </option>
+
+      <option>Holiday</option>
+      <option>Exam</option>
+      <option>Sports</option>
+      <option>Meeting</option>
+      <option>Academic</option>
+      <option>Deadline</option>
+      <option>Celebration</option>
+      <option>Emergency</option>
+      <option>Other</option>
+
+    </select>
+
+  </div>
+
+  <!-- EVENTS -->
+
+  <div id="events">
+    Loading calendar...
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  orderBy
+
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+
+});
+
+const db = getFirestore(app);
+
+let eventsCache = [];
+
+// -------------------------------------
+// LOAD EVENTS
+// -------------------------------------
+async function loadEvents(){
+
+  try{
+
+    const q =
+      query(
+        collection(db,"schoolCalendar"),
+        orderBy("startDate","asc")
+      );
+
+    const snap =
+      await getDocs(q);
+
+    eventsCache = [];
+
+    snap.forEach(d=>{
+
+      const data = d.data();
+
+      // ONLY SHOW ACTIVE + PUBLIC
+      if(
+        data.status === "active"
+        &&
+        data.visibility === "public"
+      ){
+
+        eventsCache.push({
+          docId:d.id,
+          ...data
+        });
+
+      }
+
+    });
+
+    renderEvents();
+
+  }catch(err){
+
+    console.error(err);
+
+    document.getElementById("events").innerHTML = `
+      <div class="empty">
+        Failed to load calendar.
+      </div>
+    `;
+
+  }
+
+}
+
+loadEvents();
+
+// -------------------------------------
+// RENDER EVENTS
+// -------------------------------------
+window.renderEvents = function(){
+
+  const container =
+    document.getElementById("events");
+
+  const search =
+    document
+      .getElementById("searchBox")
+      .value
+      .toLowerCase();
+
+  const category =
+    document
+      .getElementById("categoryBox")
+      .value;
+
+  let filtered =
+    eventsCache.filter(e=>{
+
+      const matchSearch =
+
+        e.title.toLowerCase().includes(search)
+        ||
+        (e.description || "")
+          .toLowerCase()
+          .includes(search);
+
+      const matchCategory =
+
+        category === "all"
+        ||
+        e.category === category;
+
+      return (
+        matchSearch
+        &&
+        matchCategory
+      );
+
+    });
+
+  // ---------------------------------
+  // EMPTY STATE
+  // ---------------------------------
+  if(filtered.length === 0){
+
+    container.innerHTML = `
+      <div class="empty">
+        No calendar events found.
+      </div>
+    `;
+
+    return;
+  }
+
+  // ---------------------------------
+  // RENDER
+  // ---------------------------------
+  container.innerHTML =
+    filtered.map(e=>`
+
+      <div class="event-card">
+
+        <h2>${e.title}</h2>
+
+        <div class="
+          badge
+          ${e.category}
+        ">
+          ${e.category}
+        </div>
+
+        <p style="margin-top:15px;">
+          ${
+            e.description ||
+            "No description provided."
+          }
+        </p>
+
+        <div class="meta">
+
+          <b>Start:</b>
+          ${formatDate(e.startDate)}
+
+          <br><br>
+
+          <b>End:</b>
+          ${formatDate(e.endDate)}
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+};
+
+// -------------------------------------
+// DATE FORMATTER
+// -------------------------------------
+function formatDate(dateString){
+
+  const d =
+    new Date(dateString);
+
+  return d.toLocaleDateString(
+    undefined,
+    {
+      year:"numeric",
+      month:"long",
+      day:"numeric"
+    }
+  );
+
+}
+
+</script>
+
+</body>
+</html>
