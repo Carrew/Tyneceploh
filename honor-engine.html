@@ -17,6 +17,7 @@
       background:white;
       padding:20px;
       border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
 
     select,button{
@@ -30,16 +31,16 @@
     button{
       background:#27ae60;
       color:white;
-      border:none;
       font-weight:bold;
+      border:none;
       cursor:pointer;
     }
 
     .msg{
       margin-top:15px;
+      font-size:14px;
       padding:10px;
       border-radius:6px;
-      font-size:14px;
     }
 
     .ok{
@@ -52,35 +53,37 @@
       color:#721c24;
     }
 
-    .info{
-      background:#d1ecf1;
-      color:#0c5460;
-    }
   </style>
 </head>
 
 <body>
 
-<h2 style="text-align:center;">Honor Engine Generator</h2>
+<h2 style="text-align:center;">Honor Engine</h2>
 
 <div class="box">
 
   <label>Class</label>
   <select id="classBox"></select>
 
-  <label>Period</label>
+  <label>Period (Auto Detected)</label>
   <select id="periodBox"></select>
 
   <button onclick="generate()">Generate Honor List</button>
 
-  <div id="msg" class="msg info">Waiting for input...</div>
+  <div id="msg"></div>
 
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -93,29 +96,38 @@ const db = getFirestore(app);
 const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "admin") location.href="login.html";
 
-// load classes dynamically
-async function loadClasses(){
+let classes = new Set();
+let periods = new Set();
+
+async function loadMeta(){
 
   const snap = await getDocs(collection(db,"users"));
 
-  const set = new Set();
-
   snap.forEach(d=>{
     const u = d.data();
-    if(u.role==="student") set.add(u.class);
+    if(u.role==="student") classes.add(u.class);
   });
 
-  classBox.innerHTML = [...set].map(c=>`<option>${c}</option>`).join("");
+  // detect periods from results
+  const resSnap = await getDocs(collection(db,"results"));
 
-  periodBox.innerHTML = [1,2,3].map(p=>`<option>${p}</option>`).join("");
+  resSnap.forEach(d=>{
+    const r = d.data();
+    if(r.period) periods.add(r.period);
+  });
+
+  classBox.innerHTML = [...classes].map(c=>`<option>${c}</option>`).join("");
+
+  periodBox.innerHTML = [...periods].length
+    ? [...periods].map(p=>`<option>${p}</option>`).join("")
+    : `<option disabled>No periods found</option>`;
 
 }
 
-loadClasses();
+loadMeta();
 
-function show(type,text){
-  msg.className = "msg "+type;
-  msg.innerText = text;
+function show(msg,type){
+  msgBox.innerHTML = `<div class="msg ${type}">${msg}</div>`;
 }
 
 window.generate = async function(){
@@ -123,18 +135,17 @@ window.generate = async function(){
   const cls = classBox.value;
   const per = periodBox.value;
 
-  show("info","Checking eligibility...");
-
   const studentsSnap = await getDocs(collection(db,"users"));
   const resultsSnap = await getDocs(collection(db,"results"));
 
   const students = {};
+
   studentsSnap.forEach(d=>{
     const u = d.data();
     if(u.role==="student") students[u.userId]=u;
   });
 
-  const results = [];
+  let results = [];
 
   resultsSnap.forEach(d=>{
     const r = d.data();
@@ -147,10 +158,12 @@ window.generate = async function(){
   });
 
   if(results.length === 0){
-    return show("bad","No approved results found for this class/period.");
+    show("No valid results found for this class & period","bad");
+    return;
   }
 
-  const grouped = {};
+  let grouped = {};
+  let eligibleCount = 0;
 
   Object.keys(students).forEach(id=>{
 
@@ -172,9 +185,18 @@ window.generate = async function(){
 
     let category = null;
 
-    if(avg >= 90) category="proprietor";
-    else if(avg >= 85) category="principal";
-    else if(avg >= 80) category="honor";
+    if(avg >= 90){
+      category = "proprietor";
+      eligibleCount++;
+    }
+    else if(avg >= 85){
+      category = "principal";
+      eligibleCount++;
+    }
+    else if(avg >= 80){
+      category = "honor";
+      eligibleCount++;
+    }
 
     if(category){
 
@@ -188,20 +210,19 @@ window.generate = async function(){
 
   });
 
-  const final = Object.values(grouped);
-
-  if(final.length === 0){
-    return show("bad","Condition NOT met. No student qualifies for honor list.");
+  if(eligibleCount === 0){
+    show("No students meet honor conditions","bad");
+    return;
   }
 
   await setDoc(doc(db,"honorResults",cls+"_"+per),{
     class:cls,
     period:per,
-    results:final,
+    results:Object.values(grouped),
     generatedAt:Date.now()
   });
 
-  show("ok",`Success! ${final.length} student(s) added to honor list.`);
+  show(`Success! ${eligibleCount} student(s) added to honor list`,"ok");
 
 };
 
