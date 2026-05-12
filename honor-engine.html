@@ -17,6 +17,7 @@
       background:white;
       padding:20px;
       border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
 
     select,button{
@@ -24,14 +25,14 @@
       padding:10px;
       margin-top:10px;
       border-radius:6px;
+      border:1px solid #ccc;
     }
 
     button{
       background:#27ae60;
       color:white;
-      border:none;
       font-weight:bold;
-      cursor:pointer;
+      border:none;
     }
 
     .msg{
@@ -41,27 +42,27 @@
       font-size:14px;
     }
 
-    .ok{background:#d4edda;color:#155724;}
-    .bad{background:#f8d7da;color:#721c24;}
-    .info{background:#d1ecf1;color:#0c5460;}
+    .ok{ background:#d4edda; color:#155724; }
+    .bad{ background:#f8d7da; color:#721c24; }
+
   </style>
 </head>
 
 <body>
 
-<h2 style="text-align:center;">Honor Engine</h2>
+<h2 style="text-align:center;">Honor Engine Generator</h2>
 
 <div class="box">
 
   <label>Class</label>
   <select id="classBox"></select>
 
-  <label>Period (Auto-detected available)</label>
+  <label>Period</label>
   <select id="periodBox"></select>
 
   <button onclick="generate()">Generate Honor List</button>
 
-  <div id="msg" class="msg info">Loading system...</div>
+  <div id="msg"></div>
 
 </div>
 
@@ -73,6 +74,7 @@ import {
   collection,
   getDocs,
   doc,
+  getDoc,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -84,64 +86,69 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
-if(!user || user.role!=="admin") location.href="login.html";
+const msg = document.getElementById("msg");
 
-let classes = new Set();
-let periods = new Set();
-
-function show(text,type="info"){
-  msg.className="msg "+type;
-  msg.innerText=text;
-}
-
-// LOAD CLASSES + PERIODS FROM REAL DATA
+// ----------------------
+// LOAD CLASSES + PERIODS
+// ----------------------
 async function loadMeta(){
 
-  const snap = await getDocs(collection(db,"users"));
+  const usersSnap = await getDocs(collection(db,"users"));
+  const resultsSnap = await getDocs(collection(db,"results"));
 
-  snap.forEach(d=>{
+  const classSet = new Set();
+  const periodSet = new Set();
+
+  usersSnap.forEach(d=>{
     const u = d.data();
-    if(u.role==="student") classes.add(u.class);
+    if(u.role === "student" && u.class){
+      classSet.add(u.class);
+    }
   });
 
-  const resSnap = await getDocs(collection(db,"results"));
-
-  resSnap.forEach(d=>{
+  resultsSnap.forEach(d=>{
     const r = d.data();
-    if(r.period) periods.add(r.period);
+    if(r.period){
+      periodSet.add(r.period);
+    }
   });
 
-  classBox.innerHTML = [...classes].map(c=>`<option>${c}</option>`).join("");
+  classBox.innerHTML = [...classSet].map(c=>`<option>${c}</option>`).join("");
+  periodBox.innerHTML = [...periodSet].map(p=>`<option>${p}</option>`).join("");
 
-  periodBox.innerHTML = [...periods].length
-    ? [...periods].map(p=>`<option>${p}</option>`).join("")
-    : `<option>No periods found</option>`;
+  show("System ready", "ok");
 
-  show("System ready","ok");
 }
 
 loadMeta();
 
+// ----------------------
+// ENGINE
+// ----------------------
 window.generate = async function(){
 
   const cls = classBox.value;
   const per = periodBox.value;
 
   if(!cls || !per){
-    show("Invalid selection","bad");
-    return;
+    return show("Missing class or period", "bad");
   }
 
-  const usersSnap = await getDocs(collection(db,"users"));
+  const studentsSnap = await getDocs(collection(db,"users"));
   const resultsSnap = await getDocs(collection(db,"results"));
+  const rulesSnap = await getDoc(doc(db,"honorRules","main"));
+
+  if(!rulesSnap.exists()){
+    return show("Honor rules not set", "bad");
+  }
+
+  const rules = rulesSnap.data();
 
   const students = {};
-
-  usersSnap.forEach(d=>{
+  studentsSnap.forEach(d=>{
     const u = d.data();
-    if(u.role==="student" && u.class===cls){
-      students[u.userId]=u;
+    if(u.role === "student"){
+      students[u.userId] = u;
     }
   });
 
@@ -149,27 +156,29 @@ window.generate = async function(){
 
   resultsSnap.forEach(d=>{
     const r = d.data();
-    if(r.period===per && students[r.studentId]){
-      results.push(r);
-    }
+
+    if(!students[r.studentId]) return;
+    if(students[r.studentId].class !== cls) return;
+    if(String(r.period) !== String(per)) return;
+
+    results.push(r);
   });
 
   if(results.length === 0){
-    show("No approved grades found for this class/period","bad");
-    return;
+    return show("No approved results found for this class/period", "bad");
   }
 
-  const grouped = {};
+  const grouped = [];
 
   Object.keys(students).forEach(id=>{
 
     const s = students[id];
+    if(s.class !== cls) return;
 
-    const sr = results.filter(r=>r.studentId===id);
+    const sr = results.filter(r=>r.studentId === id);
+    if(sr.length === 0) return;
 
-    if(sr.length===0) return;
-
-    let total=0;
+    let total = 0;
 
     sr.forEach(r=>{
       total += Number(r.score);
@@ -177,39 +186,49 @@ window.generate = async function(){
 
     const avg = total / sr.length;
 
-    let category=null;
+    let category = null;
 
-    if(avg>=90) category="proprietor";
-    else if(avg>=85) category="principal";
-    else if(avg>=80) category="honor";
-
-    if(category){
-      grouped[id]={
-        name:s.name,
-        average:avg,
-        category
-      };
+    for(const b of rules.bands){
+      if(avg >= b.min && avg <= b.max){
+        category = b.name;
+      }
     }
+
+    if(!category) return;
+
+    grouped.push({
+      studentId:id,
+      name:s.name,
+      average:avg,
+      category
+    });
 
   });
 
-  const finalList = Object.values(grouped);
-
-  if(finalList.length===0){
-    show("No students meet honor criteria","bad");
-    return;
+  if(grouped.length === 0){
+    return show("No students meet honor criteria", "bad");
   }
 
   await setDoc(doc(db,"honorResults",cls+"_"+per),{
     class:cls,
     period:per,
-    results:finalList,
+    results:grouped,
     generatedAt:Date.now()
   });
 
-  show(`Success: ${finalList.length} student(s) qualified`,"ok");
+  show(`Success: ${grouped.length} student(s) added to honor list`, "ok");
 
 };
+
+// ----------------------
+// UI MESSAGE
+// ----------------------
+function show(text,type){
+
+  msg.className = "msg " + type;
+  msg.textContent = text;
+
+}
 
 </script>
 
