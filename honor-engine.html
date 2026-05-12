@@ -12,7 +12,7 @@
     }
 
     .box{
-      max-width:600px;
+      max-width:650px;
       margin:auto;
       background:white;
       padding:20px;
@@ -57,8 +57,12 @@
   <label>Class</label>
   <select id="classBox"></select>
 
-  <label>Period</label>
-  <select id="periodBox"></select>
+  <label>Honor Mode</label>
+  <select id="modeBox">
+    <option value="period">Period Honors</option>
+    <option value="semester">Semester Honors</option>
+    <option value="yearly">Yearly Honors</option>
+  </select>
 
   <button onclick="generate()">Generate Honor List</button>
 
@@ -74,7 +78,6 @@ import {
   collection,
   getDocs,
   doc,
-  getDoc,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -88,70 +91,78 @@ const db = getFirestore(app);
 
 const msg = document.getElementById("msg");
 
-// ----------------------
-// LOAD CLASSES + PERIODS
-// ----------------------
+// --------------------
+// LOAD CLASSES
+// --------------------
 async function loadMeta(){
 
-  const usersSnap = await getDocs(collection(db,"users"));
-  const resultsSnap = await getDocs(collection(db,"results"));
+  const snap = await getDocs(collection(db,"users"));
 
   const classSet = new Set();
-  const periodSet = new Set();
 
-  usersSnap.forEach(d=>{
+  snap.forEach(d=>{
     const u = d.data();
     if(u.role === "student" && u.class){
       classSet.add(u.class);
     }
   });
 
-  resultsSnap.forEach(d=>{
-    const r = d.data();
-    if(r.period){
-      periodSet.add(r.period);
-    }
-  });
-
-  classBox.innerHTML = [...classSet].map(c=>`<option>${c}</option>`).join("");
-  periodBox.innerHTML = [...periodSet].map(p=>`<option>${p}</option>`).join("");
+  classBox.innerHTML = [...classSet]
+    .map(c=>`<option>${c}</option>`)
+    .join("");
 
   show("System ready", "ok");
-
 }
 
 loadMeta();
 
-// ----------------------
+// --------------------
+// CORE HELPERS
+// --------------------
+function avg(arr){
+  if(arr.length === 0) return null;
+  return arr.reduce((a,b)=>a+b,0) / arr.length;
+}
+
+function complete(obj, keys){
+  return keys.every(k => obj[k] != null);
+}
+
+// --------------------
 // ENGINE
-// ----------------------
+// --------------------
 window.generate = async function(){
 
   const cls = classBox.value;
-  const per = periodBox.value;
+  const mode = modeBox.value;
 
-  if(!cls || !per){
-    return show("Missing class or period", "bad");
+  if(!cls){
+    return show("Select class", "bad");
   }
 
-  const studentsSnap = await getDocs(collection(db,"users"));
+  const usersSnap = await getDocs(collection(db,"users"));
   const resultsSnap = await getDocs(collection(db,"results"));
-  const rulesSnap = await getDoc(doc(db,"honorRules","main"));
+  const rulesSnap = await getDocs(collection(db,"honorRules"));
 
-  if(!rulesSnap.exists()){
-    return show("Honor rules not set", "bad");
+  let rules = null;
+  rulesSnap.forEach(d=>{
+    rules = d.data();
+  });
+
+  if(!rules){
+    return show("Honor rules missing", "bad");
   }
 
-  const rules = rulesSnap.data();
-
+  // students map
   const students = {};
-  studentsSnap.forEach(d=>{
+  usersSnap.forEach(d=>{
     const u = d.data();
     if(u.role === "student"){
       students[u.userId] = u;
     }
   });
 
+  // filter class results
   const results = [];
 
   resultsSnap.forEach(d=>{
@@ -159,75 +170,132 @@ window.generate = async function(){
 
     if(!students[r.studentId]) return;
     if(students[r.studentId].class !== cls) return;
-    if(String(r.period) !== String(per)) return;
 
     results.push(r);
   });
 
   if(results.length === 0){
-    return show("No approved results found for this class/period", "bad");
+    return show("No results found", "bad");
   }
 
-  const grouped = [];
+  const grouped = {};
 
-  Object.keys(students).forEach(id=>{
+  results.forEach(r=>{
 
-    const s = students[id];
-    if(s.class !== cls) return;
+    const id = r.studentId;
 
-    const sr = results.filter(r=>r.studentId === id);
-    if(sr.length === 0) return;
+    if(!grouped[id]){
+      grouped[id] = {
+        name: r.studentName,
+        class: cls,
+        scores: {}
+      };
+    }
 
-    let total = 0;
+    const key = r.period || r.term;
 
-    sr.forEach(r=>{
-      total += Number(r.score);
-    });
+    grouped[id].scores[key] = Number(r.score);
 
-    const avg = total / sr.length;
+  });
+
+  const final = [];
+
+  Object.keys(grouped).forEach(id=>{
+
+    const g = grouped[id];
+
+    let average = null;
+
+    // -------------------------
+    // PERIOD MODE
+    // -------------------------
+    if(mode === "period"){
+
+      const scores = Object.values(g.scores);
+
+      if(scores.length === 0) return;
+
+      average = avg(scores);
+    }
+
+    // -------------------------
+    // SEMESTER MODE
+    // -------------------------
+    if(mode === "semester"){
+
+      const sem1 = complete(g.scores, ["P1","P2","P3","EXAM"])
+        ? avg([g.scores.P1, g.scores.P2, g.scores.P3, g.scores.EXAM])
+        : null;
+
+      const sem2 = complete(g.scores, ["P4","P5","P6","EXAM2"])
+        ? avg([g.scores.P4, g.scores.P5, g.scores.P6, g.scores.EXAM2])
+        : null;
+
+      if(sem1 == null || sem2 == null) return;
+
+      average = (sem1 + sem2) / 2;
+    }
+
+    // -------------------------
+    // YEARLY MODE
+    // -------------------------
+    if(mode === "yearly"){
+
+      const sem1 = complete(g.scores, ["P1","P2","P3","EXAM"])
+        ? avg([g.scores.P1, g.scores.P2, g.scores.P3, g.scores.EXAM])
+        : null;
+
+      const sem2 = complete(g.scores, ["P4","P5","P6","EXAM2"])
+        ? avg([g.scores.P4, g.scores.P5, g.scores.P6, g.scores.EXAM2])
+        : null;
+
+      if(sem1 == null || sem2 == null) return;
+
+      average = (sem1 + sem2) / 2;
+    }
+
+    if(average == null) return;
 
     let category = null;
 
     for(const b of rules.bands){
-      if(avg >= b.min && avg <= b.max){
+      if(average >= b.min && average <= b.max){
         category = b.name;
       }
     }
 
     if(!category) return;
 
-    grouped.push({
+    final.push({
       studentId:id,
-      name:s.name,
-      average:avg,
+      name:g.name,
+      average,
       category
     });
 
   });
 
-  if(grouped.length === 0){
-    return show("No students meet honor criteria", "bad");
+  if(final.length === 0){
+    return show("No eligible students", "bad");
   }
 
-  await setDoc(doc(db,"honorResults",cls+"_"+per),{
+  await setDoc(doc(db,"honorResults",cls+"_"+mode),{
     class:cls,
-    period:per,
-    results:grouped,
+    mode,
+    results:final,
     generatedAt:Date.now()
   });
 
-  show(`Success: ${grouped.length} student(s) added to honor list`, "ok");
+  show(`Generated ${final.length} honor students (${mode})`, "ok");
 
 };
 
-// ----------------------
-// UI MESSAGE
-// ----------------------
+// --------------------
+// UI
+// --------------------
 function show(text,type){
-
   msg.className = "msg " + type;
   msg.textContent = text;
-
 }
 
 </script>
