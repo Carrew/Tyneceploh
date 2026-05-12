@@ -2,40 +2,12 @@
 <html>
 <head>
   <title>Honor Board - TEF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body{
       font-family:sans-serif;
       background:#f4f4f4;
       padding:20px;
-    }
-
-    h2{
-      text-align:center;
-      margin-bottom:20px;
-    }
-
-    .controls{
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-bottom:20px;
-    }
-
-    select,button{
-      padding:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
-    }
-
-    button{
-      background:#27ae60;
-      color:white;
-      border:none;
-      cursor:pointer;
-      font-weight:bold;
     }
 
     .grid{
@@ -47,30 +19,18 @@
     .card{
       background:white;
       padding:15px;
-      border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      border-radius:10px;
     }
 
     .title{
+      text-align:center;
       font-weight:bold;
       margin-bottom:10px;
-      text-align:center;
     }
-
-    .proprietor{ border-top:5px solid #2ecc71; }
-    .principal{ border-top:5px solid #3498db; }
-    .honor{ border-top:5px solid #f39c12; }
-    .fail{ border-top:5px solid #e74c3c; }
 
     .student{
       padding:6px;
       border-bottom:1px solid #eee;
-      font-size:14px;
-    }
-
-    .small{
-      font-size:12px;
-      color:#666;
     }
 
   </style>
@@ -78,48 +38,42 @@
 
 <body>
 
-<h2>Honor Roll Board</h2>
+<h2 style="text-align:center;">Honor Board</h2>
 
-<div class="controls">
+<select id="class">
+  <option>JSS1</option>
+  <option>JSS2</option>
+  <option>SS1</option>
+  <option>SS2</option>
+</select>
 
-  <select id="classSelect">
-    <option value="JSS1">JSS1</option>
-    <option value="JSS2">JSS2</option>
-    <option value="SS1">SS1</option>
-    <option value="SS2">SS2</option>
-  </select>
+<select id="period">
+  <option value="1">1st</option>
+  <option value="2">2nd</option>
+</select>
 
-  <select id="periodSelect">
-    <option value="1">1st Semester</option>
-    <option value="2">2nd Semester</option>
-  </select>
-
-  <button onclick="loadBoard()">
-    Load Honor Board
-  </button>
-
-</div>
+<button onclick="load()">Load</button>
 
 <div class="grid">
 
-  <div class="card proprietor">
-    <div class="title">Proprietor List (90–100)</div>
-    <div id="proprietor"></div>
+  <div class="card">
+    <div class="title">Proprietor</div>
+    <div id="p"></div>
   </div>
 
-  <div class="card principal">
-    <div class="title">Principal List (85–89.9)</div>
-    <div id="principal"></div>
+  <div class="card">
+    <div class="title">Principal</div>
+    <div id="pr"></div>
   </div>
 
-  <div class="card honor">
-    <div class="title">Honor Roll (80–84.9)</div>
-    <div id="honor"></div>
+  <div class="card">
+    <div class="title">Honor</div>
+    <div id="h"></div>
   </div>
 
-  <div class="card fail">
-    <div class="title">Disqualified (Red Mark)</div>
-    <div id="fail"></div>
+  <div class="card">
+    <div class="title">Disqualified</div>
+    <div id="d"></div>
   </div>
 
 </div>
@@ -129,75 +83,39 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
-};
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
+window.load = async function(){
 
-if(!user){
-  location.href = "login.html";
-}
+  const cls = class.value;
+  const per = period.value;
 
-window.loadBoard = async function(){
+  const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
 
-  const cls = document.getElementById("classSelect").value;
-  const period = document.getElementById("periodSelect").value;
-
-  const snap = await getDoc(
-    doc(db,"honorResults",cls+"_"+period)
-  );
-
-  if(!snap.exists()){
-    alert("No honor data found. Generate first.");
-    return;
-  }
+  if(!snap.exists()) return;
 
   const data = snap.data().results;
 
-  // RESET UI
-  document.getElementById("proprietor").innerHTML = "";
-  document.getElementById("principal").innerHTML = "";
-  document.getElementById("honor").innerHTML = "";
-  document.getElementById("fail").innerHTML = "";
+  p.innerHTML = pr.innerHTML = h.innerHTML = d.innerHTML = "";
 
   data.forEach(s=>{
 
-    const el = `
-      <div class="student">
-        <b>${s.name}</b>
-        <div class="small">
-          Avg: ${s.average}
-        </div>
-      </div>
-    `;
+    const el = `<div class="student">${s.name} - ${s.average.toFixed(1)}</div>`;
 
-    if(s.category === "proprietor"){
-      document.getElementById("proprietor").innerHTML += el;
-    }
-
-    else if(s.category === "principal"){
-      document.getElementById("principal").innerHTML += el;
-    }
-
-    else if(s.category === "honor"){
-      document.getElementById("honor").innerHTML += el;
-    }
-
-    else{
-      document.getElementById("fail").innerHTML += el;
-    }
+    if(s.category === "proprietor") p.innerHTML += el;
+    else if(s.category === "principal") pr.innerHTML += el;
+    else if(s.category === "honor") h.innerHTML += el;
+    else d.innerHTML += el;
 
   });
 
 };
-
-loadBoard();
 
 </script>
 
