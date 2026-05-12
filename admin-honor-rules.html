@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Engine - TEF</title>
+  <title>Honor Rules Admin - TEF</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -12,7 +12,7 @@
     }
 
     .box{
-      max-width:650px;
+      max-width:700px;
       margin:auto;
       background:white;
       padding:20px;
@@ -20,25 +20,48 @@
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
 
-    select,button{
-      width:100%;
+    h2{
+      text-align:center;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    input{
+      flex:1;
       padding:10px;
-      margin-top:10px;
-      border-radius:6px;
       border:1px solid #ccc;
+      border-radius:6px;
     }
 
     button{
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+      border:none;
+      border-radius:6px;
       background:#27ae60;
       color:white;
       font-weight:bold;
-      border:none;
+      cursor:pointer;
+    }
+
+    .rule-box{
+      margin-top:20px;
+      background:#fafafa;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid #ddd;
     }
 
     .msg{
-      margin-top:15px;
+      margin-top:10px;
       padding:10px;
       border-radius:6px;
+      font-size:14px;
     }
 
     .ok{ background:#d4edda; color:#155724; }
@@ -49,26 +72,38 @@
 
 <body>
 
-<h2 style="text-align:center;">Honor Engine Generator</h2>
+<h2>Honor Rules Admin Panel</h2>
 
 <div class="box">
 
-  <label>Class</label>
-  <select id="classBox"></select>
+  <div class="rule-box">
 
-  <label>Honor Mode</label>
-  <select id="modeBox" onchange="togglePeriods()">
-    <option value="period">Period Honors</option>
-    <option value="semester">Semester Honors</option>
-    <option value="yearly">Yearly Honors</option>
-  </select>
+    <h3>Score Bands</h3>
 
-  <label>Period (only for Period Mode)</label>
-  <select id="periodBox" multiple></select>
+    <div class="row">
+      <input id="propMin" placeholder="Proprietor Min (e.g 90)">
+      <input id="propMax" placeholder="Proprietor Max (e.g 100)">
+    </div>
 
-  <button onclick="generate()">Generate Honor List</button>
+    <div class="row">
+      <input id="prinMin" placeholder="Principal Min (e.g 85)">
+      <input id="prinMax" placeholder="Principal Max (e.g 89.9)">
+    </div>
+
+    <div class="row">
+      <input id="honMin" placeholder="Honor Min (e.g 80)">
+      <input id="honMax" placeholder="Honor Max (e.g 84.9)">
+    </div>
+
+  </div>
+
+  <button onclick="saveRules()">Save Rules</button>
 
   <div id="msg"></div>
+
+  <hr>
+
+  <button onclick="loadRules()">Load Current Rules</button>
 
 </div>
 
@@ -77,10 +112,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
-  collection,
-  getDocs,
   doc,
-  setDoc
+  setDoc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
@@ -94,212 +128,67 @@ const db = getFirestore(app);
 const msg = document.getElementById("msg");
 
 // -------------------------
-// LOAD META
+// SAVE RULES
 // -------------------------
-async function loadMeta(){
+window.saveRules = async function(){
 
-  const usersSnap = await getDocs(collection(db,"users"));
+  const rules = {
+    bands:[
+      {
+        name:"Proprietor",
+        min:Number(propMin.value),
+        max:Number(propMax.value)
+      },
+      {
+        name:"Principal",
+        min:Number(prinMin.value),
+        max:Number(prinMax.value)
+      },
+      {
+        name:"Honor",
+        min:Number(honMin.value),
+        max:Number(honMax.value)
+      }
+    ],
+    updatedAt:Date.now()
+  };
 
-  const classes = new Set();
+  if(
+    isNaN(rules.bands[0].min) ||
+    isNaN(rules.bands[0].max)
+  ){
+    return show("Invalid values", "bad");
+  }
 
-  usersSnap.forEach(d=>{
-    const u = d.data();
-    if(u.role === "student"){
-      classes.add(u.class);
-    }
-  });
+  await setDoc(doc(db,"honorRules","main"),rules);
 
-  classBox.innerHTML = [...classes].map(c=>`<option>${c}</option>`).join("");
-
-  const periods = [
-    "1st Period",
-    "2nd Period",
-    "3rd Period",
-    "Semester Exam",
-    "4th Period",
-    "5th Period",
-    "6th Period",
-    "Final Exam"
-  ];
-
-  periodBox.innerHTML = periods.map(p=>`<option>${p}</option>`).join("");
-
-  show("System ready", "ok");
-}
-
-loadMeta();
-
-// -------------------------
-// UI CONTROL
-// -------------------------
-window.togglePeriods = function(){
-
-  const mode = modeBox.value;
-
-  periodBox.disabled = (mode !== "period");
+  show("Rules saved successfully", "ok");
 
 };
 
-togglePeriods();
-
 // -------------------------
-// HELPERS
+// LOAD RULES
 // -------------------------
-function avg(arr){
-  if(arr.length === 0) return null;
-  return arr.reduce((a,b)=>a+b,0)/arr.length;
-}
+window.loadRules = async function(){
 
-// -------------------------
-// ENGINE
-// -------------------------
-window.generate = async function(){
+  const snap = await getDoc(doc(db,"honorRules","main"));
 
-  const cls = classBox.value;
-  const mode = modeBox.value;
-  const selectedPeriods = [...periodBox.selectedOptions].map(o=>o.value);
-
-  const usersSnap = await getDocs(collection(db,"users"));
-  const resultsSnap = await getDocs(collection(db,"results"));
-
-  const students = {};
-
-  usersSnap.forEach(d=>{
-    const u = d.data();
-    if(u.role === "student"){
-      students[u.userId] = u;
-    }
-  });
-
-  const results = [];
-
-  resultsSnap.forEach(d=>{
-    const r = d.data();
-
-    if(!students[r.studentId]) return;
-    if(students[r.studentId].class !== cls) return;
-
-    results.push(r);
-  });
-
-  if(results.length === 0){
-    return show("No results found", "bad");
+  if(!snap.exists()){
+    return show("No rules found", "bad");
   }
 
-  const grouped = {};
+  const r = snap.data();
 
-  results.forEach(r=>{
+  propMin.value = r.bands[0].min;
+  propMax.value = r.bands[0].max;
 
-    const id = r.studentId;
+  prinMin.value = r.bands[1].min;
+  prinMax.value = r.bands[1].max;
 
-    if(!grouped[id]){
-      grouped[id] = {
-        name:r.studentName,
-        scores:{}
-      };
-    }
+  honMin.value = r.bands[2].min;
+  honMax.value = r.bands[2].max;
 
-    grouped[id].scores[r.period] = Number(r.score);
-
-  });
-
-  const finalList = [];
-
-  Object.keys(grouped).forEach(id=>{
-
-    const g = grouped[id];
-
-    let average = null;
-
-    // -------------------------
-    // PERIOD HONORS
-    // -------------------------
-    if(mode === "period"){
-
-      const vals = selectedPeriods.map(p=>g.scores[p]);
-
-      if(vals.includes(undefined)) return;
-
-      average = avg(vals);
-    }
-
-    // -------------------------
-    // SEMESTER HONORS
-    // -------------------------
-    if(mode === "semester"){
-
-      const sem1 = avg([
-        g.scores["1st Period"],
-        g.scores["2nd Period"],
-        g.scores["3rd Period"],
-        g.scores["Semester Exam"]
-      ]);
-
-      const sem2 = avg([
-        g.scores["4th Period"],
-        g.scores["5th Period"],
-        g.scores["6th Period"],
-        g.scores["Final Exam"]
-      ]);
-
-      if(sem1 == null || sem2 == null) return;
-
-      average = (sem1 + sem2) / 2;
-    }
-
-    // -------------------------
-    // YEARLY HONORS
-    // -------------------------
-    if(mode === "yearly"){
-
-      const sem1 = avg([
-        g.scores["1st Period"],
-        g.scores["2nd Period"],
-        g.scores["3rd Period"],
-        g.scores["Semester Exam"]
-      ]);
-
-      const sem2 = avg([
-        g.scores["4th Period"],
-        g.scores["5th Period"],
-        g.scores["6th Period"],
-        g.scores["Final Exam"]
-      ]);
-
-      if(sem1 == null || sem2 == null) return;
-
-      average = (sem1 + sem2) / 2;
-    }
-
-    if(average == null) return;
-
-    let category = "";
-
-    if(average >= 90) category = "Proprietor";
-    else if(average >= 85) category = "Principal";
-    else if(average >= 80) category = "Honor";
-
-    finalList.push({
-      studentId:id,
-      name:g.name,
-      average,
-      category
-    });
-
-  });
-
-  if(finalList.length === 0){
-    return show("No eligible students", "bad");
-  }
-
-  await setDoc(doc(db,"honorResults",cls+"_"+mode),{
-    class:cls,
-    mode,
-    results:finalList,
-    generatedAt:Date.now()
-  });
-
-  show(`Generated ${finalList.length} honors`, "ok");
+  show("Rules loaded", "ok");
 
 };
 
