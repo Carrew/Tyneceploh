@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Subject Honor Engine - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .box{
+      max-width:600px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    select,button{
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
+
+    button{
+      background:#2ecc71;
+      color:white;
+      font-weight:bold;
+      border:none;
+    }
+
+    .msg{
+      margin-top:10px;
+      padding:10px;
+      border-radius:6px;
+      font-size:14px;
+    }
+
+    .ok{ background:#d4edda; color:#155724; }
+    .bad{ background:#f8d7da; color:#721c24; }
+
+  </style>
+</head>
+
+<body>
+
+<h2 style="text-align:center;">Subject Honor Generator</h2>
+
+<div class="box">
+
+  <label>Class</label>
+  <select id="classBox"></select>
+
+  <label>Period</label>
+  <select id="periodBox"></select>
+
+  <button onclick="generate()">Generate Subject Honors</button>
+
+  <div id="msg"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  getDocs,
+  collection,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const msg = document.getElementById("msg");
+
+// --------------------
+// LOAD META (class + period)
+// --------------------
+async function loadMeta(){
+
+  const resSnap = await getDocs(collection(db,"results"));
+
+  const classSet = new Set();
+  const periodSet = new Set();
+
+  resSnap.forEach(d=>{
+    const r = d.data();
+    if(r.class) classSet.add(r.class);
+    if(r.period) periodSet.add(r.period);
+  });
+
+  classBox.innerHTML = [...classSet].map(c=>`<option>${c}</option>`).join("");
+  periodBox.innerHTML = [...periodSet].map(p=>`<option>${p}</option>`).join("");
+
+  show("Ready", "ok");
+
+}
+
+loadMeta();
+
+// --------------------
+// ENGINE
+// --------------------
+window.generate = async function(){
+
+  const cls = classBox.value;
+  const per = periodBox.value;
+
+  const resSnap = await getDocs(collection(db,"results"));
+  const userSnap = await getDocs(collection(db,"users"));
+
+  const students = {};
+
+  userSnap.forEach(d=>{
+    const u = d.data();
+    if(u.role === "student"){
+      students[u.userId] = u;
+    }
+  });
+
+  const filtered = [];
+
+  resSnap.forEach(d=>{
+    const r = d.data();
+
+    if(!students[r.studentId]) return;
+    if(r.class !== cls) return;
+    if(String(r.period) !== String(per)) return;
+
+    filtered.push(r);
+  });
+
+  if(filtered.length === 0){
+    return show("No approved results found", "bad");
+  }
+
+  const grouped = {};
+
+  filtered.forEach(r=>{
+
+    const key = `${r.subject}`;
+
+    if(!grouped[key]){
+      grouped[key] = [];
+    }
+
+    grouped[key].push(r);
+
+  });
+
+  const subjectWinners = [];
+
+  Object.keys(grouped).forEach(subject=>{
+
+    const list = grouped[subject];
+
+    list.sort((a,b)=> Number(b.score) - Number(a.score));
+
+    const top = list[0];
+
+    subjectWinners.push({
+      subject: subject,
+      class: cls,
+      period: per,
+      studentId: top.studentId,
+      studentName: top.studentName,
+      score: top.score
+    });
+
+  });
+
+  await setDoc(doc(db,"subjectHonors",cls+"_"+per),{
+    class:cls,
+    period:per,
+    results:subjectWinners,
+    generatedAt:Date.now()
+  });
+
+  show(`Generated ${subjectWinners.length} subject awards`, "ok");
+
+};
+
+function show(text,type){
+  msg.className = "msg " + type;
+  msg.textContent = text;
+}
+
+</script>
+
+</body>
+</html>
