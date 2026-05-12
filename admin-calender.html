@@ -15,24 +15,575 @@
       margin:0;
     }
 
-    h2{
-      text-align:center;
-      margin-bottom:20px;
-    }
-
-    .box{
-      max-width:900px;
+    .container{
+      max-width:1000px;
       margin:auto;
     }
 
-    .form{
+    .box{
       background:white;
       padding:20px;
       border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
       margin-bottom:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    h2{
+      margin-top:0;
     }
 
     input,
     textarea,
-    select
+    select,
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      box-sizing:border-box;
+      font-size:14px;
+    }
+
+    textarea{
+      resize:vertical;
+      min-height:100px;
+    }
+
+    button{
+      border:none;
+      background:#27ae60;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .event-card{
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      margin-bottom:15px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.08);
+      border-left:6px solid #3498db;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:5px 12px;
+      border-radius:20px;
+      color:white;
+      font-size:12px;
+      margin-top:10px;
+      font-weight:bold;
+    }
+
+    .Holiday{ background:#e74c3c; }
+    .Exam{ background:#8e44ad; }
+    .Sports{ background:#27ae60; }
+    .Meeting{ background:#2980b9; }
+    .Academic{ background:#f39c12; }
+    .Deadline{ background:#d35400; }
+    .Celebration{ background:#16a085; }
+    .Emergency{ background:#2c3e50; }
+    .Other{ background:#7f8c8d; }
+
+    .actions{
+      margin-top:15px;
+      display:flex;
+      gap:10px;
+    }
+
+    .edit-btn{
+      background:#2980b9;
+    }
+
+    .delete-btn{
+      background:#c0392b;
+    }
+
+    .msg{
+      margin-top:15px;
+      padding:12px;
+      border-radius:6px;
+      font-size:14px;
+    }
+
+    .ok{
+      background:#d4edda;
+      color:#155724;
+    }
+
+    .bad{
+      background:#f8d7da;
+      color:#721c24;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- CREATE / EDIT -->
+
+  <div class="box">
+
+    <h2>School Calendar Admin</h2>
+
+    <input type="hidden" id="editId">
+
+    <label>Event Title</label>
+    <input id="title">
+
+    <label>Description</label>
+    <textarea id="description"></textarea>
+
+    <label>Category</label>
+    <select id="category">
+
+      <option>Holiday</option>
+      <option>Exam</option>
+      <option>Sports</option>
+      <option>Meeting</option>
+      <option>Academic</option>
+      <option>Deadline</option>
+      <option>Celebration</option>
+      <option>Emergency</option>
+      <option>Other</option>
+
+    </select>
+
+    <label>Start Date</label>
+    <input type="date" id="startDate">
+
+    <label>End Date</label>
+    <input type="date" id="endDate">
+
+    <label>Visibility</label>
+    <select id="visibility">
+      <option value="public">Public</option>
+      <option value="private">Private</option>
+    </select>
+
+    <label>Status</label>
+    <select id="status">
+      <option value="active">Active</option>
+      <option value="draft">Draft</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+
+    <button onclick="saveEvent()">
+      Save Event
+    </button>
+
+    <div id="msg"></div>
+
+  </div>
+
+  <!-- EVENT LIST -->
+
+  <div class="box">
+
+    <h2>Calendar Events</h2>
+
+    <div id="events">
+      Loading events...
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+  orderBy,
+  query
+
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+
+});
+
+const db = getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "admin"){
+  location.href = "login.html";
+}
+
+let eventsCache = [];
+
+const msg =
+  document.getElementById("msg");
+
+// -----------------------------------
+// LOAD EVENTS
+// -----------------------------------
+async function loadEvents(){
+
+  const q =
+    query(
+      collection(db,"schoolCalendar"),
+      orderBy("startDate","asc")
+    );
+
+  const snap =
+    await getDocs(q);
+
+  eventsCache = [];
+
+  snap.forEach(d=>{
+
+    eventsCache.push({
+      docId:d.id,
+      ...d.data()
+    });
+
+  });
+
+  renderEvents();
+
+}
+
+loadEvents();
+
+// -----------------------------------
+// RENDER EVENTS
+// -----------------------------------
+function renderEvents(){
+
+  const container =
+    document.getElementById("events");
+
+  if(eventsCache.length === 0){
+
+    container.innerHTML =
+      "<p>No calendar events found.</p>";
+
+    return;
+  }
+
+  container.innerHTML =
+    eventsCache.map(e=>`
+
+      <div class="event-card">
+
+        <h3>${e.title}</h3>
+
+        <div class="
+          badge
+          ${e.category}
+        ">
+          ${e.category}
+        </div>
+
+        <p style="margin-top:15px;">
+          ${e.description || "No description"}
+        </p>
+
+        <b>Start:</b>
+        ${e.startDate}
+
+        <br>
+
+        <b>End:</b>
+        ${e.endDate}
+
+        <br><br>
+
+        <b>Status:</b>
+        ${e.status}
+
+        <br>
+
+        <b>Visibility:</b>
+        ${e.visibility}
+
+        <div class="actions">
+
+          <button
+            class="edit-btn"
+            onclick="editEvent('${e.docId}')"
+          >
+            Edit
+          </button>
+
+          <button
+            class="delete-btn"
+            onclick="deleteEvent('${e.docId}')"
+          >
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+}
+
+// -----------------------------------
+// SAVE EVENT
+// -----------------------------------
+window.saveEvent = async function(){
+
+  const title =
+    document.getElementById("title").value.trim();
+
+  const description =
+    document.getElementById("description").value.trim();
+
+  const category =
+    document.getElementById("category").value;
+
+  const startDate =
+    document.getElementById("startDate").value;
+
+  const endDate =
+    document.getElementById("endDate").value;
+
+  const visibility =
+    document.getElementById("visibility").value;
+
+  const status =
+    document.getElementById("status").value;
+
+  const editId =
+    document.getElementById("editId").value;
+
+  if(
+    !title ||
+    !startDate ||
+    !endDate
+  ){
+    return show(
+      "Fill all required fields",
+      "bad"
+    );
+  }
+
+  try{
+
+    // -----------------------------
+    // CREATE
+    // -----------------------------
+    if(!editId){
+
+      await addDoc(
+        collection(db,"schoolCalendar"),
+        {
+
+          title,
+          description,
+          category,
+
+          startDate,
+          endDate,
+
+          visibility,
+          status,
+
+          createdBy:user.userId,
+          createdByName:user.name,
+
+          createdAt:Date.now()
+
+        }
+      );
+
+      show(
+        "Event created successfully",
+        "ok"
+      );
+
+    }
+
+    // -----------------------------
+    // UPDATE
+    // -----------------------------
+    else{
+
+      await updateDoc(
+        doc(db,"schoolCalendar",editId),
+        {
+
+          title,
+          description,
+          category,
+
+          startDate,
+          endDate,
+
+          visibility,
+          status,
+
+          updatedAt:Date.now(),
+          updatedBy:user.userId
+
+        }
+      );
+
+      show(
+        "Event updated successfully",
+        "ok"
+      );
+
+    }
+
+    clearForm();
+
+    loadEvents();
+
+  }catch(err){
+
+    console.error(err);
+
+    show(
+      "Operation failed",
+      "bad"
+    );
+
+  }
+
+};
+
+// -----------------------------------
+// EDIT EVENT
+// -----------------------------------
+window.editEvent = function(id){
+
+  const e =
+    eventsCache.find(x=>x.docId === id);
+
+  if(!e) return;
+
+  document.getElementById("editId").value =
+    e.docId;
+
+  document.getElementById("title").value =
+    e.title;
+
+  document.getElementById("description").value =
+    e.description || "";
+
+  document.getElementById("category").value =
+    e.category;
+
+  document.getElementById("startDate").value =
+    e.startDate;
+
+  document.getElementById("endDate").value =
+    e.endDate;
+
+  document.getElementById("visibility").value =
+    e.visibility;
+
+  document.getElementById("status").value =
+    e.status;
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+};
+
+// -----------------------------------
+// DELETE EVENT
+// -----------------------------------
+window.deleteEvent = async function(id){
+
+  const ok =
+    confirm(
+      "Delete this event?"
+    );
+
+  if(!ok) return;
+
+  try{
+
+    await deleteDoc(
+      doc(db,"schoolCalendar",id)
+    );
+
+    show(
+      "Event deleted",
+      "ok"
+    );
+
+    loadEvents();
+
+  }catch(err){
+
+    console.error(err);
+
+    show(
+      "Delete failed",
+      "bad"
+    );
+
+  }
+
+};
+
+// -----------------------------------
+// CLEAR FORM
+// -----------------------------------
+function clearForm(){
+
+  document.getElementById("editId").value = "";
+
+  document.getElementById("title").value = "";
+
+  document.getElementById("description").value = "";
+
+  document.getElementById("category").selectedIndex = 0;
+
+  document.getElementById("startDate").value = "";
+
+  document.getElementById("endDate").value = "";
+
+  document.getElementById("visibility").selectedIndex = 0;
+
+  document.getElementById("status").selectedIndex = 0;
+
+}
+
+// -----------------------------------
+// MESSAGE
+// -----------------------------------
+function show(text,type){
+
+  msg.className =
+    "msg " + type;
+
+  msg.textContent = text;
+
+}
+
+</script>
+
+</body>
+</html>
