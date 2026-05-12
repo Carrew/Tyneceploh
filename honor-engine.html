@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Honor Engine - Generate Lists</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .card{
+      max-width:600px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    select,button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
+
+    button{
+      border:none;
+      background:#27ae60;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .log{
+      margin-top:15px;
+      font-size:13px;
+      color:#444;
+      background:#fafafa;
+      padding:10px;
+      border-radius:6px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2 style="text-align:center;">Honor Engine Generator</h2>
+
+<div class="card">
+
+  <label>Class</label>
+  <select id="class">
+    <option>JSS1</option>
+    <option>JSS2</option>
+    <option>SS1</option>
+    <option>SS2</option>
+  </select>
+
+  <label>Period</label>
+  <select id="period">
+    <option value="1">1st Semester</option>
+    <option value="2">2nd Semester</option>
+  </select>
+
+  <button onclick="generate()">
+    Generate Honor List
+  </button>
+
+  <div class="log" id="log">
+    Waiting for action...
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "admin"){
+  location.href="login.html";
+}
+
+//
+// LOAD RULES
+//
+async function getRules(){
+  const snap = await getDoc(doc(db,"honorRules","main"));
+  return snap.exists() ? snap.data() : null;
+}
+
+//
+// LOAD STUDENTS
+//
+async function getStudents(){
+
+  const snap = await getDocs(collection(db,"users"));
+
+  const students = [];
+
+  snap.forEach(d=>{
+    const u = d.data();
+    if(u.role === "student"){
+      students.push(u);
+    }
+  });
+
+  return students;
+}
+
+//
+// LOAD APPROVED RESULTS
+//
+async function getResults(){
+
+  const snap = await getDocs(collection(db,"results"));
+
+  const results = [];
+
+  snap.forEach(d=>{
+    results.push(d.data());
+  });
+
+  return results;
+}
+
+//
+// ENGINE
+//
+window.generate = async function(){
+
+  const cls = document.getElementById("class").value;
+  const per = document.getElementById("period").value;
+
+  log("Loading data...");
+
+  const rules = await getRules();
+  const students = await getStudents();
+  const results = await getResults();
+
+  if(!rules){
+    log("No rules found");
+    return;
+  }
+
+  const map = {};
+
+  students.forEach(s=>{
+    if(s.class !== cls) return;
+    map[s.userId] = s;
+  });
+
+  const grouped = {};
+
+  for(const id in map){
+
+    const s = map[id];
+
+    const r = results.filter(x =>
+      x.studentId === id &&
+      x.period === per
+    );
+
+    if(r.length === 0) continue;
+
+    let total = 0;
+    let disq = false;
+
+    r.forEach(x=>{
+
+      const score = Number(x.score);
+
+      total += score;
+
+      if(
+        rules.disqualifyOnRedMark &&
+        score <= rules.redMarkLimit
+      ){
+        disq = true;
+      }
+
+    });
+
+    const avg = total / r.length;
+
+    let category = "NONE";
+
+    if(disq){
+      category = "DISQUALIFIED";
+    }else{
+
+      for(const b of rules.bands){
+        if(avg >= b.min && avg <= b.max){
+          category = b.name;
+        }
+      }
+
+    }
+
+    grouped[id] = {
+      studentId:id,
+      name:s.name,
+      class:s.class,
+      average:avg,
+      category,
+      period:per
+    };
+
+  }
+
+  await setDoc(
+    doc(db,"honorResults",cls+"_"+per),
+    {
+      class:cls,
+      period:per,
+      results:Object.values(grouped),
+      generatedAt:Date.now()
+    }
+  );
+
+  log("Honor list generated successfully");
+
+};
+
+function log(msg){
+  document.getElementById("log").innerText = msg;
+}
+
+</script>
+
+</body>
+</html>
