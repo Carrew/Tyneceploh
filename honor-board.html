@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Board</title>
+  <title>Honor Board - TEF</title>
 
   <style>
     body{
@@ -17,7 +17,7 @@
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
       gap:15px;
       margin-top:20px;
     }
@@ -28,21 +28,20 @@
       border-radius:10px;
     }
 
-    .student{
-      border-bottom:1px solid #eee;
-      padding:6px;
-      font-size:14px;
+    .title{
+      text-align:center;
+      font-weight:bold;
+      margin-bottom:10px;
     }
 
-    .title{
-      font-weight:bold;
-      text-align:center;
-      margin-bottom:10px;
+    .student{
+      padding:6px;
+      border-bottom:1px solid #eee;
     }
 
     .empty{
       text-align:center;
-      margin-top:30px;
+      margin-top:40px;
       color:#666;
     }
   </style>
@@ -55,11 +54,12 @@
 <select id="classBox"></select>
 <select id="periodBox"></select>
 
-<button onclick="load()">Load</button>
+<button onclick="load()">Load Honor List</button>
 
 <div id="empty" class="empty"></div>
 
 <div class="grid">
+
   <div class="card">
     <div class="title">Proprietor</div>
     <div id="p"></div>
@@ -74,6 +74,7 @@
     <div class="title">Honor Roll</div>
     <div id="h"></div>
   </div>
+
 </div>
 
 <script type="module">
@@ -89,27 +90,19 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-// load only generated datasets
 async function loadOptions(){
 
   const snap = await getDocs(collection(db,"honorResults"));
 
-  const list = [];
+  const set = new Set();
 
   snap.forEach(d=>{
-    list.push(d.id);
+    const id = d.id.split("_")[0];
+    set.add(id);
   });
 
-  if(list.length === 0){
-    empty.innerText = "No honor data available yet.";
-    return;
-  }
-
-  classBox.innerHTML = [...new Set(list.map(x=>x.split("_")[0]))]
-    .map(c=>`<option>${c}</option>`).join("");
-
-  periodBox.innerHTML = [1,2,3]
-    .map(p=>`<option>${p}</option>`).join("");
+  classBox.innerHTML = [...set].map(c=>`<option>${c}</option>`).join("");
+  periodBox.innerHTML = [1,2,3].map(p=>`<option>${p}</option>`).join("");
 
 }
 
@@ -126,11 +119,16 @@ window.load = async function(){
   empty.innerText = "";
 
   if(!snap.exists()){
-    empty.innerText = "No generated honor list for this selection.";
+    empty.innerText = "No honor list generated yet for this selection.";
     return;
   }
 
   const data = snap.data().results;
+
+  if(!data || data.length === 0){
+    empty.innerText = "Honor list is empty.";
+    return;
+  }
 
   data.forEach(s=>{
 
