@@ -1,62 +1,291 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Attendance Report</title>
+  <title>TEF Daily Attendance</title>
 
-<style>
-body{font-family:sans-serif;background:#f4f4f4;padding:20px}
-table{width:100%;background:#fff;border-collapse:collapse}
-th,td{border:1px solid #ddd;padding:8px;text-align:center}
-th{background:#eee}
-</style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    h2{
+      text-align:center;
+      margin-bottom:20px;
+    }
+
+    .top{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
+
+    input,button{
+      padding:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
+
+    button{
+      background:#2980b9;
+      color:white;
+      border:none;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    table{
+      width:100%;
+      background:white;
+      border-collapse:collapse;
+    }
+
+    th,td{
+      border:1px solid #ddd;
+      padding:8px;
+      text-align:center;
+      font-size:13px;
+    }
+
+    th{
+      background:#eee;
+    }
+
+    .late{
+      color:#e67e22;
+      font-weight:bold;
+    }
+
+    .early{
+      color:#3498db;
+      font-weight:bold;
+    }
+
+    .danger{
+      color:#c0392b;
+      font-weight:bold;
+    }
+
+    .good{
+      color:#27ae60;
+      font-weight:bold;
+    }
+
+  </style>
 </head>
 
 <body>
 
-<h2>Daily Report</h2>
+<h2>Daily Attendance Report</h2>
 
-<input type="date" id="date">
-<button onclick="load()">Load</button>
+<div class="top">
+
+  <input type="date" id="date">
+
+  <button onclick="loadAttendance()">
+    Load Report
+  </button>
+
+</div>
 
 <table>
-<thead>
-<tr>
-<th>Name</th><th>In</th><th>Status</th><th>Out</th><th>Work</th>
-</tr>
-</thead>
-<tbody id="t"></tbody>
+
+  <thead>
+
+    <tr>
+
+      <th>Name</th>
+      <th>Role</th>
+      <th>Clock In</th>
+      <th>In Status</th>
+      <th>Clock Out</th>
+      <th>Out Status</th>
+      <th>Worked Hours</th>
+
+    </tr>
+
+  </thead>
+
+  <tbody id="tbody"></tbody>
+
 </table>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app=initializeApp({
-apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-projectId:"tyneceploh"
-});
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-const db=getFirestore(app);
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-window.load=async()=>{
-const d=date.value;
-const snap=await getDocs(collection(db,"attendanceDaily"));
-let rows="";
-snap.forEach(x=>{
-const v=x.data();
-if(v.date!==d)return;
-
-rows+=`
-<tr>
-<td>${v.name}</td>
-<td>${v.clockIn?new Date(v.clockIn.time).toLocaleTimeString():"-"}</td>
-<td>${v.clockIn?.status||"-"}</td>
-<td>${v.clockOut?new Date(v.clockOut.time).toLocaleTimeString():"-"}</td>
-<td>${v.clockOut?((v.clockOut.time-v.clockIn.time)/3600000).toFixed(1)+"h":"-"}</td>
-</tr>`;
-});
-t.innerHTML=rows;
+const firebaseConfig = {
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 };
+
+const app =
+  initializeApp(firebaseConfig);
+
+const db =
+  getFirestore(app);
+
+const user =
+  JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "admin"){
+
+  location.href = "login.html";
+
+}
+
+function formatTime(timestamp){
+
+  if(!timestamp) return "-";
+
+  return new Date(timestamp)
+    .toLocaleTimeString();
+
+}
+
+function workHours(start,end){
+
+  if(!start || !end){
+
+    return "-";
+
+  }
+
+  const diff =
+    end - start;
+
+  const hours =
+    (diff / 3600000)
+    .toFixed(2);
+
+  return hours + " hrs";
+
+}
+
+window.loadAttendance =
+async function(){
+
+  const selectedDate =
+    document.getElementById("date").value;
+
+  if(!selectedDate){
+
+    alert("Select date");
+
+    return;
+
+  }
+
+  const snap =
+    await getDocs(
+      collection(db,"attendanceDaily")
+    );
+
+  let rows = "";
+
+  snap.forEach(docSnap => {
+
+    const x =
+      docSnap.data();
+
+    if(x.date !== selectedDate)
+      return;
+
+    rows += `
+
+      <tr>
+
+        <td>${x.name}</td>
+
+        <td>${x.role}</td>
+
+        <td>
+          ${
+            formatTime(
+              x.clockIn?.time
+            )
+          }
+        </td>
+
+        <td class="
+          ${
+            x.clockIn?.status === "LATE"
+            ? "late"
+
+            : x.clockIn?.status === "EARLY"
+            ? "early"
+
+            : "good"
+          }
+        ">
+
+          ${x.clockIn?.status || "-"}
+
+        </td>
+
+        <td>
+          ${
+            formatTime(
+              x.clockOut?.time
+            )
+          }
+        </td>
+
+        <td class="
+          ${
+            x.clockOut?.status === "EARLY_EXIT"
+            ? "danger"
+
+            : "good"
+          }
+        ">
+
+          ${x.clockOut?.status || "-"}
+
+        </td>
+
+        <td>
+
+          ${
+            workHours(
+              x.clockIn?.time,
+              x.clockOut?.time
+            )
+          }
+
+        </td>
+
+      </tr>
+
+    `;
+
+  });
+
+  document.getElementById("tbody")
+    .innerHTML = rows;
+
+};
+
+document.getElementById("date").value =
+  new Date().toISOString().split("T")[0];
+
+loadAttendance();
+
 </script>
 
 </body>
