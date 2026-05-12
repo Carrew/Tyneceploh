@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF School Calendar</title>
+  <title>TEF Academic Calendar</title>
 
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
@@ -11,8 +11,8 @@
     body{
       margin:0;
       padding:20px;
-      font-family:sans-serif;
       background:#f4f4f4;
+      font-family:sans-serif;
     }
 
     .container{
@@ -20,35 +20,69 @@
       margin:auto;
     }
 
-    .topbar{
+    .hero{
+      background:linear-gradient(135deg,#800000,#ff4d6d);
+      color:white;
+      padding:30px;
+      border-radius:16px;
+      margin-bottom:20px;
+      box-shadow:0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    .hero h1{
+      margin:0;
+      font-size:32px;
+    }
+
+    .hero p{
+      margin-top:10px;
+      opacity:0.9;
+    }
+
+    .box{
       background:white;
       padding:20px;
-      border-radius:12px;
+      border-radius:14px;
       margin-bottom:20px;
       box-shadow:0 2px 8px rgba(0,0,0,0.08);
     }
 
-    h1{
-      margin-top:0;
+    .timeline{
+      position:relative;
+      margin-top:20px;
     }
 
-    select,
-    input{
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
-      box-sizing:border-box;
+    .timeline::before{
+      content:"";
+      position:absolute;
+      left:20px;
+      top:0;
+      bottom:0;
+      width:4px;
+      background:#ddd;
     }
 
-    .event-card{
-      background:white;
-      border-radius:12px;
+    .event{
+      position:relative;
+      margin-left:60px;
+      background:#fafafa;
       padding:18px;
-      margin-bottom:15px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.08);
-      border-left:7px solid #3498db;
+      border-radius:12px;
+      margin-bottom:20px;
+      border-left:6px solid #3498db;
+    }
+
+    .event::before{
+      content:"";
+      position:absolute;
+      left:-49px;
+      top:22px;
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:#3498db;
+      border:4px solid white;
+      box-shadow:0 0 0 2px #3498db;
     }
 
     .badge{
@@ -58,7 +92,7 @@
       color:white;
       font-size:12px;
       font-weight:bold;
-      margin-top:8px;
+      margin-top:10px;
     }
 
     .Holiday{
@@ -97,18 +131,53 @@
       background:#7f8c8d;
     }
 
-    .empty{
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      text-align:center;
-      color:#666;
-    }
-
     .meta{
+      margin-top:15px;
       color:#666;
       font-size:14px;
-      margin-top:10px;
+    }
+
+    .filters{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:15px;
+    }
+
+    select,
+    input{
+      width:100%;
+      padding:12px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      box-sizing:border-box;
+    }
+
+    .empty{
+      text-align:center;
+      color:#666;
+      padding:30px;
+    }
+
+    .active-session{
+      background:#d4edda;
+      color:#155724;
+      padding:10px 15px;
+      border-radius:8px;
+      display:inline-block;
+      font-weight:bold;
+      margin-top:15px;
+    }
+
+    @media(max-width:700px){
+
+      .filters{
+        grid-template-columns:1fr;
+      }
+
+      .hero h1{
+        font-size:25px;
+      }
+
     }
 
   </style>
@@ -118,43 +187,91 @@
 
 <div class="container">
 
-  <!-- TOP FILTERS -->
+  <!-- HERO -->
 
-  <div class="topbar">
+  <div class="hero">
 
-    <h1>TEF School Calendar</h1>
+    <h1>TEF Academic Calendar</h1>
+
+    <p>
+      School events, exams, vacations,
+      meetings, deadlines and academic schedules.
+    </p>
+
+    <div id="activeSessionBox"></div>
+
+  </div>
+
+  <!-- FILTERS -->
+
+  <div class="box">
+
+    <div class="filters">
+
+      <div>
+
+        <label>Academic Session</label>
+
+        <select id="sessionFilter"
+                onchange="renderEvents()">
+
+          <option value="all">
+            All Sessions
+          </option>
+
+        </select>
+
+      </div>
+
+      <div>
+
+        <label>Category</label>
+
+        <select id="categoryFilter"
+                onchange="renderEvents()">
+
+          <option value="all">
+            All Categories
+          </option>
+
+          <option>Holiday</option>
+          <option>Exam</option>
+          <option>Sports</option>
+          <option>Meeting</option>
+          <option>Academic</option>
+          <option>Deadline</option>
+          <option>Celebration</option>
+          <option>Emergency</option>
+          <option>Other</option>
+
+        </select>
+
+      </div>
+
+    </div>
 
     <input
       id="searchBox"
-      placeholder="Search events..."
+      placeholder="Search calendar events..."
       oninput="renderEvents()"
+      style="margin-top:15px;"
     >
-
-    <select id="categoryBox"
-            onchange="renderEvents()">
-
-      <option value="all">
-        All Categories
-      </option>
-
-      <option>Holiday</option>
-      <option>Exam</option>
-      <option>Sports</option>
-      <option>Meeting</option>
-      <option>Academic</option>
-      <option>Deadline</option>
-      <option>Celebration</option>
-      <option>Emergency</option>
-      <option>Other</option>
-
-    </select>
 
   </div>
 
   <!-- EVENTS -->
 
-  <div id="events">
-    Loading calendar...
+  <div class="box">
+
+    <h2>Timeline</h2>
+
+    <div class="timeline"
+         id="timeline">
+
+      Loading calendar...
+
+    </div>
+
   </div>
 
 </div>
@@ -185,71 +302,143 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
+let sessionsCache = [];
 let eventsCache = [];
 
-// -------------------------------------
-// LOAD EVENTS
-// -------------------------------------
-async function loadEvents(){
+// -----------------------------------
+// LOAD EVERYTHING
+// -----------------------------------
+async function loadData(){
 
-  try{
+  await loadSessions();
 
-    const q =
+  await loadEvents();
+
+}
+
+loadData();
+
+// -----------------------------------
+// LOAD SESSIONS
+// -----------------------------------
+async function loadSessions(){
+
+  const snap =
+    await getDocs(
       query(
-        collection(db,"schoolCalendar"),
-        orderBy("startDate","asc")
-      );
+        collection(db,"academicSessions"),
+        orderBy("createdAt","desc")
+      )
+    );
 
-    const snap =
-      await getDocs(q);
+  sessionsCache = [];
 
-    eventsCache = [];
+  let activeSession = null;
 
-    snap.forEach(d=>{
+  snap.forEach(d=>{
 
-      const data = d.data();
+    const data = d.data();
 
-      // ONLY SHOW ACTIVE + PUBLIC
-      if(
-        data.status === "active"
-        &&
-        data.visibility === "public"
-      ){
+    sessionsCache.push(data);
 
-        eventsCache.push({
-          docId:d.id,
-          ...data
-        });
+    if(data.active){
+      activeSession = data.name;
+    }
 
-      }
+  });
 
-    });
+  renderSessionDropdown();
 
-    renderEvents();
+  if(activeSession){
 
-  }catch(err){
+    document.getElementById(
+      "activeSessionBox"
+    ).innerHTML = `
 
-    console.error(err);
-
-    document.getElementById("events").innerHTML = `
-      <div class="empty">
-        Failed to load calendar.
+      <div class="active-session">
+        Active Session:
+        ${activeSession}
       </div>
+
     `;
 
   }
 
 }
 
-loadEvents();
+// -----------------------------------
+// SESSION DROPDOWN
+// -----------------------------------
+function renderSessionDropdown(){
 
-// -------------------------------------
+  const box =
+    document.getElementById(
+      "sessionFilter"
+    );
+
+  box.innerHTML = `
+
+    <option value="all">
+      All Sessions
+    </option>
+
+  `;
+
+  box.innerHTML +=
+    sessionsCache.map(s=>`
+
+      <option value="${s.name}">
+        ${s.name}
+      </option>
+
+    `).join("");
+
+}
+
+// -----------------------------------
+// LOAD EVENTS
+// -----------------------------------
+async function loadEvents(){
+
+  const snap =
+    await getDocs(
+      query(
+        collection(db,"schoolCalendar"),
+        orderBy("startDate","asc")
+      )
+    );
+
+  eventsCache = [];
+
+  snap.forEach(d=>{
+
+    const e = d.data();
+
+    if(
+      e.visibility === "public"
+      &&
+      e.status === "active"
+    ){
+
+      eventsCache.push(e);
+
+    }
+
+  });
+
+  renderEvents();
+
+}
+
+// -----------------------------------
 // RENDER EVENTS
-// -------------------------------------
+// -----------------------------------
 window.renderEvents = function(){
 
-  const container =
-    document.getElementById("events");
+  const timeline =
+    document.getElementById(
+      "timeline"
+    );
 
   const search =
     document
@@ -257,59 +446,83 @@ window.renderEvents = function(){
       .value
       .toLowerCase();
 
+  const session =
+    document
+      .getElementById("sessionFilter")
+      .value;
+
   const category =
     document
-      .getElementById("categoryBox")
+      .getElementById("categoryFilter")
       .value;
 
   let filtered =
     eventsCache.filter(e=>{
 
-      const matchSearch =
+      const searchMatch =
 
-        e.title.toLowerCase().includes(search)
+        e.title
+          .toLowerCase()
+          .includes(search)
+
         ||
+
         (e.description || "")
           .toLowerCase()
           .includes(search);
 
-      const matchCategory =
+      const sessionMatch =
+
+        session === "all"
+        ||
+        e.session === session;
+
+      const categoryMatch =
 
         category === "all"
         ||
         e.category === category;
 
       return (
-        matchSearch
+        searchMatch
         &&
-        matchCategory
+        sessionMatch
+        &&
+        categoryMatch
       );
 
     });
 
-  // ---------------------------------
-  // EMPTY STATE
-  // ---------------------------------
+  // SORT
+  filtered.sort((a,b)=>
+
+    new Date(a.startDate)
+    -
+    new Date(b.startDate)
+
+  );
+
+  // EMPTY
   if(filtered.length === 0){
 
-    container.innerHTML = `
+    timeline.innerHTML = `
+
       <div class="empty">
-        No calendar events found.
+        No calendar events available.
       </div>
+
     `;
 
     return;
   }
 
-  // ---------------------------------
   // RENDER
-  // ---------------------------------
-  container.innerHTML =
+  timeline.innerHTML =
     filtered.map(e=>`
 
-      <div class="event-card">
+      <div class="event">
 
-        <h2>${e.title}</h2>
+        <h3>${e.title}</h3>
 
         <div class="
           badge
@@ -319,13 +532,20 @@ window.renderEvents = function(){
         </div>
 
         <p style="margin-top:15px;">
+
           ${
             e.description ||
-            "No description provided."
+            "No description"
           }
+
         </p>
 
         <div class="meta">
+
+          <b>Session:</b>
+          ${e.session}
+
+          <br><br>
 
           <b>Start:</b>
           ${formatDate(e.startDate)}
@@ -343,22 +563,20 @@ window.renderEvents = function(){
 
 };
 
-// -------------------------------------
-// DATE FORMATTER
-// -------------------------------------
-function formatDate(dateString){
+// -----------------------------------
+// DATE FORMAT
+// -----------------------------------
+function formatDate(date){
 
-  const d =
-    new Date(dateString);
-
-  return d.toLocaleDateString(
-    undefined,
-    {
-      year:"numeric",
-      month:"long",
-      day:"numeric"
-    }
-  );
+  return new Date(date)
+    .toLocaleDateString(
+      undefined,
+      {
+        year:"numeric",
+        month:"long",
+        day:"numeric"
+      }
+    );
 
 }
 
