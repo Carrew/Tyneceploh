@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Board - TEF</title>
+  <title>Honor Board</title>
 
   <style>
     body{
@@ -17,7 +17,7 @@
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
       gap:15px;
       margin-top:20px;
     }
@@ -28,18 +28,23 @@
       border-radius:10px;
     }
 
-    .title{
-      font-weight:bold;
-      margin-bottom:10px;
-      text-align:center;
-    }
-
     .student{
       border-bottom:1px solid #eee;
       padding:6px;
       font-size:14px;
     }
 
+    .title{
+      font-weight:bold;
+      text-align:center;
+      margin-bottom:10px;
+    }
+
+    .empty{
+      text-align:center;
+      margin-top:30px;
+      color:#666;
+    }
   </style>
 </head>
 
@@ -50,10 +55,11 @@
 <select id="classBox"></select>
 <select id="periodBox"></select>
 
-<button onclick="load()">Load Board</button>
+<button onclick="load()">Load</button>
+
+<div id="empty" class="empty"></div>
 
 <div class="grid">
-
   <div class="card">
     <div class="title">Proprietor</div>
     <div id="p"></div>
@@ -65,15 +71,9 @@
   </div>
 
   <div class="card">
-    <div class="title">Honor</div>
+    <div class="title">Honor Roll</div>
     <div id="h"></div>
   </div>
-
-  <div class="card">
-    <div class="title">Fail</div>
-    <div id="f"></div>
-  </div>
-
 </div>
 
 <script type="module">
@@ -89,23 +89,27 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-// dropdowns from saved data
+// load only generated datasets
 async function loadOptions(){
 
   const snap = await getDocs(collection(db,"honorResults"));
 
-  const opts = [];
+  const list = [];
 
   snap.forEach(d=>{
-    opts.push(d.id);
+    list.push(d.id);
   });
 
-  classBox.innerHTML = opts.map(o=>{
-    const c = o.split("_")[0];
-    return `<option>${c}</option>`;
-  }).join("");
+  if(list.length === 0){
+    empty.innerText = "No honor data available yet.";
+    return;
+  }
 
-  periodBox.innerHTML = [1,2,3].map(p=>`<option>${p}</option>`).join("");
+  classBox.innerHTML = [...new Set(list.map(x=>x.split("_")[0]))]
+    .map(c=>`<option>${c}</option>`).join("");
+
+  periodBox.innerHTML = [1,2,3]
+    .map(p=>`<option>${p}</option>`).join("");
 
 }
 
@@ -118,10 +122,11 @@ window.load = async function(){
 
   const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
 
-  p.innerHTML = pr.innerHTML = h.innerHTML = f.innerHTML = "";
+  p.innerHTML = pr.innerHTML = h.innerHTML = "";
+  empty.innerText = "";
 
   if(!snap.exists()){
-    alert("No data yet. Generate first.");
+    empty.innerText = "No generated honor list for this selection.";
     return;
   }
 
@@ -134,7 +139,6 @@ window.load = async function(){
     if(s.category==="proprietor") p.innerHTML+=el;
     else if(s.category==="principal") pr.innerHTML+=el;
     else if(s.category==="honor") h.innerHTML+=el;
-    else f.innerHTML+=el;
 
   });
 
