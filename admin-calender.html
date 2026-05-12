@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TEF Calendar Admin</title>
+  <title>TEF Academic Calendar Admin</title>
 
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
@@ -9,14 +9,14 @@
   <style>
 
     body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
       margin:0;
+      padding:20px;
+      background:#f4f4f4;
+      font-family:sans-serif;
     }
 
     .container{
-      max-width:1000px;
+      max-width:1100px;
       margin:auto;
     }
 
@@ -33,8 +33,8 @@
     }
 
     input,
-    textarea,
     select,
+    textarea,
     button{
       width:100%;
       padding:12px;
@@ -42,29 +42,32 @@
       border-radius:6px;
       border:1px solid #ccc;
       box-sizing:border-box;
-      font-size:14px;
     }
 
     textarea{
-      resize:vertical;
       min-height:100px;
+      resize:vertical;
     }
 
     button{
-      border:none;
       background:#27ae60;
       color:white;
-      font-weight:bold;
+      border:none;
       cursor:pointer;
+      font-weight:bold;
     }
 
+    .session-card,
     .event-card{
-      background:white;
+      background:#fafafa;
       padding:15px;
       border-radius:10px;
-      margin-bottom:15px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.08);
+      margin-top:15px;
       border-left:6px solid #3498db;
+    }
+
+    .active{
+      border-left-color:#27ae60;
     }
 
     .badge{
@@ -73,8 +76,16 @@
       border-radius:20px;
       color:white;
       font-size:12px;
-      margin-top:10px;
       font-weight:bold;
+      margin-top:10px;
+    }
+
+    .active-badge{
+      background:#27ae60;
+    }
+
+    .inactive-badge{
+      background:#7f8c8d;
     }
 
     .Holiday{ background:#e74c3c; }
@@ -87,25 +98,30 @@
     .Emergency{ background:#2c3e50; }
     .Other{ background:#7f8c8d; }
 
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:15px;
+    }
+
     .actions{
       margin-top:15px;
       display:flex;
       gap:10px;
     }
 
-    .edit-btn{
-      background:#2980b9;
+    .danger{
+      background:#c0392b;
     }
 
-    .delete-btn{
-      background:#c0392b;
+    .blue{
+      background:#2980b9;
     }
 
     .msg{
       margin-top:15px;
       padding:12px;
       border-radius:6px;
-      font-size:14px;
     }
 
     .ok{
@@ -118,6 +134,14 @@
       color:#721c24;
     }
 
+    @media(max-width:700px){
+
+      .row{
+        grid-template-columns:1fr;
+      }
+
+    }
+
   </style>
 </head>
 
@@ -125,22 +149,72 @@
 
 <div class="container">
 
-  <!-- CREATE / EDIT -->
+  <!-- SESSION CREATOR -->
 
   <div class="box">
 
-    <h2>School Calendar Admin</h2>
+    <h2>Academic Session Manager</h2>
 
-    <input type="hidden" id="editId">
+    <input type="hidden" id="sessionEditId">
+
+    <label>Academic Session Name</label>
+
+    <input id="sessionName"
+           placeholder="2026 / 2027">
+
+    <div class="row">
+
+      <div>
+
+        <label>Start Date</label>
+
+        <input type="date"
+               id="sessionStart">
+
+      </div>
+
+      <div>
+
+        <label>End Date</label>
+
+        <input type="date"
+               id="sessionEnd">
+
+      </div>
+
+    </div>
+
+    <button onclick="saveSession()">
+      Save Academic Session
+    </button>
+
+    <div id="sessionMsg"></div>
+
+  </div>
+
+  <!-- EVENT CREATOR -->
+
+  <div class="box">
+
+    <h2>Calendar Event Builder</h2>
+
+    <input type="hidden" id="eventEditId">
+
+    <label>Select Academic Session</label>
+
+    <select id="eventSession"></select>
 
     <label>Event Title</label>
-    <input id="title">
+
+    <input id="eventTitle">
 
     <label>Description</label>
-    <textarea id="description"></textarea>
+
+    <textarea id="eventDescription"></textarea>
 
     <label>Category</label>
-    <select id="category">
+
+    <select id="eventCategory">
 
       <option>Holiday</option>
       <option>Exam</option>
@@ -154,41 +228,56 @@
 
     </select>
 
-    <label>Start Date</label>
-    <input type="date" id="startDate">
+    <div class="row">
 
-    <label>End Date</label>
-    <input type="date" id="endDate">
+      <div>
 
-    <label>Visibility</label>
-    <select id="visibility">
-      <option value="public">Public</option>
-      <option value="private">Private</option>
-    </select>
+        <label>Start Date</label>
 
-    <label>Status</label>
-    <select id="status">
-      <option value="active">Active</option>
-      <option value="draft">Draft</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
+        <input type="date"
+               id="eventStart">
+
+      </div>
+
+      <div>
+
+        <label>End Date</label>
+
+        <input type="date"
+               id="eventEnd">
+
+      </div>
+
+    </div>
 
     <button onclick="saveEvent()">
-      Save Event
+      Save Calendar Event
     </button>
 
-    <div id="msg"></div>
+    <div id="eventMsg"></div>
 
   </div>
 
-  <!-- EVENT LIST -->
+  <!-- SESSIONS -->
+
+  <div class="box">
+
+    <h2>Academic Sessions</h2>
+
+    <div id="sessions">
+      Loading...
+    </div>
+
+  </div>
+
+  <!-- EVENTS -->
 
   <div class="box">
 
     <h2>Calendar Events</h2>
 
     <div id="events">
-      Loading events...
+      Loading...
     </div>
 
   </div>
@@ -206,11 +295,11 @@ import {
   collection,
   addDoc,
   getDocs,
+  updateDoc,
   deleteDoc,
   doc,
-  updateDoc,
-  orderBy,
-  query
+  query,
+  orderBy
 
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -232,24 +321,290 @@ if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
+let sessionsCache = [];
 let eventsCache = [];
 
-const msg =
-  document.getElementById("msg");
+// -----------------------------------
+// LOAD EVERYTHING
+// -----------------------------------
+async function loadData(){
+
+  await loadSessions();
+
+  await loadEvents();
+
+}
+
+loadData();
+
+// -----------------------------------
+// LOAD SESSIONS
+// -----------------------------------
+async function loadSessions(){
+
+  const snap =
+    await getDocs(
+      query(
+        collection(db,"academicSessions"),
+        orderBy("createdAt","desc")
+      )
+    );
+
+  sessionsCache = [];
+
+  snap.forEach(d=>{
+
+    sessionsCache.push({
+      docId:d.id,
+      ...d.data()
+    });
+
+  });
+
+  renderSessions();
+
+  renderSessionDropdown();
+
+}
+
+// -----------------------------------
+// SESSION DROPDOWN
+// -----------------------------------
+function renderSessionDropdown(){
+
+  const box =
+    document.getElementById("eventSession");
+
+  if(sessionsCache.length === 0){
+
+    box.innerHTML =
+      `<option>No Sessions</option>`;
+
+    return;
+  }
+
+  box.innerHTML =
+    sessionsCache.map(s=>`
+
+      <option value="${s.name}">
+        ${s.name}
+      </option>
+
+    `).join("");
+
+}
+
+// -----------------------------------
+// RENDER SESSIONS
+// -----------------------------------
+function renderSessions(){
+
+  const container =
+    document.getElementById("sessions");
+
+  if(sessionsCache.length === 0){
+
+    container.innerHTML =
+      "<p>No sessions yet.</p>";
+
+    return;
+  }
+
+  container.innerHTML =
+    sessionsCache.map(s=>`
+
+      <div class="
+        session-card
+        ${s.active ? "active" : ""}
+      ">
+
+        <h3>${s.name}</h3>
+
+        <div class="
+          badge
+          ${s.active
+            ? "active-badge"
+            : "inactive-badge"}
+        ">
+          ${s.active
+            ? "ACTIVE SESSION"
+            : "INACTIVE"}
+        </div>
+
+        <p>
+
+          <b>Start:</b>
+          ${s.startDate}
+
+          <br><br>
+
+          <b>End:</b>
+          ${s.endDate}
+
+        </p>
+
+        <div class="actions">
+
+          <button
+            class="blue"
+            onclick="activateSession('${s.docId}')"
+          >
+            Set Active
+          </button>
+
+          <button
+            class="danger"
+            onclick="deleteSession('${s.docId}')"
+          >
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+}
+
+// -----------------------------------
+// SAVE SESSION
+// -----------------------------------
+window.saveSession = async function(){
+
+  const name =
+    sessionName.value.trim();
+
+  const start =
+    sessionStart.value;
+
+  const end =
+    sessionEnd.value;
+
+  if(
+    !name ||
+    !start ||
+    !end
+  ){
+    return showSessionMsg(
+      "Fill all fields",
+      "bad"
+    );
+  }
+
+  try{
+
+    await addDoc(
+      collection(db,"academicSessions"),
+      {
+
+        name,
+        startDate:start,
+        endDate:end,
+
+        active:false,
+
+        createdAt:Date.now(),
+        createdBy:user.userId
+
+      }
+    );
+
+    sessionName.value = "";
+    sessionStart.value = "";
+    sessionEnd.value = "";
+
+    showSessionMsg(
+      "Session created",
+      "ok"
+    );
+
+    loadSessions();
+
+  }catch(err){
+
+    console.error(err);
+
+    showSessionMsg(
+      "Failed to create session",
+      "bad"
+    );
+
+  }
+
+};
+
+// -----------------------------------
+// ACTIVATE SESSION
+// -----------------------------------
+window.activateSession =
+async function(id){
+
+  try{
+
+    // REMOVE ACTIVE FROM ALL
+    for(const s of sessionsCache){
+
+      await updateDoc(
+        doc(db,"academicSessions",s.docId),
+        {
+          active:false
+        }
+      );
+
+    }
+
+    // SET TARGET ACTIVE
+    await updateDoc(
+      doc(db,"academicSessions",id),
+      {
+        active:true
+      }
+    );
+
+    loadSessions();
+
+  }catch(err){
+
+    console.error(err);
+
+  }
+
+};
+
+// -----------------------------------
+// DELETE SESSION
+// -----------------------------------
+window.deleteSession =
+async function(id){
+
+  const ok =
+    confirm(
+      "Delete session?"
+    );
+
+  if(!ok) return;
+
+  await deleteDoc(
+    doc(db,"academicSessions",id)
+  );
+
+  loadSessions();
+
+};
 
 // -----------------------------------
 // LOAD EVENTS
 // -----------------------------------
 async function loadEvents(){
 
-  const q =
-    query(
-      collection(db,"schoolCalendar"),
-      orderBy("startDate","asc")
-    );
-
   const snap =
-    await getDocs(q);
+    await getDocs(
+      query(
+        collection(db,"schoolCalendar"),
+        orderBy("startDate","asc")
+      )
+    );
 
   eventsCache = [];
 
@@ -266,7 +621,89 @@ async function loadEvents(){
 
 }
 
-loadEvents();
+// -----------------------------------
+// SAVE EVENT
+// -----------------------------------
+window.saveEvent = async function(){
+
+  const session =
+    eventSession.value;
+
+  const title =
+    eventTitle.value.trim();
+
+  const description =
+    eventDescription.value.trim();
+
+  const category =
+    eventCategory.value;
+
+  const start =
+    eventStart.value;
+
+  const end =
+    eventEnd.value;
+
+  if(
+    !session ||
+    !title ||
+    !start ||
+    !end
+  ){
+    return showEventMsg(
+      "Fill all required fields",
+      "bad"
+    );
+  }
+
+  try{
+
+    await addDoc(
+      collection(db,"schoolCalendar"),
+      {
+
+        session,
+
+        title,
+        description,
+        category,
+
+        startDate:start,
+        endDate:end,
+
+        visibility:"public",
+        status:"active",
+
+        createdBy:user.userId,
+        createdAt:Date.now()
+
+      }
+    );
+
+    eventTitle.value = "";
+    eventDescription.value = "";
+    eventStart.value = "";
+    eventEnd.value = "";
+
+    showEventMsg(
+      "Event created",
+      "ok"
+    );
+
+    loadEvents();
+
+  }catch(err){
+
+    console.error(err);
+
+    showEventMsg(
+      "Failed to create event",
+      "bad"
+    );
+
+  }
+
+};
 
 // -----------------------------------
 // RENDER EVENTS
@@ -279,7 +716,7 @@ function renderEvents(){
   if(eventsCache.length === 0){
 
     container.innerHTML =
-      "<p>No calendar events found.</p>";
+      "<p>No events found.</p>";
 
     return;
   }
@@ -299,44 +736,26 @@ function renderEvents(){
         </div>
 
         <p style="margin-top:15px;">
-          ${e.description || "No description"}
+
+          <b>Session:</b>
+          ${e.session}
+
+          <br><br>
+
+          ${
+            e.description ||
+            "No description"
+          }
+
         </p>
 
         <b>Start:</b>
         ${e.startDate}
 
-        <br>
+        <br><br>
 
         <b>End:</b>
         ${e.endDate}
-
-        <br><br>
-
-        <b>Status:</b>
-        ${e.status}
-
-        <br>
-
-        <b>Visibility:</b>
-        ${e.visibility}
-
-        <div class="actions">
-
-          <button
-            class="edit-btn"
-            onclick="editEvent('${e.docId}')"
-          >
-            Edit
-          </button>
-
-          <button
-            class="delete-btn"
-            onclick="deleteEvent('${e.docId}')"
-          >
-            Delete
-          </button>
-
-        </div>
 
       </div>
 
@@ -345,241 +764,29 @@ function renderEvents(){
 }
 
 // -----------------------------------
-// SAVE EVENT
+// MESSAGES
 // -----------------------------------
-window.saveEvent = async function(){
+function showSessionMsg(text,type){
 
-  const title =
-    document.getElementById("title").value.trim();
+  const box =
+    document.getElementById("sessionMsg");
 
-  const description =
-    document.getElementById("description").value.trim();
+  box.className =
+    "msg " + type;
 
-  const category =
-    document.getElementById("category").value;
-
-  const startDate =
-    document.getElementById("startDate").value;
-
-  const endDate =
-    document.getElementById("endDate").value;
-
-  const visibility =
-    document.getElementById("visibility").value;
-
-  const status =
-    document.getElementById("status").value;
-
-  const editId =
-    document.getElementById("editId").value;
-
-  if(
-    !title ||
-    !startDate ||
-    !endDate
-  ){
-    return show(
-      "Fill all required fields",
-      "bad"
-    );
-  }
-
-  try{
-
-    // -----------------------------
-    // CREATE
-    // -----------------------------
-    if(!editId){
-
-      await addDoc(
-        collection(db,"schoolCalendar"),
-        {
-
-          title,
-          description,
-          category,
-
-          startDate,
-          endDate,
-
-          visibility,
-          status,
-
-          createdBy:user.userId,
-          createdByName:user.name,
-
-          createdAt:Date.now()
-
-        }
-      );
-
-      show(
-        "Event created successfully",
-        "ok"
-      );
-
-    }
-
-    // -----------------------------
-    // UPDATE
-    // -----------------------------
-    else{
-
-      await updateDoc(
-        doc(db,"schoolCalendar",editId),
-        {
-
-          title,
-          description,
-          category,
-
-          startDate,
-          endDate,
-
-          visibility,
-          status,
-
-          updatedAt:Date.now(),
-          updatedBy:user.userId
-
-        }
-      );
-
-      show(
-        "Event updated successfully",
-        "ok"
-      );
-
-    }
-
-    clearForm();
-
-    loadEvents();
-
-  }catch(err){
-
-    console.error(err);
-
-    show(
-      "Operation failed",
-      "bad"
-    );
-
-  }
-
-};
-
-// -----------------------------------
-// EDIT EVENT
-// -----------------------------------
-window.editEvent = function(id){
-
-  const e =
-    eventsCache.find(x=>x.docId === id);
-
-  if(!e) return;
-
-  document.getElementById("editId").value =
-    e.docId;
-
-  document.getElementById("title").value =
-    e.title;
-
-  document.getElementById("description").value =
-    e.description || "";
-
-  document.getElementById("category").value =
-    e.category;
-
-  document.getElementById("startDate").value =
-    e.startDate;
-
-  document.getElementById("endDate").value =
-    e.endDate;
-
-  document.getElementById("visibility").value =
-    e.visibility;
-
-  document.getElementById("status").value =
-    e.status;
-
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
-
-};
-
-// -----------------------------------
-// DELETE EVENT
-// -----------------------------------
-window.deleteEvent = async function(id){
-
-  const ok =
-    confirm(
-      "Delete this event?"
-    );
-
-  if(!ok) return;
-
-  try{
-
-    await deleteDoc(
-      doc(db,"schoolCalendar",id)
-    );
-
-    show(
-      "Event deleted",
-      "ok"
-    );
-
-    loadEvents();
-
-  }catch(err){
-
-    console.error(err);
-
-    show(
-      "Delete failed",
-      "bad"
-    );
-
-  }
-
-};
-
-// -----------------------------------
-// CLEAR FORM
-// -----------------------------------
-function clearForm(){
-
-  document.getElementById("editId").value = "";
-
-  document.getElementById("title").value = "";
-
-  document.getElementById("description").value = "";
-
-  document.getElementById("category").selectedIndex = 0;
-
-  document.getElementById("startDate").value = "";
-
-  document.getElementById("endDate").value = "";
-
-  document.getElementById("visibility").selectedIndex = 0;
-
-  document.getElementById("status").selectedIndex = 0;
+  box.textContent = text;
 
 }
 
-// -----------------------------------
-// MESSAGE
-// -----------------------------------
-function show(text,type){
+function showEventMsg(text,type){
 
-  msg.className =
+  const box =
+    document.getElementById("eventMsg");
+
+  box.className =
     "msg " + type;
 
-  msg.textContent = text;
+  box.textContent = text;
 
 }
 
