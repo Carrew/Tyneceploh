@@ -9,72 +9,74 @@ import {
 
 const db = getFirestore();
 
-//
-// MAIN ENGINE
-//
+async function getStudents(){
+
+  const snap = await getDocs(collection(db,"users"));
+
+  const map = {};
+
+  snap.forEach(d=>{
+
+    const u = d.data();
+
+    if(u.role === "student"){
+
+      map[u.userId] = u;
+
+    }
+
+  });
+
+  return map;
+
+}
+
 export async function generateHonorRoll(selectedClass, period){
 
-  console.log("Starting Honor Engine...");
+  const rulesSnap = await getDoc(doc(db,"honorRules","main"));
+  const rules = rulesSnap.data();
 
-  // 1. LOAD RULES
-  const ruleSnap = await getDoc(
-    doc(db,"honorRules","main")
-  );
+  const students = await getStudents();
 
-  if(!ruleSnap.exists()){
-    throw new Error("Honor rules not set");
-  }
-
-  const rules = ruleSnap.data();
-
-  console.log("Rules loaded:", rules);
-
-  // 2. LOAD STUDENTS
-  const studentsSnap = await getDocs(
-    collection(db,"students")
-  );
-
-  // 3. LOAD GRADES
-  const gradesSnap = await getDocs(
-    collection(db,"grades")
-  );
-
-  const grades = [];
-
-  gradesSnap.forEach(d=>{
-    grades.push(d.data());
-  });
+  const resultsSnap = await getDocs(collection(db,"results"));
 
   const results = [];
 
-  // 4. LOOP STUDENTS
-  studentsSnap.forEach(docSnap=>{
+  resultsSnap.forEach(d=>{
 
-    const student = docSnap.data();
+    const r = d.data();
 
-    if(student.class !== selectedClass) return;
+    if(!students[r.studentId]) return;
+    if(students[r.studentId].class !== selectedClass) return;
+    if(r.period !== period) return;
 
-    const studentGrades =
-      grades.filter(g =>
-        g.studentId === student.studentId &&
-        g.period === period
-      );
+    results.push(r);
 
-    if(studentGrades.length === 0) return;
+  });
+
+  const grouped = {};
+
+  Object.keys(students).forEach(id=>{
+
+    const s = students[id];
+
+    if(s.class !== selectedClass) return;
+
+    const studentResults = results.filter(r=>r.studentId === id);
+
+    if(studentResults.length === 0) return;
 
     let total = 0;
     let count = 0;
     let disqualified = false;
 
-    // 5. CALCULATE AVERAGE + RED MARK CHECK
-    studentGrades.forEach(g=>{
+    studentResults.forEach(r=>{
 
-      const score = Number(g.score);
+      const score = Number(r.score);
 
       total += score;
       count++;
 
-      // RED MARK CHECK
       if(
         rules.disqualifyOnRedMark &&
         score <= rules.redMarkLimit
@@ -88,50 +90,39 @@ export async function generateHonorRoll(selectedClass, period){
 
     let category = "NONE";
 
-    // 6. APPLY DISQUALIFICATION FIRST
     if(disqualified){
       category = "DISQUALIFIED";
-    }
+    }else{
 
-    else{
-
-      // 7. APPLY BANDS
       for(const b of rules.bands){
-
         if(avg >= b.min && avg <= b.max){
           category = b.name;
-          break;
         }
-
       }
 
     }
 
-    results.push({
-      studentId: student.studentId,
-      name: student.name,
-      class: student.class,
-      average: avg.toFixed(2),
+    grouped[id] = {
+      studentId:id,
+      name:s.name,
+      class:s.class,
+      average:avg,
       category,
-      period,
-      timestamp: Date.now()
-    });
+      period
+    };
 
   });
 
-  // 8. SAVE RESULTS
   await setDoc(
     doc(db,"honorResults",selectedClass+"_"+period),
     {
-      class: selectedClass,
+      class:selectedClass,
       period,
-      results,
-      generatedAt: Date.now()
+      results:Object.values(grouped),
+      generatedAt:Date.now()
     }
   );
 
-  console.log("Honor Roll Generated:", results);
-
-  return results;
+  return grouped;
 
 }
