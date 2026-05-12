@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Honor Board - TEF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body{
@@ -11,27 +10,22 @@
       padding:20px;
     }
 
-    .wrap{
-      max-width:800px;
-      margin:auto;
-    }
-
     select,button{
       padding:10px;
       margin:5px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-      gap:15px;
-      margin-top:20px;
     }
 
     .card{
       background:white;
       padding:15px;
       border-radius:10px;
+      max-width:500px;
+      margin:auto;
+    }
+
+    .student{
+      padding:8px;
+      border-bottom:1px solid #eee;
     }
 
     .title{
@@ -40,64 +34,27 @@
       margin-bottom:10px;
     }
 
-    .student{
-      padding:6px;
-      border-bottom:1px solid #eee;
-      font-size:14px;
-    }
-
-    .msg{
-      text-align:center;
-      margin-top:20px;
-      color:#666;
-    }
-
   </style>
 </head>
 
 <body>
 
-<div class="wrap">
+<h2 style="text-align:center;">Honor Board</h2>
 
-  <h2>Honor Board</h2>
+<select id="classBox"></select>
+<select id="periodBox"></select>
 
-  <select id="listBox"></select>
+<button onclick="load()">Load Honor List</button>
 
-  <button onclick="loadBoard()">Load</button>
-
-  <div id="msg" class="msg">Loading generated lists...</div>
-
-  <div class="grid">
-
-    <div class="card">
-      <div class="title">Proprietor</div>
-      <div id="p"></div>
-    </div>
-
-    <div class="card">
-      <div class="title">Principal</div>
-      <div id="pr"></div>
-    </div>
-
-    <div class="card">
-      <div class="title">Honor</div>
-      <div id="h"></div>
-    </div>
-
-  </div>
-
+<div class="card">
+  <div class="title">Honor Students</div>
+  <div id="list"></div>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  getDocs,
-  collection,
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, getDocs, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -107,67 +64,55 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-let availableLists = [];
-
-// 🔥 ONLY LOAD EXISTING GENERATED HONOR LISTS
-async function loadLists(){
+// load available generated sets
+async function loadOptions(){
 
   const snap = await getDocs(collection(db,"honorResults"));
 
-  availableLists = [];
+  const opts = [];
 
   snap.forEach(d=>{
-    availableLists.push(d.id);
+    opts.push(d.id);
   });
 
-  if(availableLists.length === 0){
-    msg.innerText = "No honor lists generated yet.";
-    return;
-  }
+  classBox.innerHTML = [...new Set(opts.map(o=>o.split("_")[0]))]
+    .map(c=>`<option>${c}</option>`).join("");
 
-  listBox.innerHTML = availableLists
-    .map(id=>`<option value="${id}">${id}</option>`)
-    .join("");
-
-  msg.innerText = "Select a generated list";
+  periodBox.innerHTML = [...new Set(opts.map(o=>o.split("_")[1]))]
+    .map(p=>`<option>${p}</option>`).join("");
 
 }
 
-loadLists();
+loadOptions();
 
-window.loadBoard = async function(){
+window.load = async function(){
 
-  const id = listBox.value;
+  const cls = classBox.value;
+  const per = periodBox.value;
 
-  if(!id){
-    msg.innerText = "No list selected";
-    return;
-  }
+  const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
 
-  const snap = await getDoc(doc(db,"honorResults",id));
+  list.innerHTML = "";
 
   if(!snap.exists()){
-    msg.innerText = "This list no longer exists";
+    list.innerHTML = "<p>No honor data found.</p>";
     return;
   }
 
   const data = snap.data().results;
 
-  p.innerHTML = "";
-  pr.innerHTML = "";
-  h.innerHTML = "";
+  if(!data || data.length === 0){
+    list.innerHTML = "<p>No honor students yet.</p>";
+    return;
+  }
 
   data.forEach(s=>{
-
-    const el = `<div class="student">${s.name} - ${s.average.toFixed(1)}</div>`;
-
-    if(s.category === "proprietor") p.innerHTML += el;
-    if(s.category === "principal") pr.innerHTML += el;
-    if(s.category === "honor") h.innerHTML += el;
-
+    list.innerHTML += `
+      <div class="student">
+        ${s.name} — <b>${s.average.toFixed(1)}</b>
+      </div>
+    `;
   });
-
-  msg.innerText = `Loaded: ${id}`;
 
 };
 
