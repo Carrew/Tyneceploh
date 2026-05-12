@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Board</title>
+  <title>Honor Board - TEF</title>
 
   <style>
     body{
@@ -17,7 +17,7 @@
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
       gap:15px;
       margin-top:20px;
     }
@@ -30,13 +30,14 @@
 
     .title{
       font-weight:bold;
-      text-align:center;
       margin-bottom:10px;
+      text-align:center;
     }
 
     .student{
-      padding:6px;
       border-bottom:1px solid #eee;
+      padding:6px;
+      font-size:14px;
     }
 
   </style>
@@ -46,13 +47,10 @@
 
 <h2>Honor Board</h2>
 
-<select id="class"></select>
-<select id="period">
-  <option value="1">1st Semester</option>
-  <option value="2">2nd Semester</option>
-</select>
+<select id="classBox"></select>
+<select id="periodBox"></select>
 
-<button onclick="load()">Load</button>
+<button onclick="load()">Load Board</button>
 
 <div class="grid">
 
@@ -72,8 +70,8 @@
   </div>
 
   <div class="card">
-    <div class="title">Disqualified</div>
-    <div id="d"></div>
+    <div class="title">Fail</div>
+    <div id="f"></div>
   </div>
 
 </div>
@@ -81,7 +79,7 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, getDocs, collection, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -91,28 +89,40 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const classes = ["JSS1","JSS2","SS1","SS2"];
+// dropdowns from saved data
+async function loadOptions(){
 
-const sel = document.getElementById("class");
+  const snap = await getDocs(collection(db,"honorResults"));
 
-classes.forEach(c=>{
-  const o = document.createElement("option");
-  o.value = c;
-  o.textContent = c;
-  sel.appendChild(o);
-});
+  const opts = [];
+
+  snap.forEach(d=>{
+    opts.push(d.id);
+  });
+
+  classBox.innerHTML = opts.map(o=>{
+    const c = o.split("_")[0];
+    return `<option>${c}</option>`;
+  }).join("");
+
+  periodBox.innerHTML = [1,2,3].map(p=>`<option>${p}</option>`).join("");
+
+}
+
+loadOptions();
 
 window.load = async function(){
 
-  const cls = document.getElementById("class").value;
-  const per = document.getElementById("period").value;
+  const cls = classBox.value;
+  const per = periodBox.value;
 
   const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
 
-  p.innerHTML = pr.innerHTML = h.innerHTML = d.innerHTML = "";
+  p.innerHTML = pr.innerHTML = h.innerHTML = f.innerHTML = "";
 
   if(!snap.exists()){
-    return; // stays empty intentionally
+    alert("No data yet. Generate first.");
+    return;
   }
 
   const data = snap.data().results;
@@ -121,10 +131,10 @@ window.load = async function(){
 
     const el = `<div class="student">${s.name} - ${s.average.toFixed(1)}</div>`;
 
-    if(s.category === "proprietor") p.innerHTML += el;
-    else if(s.category === "principal") pr.innerHTML += el;
-    else if(s.category === "honor") h.innerHTML += el;
-    else d.innerHTML += el;
+    if(s.category==="proprietor") p.innerHTML+=el;
+    else if(s.category==="principal") pr.innerHTML+=el;
+    else if(s.category==="honor") h.innerHTML+=el;
+    else f.innerHTML+=el;
 
   });
 
