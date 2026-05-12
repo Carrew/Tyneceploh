@@ -17,7 +17,7 @@
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
       gap:15px;
       margin-top:20px;
     }
@@ -28,17 +28,16 @@
       border-radius:10px;
     }
 
+    .student{
+      border-bottom:1px solid #eee;
+      padding:6px;
+    }
+
     .title{
+      text-align:center;
       font-weight:bold;
       margin-bottom:10px;
-      text-align:center;
     }
-
-    .student{
-      padding:6px;
-      border-bottom:1px solid #eee;
-    }
-
   </style>
 </head>
 
@@ -64,7 +63,7 @@
   </div>
 
   <div class="card">
-    <div class="title">Honor Roll</div>
+    <div class="title">Honor</div>
     <div id="h"></div>
   </div>
 
@@ -72,17 +71,8 @@
 
 <script type="module">
 
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  getDocs,
-  collection,
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, getDocs, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -96,17 +86,14 @@ async function loadOptions(){
 
   const snap = await getDocs(collection(db,"honorResults"));
 
-  const opts = [];
+  classBox.innerHTML="";
+  periodBox.innerHTML="";
 
   snap.forEach(d=>{
-    opts.push(d.id);
+    const [cls,per] = d.id.split("_");
+    classBox.innerHTML += `<option>${cls}</option>`;
+    periodBox.innerHTML += `<option>${per}</option>`;
   });
-
-  classBox.innerHTML = [...new Set(opts.map(o=>o.split("_")[0]))]
-    .map(c=>`<option>${c}</option>`).join("");
-
-  periodBox.innerHTML = [...new Set(opts.map(o=>o.split("_")[1]))]
-    .map(p=>`<option>${p}</option>`).join("");
 
 }
 
@@ -122,24 +109,19 @@ window.load = async function(){
   p.innerHTML = pr.innerHTML = h.innerHTML = "";
 
   if(!snap.exists()){
-    alert("No honor data yet");
+    alert("No honor data found");
     return;
   }
 
   const data = snap.data().results;
-
-  if(!data || data.length === 0){
-    alert("No eligible students");
-    return;
-  }
 
   data.forEach(s=>{
 
     const el = `<div class="student">${s.name} - ${s.average.toFixed(1)}</div>`;
 
     if(s.category==="proprietor") p.innerHTML+=el;
-    else if(s.category==="principal") pr.innerHTML+=el;
-    else if(s.category==="honor") h.innerHTML+=el;
+    if(s.category==="principal") pr.innerHTML+=el;
+    if(s.category==="honor") h.innerHTML+=el;
 
   });
 
