@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Engine - TEF</title>
+  <title>TEF Honor Engine</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+
     body{
       font-family:sans-serif;
       background:#f4f4f4;
@@ -12,7 +13,7 @@
     }
 
     .box{
-      max-width:650px;
+      max-width:700px;
       margin:auto;
       background:white;
       padding:20px;
@@ -20,53 +21,68 @@
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
 
+    h2{
+      text-align:center;
+    }
+
     select,button{
       width:100%;
-      padding:10px;
+      padding:12px;
       margin-top:10px;
       border-radius:6px;
       border:1px solid #ccc;
+      box-sizing:border-box;
     }
 
     button{
       background:#27ae60;
       color:white;
-      font-weight:bold;
       border:none;
+      font-weight:bold;
+      cursor:pointer;
     }
 
     .msg{
       margin-top:15px;
-      padding:10px;
+      padding:12px;
       border-radius:6px;
+      font-size:14px;
     }
 
-    .ok{ background:#d4edda; color:#155724; }
-    .bad{ background:#f8d7da; color:#721c24; }
+    .ok{
+      background:#d4edda;
+      color:#155724;
+    }
+
+    .bad{
+      background:#f8d7da;
+      color:#721c24;
+    }
 
   </style>
 </head>
 
 <body>
 
-<h2 style="text-align:center;">Honor Engine Generator</h2>
-
 <div class="box">
+
+  <h2>Honor Engine Generator</h2>
 
   <label>Class</label>
   <select id="classBox"></select>
 
-  <label>Honor Mode</label>
-  <select id="modeBox" onchange="togglePeriods()">
-    <option value="period">Period Honors</option>
-    <option value="semester">Semester Honors</option>
-    <option value="yearly">Yearly Honors</option>
+  <label>Honor Generation Mode</label>
+  <select id="modeBox" onchange="renderModeOptions()">
+    <option value="period">Direct Period</option>
+    <option value="semester">Semester Honor</option>
+    <option value="yearly">Yearly Honor</option>
   </select>
 
-  <label>Period (only for Period Mode)</label>
-  <select id="periodBox" multiple></select>
+  <div id="dynamicArea"></div>
 
-  <button onclick="generate()">Generate Honor List</button>
+  <button onclick="generateHonor()">
+    Generate Honor List
+  </button>
 
   <div id="msg"></div>
 
@@ -74,14 +90,18 @@
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   collection,
   getDocs,
   doc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  setDoc,
+  getDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -93,220 +113,383 @@ const db = getFirestore(app);
 
 const msg = document.getElementById("msg");
 
-// -------------------------
-// LOAD META
-// -------------------------
+let allPeriods = [];
+
+const semester1Periods = [
+  "1st Period",
+  "2nd Period",
+  "3rd Period",
+  "Semester Exam"
+];
+
+const semester2Periods = [
+  "4th Period",
+  "5th Period",
+  "6th Period",
+  "Final Exam"
+];
+
+// ----------------------------------
+// LOAD CLASSES + PERIODS
+// ----------------------------------
 async function loadMeta(){
 
-  const usersSnap = await getDocs(collection(db,"users"));
+  const usersSnap =
+    await getDocs(collection(db,"users"));
 
-  const classes = new Set();
+  const resultsSnap =
+    await getDocs(collection(db,"results"));
+
+  const classSet = new Set();
+  const periodSet = new Set();
 
   usersSnap.forEach(d=>{
+
     const u = d.data();
-    if(u.role === "student"){
-      classes.add(u.class);
+
+    if(
+      u.role === "student"
+      &&
+      u.class
+    ){
+      classSet.add(u.class);
     }
+
   });
 
-  classBox.innerHTML = [...classes].map(c=>`<option>${c}</option>`).join("");
+  resultsSnap.forEach(d=>{
 
-  const periods = [
-    "1st Period",
-    "2nd Period",
-    "3rd Period",
-    "Semester Exam",
-    "4th Period",
-    "5th Period",
-    "6th Period",
-    "Final Exam"
-  ];
+    const r = d.data();
 
-  periodBox.innerHTML = periods.map(p=>`<option>${p}</option>`).join("");
+    if(r.period){
+      periodSet.add(r.period);
+    }
 
-  show("System ready", "ok");
+  });
+
+  allPeriods = [...periodSet];
+
+  classBox.innerHTML =
+    [...classSet]
+    .map(c=>`<option>${c}</option>`)
+    .join("");
+
+  renderModeOptions();
+
 }
 
 loadMeta();
 
-// -------------------------
-// UI CONTROL
-// -------------------------
-window.togglePeriods = function(){
+// ----------------------------------
+// MODE UI
+// ----------------------------------
+window.renderModeOptions = function(){
 
   const mode = modeBox.value;
 
-  periodBox.disabled = (mode !== "period");
+  const area =
+    document.getElementById("dynamicArea");
+
+  if(mode === "period"){
+
+    area.innerHTML = `
+      <label>Select Period</label>
+
+      <select id="periodBox">
+        ${
+          allPeriods.map(p=>
+            `<option>${p}</option>`
+          ).join("")
+        }
+      </select>
+    `;
+
+  }
+
+  else if(mode === "semester"){
+
+    area.innerHTML = `
+      <label>Select Semester</label>
+
+      <select id="semesterBox">
+        <option value="Semester 1">
+          Semester 1
+        </option>
+
+        <option value="Semester 2">
+          Semester 2
+        </option>
+      </select>
+    `;
+  }
+
+  else if(mode === "yearly"){
+
+    area.innerHTML = `
+      <div style="margin-top:10px;">
+        Generates yearly honor using:
+        <br><br>
+
+        1st → 6th Period
+        <br>
+        Semester Exam
+        <br>
+        Final Exam
+      </div>
+    `;
+  }
 
 };
 
-togglePeriods();
-
-// -------------------------
-// HELPERS
-// -------------------------
-function avg(arr){
-  if(arr.length === 0) return null;
-  return arr.reduce((a,b)=>a+b,0)/arr.length;
-}
-
-// -------------------------
-// ENGINE
-// -------------------------
-window.generate = async function(){
+// ----------------------------------
+// MAIN ENGINE
+// ----------------------------------
+window.generateHonor = async function(){
 
   const cls = classBox.value;
   const mode = modeBox.value;
-  const selectedPeriods = [...periodBox.selectedOptions].map(o=>o.value);
 
-  const usersSnap = await getDocs(collection(db,"users"));
-  const resultsSnap = await getDocs(collection(db,"results"));
+  if(!cls){
+    return show("Select class","bad");
+  }
+
+  const rulesSnap =
+    await getDoc(doc(db,"honorRules","main"));
+
+  if(!rulesSnap.exists()){
+    return show("Honor rules missing","bad");
+  }
+
+  const rules = rulesSnap.data();
+
+  const studentsSnap =
+    await getDocs(collection(db,"users"));
+
+  const resultsSnap =
+    await getDocs(collection(db,"results"));
 
   const students = {};
 
-  usersSnap.forEach(d=>{
+  studentsSnap.forEach(d=>{
+
     const u = d.data();
+
     if(u.role === "student"){
       students[u.userId] = u;
     }
+
   });
 
-  const results = [];
+  let selectedPeriods = [];
+  let datasetName = "";
 
-  resultsSnap.forEach(d=>{
-    const r = d.data();
+  // ----------------------------------
+  // PERIOD MODE
+  // ----------------------------------
+  if(mode === "period"){
 
-    if(!students[r.studentId]) return;
-    if(students[r.studentId].class !== cls) return;
+    const p =
+      document.getElementById("periodBox").value;
 
-    results.push(r);
-  });
+    selectedPeriods = [p];
 
-  if(results.length === 0){
-    return show("No results found", "bad");
+    datasetName = p;
+
   }
 
-  const grouped = {};
+  // ----------------------------------
+  // SEMESTER MODE
+  // ----------------------------------
+  else if(mode === "semester"){
 
-  results.forEach(r=>{
+    const sem =
+      document.getElementById("semesterBox").value;
 
-    const id = r.studentId;
-
-    if(!grouped[id]){
-      grouped[id] = {
-        name:r.studentName,
-        scores:{}
-      };
+    if(sem === "Semester 1"){
+      selectedPeriods = semester1Periods;
     }
 
-    grouped[id].scores[r.period] = Number(r.score);
+    else{
+      selectedPeriods = semester2Periods;
+    }
+
+    datasetName = sem;
+
+  }
+
+  // ----------------------------------
+  // YEARLY MODE
+  // ----------------------------------
+  else if(mode === "yearly"){
+
+    selectedPeriods = [
+      ...semester1Periods,
+      ...semester2Periods
+    ];
+
+    datasetName = "Yearly Average";
+
+  }
+
+  // ----------------------------------
+  // FILTER RESULTS
+  // ----------------------------------
+  const filtered = [];
+
+  resultsSnap.forEach(d=>{
+
+    const r = d.data();
+
+    if(
+      students[r.studentId]
+      &&
+      students[r.studentId].class === cls
+      &&
+      selectedPeriods.includes(r.period)
+    ){
+      filtered.push(r);
+    }
 
   });
 
+  if(filtered.length === 0){
+    return show(
+      "No approved results found",
+      "bad"
+    );
+  }
+
+  // ----------------------------------
+  // CALCULATE HONORS
+  // ----------------------------------
   const finalList = [];
 
-  Object.keys(grouped).forEach(id=>{
+  Object.keys(students).forEach(id=>{
 
-    const g = grouped[id];
+    const stu = students[id];
 
-    let average = null;
+    if(stu.class !== cls) return;
 
-    // -------------------------
-    // PERIOD HONORS
-    // -------------------------
-    if(mode === "period"){
+    const records =
+      filtered.filter(r=>r.studentId === id);
 
-      const vals = selectedPeriods.map(p=>g.scores[p]);
+    if(records.length === 0) return;
 
-      if(vals.includes(undefined)) return;
+    // -----------------------------
+    // MISSING PERIOD CHECK
+    // -----------------------------
+    const periodsOwned =
+      [...new Set(records.map(r=>r.period))];
 
-      average = avg(vals);
+    if(
+      periodsOwned.length
+      !==
+      selectedPeriods.length
+    ){
+      return;
     }
 
-    // -------------------------
-    // SEMESTER HONORS
-    // -------------------------
-    if(mode === "semester"){
+    // -----------------------------
+    // RED MARK CHECK
+    // -----------------------------
+    let redMark = false;
 
-      const sem1 = avg([
-        g.scores["1st Period"],
-        g.scores["2nd Period"],
-        g.scores["3rd Period"],
-        g.scores["Semester Exam"]
-      ]);
+    records.forEach(r=>{
 
-      const sem2 = avg([
-        g.scores["4th Period"],
-        g.scores["5th Period"],
-        g.scores["6th Period"],
-        g.scores["Final Exam"]
-      ]);
+      if(Number(r.score) < 70){
+        redMark = true;
+      }
 
-      if(sem1 == null || sem2 == null) return;
+    });
 
-      average = (sem1 + sem2) / 2;
-    }
+    if(redMark) return;
 
-    // -------------------------
-    // YEARLY HONORS
-    // -------------------------
-    if(mode === "yearly"){
+    // -----------------------------
+    // AVERAGE
+    // -----------------------------
+    let total = 0;
 
-      const sem1 = avg([
-        g.scores["1st Period"],
-        g.scores["2nd Period"],
-        g.scores["3rd Period"],
-        g.scores["Semester Exam"]
-      ]);
+    records.forEach(r=>{
+      total += Number(r.score);
+    });
 
-      const sem2 = avg([
-        g.scores["4th Period"],
-        g.scores["5th Period"],
-        g.scores["6th Period"],
-        g.scores["Final Exam"]
-      ]);
+    const avg =
+      total / records.length;
 
-      if(sem1 == null || sem2 == null) return;
+    // -----------------------------
+    // CATEGORY
+    // -----------------------------
+    let category = null;
 
-      average = (sem1 + sem2) / 2;
-    }
+    rules.bands.forEach(b=>{
 
-    if(average == null) return;
+      if(
+        avg >= b.min
+        &&
+        avg <= b.max
+      ){
+        category = b.name;
+      }
 
-    let category = "";
+    });
 
-    if(average >= 90) category = "Proprietor";
-    else if(average >= 85) category = "Principal";
-    else if(average >= 80) category = "Honor";
+    if(!category) return;
 
     finalList.push({
       studentId:id,
-      name:g.name,
-      average,
+      studentName:stu.name,
+      class:cls,
+      average:Number(avg.toFixed(2)),
       category
     });
 
   });
 
+  // ----------------------------------
+  // EMPTY RESULT
+  // ----------------------------------
   if(finalList.length === 0){
-    return show("No eligible students", "bad");
+
+    return show(
+      "No students qualified",
+      "bad"
+    );
+
   }
 
-  await setDoc(doc(db,"honorResults",cls+"_"+mode),{
-    class:cls,
-    mode,
-    results:finalList,
-    generatedAt:Date.now()
-  });
+  // ----------------------------------
+  // SAVE DATASET
+  // ----------------------------------
+  const docId =
+    cls + "_" + datasetName;
 
-  show(`Generated ${finalList.length} honors`, "ok");
+  await setDoc(
+    doc(db,"honorResults",docId),
+    {
+      class:cls,
+      datasetName,
+      mode,
+      generatedAt:Date.now(),
+      generatedFrom:selectedPeriods,
+      students:finalList
+    }
+  );
+
+  show(
+    `Success: ${finalList.length} students added`,
+    "ok"
+  );
 
 };
 
-// -------------------------
+// ----------------------------------
 function show(text,type){
-  msg.className = "msg " + type;
+
+  msg.className =
+    "msg " + type;
+
   msg.textContent = text;
+
 }
 
 </script>
