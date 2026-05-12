@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Board - TEF</title>
+  <title>Honor Board</title>
 
   <style>
     body{
@@ -10,10 +10,16 @@
       padding:20px;
     }
 
+    select,button{
+      padding:10px;
+      margin:5px;
+    }
+
     .grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
       gap:15px;
+      margin-top:20px;
     }
 
     .card{
@@ -23,8 +29,8 @@
     }
 
     .title{
-      text-align:center;
       font-weight:bold;
+      text-align:center;
       margin-bottom:10px;
     }
 
@@ -38,18 +44,12 @@
 
 <body>
 
-<h2 style="text-align:center;">Honor Board</h2>
+<h2>Honor Board</h2>
 
-<select id="class">
-  <option>JSS1</option>
-  <option>JSS2</option>
-  <option>SS1</option>
-  <option>SS2</option>
-</select>
-
+<select id="class"></select>
 <select id="period">
-  <option value="1">1st</option>
-  <option value="2">2nd</option>
+  <option value="1">1st Semester</option>
+  <option value="2">2nd Semester</option>
 </select>
 
 <button onclick="load()">Load</button>
@@ -91,18 +91,31 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
+const classes = ["JSS1","JSS2","SS1","SS2"];
+
+const sel = document.getElementById("class");
+
+classes.forEach(c=>{
+  const o = document.createElement("option");
+  o.value = c;
+  o.textContent = c;
+  sel.appendChild(o);
+});
+
 window.load = async function(){
 
-  const cls = class.value;
-  const per = period.value;
+  const cls = document.getElementById("class").value;
+  const per = document.getElementById("period").value;
 
   const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
 
-  if(!snap.exists()) return;
+  p.innerHTML = pr.innerHTML = h.innerHTML = d.innerHTML = "";
+
+  if(!snap.exists()){
+    return; // stays empty intentionally
+  }
 
   const data = snap.data().results;
-
-  p.innerHTML = pr.innerHTML = h.innerHTML = d.innerHTML = "";
 
   data.forEach(s=>{
 
