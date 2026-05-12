@@ -1,377 +1,218 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Staff Attendance</title>
+  <title>My Attendance - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-
     body{
       font-family:sans-serif;
-      padding:20px;
       background:#f4f4f4;
+      padding:20px;
+    }
+
+    h2{
+      text-align:center;
+      margin-bottom:20px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:15px;
     }
 
     .card{
       background:white;
-      padding:20px;
-      border-radius:10px;
-      max-width:600px;
-      margin:auto;
-    }
-
-    button{
-      padding:12px 20px;
-      margin-right:10px;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
-    }
-
-    .in{
-      background:#27ae60;
-      color:white;
-    }
-
-    .out{
-      background:#c0392b;
-      color:white;
-    }
-
-    .status{
-      margin-top:20px;
-      background:#fafafa;
       padding:15px;
-      border-radius:8px;
+      border-radius:10px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      text-align:center;
     }
+
+    .big{
+      font-size:22px;
+      font-weight:bold;
+      margin-top:8px;
+    }
+
+    table{
+      width:100%;
+      margin-top:20px;
+      border-collapse:collapse;
+      background:white;
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    th,td{
+      padding:10px;
+      border:1px solid #eee;
+      text-align:center;
+      font-size:13px;
+    }
+
+    th{
+      background:#2c3e50;
+      color:white;
+    }
+
+    .late{ color:#e67e22; font-weight:bold; }
+    .early{ color:#3498db; font-weight:bold; }
+    .bad{ color:#c0392b; font-weight:bold; }
+    .good{ color:#27ae60; font-weight:bold; }
 
   </style>
 </head>
 
 <body>
 
-<div class="card">
+<h2>My Attendance Report</h2>
 
-  <h2>Clock In / Out</h2>
+<div class="grid">
 
-  <p>
-    Welcome
-    <b id="name"></b>
-  </p>
+  <div class="card">
+    Total Days
+    <div class="big" id="total">0</div>
+  </div>
 
-  <button class="in" onclick="clockIn()">
-    Clock In
-  </button>
+  <div class="card">
+    Present
+    <div class="big good" id="present">0</div>
+  </div>
 
-  <button class="out" onclick="clockOut()">
-    Clock Out
-  </button>
+  <div class="card">
+    Late Days
+    <div class="big late" id="late">0</div>
+  </div>
 
-  <div class="status" id="statusBox">
-    Loading...
+  <div class="card">
+    Early Exit
+    <div class="big early" id="early">0</div>
+  </div>
+
+  <div class="card">
+    Flags
+    <div class="big bad" id="flags">0</div>
+  </div>
+
+  <div class="card">
+    Avg Hours/Day
+    <div class="big" id="avg">0</div>
   </div>
 
 </div>
 
+<table>
+
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Clock In</th>
+      <th>Clock Out</th>
+      <th>Status</th>
+      <th>Hours</th>
+      <th>Flags</th>
+    </tr>
+  </thead>
+
+  <tbody id="body"></tbody>
+
+</table>
+
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const app = initializeApp({
+const firebaseConfig = {
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
-});
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user =
-  JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
-if(
-  !user ||
-  ![
-    "teacher",
-    "janitor",
-    "security",
-    "coordinator"
-  ].includes(user.role)
-){
+if(!user){
   location.href = "login.html";
 }
 
-document.getElementById("name").innerText =
-  user.name;
-
-function today(){
-
-  return new Date()
-    .toISOString()
-    .split("T")[0];
+function hours(a,b){
+  if(!a || !b) return 0;
+  return ((b-a)/(1000*60*60));
 }
 
-function recordId(){
+async function load(){
 
-  return `${today()}_${user.userId}`;
-}
+  const snap = await getDocs(collection(db,"attendanceDaily"));
 
-async function getSettings(){
+  let total=0, present=0, late=0, early=0, flags=0;
+  let sumHours=0;
 
-  const snap =
-    await getDoc(
-      doc(
-        db,
-        "attendanceSettings",
-        user.role
-      )
-    );
+  let rows="";
 
-  return snap.exists()
-    ? snap.data()
-    : null;
-}
+  snap.forEach(d=>{
 
-function currentTime(){
+    const a = d.data();
 
-  const d = new Date();
+    if(a.userId !== user.userId) return;
 
-  return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-}
+    total++;
 
-function detectLate(now, official){
+    let status = "ABSENT";
+    let hrs = 0;
+    let flagList = [];
 
-  return now > official;
-}
+    if(a.clockIn){
 
-window.clockIn = async function(){
+      present++;
+      status = a.clockIn.status || "ON_TIME";
 
-  const ref =
-    doc(
-      db,
-      "attendanceRecords",
-      recordId()
-    );
+      if(status === "LATE") late++;
+      if(status === "EARLY") early++;
 
-  const existing =
-    await getDoc(ref);
+      if(a.clockOut){
 
-  if(existing.exists()){
+        hrs = hours(a.clockIn.time,a.clockOut.time);
+        sumHours += hrs;
 
-    const data = existing.data();
+      }
 
-    if(data.clockIn){
+      if(a.clockIn.flag) flagList.push(a.clockIn.flag);
+      if(a.clockOut?.flag) flagList.push(a.clockOut.flag);
 
-      alert("Already clocked in today");
-
-      return;
     }
-  }
 
-  const settings =
-    await getSettings();
+    rows += `
+      <tr>
+        <td>${a.date}</td>
+        <td>${a.clockIn ? new Date(a.clockIn.time).toLocaleTimeString() : "-"}</td>
+        <td>${a.clockOut ? new Date(a.clockOut.time).toLocaleTimeString() : "-"}</td>
+        <td class="${status==='LATE'?'late':status==='EARLY'?'early':'good'}">${status}</td>
+        <td>${hrs.toFixed(2)}</td>
+        <td class="bad">${flagList.join(", ") || "OK"}</td>
+      </tr>
+    `;
+
+  });
+
+  document.getElementById("body").innerHTML = rows;
+
+  document.getElementById("total").innerText = total;
+  document.getElementById("present").innerText = present;
+  document.getElementById("late").innerText = late;
+  document.getElementById("early").innerText = early;
+  document.getElementById("flags").innerText = flags;
+
+  document.getElementById("avg").innerText =
+    total ? (sumHours/total).toFixed(2) : 0;
 
-  if(!settings){
-
-    alert("No attendance settings");
-
-    return;
-  }
-
-  const now = currentTime();
-
-  const violations = [];
-
-  let status = "on-time";
-
-  if(
-    detectLate(
-      now,
-      settings.clockInTime
-    )
-  ){
-
-    status = "late";
-
-    violations.push(
-      "Late Clock In"
-    );
-  }
-
-  const payload = {
-
-    date:today(),
-
-    userId:user.userId,
-
-    name:user.name,
-
-    role:user.role,
-
-    clockIn:Date.now(),
-
-    clockInReadable:now,
-
-    clockOut:null,
-
-    clockOutReadable:"",
-
-    clockInStatus:status,
-
-    clockOutStatus:"",
-
-    violations,
-
-    manuallyEdited:false
-  };
-
-  try{
-
-    await setDoc(ref,payload,{merge:true});
-
-    alert("Clocked In");
-
-    loadStatus();
-
-  }catch(err){
-
-    console.error(err);
-
-    alert("Failed");
-  }
-};
-
-window.clockOut = async function(){
-
-  const ref =
-    doc(
-      db,
-      "attendanceRecords",
-      recordId()
-    );
-
-  const snap =
-    await getDoc(ref);
-
-  if(!snap.exists()){
-
-    alert("Clock in first");
-
-    return;
-  }
-
-  const data = snap.data();
-
-  if(data.clockOut){
-
-    alert("Already clocked out");
-
-    return;
-  }
-
-  const settings =
-    await getSettings();
-
-  const now = currentTime();
-
-  let status = "normal";
-
-  let violations =
-    data.violations || [];
-
-  if(now < settings.clockOutTime){
-
-    status = "early";
-
-    violations.push(
-      "Early Clock Out"
-    );
-  }
-
-  try{
-
-    await updateDoc(ref,{
-
-      clockOut:Date.now(),
-
-      clockOutReadable:now,
-
-      clockOutStatus:status,
-
-      violations
-    });
-
-    alert("Clocked Out");
-
-    loadStatus();
-
-  }catch(err){
-
-    console.error(err);
-
-    alert("Failed");
-  }
-};
-
-async function loadStatus(){
-
-  const ref =
-    doc(
-      db,
-      "attendanceRecords",
-      recordId()
-    );
-
-  const snap =
-    await getDoc(ref);
-
-  const box =
-    document.getElementById("statusBox");
-
-  if(!snap.exists()){
-
-    box.innerHTML =
-      "No attendance record today.";
-
-    return;
-  }
-
-  const d = snap.data();
-
-  box.innerHTML = `
-
-    <b>Clock In:</b>
-    ${d.clockInReadable || "-"}
-
-    <br><br>
-
-    <b>Clock Out:</b>
-    ${d.clockOutReadable || "-"}
-
-    <br><br>
-
-    <b>Violations:</b>
-
-    <br>
-
-    ${
-      d.violations.length
-      ? d.violations.join(", ")
-      : "None"
-    }
-  `;
 }
 
-loadStatus();
+load();
 
 </script>
 
