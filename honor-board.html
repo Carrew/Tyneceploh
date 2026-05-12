@@ -13,19 +13,39 @@
 
     h2{
       text-align:center;
+      margin-bottom:10px;
+    }
+
+    .controls{
+      max-width:700px;
+      margin:auto;
+      background:white;
+      padding:15px;
+      border-radius:10px;
       margin-bottom:20px;
     }
 
     select,button{
+      width:100%;
       padding:10px;
-      margin:5px;
+      margin-top:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
+
+    button{
+      background:#2980b9;
+      color:white;
+      border:none;
+      font-weight:bold;
     }
 
     .grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
       gap:15px;
-      margin-top:20px;
+      max-width:900px;
+      margin:auto;
     }
 
     .card{
@@ -36,15 +56,15 @@
     }
 
     .title{
-      text-align:center;
       font-weight:bold;
-      margin-bottom:10px;
+      text-align:center;
       padding:8px;
       border-radius:6px;
       color:white;
+      margin-bottom:10px;
     }
 
-    .proprietor{ background:#2ecc71; }
+    .proprietor{ background:#27ae60; }
     .principal{ background:#3498db; }
     .honor{ background:#f39c12; }
 
@@ -68,10 +88,21 @@
 
 <h2>Honor Board</h2>
 
-<select id="classBox"></select>
-<select id="periodBox"></select>
+<div class="controls">
 
-<button onclick="loadBoard()">Load Honor Board</button>
+  <label>Class</label>
+  <select id="classBox"></select>
+
+  <label>Mode</label>
+  <select id="modeBox">
+    <option value="period">Period Honors</option>
+    <option value="semester">Semester Honors</option>
+    <option value="yearly">Yearly Honors</option>
+  </select>
+
+  <button onclick="loadBoard()">Load Honor Board</button>
+
+</div>
 
 <div class="grid">
 
@@ -95,7 +126,11 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, getDocs, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  getDocs,
+  collection
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -106,27 +141,26 @@ const app = initializeApp({
 const db = getFirestore(app);
 
 // --------------------
-// LOAD GENERATED SETS
+// LOAD CLASSES
 // --------------------
-async function loadOptions(){
+async function loadClasses(){
 
-  const snap = await getDocs(collection(db,"honorResults"));
+  const snap = await getDocs(collection(db,"users"));
 
-  const keys = [];
+  const set = new Set();
 
   snap.forEach(d=>{
-    keys.push(d.id);
+    const u = d.data();
+    if(u.role === "student" && u.class){
+      set.add(u.class);
+    }
   });
 
-  const classes = [...new Set(keys.map(k=>k.split("_")[0]))];
-  const periods = [...new Set(keys.map(k=>k.split("_")[1]))];
-
-  classBox.innerHTML = classes.map(c=>`<option>${c}</option>`).join("");
-  periodBox.innerHTML = periods.map(p=>`<option>${p}</option>`).join("");
+  classBox.innerHTML = [...set].map(c=>`<option>${c}</option>`).join("");
 
 }
 
-loadOptions();
+loadClasses();
 
 // --------------------
 // LOAD BOARD
@@ -134,36 +168,33 @@ loadOptions();
 window.loadBoard = async function(){
 
   const cls = classBox.value;
-  const per = periodBox.value;
+  const mode = modeBox.value;
 
-  const snap = await getDoc(doc(db,"honorResults",cls+"_"+per));
-
-  // reset
   proprietor.innerHTML = "";
   principal.innerHTML = "";
   honor.innerHTML = "";
 
-  if(!snap.exists()){
-    proprietor.innerHTML =
-    principal.innerHTML =
-    honor.innerHTML =
-      `<div class="empty">No honor data found</div>`;
-    return;
+  const snap = await getDocs(collection(db,"honorResults"));
+
+  let found = null;
+
+  snap.forEach(d=>{
+    if(d.id === cls + "_" + mode){
+      found = d.data();
+    }
+  });
+
+  if(!found){
+    return showEmpty();
   }
 
-  const data = snap.data().results;
+  const list = found.results || [];
 
-  if(!data || data.length === 0){
-    proprietor.innerHTML =
-    principal.innerHTML =
-    honor.innerHTML =
-      `<div class="empty">No students qualify</div>`;
-    return;
+  if(list.length === 0){
+    return showEmpty();
   }
 
-  let p = 0, pr = 0, h = 0;
-
-  data.forEach(s=>{
+  list.forEach(s=>{
 
     const row = `
       <div class="student">
@@ -174,25 +205,33 @@ window.loadBoard = async function(){
 
     if(s.category === "proprietor"){
       proprietor.innerHTML += row;
-      p++;
     }
     else if(s.category === "principal"){
       principal.innerHTML += row;
-      pr++;
     }
     else if(s.category === "honor"){
       honor.innerHTML += row;
-      h++;
     }
 
   });
 
-  // empty states per box
-  if(p === 0) proprietor.innerHTML = `<div class="empty">No Proprietor students</div>`;
-  if(pr === 0) principal.innerHTML = `<div class="empty">No Principal students</div>`;
-  if(h === 0) honor.innerHTML = `<div class="empty">No Honor students</div>`;
+  if(proprietor.innerHTML === "") proprietor.innerHTML = `<div class="empty">No students</div>`;
+  if(principal.innerHTML === "") principal.innerHTML = `<div class="empty">No students</div>`;
+  if(honor.innerHTML === "") honor.innerHTML = `<div class="empty">No students</div>`;
 
 };
+
+// --------------------
+// EMPTY STATE
+// --------------------
+function showEmpty(){
+
+  proprietor.innerHTML =
+  principal.innerHTML =
+  honor.innerHTML =
+    `<div class="empty">No honor data generated for this selection</div>`;
+
+}
 
 </script>
 
