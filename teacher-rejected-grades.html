@@ -1,18 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Rejected Grades</title>
+  <title>Rejected Grades - TEF</title>
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f6f9;
+      padding:20px;
+    }
+
+    h2{
+      margin-bottom:15px;
+    }
+
+    .wrap{
+      max-width:900px;
+      margin:auto;
+    }
+
+    .card{
+      background:white;
+      padding:15px;
+      margin-bottom:15px;
+      border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    input{
+      width:100%;
+      padding:10px;
+      margin-top:5px;
+      margin-bottom:10px;
+      border:1px solid #ddd;
+      border-radius:6px;
+    }
+
+    .feedback{
+      background:#fff3cd;
+      padding:10px;
+      border-left:4px solid #ffc107;
+      margin-top:10px;
+      border-radius:6px;
+      font-size:14px;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:20px;
+      font-size:12px;
+      font-weight:bold;
+      margin-bottom:10px;
+    }
+
+    .rejected{
+      background:#f8d7da;
+      color:#721c24;
+    }
+
+    .btn{
+      background:#27ae60;
+      color:white;
+      border:none;
+      padding:10px 15px;
+      border-radius:6px;
+      cursor:pointer;
+      width:100%;
+    }
+
+    .btn:hover{
+      background:#219150;
+    }
+
+    .empty{
+      text-align:center;
+      color:#666;
+      margin-top:40px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Rejected Grades</h2>
+<div class="wrap">
 
-<div id="list">Loading...</div>
+  <h2>Rejected Grades</h2>
+
+  <div id="list">Loading...</div>
+
+</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
 import {
   getFirestore,
   collection,
@@ -39,6 +120,8 @@ let rejected = [];
 
 async function load(){
 
+  document.getElementById("list").innerHTML = "Loading...";
+
   const snap = await getDocs(collection(db,"gradeSubmissions"));
 
   rejected = [];
@@ -51,7 +134,6 @@ async function load(){
       g.teacherId === user.userId &&
       g.status === "rejected"
     ){
-
       rejected.push({
         ...g,
         docId:d.id
@@ -67,39 +149,31 @@ function render(){
   const div = document.getElementById("list");
 
   if(rejected.length === 0){
-    div.innerHTML = "No rejected grades";
+    div.innerHTML = `<p class="empty">No rejected grades right now.</p>`;
     return;
   }
 
   div.innerHTML = rejected.map(g=>`
 
-    <div style="
-      border:1px solid #ccc;
-      padding:15px;
-      margin-bottom:15px;
-      background:white;
-    ">
+    <div class="card">
 
-      <h3>${g.studentName}</h3>
+      <div class="badge rejected">REJECTED</div>
 
-      Subject:
-      <input id="subject-${g.docId}" value="${g.subject}">
+      <h3>${g.studentName || "Unknown Student"}</h3>
 
-      <br><br>
+      <label>Subject</label>
+      <input id="subject-${g.docId}" value="${g.subject || ""}">
 
-      Score:
-      <input id="score-${g.docId}" value="${g.score}" type="number">
+      <label>Score</label>
+      <input id="score-${g.docId}" type="number" value="${g.score || 0}">
 
-      <br><br>
+      <div class="feedback">
+        <b>Teacher Feedback:</b><br>
+        ${g.feedback || "No feedback provided"}
+      </div>
 
-      <b style="color:red;">
-        Feedback:
-      </b>
-
-      <p>${g.feedback || "No feedback"}</p>
-
-      <button onclick="resubmit('${g.docId}')">
-        Resubmit
+      <button class="btn" onclick="resubmit('${g.docId}')">
+        Resubmit Grade
       </button>
 
     </div>
@@ -116,7 +190,12 @@ window.resubmit = async function(id){
     Number(document.getElementById(`score-${id}`).value);
 
   if(!subject){
-    alert("Subject required");
+    alert("Subject cannot be empty");
+    return;
+  }
+
+  if(isNaN(score)){
+    alert("Invalid score");
     return;
   }
 
@@ -128,22 +207,18 @@ window.resubmit = async function(id){
       score,
 
       status:"resubmitted",
-
       resubmittedAt:Date.now(),
-
       feedback:""
 
     });
 
-    alert("Grade resubmitted");
+    alert("Resubmitted successfully");
 
     load();
 
   }catch(err){
-
     console.error(err);
-
-    alert("Failed to resubmit");
+    alert("Failed to resubmit grade");
   }
 };
 
