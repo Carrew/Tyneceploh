@@ -14,7 +14,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
-  messagingSenderId: "YOUR_SENDER_ID"
+  messagingSenderId: "161024255934"
 };
 
 const app = initializeApp(firebaseConfig);
