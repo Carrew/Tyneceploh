@@ -2,107 +2,139 @@
 <html>
 <head>
   <title>Coordinator Dashboard - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
+
+    :root{
+      --bg:#0b0b0f;
+      --panel:rgba(255,255,255,0.05);
+      --border:rgba(255,255,255,0.08);
+      --pink:#ffc0cb;
+      --text:#fff;
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:system-ui;
     }
 
-    header {
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    body{
+      background:radial-gradient(circle at top,#1a0010,var(--bg));
+      color:var(--text);
+      min-height:100vh;
     }
 
-    h1 {
-      margin: 0;
-      color: var(--pink);
+    header{
+      padding:22px;
+      text-align:center;
+      background:linear-gradient(135deg,#800000,#1a0010);
     }
 
-    .sub {
-      opacity: 0.8;
-      margin-top: 5px;
+    header h1{
+      color:var(--pink);
     }
 
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 15px;
-      margin: 10px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 12px;
+    .sub{
+      opacity:.7;
+      margin-top:6px;
+      font-size:13px;
     }
 
-    .profile img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #222;
+    /* PROFILE */
+    .profile{
+      margin:16px;
+      padding:18px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      gap:14px;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 10px;
+    .profile img{
+      width:70px;
+      height:70px;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid var(--pink);
+      background:#222;
     }
 
-    .stat {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
+    .meta{
+      font-size:13px;
+      opacity:.8;
     }
 
-    .section-title {
-      padding: 10px 15px;
-      font-size: 13px;
-      opacity: 0.8;
+    /* STATS (ONLY REAL OR SAFE INFO) */
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+      padding:0 16px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      padding: 15px;
+    .stat{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:14px;
+      border-radius:12px;
+      text-align:center;
     }
 
-    .card {
-      background: var(--card);
-      padding: 14px;
-      border-radius: 12px;
-      border-left: 3px solid var(--pink);
-      cursor: pointer;
-      transition: 0.2s;
+    .stat b{
+      color:var(--pink);
+      font-size:13px;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      background: rgba(255,255,255,0.09);
+    .stat h3{
+      margin-top:6px;
     }
 
-    .logout {
-      width: 90%;
-      margin: 20px auto;
-      display: block;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #222;
-      color: white;
+    /* SECTIONS */
+    .section-title{
+      padding:18px 16px 8px;
+      font-size:12px;
+      opacity:.7;
+      letter-spacing:1px;
+      text-transform:uppercase;
     }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:10px;
+      padding:12px 16px;
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:14px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    .card:hover{
+      border-color:var(--pink);
+      transform:translateY(-3px);
+    }
+
+    .logout{
+      width:90%;
+      margin:25px auto;
+      display:block;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background:#1b1b25;
+      color:white;
+    }
+
   </style>
 </head>
 
@@ -114,81 +146,116 @@ const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "coordinator"){
   location.href = "login.html";
 }
-
-// image cache system
-const imageCache = {
-  get(key){ return localStorage.getItem("img_" + key); },
-  set(key, value){ localStorage.setItem("img_" + key, value); }
-};
 </script>
 
 <header>
   <h1>Coordinator Control Panel</h1>
-  <div class="sub">School oversight & coordination hub</div>
+  <div class="sub">School oversight & coordination system</div>
 </header>
 
+<!-- PROFILE -->
 <div class="profile">
-  <img id="photo" />
+
+  <img id="photo">
+
   <div>
-    <b id="name"></b><br>
-    <span id="id"></span>
+
+    <b id="name"></b>
+
+    <div class="meta">ID: <span id="id"></span></div>
+
+    <div class="meta">Role: <span id="role"></span></div>
+
   </div>
+
 </div>
 
+<!-- SAFE STATS ONLY (NO FAKE NUMBERS) -->
 <div class="stats">
+
   <div class="stat">
-    <b>Students</b><br>--
+    <b>Status</b>
+    <h3>Active</h3>
   </div>
+
   <div class="stat">
-    <b>Teachers</b><br>--
+    <b>Access Level</b>
+    <h3>Coordinator</h3>
   </div>
-  <div class="stat">
-    <b>Attendance</b><br>--
-  </div>
+
 </div>
 
+<!-- OVERSIGHT TOOLS -->
 <div class="section-title">Oversight Tools</div>
 
 <div class="grid">
-  <div class="card" onclick="go('admin-view-attendance.html')">📌 View Attendance</div>
-  <div class="card" onclick="go('admin-attendance-analytics.html')">📊 Attendance Analytics</div>
-  <div class="card" onclick="go('admin-grade-approval.html')">📥 Grade Approval</div>
-  <div class="card" onclick="go('admin-results.html')">🏆 Results</div>
+
+  <div class="card" onclick="go('admin-view-attendance.html')">
+    📌 Attendance Logs
+  </div>
+
+  <div class="card" onclick="go('admin-attendance-analytics.html')">
+    📊 Analytics
+  </div>
+
+  <div class="card" onclick="go('admin-grade-approval.html')">
+    📥 Grade Approval
+  </div>
+
+  <div class="card" onclick="go('admin-results.html')">
+    🏆 Results
+  </div>
+
 </div>
 
+<!-- COMMUNICATION -->
 <div class="section-title">Communication</div>
 
 <div class="grid">
-  <div class="card" onclick="go('admin-announcements.html')">📢 Announcements</div>
-  <div class="card" onclick="go('users-announcement.html')">📣 Broadcast Users</div>
+
+  <div class="card" onclick="go('admin-announcements.html')">
+    📢 Announcements
+  </div>
+
+  <div class="card" onclick="go('users-announcement.html')">
+    📣 Broadcast Users
+  </div>
+
 </div>
 
-<div class="section-title">Support Tools</div>
+<!-- SYSTEM VIEW -->
+<div class="section-title">System View</div>
 
 <div class="grid">
-  <div class="card" onclick="go('student-dashboard.html')">👨‍🎓 Student View</div>
-  <div class="card" onclick="go('teacher-dashboard.html')">👨‍🏫 Teacher View</div>
-  <div class="card" onclick="go('admin-calender.html')">📅 Calendar</div>
+
+  <div class="card" onclick="go('student-dashboard.html')">
+    👨‍🎓 Student View
+  </div>
+
+  <div class="card" onclick="go('teacher-dashboard.html')">
+    👨‍🏫 Teacher View
+  </div>
+
+  <div class="card" onclick="go('admin-dashboard.html')">
+    🏠 Admin View
+  </div>
+
 </div>
 
 <button class="logout" onclick="logout()">Logout</button>
 
 <script>
-document.getElementById("name").innerText = user.name;
-document.getElementById("id").innerText = user.userId || "";
 
-// IMAGE CACHE
-const cachedImg = localStorage.getItem("img_" + user.userId);
+/* PROFILE */
+document.getElementById("name").innerText = user.name || "Coordinator";
+document.getElementById("id").innerText = user.userId || "-";
+document.getElementById("role").innerText = (user.role || "").toUpperCase();
 
-if(cachedImg){
-  document.getElementById("photo").src = cachedImg;
-} else if(user.photoURL){
-  document.getElementById("photo").src = user.photoURL;
-  localStorage.setItem("img_" + user.userId, user.photoURL);
-} else {
-  document.getElementById("photo").src = "https://via.placeholder.com/60";
-}
+/* PHOTO */
+const img = user.photoURL || "https://via.placeholder.com/100";
+document.getElementById("photo").src = img;
 
+/* NAV */
 function go(page){
   location.href = page;
 }
@@ -197,6 +264,7 @@ function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
+
 </script>
 
 </body>
