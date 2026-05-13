@@ -1,30 +1,197 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Coordinator Dashboard - TEF</title>
+
+  <style>
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: white;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--pink);
+    }
+
+    .sub {
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      margin: 10px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+    }
+
+    .profile img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #222;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .section-title {
+      padding: 10px 15px;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      padding: 15px;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 14px;
+      border-radius: 12px;
+      border-left: 3px solid var(--pink);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,0.09);
+    }
+
+    .logout {
+      width: 90%;
+      margin: 20px auto;
+      display: block;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+    }
+  </style>
+</head>
+
 <body>
 
 <script>
 const user = JSON.parse(localStorage.getItem("user"));
+
 if(!user || user.role !== "coordinator"){
   location.href = "login.html";
 }
+
+// image cache system
+const imageCache = {
+  get(key){ return localStorage.getItem("img_" + key); },
+  set(key, value){ localStorage.setItem("img_" + key, value); }
+};
 </script>
 
-<h2>Coordinator Dashboard</h2>
-<p>Welcome, <b id="name"></b></p>
+<header>
+  <h1>Coordinator Control Panel</h1>
+  <div class="sub">School oversight & coordination hub</div>
+</header>
 
-<div>
-  <h3>Oversight</h3>
-  <button onclick="go('admin-results.html')">View Results</button>
-  <button onclick="go('teacher-quiz-review.html')">Quiz Reports</button>
+<div class="profile">
+  <img id="photo" />
+  <div>
+    <b id="name"></b><br>
+    <span id="id"></span>
+  </div>
 </div>
 
-<br>
-<button onclick="logout()">Logout</button>
+<div class="stats">
+  <div class="stat">
+    <b>Students</b><br>--
+  </div>
+  <div class="stat">
+    <b>Teachers</b><br>--
+  </div>
+  <div class="stat">
+    <b>Attendance</b><br>--
+  </div>
+</div>
+
+<div class="section-title">Oversight Tools</div>
+
+<div class="grid">
+  <div class="card" onclick="go('admin-view-attendance.html')">📌 View Attendance</div>
+  <div class="card" onclick="go('admin-attendance-analytics.html')">📊 Attendance Analytics</div>
+  <div class="card" onclick="go('admin-grade-approval.html')">📥 Grade Approval</div>
+  <div class="card" onclick="go('admin-results.html')">🏆 Results</div>
+</div>
+
+<div class="section-title">Communication</div>
+
+<div class="grid">
+  <div class="card" onclick="go('admin-announcements.html')">📢 Announcements</div>
+  <div class="card" onclick="go('users-announcement.html')">📣 Broadcast Users</div>
+</div>
+
+<div class="section-title">Support Tools</div>
+
+<div class="grid">
+  <div class="card" onclick="go('student-dashboard.html')">👨‍🎓 Student View</div>
+  <div class="card" onclick="go('teacher-dashboard.html')">👨‍🏫 Teacher View</div>
+  <div class="card" onclick="go('admin-calender.html')">📅 Calendar</div>
+</div>
+
+<button class="logout" onclick="logout()">Logout</button>
 
 <script>
 document.getElementById("name").innerText = user.name;
+document.getElementById("id").innerText = user.userId || "";
 
-function go(p){ location.href = p; }
+// IMAGE CACHE
+const cachedImg = localStorage.getItem("img_" + user.userId);
+
+if(cachedImg){
+  document.getElementById("photo").src = cachedImg;
+} else if(user.photoURL){
+  document.getElementById("photo").src = user.photoURL;
+  localStorage.setItem("img_" + user.userId, user.photoURL);
+} else {
+  document.getElementById("photo").src = "https://via.placeholder.com/60";
+}
+
+function go(page){
+  location.href = page;
+}
 
 function logout(){
   localStorage.removeItem("user");
