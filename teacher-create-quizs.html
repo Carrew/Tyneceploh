@@ -1,142 +1,1147 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Create Quiz - TEF</title>
+  <meta charset="UTF-8" />
+
+  <title>Create Quiz • TEF</title>
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0" />
+
+  <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:"Inter",sans-serif;
+      background:
+        linear-gradient(
+          135deg,
+          #fff0f3,
+          #f4f4f4
+        );
+      min-height:100vh;
+      padding:20px;
+      color:#222;
+    }
+
+    .container{
+      max-width:1100px;
+      margin:auto;
+    }
+
+    .hero{
+      background:
+        linear-gradient(
+          135deg,
+          #800000,
+          #ff4d6d
+        );
+      color:white;
+      padding:30px;
+      border-radius:24px;
+      margin-bottom:20px;
+      position:relative;
+      overflow:hidden;
+      box-shadow:
+        0 15px 40px
+        rgba(128,0,0,0.25);
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      width:250px;
+      height:250px;
+      background:
+        rgba(255,255,255,0.08);
+      border-radius:50%;
+      top:-90px;
+      right:-70px;
+    }
+
+    .hero h1{
+      font-size:34px;
+      font-weight:800;
+      position:relative;
+      z-index:2;
+    }
+
+    .hero p{
+      margin-top:10px;
+      opacity:0.92;
+      max-width:650px;
+      line-height:1.6;
+      position:relative;
+      z-index:2;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(180px,1fr)
+        );
+      gap:15px;
+      margin-top:25px;
+      position:relative;
+      z-index:2;
+    }
+
+    .stat-card{
+      background:
+        rgba(255,255,255,0.14);
+      backdrop-filter:blur(10px);
+      border:1px solid
+        rgba(255,255,255,0.15);
+      border-radius:18px;
+      padding:18px;
+    }
+
+    .stat-label{
+      font-size:13px;
+      opacity:0.9;
+    }
+
+    .stat-value{
+      margin-top:6px;
+      font-size:28px;
+      font-weight:800;
+    }
+
+    .card{
+      background:white;
+      border-radius:24px;
+      padding:25px;
+      margin-bottom:20px;
+      box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.06);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(250px,1fr)
+        );
+      gap:18px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+    }
+
+    .field label{
+      margin-bottom:8px;
+      font-size:14px;
+      font-weight:700;
+      color:#555;
+    }
+
+    input,
+    select,
+    textarea{
+      width:100%;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid #ddd;
+      background:#fafafa;
+      font-size:15px;
+      transition:0.2s;
+      font-family:inherit;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus{
+      outline:none;
+      border-color:#ff4d6d;
+      background:white;
+      box-shadow:
+        0 0 0 4px
+        rgba(255,77,109,0.12);
+    }
+
+    .section-title{
+      font-size:22px;
+      font-weight:800;
+      margin-bottom:18px;
+      color:#800000;
+    }
+
+    .question-card{
+      border:1px solid #eee;
+      border-radius:22px;
+      padding:22px;
+      margin-bottom:18px;
+      background:
+        linear-gradient(
+          135deg,
+          #fff,
+          #fff8f9
+        );
+      position:relative;
+    }
+
+    .question-number{
+      width:45px;
+      height:45px;
+      border-radius:50%;
+      background:
+        linear-gradient(
+          135deg,
+          #800000,
+          #ff4d6d
+        );
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      margin-bottom:18px;
+      box-shadow:
+        0 8px 20px
+        rgba(255,77,109,0.25);
+    }
+
+    .options-grid{
+      display:grid;
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(220px,1fr)
+        );
+      gap:15px;
+      margin-top:15px;
+    }
+
+    .option-box{
+      background:white;
+      border:1px solid #eee;
+      border-radius:16px;
+      padding:14px;
+    }
+
+    .option-label{
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:8px;
+      color:#800000;
+    }
+
+    .question-actions{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-top:18px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:14px 18px;
+      font-size:15px;
+      font-weight:700;
+      cursor:pointer;
+      transition:0.2s;
+      font-family:inherit;
+    }
+
+    .btn:hover{
+      transform:translateY(-2px);
+    }
+
+    .primary{
+      background:
+        linear-gradient(
+          135deg,
+          #800000,
+          #ff4d6d
+        );
+      color:white;
+      box-shadow:
+        0 10px 25px
+        rgba(255,77,109,0.25);
+    }
+
+    .secondary{
+      background:#eef2ff;
+      color:#4338ca;
+    }
+
+    .danger{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    .bottom-actions{
+      display:flex;
+      gap:15px;
+      flex-wrap:wrap;
+      margin-top:20px;
+    }
+
+    .publish-btn{
+      flex:1;
+      min-width:240px;
+      font-size:16px;
+      padding:18px;
+    }
+
+    .message{
+      margin-top:20px;
+      padding:15px;
+      border-radius:16px;
+      display:none;
+      font-weight:600;
+    }
+
+    .success{
+      background:#dcfce7;
+      color:#166534;
+      display:block;
+    }
+
+    .error{
+      background:#fee2e2;
+      color:#991b1b;
+      display:block;
+    }
+
+    .empty{
+      text-align:center;
+      padding:40px 20px;
+      color:#777;
+    }
+
+    .tips{
+      margin-top:15px;
+      display:grid;
+      gap:10px;
+    }
+
+    .tip{
+      background:#fafafa;
+      border-left:5px solid #ff4d6d;
+      padding:12px;
+      border-radius:10px;
+      font-size:14px;
+      color:#555;
+    }
+
+    .loading{
+      opacity:0.6;
+      pointer-events:none;
+    }
+
+    @media(max-width:700px){
+
+      .hero h1{
+        font-size:28px;
+      }
+
+      .question-actions{
+        flex-direction:column;
+        align-items:stretch;
+      }
+
+      .bottom-actions{
+        flex-direction:column;
+      }
+
+    }
+
+  </style>
 </head>
+
 <body>
 
-<h2>Create Quiz (Weighted MCQ)</h2>
+<div class="container">
 
-<label>Target Class:</label>
-<select id="class"></select>
-<br><br>
-<input id="title" placeholder="Quiz Title" style="width: 300px;">
+  <!-- HERO -->
 
-<div id="questions" style="margin-top: 20px;"></div>
+  <div class="hero">
 
-<button onclick="addQ()">+ Add Question</button>
-<br><br>
+    <h1>Create Quiz</h1>
 
-<button onclick="createQuiz()">Create Quiz</button>
+    <p>
+      Build smart multiple choice quizzes for your students.
+      Add weighted scoring, organize questions beautifully,
+      and publish instantly to your classroom.
+    </p>
+
+    <div class="stats">
+
+      <div class="stat-card">
+        <div class="stat-label">
+          Questions Added
+        </div>
+
+        <div class="stat-value"
+             id="questionCount">
+          0
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          Total Points
+        </div>
+
+        <div class="stat-value"
+             id="totalPoints">
+          0
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          Target Class
+        </div>
+
+        <div class="stat-value"
+             id="targetClass">
+          -
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- QUIZ INFO -->
+
+  <div class="card">
+
+    <div class="section-title">
+      Quiz Information
+    </div>
+
+    <div class="grid">
+
+      <div class="field">
+
+        <label>
+          Target Class
+        </label>
+
+        <select id="classBox"></select>
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Quiz Title
+        </label>
+
+        <input id="title"
+               placeholder="Example: Midterm Science Quiz">
+
+      </div>
+
+    </div>
+
+    <div class="tips">
+
+      <div class="tip">
+        Students can only attempt a quiz once.
+      </div>
+
+      <div class="tip">
+        Each question can have different points.
+      </div>
+
+      <div class="tip">
+        Auto grading works instantly after submission.
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- QUESTIONS -->
+
+  <div class="card">
+
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+      gap:15px;
+    ">
+
+      <div class="section-title"
+           style="margin:0;">
+        Quiz Questions
+      </div>
+
+      <button class="btn secondary"
+              onclick="addQ()">
+
+        + Add Question
+
+      </button>
+
+    </div>
+
+    <div id="questions">
+
+      <div class="empty">
+        No questions added yet.
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ACTIONS -->
+
+  <div class="bottom-actions">
+
+    <button class="btn primary publish-btn"
+            onclick="createQuiz()">
+
+      Publish Quiz
+
+    </button>
+
+    <button class="btn secondary"
+            onclick="previewQuiz()">
+
+      Preview Quiz
+
+    </button>
+
+  </div>
+
+  <div id="msg"
+       class="message"></div>
+
+</div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
+import {
+  getFirestore,
+  collection,
+  addDoc
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+//
+// FIREBASE
+//
 const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
+
+  apiKey:
+  "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+
+  authDomain:
+  "tyneceploh.firebaseapp.com",
+
+  projectId:
+  "tyneceploh"
+
 });
 
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
-if(!user || user.role !== "teacher") {
+//
+// USER CHECK
+//
+const user =
+  JSON.parse(
+    localStorage.getItem("user")
+  );
+
+if(
+  !user
+  ||
+  user.role !== "teacher"
+){
   location.href = "login.html";
 }
 
-// Populate the class dropdown based on teacher's classes
-document.getElementById("class").innerHTML =
-  (user.classes || []).map(c => `<option value="${c}">${c}</option>`).join("");
+//
+// CLASS DROPDOWN
+//
+const classBox =
+  document.getElementById("classBox");
 
+classBox.innerHTML =
+  (user.classes || [])
+  .map(c=>`
+
+    <option value="${c}">
+      ${c}
+    </option>
+
+  `)
+  .join("");
+
+//
+// UPDATE CLASS DISPLAY
+//
+function updateClassStat(){
+
+  document.getElementById(
+    "targetClass"
+  ).innerText =
+    classBox.value || "-";
+
+}
+
+classBox.addEventListener(
+  "change",
+  updateClassStat
+);
+
+updateClassStat();
+
+//
+// GLOBALS
+//
 let count = 0;
 
-window.addQ = function(){
-  count++;
-  const container = document.getElementById("questions");
+//
+// SHOW MESSAGE
+//
+function showMessage(text,type){
 
-  // FIX: Using insertAdjacentHTML prevents the loss of previously typed data
-  const qHtml = `
-    <div id="quiz-row-${count}" style="margin:15px 0; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
-      <b>Question ${count}</b><br>
-      <input id="q${count}" placeholder="Enter question text" style="width: 80%; margin-bottom: 10px;"><br>
+  const msg =
+    document.getElementById("msg");
 
-      A <input id="a${count}" placeholder="Option A">
-      B <input id="b${count}" placeholder="Option B"><br>
-      C <input id="c${count}" placeholder="Option C">
-      D <input id="d${count}" placeholder="Option D"><br><br>
+  msg.className =
+    "message " + type;
 
-      Correct Answer:
-      <select id="ans${count}">
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-        <option value="D">D</option>
-      </select>
+  msg.innerHTML = text;
 
-      Points:
-      <input id="s${count}" type="number" style="width:50px" value="1">
-    </div>
-  `;
-  
-  container.insertAdjacentHTML('beforeend', qHtml);
-};
+}
 
-window.createQuiz = async function(){
-  const title = document.getElementById("title").value.trim();
-  const selectedClass = document.getElementById("class").value;
+//
+// UPDATE STATS
+//
+function updateStats(){
 
-  if(!title || count === 0) {
-    alert("Please enter a title and add at least one question.");
-    return;
-  }
+  document.getElementById(
+    "questionCount"
+  ).innerText = count;
 
-  const questions = [];
   let total = 0;
 
-  for(let i=1; i<=count; i++){
-    const q = document.getElementById(`q${i}`).value.trim();
-    const a = document.getElementById(`a${i}`).value.trim();
-    const b = document.getElementById(`b${i}`).value.trim();
-    const c = document.getElementById(`c${i}`).value.trim();
-    const d = document.getElementById(`d${i}`).value.trim();
+  for(let i=1;i<=count;i++){
 
-    const ans = document.getElementById(`ans${i}`).value;
-    const score = Number(document.getElementById(`s${i}`).value || 0);
+    const scoreInput =
+      document.getElementById(`s${i}`);
 
-    // Basic validation: skip incomplete questions
-    if(!q || !a || !b || !c || !d) continue;
+    if(scoreInput){
 
-    questions.push({
-      q,
-      options: [a, b, c, d],
-      answer: ans,
-      score: score
-    });
+      total +=
+        Number(scoreInput.value || 0);
 
-    total += score;
+    }
+
   }
 
-  if(questions.length === 0) {
-    alert("No valid questions found. Ensure all fields are filled.");
-    return;
+  document.getElementById(
+    "totalPoints"
+  ).innerText = total;
+
+}
+
+//
+// ADD QUESTION
+//
+window.addQ = function(){
+
+  count++;
+
+  const wrap =
+    document.getElementById(
+      "questions"
+    );
+
+  //
+  // REMOVE EMPTY MESSAGE
+  //
+  if(
+    wrap.querySelector(".empty")
+  ){
+    wrap.innerHTML = "";
   }
 
-  try {
-    await addDoc(collection(db, "quizzes"), {
-      teacherId: user.id, // Consistent with login.userId mapping
-      teacherName: user.name,
-      class: selectedClass,
-      title: title,
-      questions: questions,
-      totalScore: total,
-      createdAt: Date.now()
-    });
+  const html = `
 
-    alert("Quiz created! Total points: " + total);
-    location.reload(); // Reset page for next quiz
-  } catch (err) {
-    console.error("Firebase Error:", err);
-    alert("Failed to save quiz.");
-  }
+    <div class="question-card"
+         id="row${count}">
+
+      <div class="question-number">
+        ${count}
+      </div>
+
+      <div class="field">
+
+        <label>
+          Question
+        </label>
+
+        <textarea
+          id="q${count}"
+          rows="3"
+          placeholder="Enter your question here..."
+        ></textarea>
+
+      </div>
+
+      <div class="options-grid">
+
+        <div class="option-box">
+
+          <div class="option-label">
+            Option A
+          </div>
+
+          <input id="a${count}"
+                 placeholder="Type answer A">
+
+        </div>
+
+        <div class="option-box">
+
+          <div class="option-label">
+            Option B
+          </div>
+
+          <input id="b${count}"
+                 placeholder="Type answer B">
+
+        </div>
+
+        <div class="option-box">
+
+          <div class="option-label">
+            Option C
+          </div>
+
+          <input id="c${count}"
+                 placeholder="Type answer C">
+
+        </div>
+
+        <div class="option-box">
+
+          <div class="option-label">
+            Option D
+          </div>
+
+          <input id="d${count}"
+                 placeholder="Type answer D">
+
+        </div>
+
+      </div>
+
+      <div class="question-actions">
+
+        <div style="
+          display:flex;
+          gap:12px;
+          flex-wrap:wrap;
+        ">
+
+          <div class="field">
+
+            <label>
+              Correct Answer
+            </label>
+
+            <select id="ans${count}">
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
+
+          </div>
+
+          <div class="field">
+
+            <label>
+              Points
+            </label>
+
+            <input
+              id="s${count}"
+              type="number"
+              value="1"
+              min="1"
+              onchange="updateStats()"
+            >
+
+          </div>
+
+        </div>
+
+        <button class="btn danger"
+                onclick="removeQuestion(${count})">
+
+          Remove
+
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+  wrap.insertAdjacentHTML(
+    "beforeend",
+    html
+  );
+
+  updateStats();
+
 };
 
-// Start with one question displayed
+//
+// REMOVE QUESTION
+//
+window.removeQuestion = function(id){
+
+  const row =
+    document.getElementById(
+      `row${id}`
+    );
+
+  if(row){
+
+    row.remove();
+
+    updateStats();
+
+  }
+
+};
+
+//
+// PREVIEW
+//
+window.previewQuiz = function(){
+
+  const title =
+    document.getElementById("title")
+    .value
+    .trim();
+
+  if(!title){
+
+    showMessage(
+      "Enter a quiz title first.",
+      "error"
+    );
+
+    return;
+
+  }
+
+  showMessage(
+    `
+      Preview Ready ✅
+      <br><br>
+      Quiz:
+      <b>${title}</b>
+      <br>
+      Questions:
+      <b>${count}</b>
+    `,
+    "success"
+  );
+
+};
+
+//
+// CREATE QUIZ
+//
+window.createQuiz = async function(){
+
+  try{
+
+    const btn =
+      document.querySelector(
+        ".publish-btn"
+      );
+
+    btn.innerHTML =
+      "Publishing...";
+
+    btn.classList.add("loading");
+
+    const title =
+      document
+      .getElementById("title")
+      .value
+      .trim();
+
+    const selectedClass =
+      classBox.value;
+
+    //
+    // VALIDATION
+    //
+    if(!title){
+
+      throw new Error(
+        "Quiz title is required."
+      );
+
+    }
+
+    if(count === 0){
+
+      throw new Error(
+        "Add at least one question."
+      );
+
+    }
+
+    const questions = [];
+
+    let total = 0;
+
+    //
+    // BUILD QUESTIONS
+    //
+    for(let i=1;i<=count;i++){
+
+      //
+      // SKIP REMOVED
+      //
+      if(
+        !document.getElementById(
+          `row${i}`
+        )
+      ){
+        continue;
+      }
+
+      const q =
+        document
+        .getElementById(`q${i}`)
+        .value
+        .trim();
+
+      const a =
+        document
+        .getElementById(`a${i}`)
+        .value
+        .trim();
+
+      const b =
+        document
+        .getElementById(`b${i}`)
+        .value
+        .trim();
+
+      const c =
+        document
+        .getElementById(`c${i}`)
+        .value
+        .trim();
+
+      const d =
+        document
+        .getElementById(`d${i}`)
+        .value
+        .trim();
+
+      const ans =
+        document
+        .getElementById(`ans${i}`)
+        .value;
+
+      const score =
+        Number(
+          document
+          .getElementById(`s${i}`)
+          .value || 0
+        );
+
+      //
+      // REQUIRED CHECK
+      //
+      if(
+        !q
+        ||
+        !a
+        ||
+        !b
+        ||
+        !c
+        ||
+        !d
+      ){
+
+        throw new Error(
+          `Question ${i} is incomplete.`
+        );
+
+      }
+
+      if(score <= 0){
+
+        throw new Error(
+          `Question ${i} must have points.`
+        );
+
+      }
+
+      questions.push({
+
+        q,
+
+        options:[
+          a,b,c,d
+        ],
+
+        answer:ans,
+
+        score
+
+      });
+
+      total += score;
+
+    }
+
+    //
+    // SAVE TO FIREBASE
+    //
+    await addDoc(
+
+      collection(
+        db,
+        "quizzes"
+      ),
+
+      {
+
+        teacherId:
+          user.id
+          ||
+          user.userId,
+
+        teacherName:
+          user.name,
+
+        class:
+          selectedClass,
+
+        title,
+
+        questions,
+
+        totalScore:total,
+
+        createdAt:
+          Date.now()
+
+      }
+
+    );
+
+    //
+    // SUCCESS
+    //
+    showMessage(
+      `
+        Quiz published successfully ✅
+        <br><br>
+        Total Questions:
+        <b>${questions.length}</b>
+        <br>
+        Total Points:
+        <b>${total}</b>
+      `,
+      "success"
+    );
+
+    //
+    // RESET
+    //
+    setTimeout(()=>{
+
+      location.reload();
+
+    },1500);
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showMessage(
+      err.message,
+      "error"
+    );
+
+  }
+
+  finally{
+
+    const btn =
+      document.querySelector(
+        ".publish-btn"
+      );
+
+    btn.innerHTML =
+      "Publish Quiz";
+
+    btn.classList.remove(
+      "loading"
+    );
+
+  }
+
+};
+
+//
+// START WITH ONE
+//
 addQ();
 
 </script>
 
 </body>
-</html>
+  </html>
