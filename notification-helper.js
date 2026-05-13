@@ -1,28 +1,69 @@
 import {
   collection,
-  addDoc
+  addDoc,
+  getDocs,
+  query,
+  where,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-export async function sendNotification(db, data){
+/**
+ * Send notification to users or roles
+ * Works with your existing Firestore + FCM system
+ */
+export async function sendNotification(db, payload) {
+  try {
+    const {
+      userId,
+      role,
+      title,
+      message,
+      type = "general",
+      link = null,
+      refId = null
+    } = payload;
 
-  await addDoc(collection(db,"notifications"),{
+    let targets = [];
 
-    userId: data.userId || null,
+    // 1. Direct user notification
+    if (userId) {
+      targets.push(userId);
+    }
 
-    role: data.role || null,
+    // 2. Role-based notification
+    if (role) {
+      const snap = await getDocs(collection(db, "users"));
 
-    className: data.className || null,
+      snap.forEach(doc => {
+        const u = doc.data();
+        if ((u.role || "").toLowerCase() === role) {
+          targets.push(u.userId);
+        }
+      });
+    }
 
-    title: data.title || "Notification",
+    // Remove duplicates
+    targets = [...new Set(targets)];
 
-    message: data.message || "",
+    // 3. Save notifications in Firestore
+    const promises = targets.map(id =>
+      addDoc(collection(db, "notifications"), {
+        userId: id,
+        title,
+        message,
+        type,
+        link,
+        refId,
+        read: false,
+        createdAt: Date.now()
+      })
+    );
 
-    type: data.type || "info",
+    await Promise.all(promises);
 
-    read: false,
+    console.log("Notification sent:", payload);
 
-    createdAt: Date.now()
-
-  });
-
+  } catch (err) {
+    console.error("Notification Error:", err);
+  }
 }
