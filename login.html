@@ -1,8 +1,8 @@
-<!DOCTYPE html>            
-<html>            
-<head>            
-  <title>Login - TEF System</title>            
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - TEF System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
   <style>
     :root {
@@ -24,14 +24,15 @@
     body {
       background: radial-gradient(circle at top, #1a0010, var(--bg));
       color: var(--text);
-      height: 100vh;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    /* floating glow background */
     body::before {
       content: "";
       position: absolute;
@@ -42,6 +43,7 @@
       opacity: 0.4;
       top: -100px;
       left: -100px;
+      pointer-events: none;
     }
 
     body::after {
@@ -54,6 +56,7 @@
       opacity: 0.3;
       bottom: -100px;
       right: -100px;
+      pointer-events: none;
     }
 
     .login-box {
@@ -91,6 +94,7 @@
       background: rgba(255,255,255,0.08);
       color: white;
       transition: 0.3s;
+      font-size: 15px;
     }
 
     input:focus {
@@ -111,6 +115,7 @@
       transition: 0.3s;
       position: relative;
       overflow: hidden;
+      font-size: 15px;
     }
 
     button:hover {
@@ -122,7 +127,6 @@
       transform: scale(0.98);
     }
 
-    /* loader */
     .loader {
       display: none;
       width: 18px;
@@ -139,7 +143,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* notification system */
     .notify {
       position: fixed;
       top: 20px;
@@ -158,43 +161,60 @@
     .notify.show {
       transform: translateX(0);
     }
-  </style>
-</head>            
 
-<body>            
+    /* MOBILE FIX */
+    @media (max-width: 480px) {
+      .login-box {
+        padding: 20px;
+        transform: none;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      input, button {
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
 
 <div class="notify" id="notify"></div>
 
 <div class="login-box">
 
-<h2>TEF LOGIN</h2>            
+  <h2>TEF LOGIN</h2>
 
-<input id="id" placeholder="User ID">            
-<input id="pin" type="password" placeholder="PIN">            
+  <input id="id" placeholder="User ID">
+  <input id="pin" type="password" placeholder="PIN">
 
-<button onclick="login()" id="loginBtn">
-  <span id="btnText">Login</span>
-  <div class="loader" id="loader"></div>
-</button>            
+  <button onclick="login()" id="loginBtn">
+    <span id="btnText">Login</span>
+    <div class="loader" id="loader"></div>
+  </button>
 
 </div>
 
-<script type="module">            
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";            
-import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";            
-import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";            
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
-const firebaseConfig = {            
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",            
-  authDomain: "tyneceploh.firebaseapp.com",            
-  projectId: "tyneceploh",            
-  messagingSenderId: "161024255934",            
-  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"            
-};            
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+  messagingSenderId: "161024255934",
+  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"
+};
 
-const app = initializeApp(firebaseConfig);            
-const db = getFirestore(app);            
-let messaging = null;            
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+let messaging = null;
 
 function notify(msg) {
   const box = document.getElementById("notify");
@@ -203,135 +223,134 @@ function notify(msg) {
   setTimeout(() => box.classList.remove("show"), 2500);
 }
 
-// Service worker            
-if ('serviceWorker' in navigator) {            
-  window.addEventListener('load', () => {            
-    navigator.serviceWorker.register('firebase-messaging-sw.js')            
-      .then(async (registration) => {            
-        if (await isSupported()) {            
-          messaging = getMessaging(app);            
-        }            
-      });            
-  });            
-}            
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('firebase-messaging-sw.js')
+      .then(async () => {
+        if (await isSupported()) {
+          messaging = getMessaging(app);
+        }
+      });
+  });
+}
 
-async function safeNotify(title, body) {            
-  try {            
-    const permission = await Notification.requestPermission();            
-    if (permission !== "granted") return;            
+async function safeNotify(title, body) {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return;
 
-    const reg = await navigator.serviceWorker.ready;            
+    const reg = await navigator.serviceWorker.ready;
 
-    if (reg && reg.showNotification) {            
-      await reg.showNotification(title, { body });            
-    } else {            
-      new Notification(title, { body });            
-    }            
-  } catch (err) {}            
-}            
+    if (reg && reg.showNotification) {
+      await reg.showNotification(title, { body });
+    } else {
+      new Notification(title, { body });
+    }
+  } catch (err) {}
+}
 
-async function registerPush(userDocId) {            
-  try {            
-    if (!messaging) return;            
+async function registerPush(userDocId) {
+  try {
+    if (!messaging) return;
 
-    const permission = await Notification.requestPermission();            
-    if (permission !== "granted") return;            
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return;
 
-    const token = await getToken(messaging, {            
-      vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"            
-    });            
+    const token = await getToken(messaging, {
+      vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
+    });
 
-    if (token) {            
-      await updateDoc(doc(db, "users", userDocId), {            
-        fcmToken: token,            
-        notificationEnabled: true,            
-        lastLogin: Date.now()            
-      });            
-    }            
-  } catch (err) {}            
-}            
+    if (token) {
+      await updateDoc(doc(db, "users", userDocId), {
+        fcmToken: token,
+        notificationEnabled: true,
+        lastLogin: Date.now()
+      });
+    }
+  } catch (err) {}
+}
 
-window.login = async function() {            
+window.login = async function () {
   const btn = document.getElementById("loginBtn");
   const loader = document.getElementById("loader");
   const text = document.getElementById("btnText");
 
-  const idInput = document.getElementById("id").value.trim().toUpperCase();            
-  const pinInput = document.getElementById("pin").value.trim();            
+  const idInput = document.getElementById("id").value.trim().toUpperCase();
+  const pinInput = document.getElementById("pin").value.trim();
 
-  if (!idInput || !pinInput) {            
-    notify("Enter ID and PIN");            
-    return;            
-  }            
+  if (!idInput || !pinInput) {
+    notify("Enter ID and PIN");
+    return;
+  }
 
-  try {            
+  try {
     btn.disabled = true;
     loader.style.display = "block";
     text.style.display = "none";
 
-    const snap = await getDocs(collection(db, "users"));            
-    let found = null;            
-    let docId = null;            
+    const snap = await getDocs(collection(db, "users"));
+    let found = null;
+    let docId = null;
 
-    snap.forEach(d => {            
-      const u = d.data();            
-      if (u.userId === idInput && u.pin === pinInput) {            
-found = {
-  ...u,                 
-  id: u.userId,
-  userId: u.userId,
-  name: u.name || "",
-  role: (u.role || "").toLowerCase(),
-  status: u.status || "",
-  classes: u.classes || []
-};
-        docId = d.id;            
-      }            
-    });            
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.userId === idInput && u.pin === pinInput) {
+        found = {
+          ...u,
+          id: u.userId,
+          userId: u.userId,
+          name: u.name || "",
+          role: (u.role || "").toLowerCase(),
+          status: u.status || "",
+          classes: u.classes || []
+        };
+        docId = d.id;
+      }
+    });
 
-    if (!found) {            
-      notify("Invalid ID or PIN");            
+    if (!found) {
+      notify("Invalid ID or PIN");
       btn.disabled = false;
       loader.style.display = "none";
       text.style.display = "block";
-      return;            
-    }            
+      return;
+    }
 
-    if (found.role !== "student" && found.status !== "active") {            
-      notify("Account restricted");            
+    if (found.role !== "student" && found.status !== "active") {
+      notify("Account restricted");
       btn.disabled = false;
       loader.style.display = "none";
       text.style.display = "block";
-      return;            
-    }            
+      return;
+    }
 
-    localStorage.setItem("user", JSON.stringify(found));            
+    localStorage.setItem("user", JSON.stringify(found));
 
-    await registerPush(docId);            
-    await safeNotify("Login Successful", `Welcome ${found.name || found.userId}`);            
+    await registerPush(docId);
+    await safeNotify("Login Successful", `Welcome ${found.name || found.userId}`);
     notify("Login successful... redirecting");
 
-    const routes = {            
-      admin: "admin-dashboard.html",            
-      teacher: "teacher-dashboard.html",            
-      student: "student-dashboard.html",            
-      janitor: "janitor-dashboard.html",            
-      security: "security-dashboard.html",            
-      coordinator: "coordinator-dashboard.html"            
-    };            
+    const routes = {
+      admin: "admin-dashboard.html",
+      teacher: "teacher-dashboard.html",
+      student: "student-dashboard.html",
+      janitor: "janitor-dashboard.html",
+      security: "security-dashboard.html",
+      coordinator: "coordinator-dashboard.html"
+    };
 
-    setTimeout(() => {            
-      location.href = routes[found.role] || "index.html";            
-    }, 1200);            
+    setTimeout(() => {
+      location.href = routes[found.role] || "index.html";
+    }, 1200);
 
-  } catch (error) {            
-    notify("Login failed. Check connection.");            
+  } catch (error) {
+    notify("Login failed. Check connection.");
     btn.disabled = false;
     loader.style.display = "none";
     text.style.display = "block";
-  }            
-};            
-</script>            
+  }
+};
+</script>
 
-</body>            
+</body>
 </html>
