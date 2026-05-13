@@ -2,17 +2,16 @@
 <html>
 <head>
   <title>TEF Academic Calendar Admin</title>
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
 
     body{
       margin:0;
       padding:20px;
-      background:#f4f4f4;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
       font-family:sans-serif;
+      color:white;
     }
 
     .container{
@@ -21,27 +20,28 @@
     }
 
     .box{
-      background:white;
+      background: rgba(255,255,255,0.05);
       padding:20px;
-      border-radius:12px;
+      border-radius:14px;
       margin-bottom:20px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+      backdrop-filter: blur(10px);
     }
 
     h2{
       margin-top:0;
+      color:#ffc0cb;
     }
 
-    input,
-    select,
-    textarea,
-    button{
+    input,select,textarea,button{
       width:100%;
       padding:12px;
       margin-top:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
+      border-radius:10px;
+      border:none;
       box-sizing:border-box;
+      background: rgba(255,255,255,0.08);
+      color:white;
+      outline:none;
     }
 
     textarea{
@@ -50,53 +50,40 @@
     }
 
     button{
-      background:#27ae60;
-      color:white;
-      border:none;
+      background: linear-gradient(135deg, #800000, #ffc0cb);
       cursor:pointer;
       font-weight:bold;
     }
 
     .session-card,
     .event-card{
-      background:#fafafa;
+      background: rgba(255,255,255,0.04);
       padding:15px;
-      border-radius:10px;
+      border-radius:12px;
       margin-top:15px;
-      border-left:6px solid #3498db;
+      border-left:4px solid #ffc0cb;
     }
 
     .active{
-      border-left-color:#27ae60;
+      border-left-color:#2ecc71;
     }
 
     .badge{
       display:inline-block;
       padding:5px 12px;
       border-radius:20px;
-      color:white;
       font-size:12px;
       font-weight:bold;
       margin-top:10px;
     }
 
     .active-badge{
-      background:#27ae60;
+      background:#2ecc71;
     }
 
     .inactive-badge{
       background:#7f8c8d;
     }
-
-    .Holiday{ background:#e74c3c; }
-    .Exam{ background:#8e44ad; }
-    .Sports{ background:#27ae60; }
-    .Meeting{ background:#2980b9; }
-    .Academic{ background:#f39c12; }
-    .Deadline{ background:#d35400; }
-    .Celebration{ background:#16a085; }
-    .Emergency{ background:#2c3e50; }
-    .Other{ background:#7f8c8d; }
 
     .row{
       display:grid;
@@ -110,36 +97,20 @@
       gap:10px;
     }
 
-    .danger{
-      background:#c0392b;
-    }
-
-    .blue{
-      background:#2980b9;
-    }
+    .danger{ background:#c0392b; }
+    .blue{ background:#2980b9; }
 
     .msg{
       margin-top:15px;
       padding:12px;
-      border-radius:6px;
+      border-radius:10px;
     }
 
-    .ok{
-      background:#d4edda;
-      color:#155724;
-    }
-
-    .bad{
-      background:#f8d7da;
-      color:#721c24;
-    }
+    .ok{ background:rgba(46,204,113,0.2); }
+    .bad{ background:rgba(231,76,60,0.2); }
 
     @media(max-width:700px){
-
-      .row{
-        grid-template-columns:1fr;
-      }
-
+      .row{ grid-template-columns:1fr; }
     }
 
   </style>
@@ -149,50 +120,24 @@
 
 <div class="container">
 
-  <!-- SESSION CREATOR -->
-
   <div class="box">
 
     <h2>Academic Session Manager</h2>
 
     <input type="hidden" id="sessionEditId">
 
-    <label>Academic Session Name</label>
-
-    <input id="sessionName"
-           placeholder="2026 / 2027">
+    <input id="sessionName" placeholder="2026 / 2027">
 
     <div class="row">
-
-      <div>
-
-        <label>Start Date</label>
-
-        <input type="date"
-               id="sessionStart">
-
-      </div>
-
-      <div>
-
-        <label>End Date</label>
-
-        <input type="date"
-               id="sessionEnd">
-
-      </div>
-
+      <input type="date" id="sessionStart">
+      <input type="date" id="sessionEnd">
     </div>
 
-    <button onclick="saveSession()">
-      Save Academic Session
-    </button>
+    <button onclick="saveSession()">Save Academic Session</button>
 
     <div id="sessionMsg"></div>
 
   </div>
-
-  <!-- EVENT CREATOR -->
 
   <div class="box">
 
@@ -200,22 +145,13 @@
 
     <input type="hidden" id="eventEditId">
 
-    <label>Select Academic Session</label>
-
     <select id="eventSession"></select>
 
-    <label>Event Title</label>
+    <input id="eventTitle" placeholder="Event title">
 
-    <input id="eventTitle">
-
-    <label>Description</label>
-
-    <textarea id="eventDescription"></textarea>
-
-    <label>Category</label>
+    <textarea id="eventDescription" placeholder="Description"></textarea>
 
     <select id="eventCategory">
-
       <option>Holiday</option>
       <option>Exam</option>
       <option>Sports</option>
@@ -225,72 +161,38 @@
       <option>Celebration</option>
       <option>Emergency</option>
       <option>Other</option>
-
     </select>
 
     <div class="row">
-
-      <div>
-
-        <label>Start Date</label>
-
-        <input type="date"
-               id="eventStart">
-
-      </div>
-
-      <div>
-
-        <label>End Date</label>
-
-        <input type="date"
-               id="eventEnd">
-
-      </div>
-
+      <input type="date" id="eventStart">
+      <input type="date" id="eventEnd">
     </div>
 
-    <button onclick="saveEvent()">
-      Save Calendar Event
-    </button>
+    <button onclick="saveEvent()">Save Calendar Event</button>
 
     <div id="eventMsg"></div>
 
   </div>
 
-  <!-- SESSIONS -->
-
   <div class="box">
-
     <h2>Academic Sessions</h2>
-
-    <div id="sessions">
-      Loading...
-    </div>
-
+    <div id="sessions">Loading...</div>
   </div>
 
-  <!-- EVENTS -->
-
   <div class="box">
-
     <h2>Calendar Events</h2>
-
-    <div id="events">
-      Loading...
-    </div>
-
+    <div id="events">Loading...</div>
   </div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-
   getFirestore,
   collection,
   addDoc,
@@ -300,494 +202,200 @@ import {
   doc,
   query,
   orderBy
-
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
-
 });
 
 const db = getFirestore(app);
 
-const user =
-  JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
+// ⚡ lightweight cache
 let sessionsCache = [];
 let eventsCache = [];
 
-// -----------------------------------
-// LOAD EVERYTHING
-// -----------------------------------
-async function loadData(){
-
+// -------------------- LOAD --------------------
+async function loadAll(){
   await loadSessions();
-
   await loadEvents();
-
 }
+loadAll();
 
-loadData();
-
-// -----------------------------------
-// LOAD SESSIONS
-// -----------------------------------
+// -------------------- SESSIONS --------------------
 async function loadSessions(){
 
-  const snap =
-    await getDocs(
-      query(
-        collection(db,"academicSessions"),
-        orderBy("createdAt","desc")
-      )
-    );
+  const snap = await getDocs(
+    query(collection(db,"academicSessions"), orderBy("createdAt","desc"))
+  );
 
   sessionsCache = [];
 
   snap.forEach(d=>{
-
-    sessionsCache.push({
-      docId:d.id,
-      ...d.data()
-    });
-
+    sessionsCache.push({ docId:d.id, ...d.data() });
   });
 
   renderSessions();
-
-  renderSessionDropdown();
-
+  renderDropdown();
 }
 
-// -----------------------------------
-// SESSION DROPDOWN
-// -----------------------------------
-function renderSessionDropdown(){
-
-  const box =
-    document.getElementById("eventSession");
-
-  if(sessionsCache.length === 0){
-
-    box.innerHTML =
-      `<option>No Sessions</option>`;
-
-    return;
-  }
-
-  box.innerHTML =
-    sessionsCache.map(s=>`
-
-      <option value="${s.name}">
-        ${s.name}
-      </option>
-
-    `).join("");
-
+function renderDropdown(){
+  eventSession.innerHTML = sessionsCache.length
+    ? sessionsCache.map(s=>`<option value="${s.name}">${s.name}</option>`).join("")
+    : `<option>No Sessions</option>`;
 }
 
-// -----------------------------------
-// RENDER SESSIONS
-// -----------------------------------
 function renderSessions(){
 
-  const container =
-    document.getElementById("sessions");
-
-  if(sessionsCache.length === 0){
-
-    container.innerHTML =
-      "<p>No sessions yet.</p>";
-
-    return;
-  }
-
-  container.innerHTML =
-    sessionsCache.map(s=>`
-
-      <div class="
-        session-card
-        ${s.active ? "active" : ""}
-      ">
-
+  sessions.innerHTML = sessionsCache.length
+    ? sessionsCache.map(s=>`
+      <div class="session-card ${s.active ? "active":""}">
         <h3>${s.name}</h3>
 
-        <div class="
-          badge
-          ${s.active
-            ? "active-badge"
-            : "inactive-badge"}
-        ">
-          ${s.active
-            ? "ACTIVE SESSION"
-            : "INACTIVE"}
+        <div class="badge ${s.active ? "active-badge":"inactive-badge"}">
+          ${s.active ? "ACTIVE":"INACTIVE"}
         </div>
 
         <p>
-
-          <b>Start:</b>
-          ${s.startDate}
-
-          <br><br>
-
-          <b>End:</b>
-          ${s.endDate}
-
+          <b>Start:</b> ${s.startDate}<br><br>
+          <b>End:</b> ${s.endDate}
         </p>
 
         <div class="actions">
-
-          <button
-            class="blue"
-            onclick="activateSession('${s.docId}')"
-          >
-            Set Active
-          </button>
-
-          <button
-            class="danger"
-            onclick="deleteSession('${s.docId}')"
-          >
-            Delete
-          </button>
-
+          <button class="blue" onclick="activateSession('${s.docId}')">Activate</button>
+          <button class="danger" onclick="deleteSession('${s.docId}')">Delete</button>
         </div>
-
       </div>
-
-    `).join("");
-
+    `).join("")
+    : "<p>No sessions yet</p>";
 }
 
-// -----------------------------------
-// SAVE SESSION
-// -----------------------------------
+// -------------------- SAVE SESSION --------------------
 window.saveSession = async function(){
 
-  const name =
-    sessionName.value.trim();
-
-  const start =
-    sessionStart.value;
-
-  const end =
-    sessionEnd.value;
-
-  if(
-    !name ||
-    !start ||
-    !end
-  ){
-    return showSessionMsg(
-      "Fill all fields",
-      "bad"
-    );
+  if(!sessionName.value || !sessionStart.value || !sessionEnd.value){
+    return showSessionMsg("Fill all fields","bad");
   }
 
-  try{
+  await addDoc(collection(db,"academicSessions"),{
+    name: sessionName.value,
+    startDate: sessionStart.value,
+    endDate: sessionEnd.value,
+    active:false,
+    createdAt: Date.now(),
+    createdBy: user.userId
+  });
 
-    await addDoc(
-      collection(db,"academicSessions"),
-      {
+  sessionName.value = "";
+  sessionStart.value = "";
+  sessionEnd.value = "";
 
-        name,
-        startDate:start,
-        endDate:end,
-
-        active:false,
-
-        createdAt:Date.now(),
-        createdBy:user.userId
-
-      }
-    );
-
-    sessionName.value = "";
-    sessionStart.value = "";
-    sessionEnd.value = "";
-
-    showSessionMsg(
-      "Session created",
-      "ok"
-    );
-
-    loadSessions();
-
-  }catch(err){
-
-    console.error(err);
-
-    showSessionMsg(
-      "Failed to create session",
-      "bad"
-    );
-
-  }
-
-};
-
-// -----------------------------------
-// ACTIVATE SESSION
-// -----------------------------------
-window.activateSession =
-async function(id){
-
-  try{
-
-    // REMOVE ACTIVE FROM ALL
-    for(const s of sessionsCache){
-
-      await updateDoc(
-        doc(db,"academicSessions",s.docId),
-        {
-          active:false
-        }
-      );
-
-    }
-
-    // SET TARGET ACTIVE
-    await updateDoc(
-      doc(db,"academicSessions",id),
-      {
-        active:true
-      }
-    );
-
-    loadSessions();
-
-  }catch(err){
-
-    console.error(err);
-
-  }
-
-};
-
-// -----------------------------------
-// DELETE SESSION
-// -----------------------------------
-window.deleteSession =
-async function(id){
-
-  const ok =
-    confirm(
-      "Delete session?"
-    );
-
-  if(!ok) return;
-
-  await deleteDoc(
-    doc(db,"academicSessions",id)
-  );
-
+  showSessionMsg("Session saved","ok");
   loadSessions();
-
 };
 
-// -----------------------------------
-// LOAD EVENTS
-// -----------------------------------
+// -------------------- ACTIVATE SESSION --------------------
+window.activateSession = async function(id){
+
+  // only update if needed (performance fix)
+  const updates = sessionsCache.map(s=>{
+    return updateDoc(doc(db,"academicSessions",s.docId),{
+      active: s.docId === id
+    });
+  });
+
+  await Promise.all(updates);
+  loadSessions();
+};
+
+// -------------------- DELETE SESSION --------------------
+window.deleteSession = async function(id){
+  if(!confirm("Delete session?")) return;
+  await deleteDoc(doc(db,"academicSessions",id));
+  loadSessions();
+};
+
+// -------------------- EVENTS --------------------
 async function loadEvents(){
 
-  const snap =
-    await getDocs(
-      query(
-        collection(db,"schoolCalendar"),
-        orderBy("startDate","asc")
-      )
-    );
+  const snap = await getDocs(
+    query(collection(db,"schoolCalendar"), orderBy("startDate","asc"))
+  );
 
   eventsCache = [];
 
   snap.forEach(d=>{
-
-    eventsCache.push({
-      docId:d.id,
-      ...d.data()
-    });
-
+    eventsCache.push({ docId:d.id, ...d.data() });
   });
 
   renderEvents();
-
 }
 
-// -----------------------------------
-// SAVE EVENT
-// -----------------------------------
-window.saveEvent = async function(){
-
-  const session =
-    eventSession.value;
-
-  const title =
-    eventTitle.value.trim();
-
-  const description =
-    eventDescription.value.trim();
-
-  const category =
-    eventCategory.value;
-
-  const start =
-    eventStart.value;
-
-  const end =
-    eventEnd.value;
-
-  if(
-    !session ||
-    !title ||
-    !start ||
-    !end
-  ){
-    return showEventMsg(
-      "Fill all required fields",
-      "bad"
-    );
-  }
-
-  try{
-
-    await addDoc(
-      collection(db,"schoolCalendar"),
-      {
-
-        session,
-
-        title,
-        description,
-        category,
-
-        startDate:start,
-        endDate:end,
-
-        visibility:"public",
-        status:"active",
-
-        createdBy:user.userId,
-        createdAt:Date.now()
-
-      }
-    );
-
-    eventTitle.value = "";
-    eventDescription.value = "";
-    eventStart.value = "";
-    eventEnd.value = "";
-
-    showEventMsg(
-      "Event created",
-      "ok"
-    );
-
-    loadEvents();
-
-  }catch(err){
-
-    console.error(err);
-
-    showEventMsg(
-      "Failed to create event",
-      "bad"
-    );
-
-  }
-
-};
-
-// -----------------------------------
-// RENDER EVENTS
-// -----------------------------------
 function renderEvents(){
 
-  const container =
-    document.getElementById("events");
-
-  if(eventsCache.length === 0){
-
-    container.innerHTML =
-      "<p>No events found.</p>";
-
-    return;
-  }
-
-  container.innerHTML =
-    eventsCache.map(e=>`
-
+  events.innerHTML = eventsCache.length
+    ? eventsCache.map(e=>`
       <div class="event-card">
-
         <h3>${e.title}</h3>
 
-        <div class="
-          badge
-          ${e.category}
-        ">
-          ${e.category}
-        </div>
+        <div class="badge">${e.category}</div>
 
-        <p style="margin-top:15px;">
-
-          <b>Session:</b>
-          ${e.session}
-
-          <br><br>
-
-          ${
-            e.description ||
-            "No description"
-          }
-
+        <p>
+          <b>Session:</b> ${e.session}<br><br>
+          ${e.description || "No description"}
         </p>
 
-        <b>Start:</b>
-        ${e.startDate}
-
-        <br><br>
-
-        <b>End:</b>
-        ${e.endDate}
-
+        <b>Start:</b> ${e.startDate}<br><br>
+        <b>End:</b> ${e.endDate}
       </div>
-
-    `).join("");
-
+    `).join("")
+    : "<p>No events found</p>";
 }
 
-// -----------------------------------
-// MESSAGES
-// -----------------------------------
-function showSessionMsg(text,type){
+// -------------------- SAVE EVENT --------------------
+window.saveEvent = async function(){
 
-  const box =
-    document.getElementById("sessionMsg");
+  if(!eventSession.value || !eventTitle.value || !eventStart.value || !eventEnd.value){
+    return showEventMsg("Fill required fields","bad");
+  }
 
-  box.className =
-    "msg " + type;
+  await addDoc(collection(db,"schoolCalendar"),{
+    session:eventSession.value,
+    title:eventTitle.value,
+    description:eventDescription.value,
+    category:eventCategory.value,
+    startDate:eventStart.value,
+    endDate:eventEnd.value,
+    createdBy:user.userId,
+    createdAt:Date.now(),
+    status:"active"
+  });
 
-  box.textContent = text;
+  eventTitle.value = "";
+  eventDescription.value = "";
+  eventStart.value = "";
+  eventEnd.value = "";
 
+  showEventMsg("Event created","ok");
+  loadEvents();
+};
+
+// -------------------- MESSAGES --------------------
+function showSessionMsg(t,type){
+  sessionMsg.className = "msg " + type;
+  sessionMsg.textContent = t;
 }
 
-function showEventMsg(text,type){
-
-  const box =
-    document.getElementById("eventMsg");
-
-  box.className =
-    "msg " + type;
-
-  box.textContent = text;
-
+function showEventMsg(t,type){
+  eventMsg.className = "msg " + type;
+  eventMsg.textContent = t;
 }
 
 </script>
