@@ -1,11 +1,7 @@
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
-);
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"
-);
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
 
-// Configuration - Verified with your provided settings
+// Firebase config
 firebase.initializeApp({
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
@@ -16,32 +12,57 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages
+/* --------------------------------------------------
+   BACKGROUND NOTIFICATION
+---------------------------------------------------*/
 messaging.onBackgroundMessage((payload) => {
-  console.log("Background message received:", payload);
-  
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: "icon.png", // Relative path for GitHub Pages
-    badge: "icon.png"
-  };
+  console.log("BG message:", payload);
 
-  return self.registration.showNotification(
-    notificationTitle,
-    notificationOptions
-  );
+  const data = payload.data || {};
+  const notification = payload.notification || {};
+
+  const title = notification.title || "TEF Update";
+  const body = notification.body || "You have a new update";
+
+  // 🔥 KEY UPGRADE: attach routing info here
+  const link = data.link || "./student-dashboard.html";
+  const type = data.type || "general";
+  const refId = data.refId || null;
+
+  self.registration.showNotification(title, {
+    body,
+    icon: "icon.png",
+    badge: "icon.png",
+    data: {
+      link,
+      type,
+      refId
+    }
+  });
 });
 
-// Handle notification click to open the site
-self.addEventListener('notificationclick', (event) => {
+/* --------------------------------------------------
+   CLICK HANDLER (THIS IS THE IMPORTANT PART)
+---------------------------------------------------*/
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+
+  const data = event.notification.data || {};
+  const targetUrl = data.link || "./index.html";
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      if (windowClients.length > 0) {
-        return windowClients[0].focus();
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+
+      // Try to reuse open tab
+      for (let client of windowClients) {
+        if (client.url.includes(self.location.origin)) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
       }
-      return clients.openWindow('./');
+
+      // Otherwise open new tab
+      return clients.openWindow(targetUrl);
     })
   );
 });
