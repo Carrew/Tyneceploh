@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Announcements</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .box{
+      max-width:800px;
+      margin:auto;
+    }
+
+    .card{
+      background:white;
+      padding:15px;
+      margin-bottom:10px;
+      border-radius:10px;
+      border-left:6px solid #3498db;
+    }
+
+    .meta{
+      font-size:12px;
+      color:#666;
+    }
+
+    .tag{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:20px;
+      background:#27ae60;
+      color:white;
+      font-size:12px;
+      margin-bottom:10px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>Announcements</h2>
+
+  <div id="list">Loading...</div>
+
+</div>
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+async function load(){
+
+  const snap = await getDocs(collection(db,"announcements"));
+
+  let html = "";
+
+  snap.forEach(d=>{
+
+    const a = d.data();
+
+    let allowed = false;
+
+    if(a.type === "public") allowed = true;
+
+    if(a.type === "role" && a.targetRoles?.includes(user.role))
+      allowed = true;
+
+    if(a.type === "class" && a.targetClass === user.class)
+      allowed = true;
+
+    if(!allowed) return;
+
+    html += `
+      <div class="card">
+
+        <div class="tag">${a.type}</div>
+
+        <h3>${a.title}</h3>
+
+        <p>${a.message}</p>
+
+        <div class="meta">
+          By ${a.createdBy}
+        </div>
+
+      </div>
+    `;
+
+  });
+
+  document.getElementById("list").innerHTML =
+    html || "<p>No announcements</p>";
+
+}
+
+load();
+
+</script>
+
+</body>
+</html>
