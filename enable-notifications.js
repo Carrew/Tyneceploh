@@ -16,15 +16,15 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 
-  apiKey:"YOUR_API_KEY",
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
 
   authDomain:"tyneceploh.firebaseapp.com",
 
   projectId:"tyneceploh",
 
-  messagingSenderId:"YOUR_SENDER_ID",
+  messagingSenderId:"161024255934",
 
-  appId:"YOUR_APP_ID"
+  appId:"1:161024255934:web:2bca05f1d6af871cc57bef"
 
 };
 
