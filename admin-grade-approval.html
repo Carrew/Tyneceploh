@@ -1,304 +1,332 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Grade Approval - TEF</title>
+<!DOCTYPE html>  
+<html>  
+<head>  
+  <title>Grade Approval - TEF</title>  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body{
-      font-family:sans-serif;
-      padding:20px;
-      background:#f4f4f4;
+  <style>  
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --text:#fff;
+      --green:#27ae60;
+      --red:#c0392b;
+      --orange:#f39c12;
     }
 
-    .approval-card{
-      background:white;
-      padding:15px;
-      margin-bottom:15px;
-      border-radius:8px;
-      border-left:5px solid #f39c12;
-      box-shadow:0 2px 4px rgba(0,0,0,0.1);
+    body{  
+      margin:0;
+      font-family:system-ui;
+      padding:20px;  
+      background:radial-gradient(circle at top,#1a0010,var(--bg));
+      color:white;
+    }  
+
+    h2{
+      text-align:center;
+      color:var(--pink);
+      margin-bottom:20px;
+      letter-spacing:1px;
     }
 
-    .meta-info{
-      color:#666;
-      font-size:0.9em;
-      margin-bottom:10px;
+    #list{
+      max-width:1000px;
+      margin:auto;
     }
 
-    button{
-      padding:8px 15px;
-      cursor:pointer;
+    /* CARD */
+    .approval-card{  
+      background:var(--card);  
+      padding:16px;  
+      margin-bottom:15px;  
+      border-radius:14px;  
+      border-left:4px solid var(--orange);  
+      box-shadow:0 10px 40px rgba(0,0,0,0.4);
+      backdrop-filter:blur(10px);
+      transition:0.3s;
+    }  
+
+    .approval-card:hover{
+      transform:translateY(-3px);
+      border-left-color:var(--pink);
+    }
+
+    .meta-info{  
+      color:#bbb;  
+      font-size:0.85em;  
+      margin-bottom:10px;  
+    }  
+
+    .status{  
+      padding:5px 12px;  
+      border-radius:20px;  
+      color:white;  
+      display:inline-block;  
+      margin-bottom:10px;  
+      font-size:11px;  
+      font-weight:bold;  
+      letter-spacing:1px;
+    }  
+
+    .pending{ background:var(--orange); }  
+    .resubmitted{ background:#2980b9; }  
+
+    /* TEXT */
+    b{
+      font-size:15px;
+    }
+
+    /* INPUT */
+    input{  
+      width:100%;  
+      margin-top:10px;  
+      padding:10px;  
+      border-radius:10px;  
       border:none;
-      border-radius:4px;
-      font-weight:bold;
-    }
-
-    .btn-approve{
-      background:#27ae60;
+      outline:none;
+      background:rgba(255,255,255,0.08);
       color:white;
-      margin-right:10px;
+      transition:0.3s;
+    }  
+
+    input:focus{
+      box-shadow:0 0 0 2px var(--pink);
+      background:rgba(255,255,255,0.12);
     }
 
-    .btn-reject{
-      background:#c0392b;
-      color:white;
+    /* BUTTONS */
+    button{  
+      padding:10px 14px;  
+      cursor:pointer;  
+      border:none;  
+      border-radius:10px;  
+      font-weight:bold;  
+      transition:0.3s;
+    }  
+
+    .btn-approve{  
+      background:linear-gradient(135deg,var(--green),#2ecc71);  
+      color:white;  
+      margin-right:10px;  
+    }  
+
+    .btn-reject{  
+      background:linear-gradient(135deg,var(--red),#e74c3c);  
+      color:white;  
+    }  
+
+    button:hover{
+      transform:translateY(-2px);
+      filter:brightness(1.1);
     }
 
-    input{
-      width:100%;
-      margin-top:10px;
-      padding:8px;
-      box-sizing:border-box;
+    button:active{
+      transform:scale(0.98);
     }
 
-    .status{
-      padding:5px 10px;
-      border-radius:20px;
-      color:white;
-      display:inline-block;
-      margin-bottom:10px;
-      font-size:12px;
-      font-weight:bold;
+    /* EMPTY STATE */
+    .empty{
+      text-align:center;
+      opacity:0.7;
+      margin-top:40px;
     }
 
-    .pending{ background:#f39c12; }
-    .resubmitted{ background:#2980b9; }
-  </style>
+  </style>  
+</head>  
 
-</head>
+<body>  
 
-<body>
+<h2>Grade Approval Queue</h2>  
 
-<h2>Grade Approval Queue</h2>
+<div id="list">Loading submissions...</div>  
 
-<div id="list">Loading submissions...</div>
+<script type="module">  
 
-<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";  
+import {  
+  getFirestore,  
+  collection,  
+  getDocs,  
+  doc,  
+  updateDoc,  
+  addDoc,  
+  arrayUnion  
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";  
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  addDoc,
-  arrayUnion
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { sendNotification } from "./notification-helper.js";  
 
-import { sendNotification } from "./notification-helper.js";
+const firebaseConfig = {  
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",  
+  authDomain:"tyneceploh.firebaseapp.com",  
+  projectId:"tyneceploh"  
+};  
 
-const firebaseConfig = {
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
-};
+const app = initializeApp(firebaseConfig);  
+const db = getFirestore(app);  
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const user = JSON.parse(localStorage.getItem("user"));  
 
-const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "admin"){  
+  location.href = "login.html";  
+}  
 
-if(!user || user.role !== "admin"){
-  location.href = "login.html";
-}
+let submissions = [];  
 
-let submissions = [];
+async function loadSubmissions(){  
+  const snap = await getDocs(collection(db,"gradeSubmissions"));  
 
-async function loadSubmissions(){
+  submissions = [];  
 
-  const snap = await getDocs(collection(db,"gradeSubmissions"));
+  snap.forEach(d=>{  
+    const data = d.data();  
+    if(data.status === "pending" || data.status === "resubmitted"){  
+      submissions.push({ ...data, docId:d.id });  
+    }  
+  });  
 
-  submissions = [];
+  render();  
+}  
 
-  snap.forEach(d=>{
-    const data = d.data();
+function render(){  
+  const container = document.getElementById("list");  
 
-    if(data.status === "pending" || data.status === "resubmitted"){
-      submissions.push({ ...data, docId:d.id });
-    }
-  });
+  if(submissions.length === 0){  
+    container.innerHTML = `<div class="empty">No pending grades right now</div>`;  
+    return;  
+  }  
 
-  render();
-}
+  container.innerHTML = submissions.map(s=>`  
+    <div class="approval-card">  
 
-function render(){
+      <div class="status ${s.status === "resubmitted" ? "resubmitted" : "pending"}">  
+        ${s.status.toUpperCase()}  
+      </div>  
 
-  const container = document.getElementById("list");
+      <div class="meta-info">  
+        ${s.teacherName} (${s.teacherId})  
+      </div>  
 
-  if(submissions.length === 0){
-    container.innerHTML = "<p>No pending grades.</p>";
-    return;
-  }
+      <b>${s.studentName} (${s.studentId})</b>  
 
-  container.innerHTML = submissions.map(s=>`
+      <br><br>  
 
-    <div class="approval-card">
+      Subject: ${s.subject}<br>  
+      Period: ${s.period}<br>  
+      Score: <b>${s.score}</b>  
 
-      <div class="status ${s.status === "resubmitted" ? "resubmitted" : "pending"}">
-        ${s.status.toUpperCase()}
-      </div>
+      <br><br>  
 
-      <div class="meta-info">
-        ${s.teacherName} (${s.teacherId})
-      </div>
+      <button class="btn-approve" onclick="approve('${s.docId}')">Approve</button>  
+      <button class="btn-reject" onclick="reject('${s.docId}')">Reject</button>  
 
-      <b>
-        ${s.studentName} (${s.studentId})
-      </b>
+      <input id="fb-${s.docId}" placeholder="Rejection reason...">  
 
-      <br><br>
+    </div>  
+  `).join("");  
+}  
 
-      Subject: ${s.subject}<br>
-      Period: ${s.period}<br>
-      Score: <b>${s.score}</b>
+window.approve = async function(id){  
+  const sub = submissions.find(s => s.docId === id);  
+  if(!sub) return;  
 
-      <br><br>
+  try{  
+    await addDoc(collection(db,"results"),{  
+      studentId: sub.studentId,  
+      studentName: sub.studentName,  
+      class: sub.class,  
+      subject: sub.subject,  
+      period: sub.period,  
+      score: sub.score,  
+      teacherId: sub.teacherId,  
+      teacherName: sub.teacherName,  
+      approvedBy: user.userId,  
+      approvedByName: user.name,  
+      approvedAt: Date.now()  
+    });  
 
-      <button class="btn-approve" onclick="approve('${s.docId}')">
-        Approve
-      </button>
+    await updateDoc(doc(db,"gradeSubmissions",id),{  
+      status:"approved",  
+      reviewedBy:user.name,  
+      reviewedAt:Date.now(),  
+      feedback:"",  
+      reviewHistory: arrayUnion({  
+        action:"approved",  
+        by:user.name,  
+        byId:user.userId,  
+        time:Date.now()  
+      })  
+    });  
 
-      <button class="btn-reject" onclick="reject('${s.docId}')">
-        Reject
-      </button>
+    await sendNotification(db,{  
+      userId: sub.studentId,  
+      title: "Grade Approved",  
+      message: `${sub.subject} (${sub.period}) approved`,  
+      type:"academic",  
+      link:"student-results.html"  
+    });  
 
-      <input id="fb-${s.docId}" placeholder="Reason for rejection">
+    await sendNotification(db,{  
+      userId: sub.teacherId,  
+      title: "Grade Approved",  
+      message: `Approved for ${sub.studentName}`,  
+      type:"success",  
+      link:"teacher-dashboard.html"  
+    });  
 
-    </div>
+    loadSubmissions();  
 
-  `).join("");
-}
+  }catch(err){  
+    console.error(err);  
+  }  
+};  
 
-window.approve = async function(id){
+window.reject = async function(id){  
 
-  const sub = submissions.find(s => s.docId === id);
-  if(!sub) return;
+  const sub = submissions.find(s => s.docId === id);  
+  if(!sub) return;  
 
-  try{
+  const feedback = document.getElementById(`fb-${id}`).value.trim();  
 
-    // SAVE RESULT
-    await addDoc(collection(db,"results"),{
-      studentId: sub.studentId,
-      studentName: sub.studentName,
-      class: sub.class,
-      subject: sub.subject,
-      period: sub.period,
-      score: sub.score,
-      teacherId: sub.teacherId,
-      teacherName: sub.teacherName,
-      approvedBy: user.userId,
-      approvedByName: user.name,
-      approvedAt: Date.now()
-    });
+  if(!feedback){  
+    alert("Add rejection reason");  
+    return;  
+  }  
 
-    // UPDATE SUBMISSION
-    await updateDoc(doc(db,"gradeSubmissions",id),{
-      status:"approved",
-      reviewedBy:user.name,
-      reviewedAt:Date.now(),
-      feedback:"",
-      reviewHistory: arrayUnion({
-        action:"approved",
-        by:user.name,
-        byId:user.userId,
-        time:Date.now()
-      })
-    });
+  try{  
+    await updateDoc(doc(db,"gradeSubmissions",id),{  
+      status:"rejected",  
+      feedback,  
+      reviewedBy:user.name,  
+      reviewedAt:Date.now(),  
+      reviewHistory: arrayUnion({  
+        action:"rejected",  
+        by:user.name,  
+        byId:user.userId,  
+        feedback,  
+        time:Date.now()  
+      })  
+    });  
 
-    // NOTIFY STUDENT
-    await sendNotification(db,{
-      userId: sub.studentId,
-      title: "Grade Approved",
-      message: `${sub.subject} (${sub.period}) has been approved.`,
-      type:"academic",
-      link:"student-results.html"
-    });
+    await sendNotification(db,{  
+      userId: sub.teacherId,  
+      title: "Grade Rejected",  
+      message: `${sub.subject} rejected`,  
+      type:"warning",  
+      link:"teacher-dashboard.html"  
+    });  
 
-    // NOTIFY TEACHER (important missing link before)
-    await sendNotification(db,{
-      userId: sub.teacherId,
-      title: "Grade Approved",
-      message: `Your ${sub.subject} submission for ${sub.studentName} was approved.`,
-      type:"success",
-      link:"teacher-dashboard.html"
-    });
+    loadSubmissions();  
 
-    // OPTIONAL ADMIN LOG FEEDBACK LOOP (future audit feed)
-    await sendNotification(db,{
-      role:"admin",
-      title:"Approval Logged",
-      message:`You approved ${sub.subject} for ${sub.studentName}`,
-      type:"system",
-      link:"grade-approval.html"
-    });
+  }catch(err){  
+    console.error(err);  
+  }  
+};  
 
-    alert("Grade approved");
-    loadSubmissions();
+loadSubmissions();  
 
-  }catch(err){
-    console.error(err);
-    alert("Approval failed");
-  }
-};
+</script>  
 
-window.reject = async function(id){
-
-  const sub = submissions.find(s => s.docId === id);
-  if(!sub) return;
-
-  const feedback = document.getElementById(`fb-${id}`).value.trim();
-
-  if(!feedback){
-    return alert("Provide rejection reason");
-  }
-
-  try{
-
-    await updateDoc(doc(db,"gradeSubmissions",id),{
-      status:"rejected",
-      feedback,
-      reviewedBy:user.name,
-      reviewedAt:Date.now(),
-      reviewHistory: arrayUnion({
-        action:"rejected",
-        by:user.name,
-        byId:user.userId,
-        feedback,
-        time:Date.now()
-      })
-    });
-
-    // NOTIFY TEACHER
-    await sendNotification(db,{
-      userId: sub.teacherId,
-      title: "Grade Rejected",
-      message: `${sub.subject} for ${sub.studentName} was rejected: ${feedback}`,
-      type:"warning",
-      link:"teacher-dashboard.html"
-    });
-
-    // NOTIFY STUDENT (optional transparency upgrade)
-    await sendNotification(db,{
-      userId: sub.studentId,
-      title: "Grade Under Review",
-      message: `${sub.subject} needs correction before approval.`,
-      type:"info",
-      link:"student-results.html"
-    });
-
-    alert("Grade rejected");
-    loadSubmissions();
-
-  }catch(err){
-    console.error(err);
-    alert("Rejection failed");
-  }
-};
-
-loadSubmissions();
-
-</script>
-
-</body>
+</body>  
 </html>
