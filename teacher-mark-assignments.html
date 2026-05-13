@@ -1,148 +1,1213 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Mark Assignments - TEF</title>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Mark Assignments • TEF</title>
+
+  <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:"Inter",sans-serif;
+      background:
+        linear-gradient(
+          135deg,
+          #fff0f3,
+          #f5f7fa
+        );
+      min-height:100vh;
+      padding:20px;
+      color:#222;
+    }
+
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
+
+    .hero{
+      background:
+        linear-gradient(
+          135deg,
+          #800000,
+          #ff4d6d
+        );
+      color:white;
+      padding:30px;
+      border-radius:26px;
+      margin-bottom:25px;
+      position:relative;
+      overflow:hidden;
+      box-shadow:
+        0 18px 40px
+        rgba(128,0,0,0.22);
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      width:260px;
+      height:260px;
+      border-radius:50%;
+      background:
+        rgba(255,255,255,0.08);
+      top:-120px;
+      right:-70px;
+    }
+
+    .hero h1{
+      font-size:34px;
+      font-weight:800;
+      position:relative;
+      z-index:2;
+    }
+
+    .hero p{
+      margin-top:12px;
+      line-height:1.6;
+      max-width:650px;
+      opacity:0.94;
+      position:relative;
+      z-index:2;
+    }
+
+    .stats{
+      margin-top:25px;
+      display:grid;
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(180px,1fr)
+        );
+      gap:15px;
+      position:relative;
+      z-index:2;
+    }
+
+    .stat{
+      background:
+        rgba(255,255,255,0.13);
+      border:1px solid
+        rgba(255,255,255,0.12);
+      border-radius:18px;
+      padding:18px;
+      backdrop-filter:blur(10px);
+    }
+
+    .stat small{
+      opacity:0.85;
+    }
+
+    .stat h2{
+      margin-top:6px;
+      font-size:28px;
+      font-weight:800;
+    }
+
+    .toolbar{
+      background:white;
+      padding:20px;
+      border-radius:22px;
+      margin-bottom:20px;
+      box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.06);
+      display:flex;
+      gap:15px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .search-box{
+      flex:1;
+      min-width:240px;
+    }
+
+    input{
+      width:100%;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid #ddd;
+      background:#fafafa;
+      font-size:15px;
+      transition:0.2s;
+      font-family:inherit;
+    }
+
+    input:focus{
+      outline:none;
+      border-color:#ff4d6d;
+      background:white;
+      box-shadow:
+        0 0 0 4px
+        rgba(255,77,109,0.12);
+    }
+
+    .refresh-btn{
+      border:none;
+      background:
+        linear-gradient(
+          135deg,
+          #800000,
+          #ff4d6d
+        );
+      color:white;
+      padding:14px 18px;
+      border-radius:14px;
+      font-weight:700;
+      cursor:pointer;
+      transition:0.2s;
+      font-family:inherit;
+    }
+
+    .refresh-btn:hover{
+      transform:translateY(-2px);
+    }
+
+    .submission{
+      background:white;
+      border-radius:24px;
+      padding:25px;
+      margin-bottom:22px;
+      box-shadow:
+        0 6px 22px
+        rgba(0,0,0,0.06);
+      border:1px solid #f0f0f0;
+    }
+
+    .top{
+      display:flex;
+      justify-content:space-between;
+      gap:15px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:20px;
+    }
+
+    .student{
+      display:flex;
+      align-items:center;
+      gap:15px;
+    }
+
+    .avatar{
+      width:58px;
+      height:58px;
+      border-radius:50%;
+      background:
+        linear-gradient(
+          135deg,
+          #800000,
+          #ff4d6d
+        );
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      font-size:20px;
+      box-shadow:
+        0 8px 20px
+        rgba(255,77,109,0.25);
+    }
+
+    .student h3{
+      font-size:20px;
+      margin-bottom:4px;
+    }
+
+    .meta{
+      color:#777;
+      font-size:14px;
+    }
+
+    .assignment-badge{
+      background:#fff0f3;
+      color:#800000;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:14px;
+    }
+
+    .question{
+      background:#fafafa;
+      border:1px solid #eee;
+      border-radius:20px;
+      padding:18px;
+      margin-bottom:18px;
+    }
+
+    .question-number{
+      display:inline-block;
+      background:
+        linear-gradient(
+          135deg,
+          #800000,
+          #ff4d6d
+        );
+      color:white;
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:14px;
+    }
+
+    .question-text{
+      font-weight:700;
+      line-height:1.6;
+      margin-bottom:12px;
+    }
+
+    .answer-box{
+      background:white;
+      border-radius:16px;
+      padding:15px;
+      border-left:5px solid #3498db;
+      margin-bottom:16px;
+      line-height:1.6;
+      color:#444;
+    }
+
+    .grading{
+      display:grid;
+      grid-template-columns:
+        repeat(
+          auto-fit,
+          minmax(180px,1fr)
+        );
+      gap:15px;
+      align-items:end;
+    }
+
+    select{
+      width:100%;
+      padding:13px;
+      border-radius:14px;
+      border:1px solid #ddd;
+      background:white;
+      font-family:inherit;
+      font-size:14px;
+    }
+
+    .partial-input{
+      display:none;
+    }
+
+    .score-info{
+      font-size:14px;
+      color:#666;
+      margin-top:8px;
+    }
+
+    .footer{
+      margin-top:22px;
+      display:flex;
+      justify-content:space-between;
+      gap:15px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .score-preview{
+      background:#f8f9fa;
+      padding:14px 18px;
+      border-radius:14px;
+      font-weight:700;
+      color:#333;
+    }
+
+    .submit-btn{
+      border:none;
+      background:
+        linear-gradient(
+          135deg,
+          #27ae60,
+          #2ecc71
+        );
+      color:white;
+      padding:16px 24px;
+      border-radius:16px;
+      font-weight:800;
+      cursor:pointer;
+      transition:0.2s;
+      font-size:15px;
+      font-family:inherit;
+      box-shadow:
+        0 10px 25px
+        rgba(46,204,113,0.25);
+    }
+
+    .submit-btn:hover{
+      transform:translateY(-2px);
+    }
+
+    .empty{
+      background:white;
+      padding:50px 20px;
+      border-radius:24px;
+      text-align:center;
+      color:#777;
+      box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.05);
+    }
+
+    .loader{
+      width:50px;
+      height:50px;
+      border:5px solid #eee;
+      border-top-color:#ff4d6d;
+      border-radius:50%;
+      margin:auto auto 20px;
+      animation:spin 1s linear infinite;
+    }
+
+    @keyframes spin{
+      to{
+        transform:rotate(360deg);
+      }
+    }
+
+    .success{
+      background:#dcfce7;
+      color:#166534;
+      padding:14px 16px;
+      border-radius:14px;
+      margin-bottom:15px;
+      font-weight:700;
+    }
+
+    .error{
+      background:#fee2e2;
+      color:#991b1b;
+      padding:14px 16px;
+      border-radius:14px;
+      margin-bottom:15px;
+      font-weight:700;
+    }
+
+    @media(max-width:700px){
+
+      .hero h1{
+        font-size:28px;
+      }
+
+      .footer{
+        flex-direction:column;
+        align-items:stretch;
+      }
+
+      .submit-btn{
+        width:100%;
+      }
+
+    }
+
+  </style>
+
 </head>
+
 <body>
 
-<h2>Mark Student Submissions</h2>
-<div id="list"></div>
+<div class="container">
+
+  <!-- HERO -->
+
+  <div class="hero">
+
+    <h1>Mark Student Assignments</h1>
+
+    <p>
+      Review submissions, assign partial credit,
+      and publish marks with a cleaner grading workflow.
+    </p>
+
+    <div class="stats">
+
+      <div class="stat">
+        <small>Pending Submissions</small>
+        <h2 id="pendingCount">0</h2>
+      </div>
+
+      <div class="stat">
+        <small>Teacher</small>
+        <h2 id="teacherName">-</h2>
+      </div>
+
+      <div class="stat">
+        <small>Status</small>
+        <h2>Active</h2>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- TOOLBAR -->
+
+  <div class="toolbar">
+
+    <div class="search-box">
+
+      <input
+        id="search"
+        placeholder="Search by student name, assignment title or ID..."
+        oninput="filterSubmissions()"
+      >
+
+    </div>
+
+    <button class="refresh-btn"
+            onclick="load()">
+
+      Refresh List
+
+    </button>
+
+  </div>
+
+  <!-- ALERT -->
+
+  <div id="alertBox"></div>
+
+  <!-- LIST -->
+
+  <div id="list">
+
+    <div class="empty">
+
+      <div class="loader"></div>
+
+      Loading submissions...
+
+    </div>
+
+  </div>
+
+</div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import {
+  initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  updateDoc,
+  doc
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+//
+// FIREBASE
+//
 const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
+
+  apiKey:
+  "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+
+  authDomain:
+  "tyneceploh.firebaseapp.com",
+
+  projectId:
+  "tyneceploh"
+
 });
 
-const db = getFirestore(app);
+const db =
+  getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
-if (!user || user.role !== "teacher") location.href = "login.html";
+//
+// USER
+//
+const user =
+  JSON.parse(
+    localStorage.getItem("user")
+  );
 
-// Global cache to avoid re-fetching assignments during marking
-let assignmentsCache = {};
-
-async function load() {
-  const sSnap = await getDocs(collection(db, "submissions"));
-  const aSnap = await getDocs(collection(db, "assignments"));
-
-  // Reset and fill assignment cache
-  assignmentsCache = {};
-  aSnap.forEach(d => {
-    assignmentsCache[d.id] = d.data();
-  });
-
-  let html = "";
-  let count = 0;
-
-  sSnap.forEach(d => {
-    const s = d.data();
-    const a = assignmentsCache[s.assignmentId];
-
-    // 🔒 SECURITY FILTER: Only show submissions for THIS teacher's assignments
-    // and only show those that haven't been marked yet
-    if (!a || a.teacherId !== user.id || s.status === "marked") return;
-
-    count++;
-    const qs = a.questions || [];
-
-    html += `
-      <div style="border:1px solid #444; padding:15px; margin:15px; border-radius:10px; background:#f9f9f9;">
-        <div style="display:flex; justify-content:between; align-items:center;">
-            <h3>${s.studentName} (${s.studentId})</h3>
-            <span style="margin-left:auto; color:#666;">Assignment: ${a.title}</span>
-        </div>
-        <hr>
-
-        ${qs.map((q, i) => `
-          <div style="margin-bottom:15px; padding:10px; background:white; border-radius:5px;">
-            <p><b>Q${i+1}: ${q.q}</b></p>
-            <p style="color:#2c3e50;">Student Answer: <i style="background:#fff3cd; padding:2px 5px;">${s.answers[i] || "No Answer"}</i></p>
-
-            <label>Grade:</label>
-            <select id="mode_${d.id}_${i}" onchange="togglePartial('${d.id}',${i})">
-              <option value="fail">Fail (0)</option>
-              <option value="pass">Pass (${q.score})</option>
-              <option value="partial">Partial</option>
-            </select>
-
-            <input 
-              id="p_${d.id}_${i}" 
-              type="number" 
-              placeholder="0"
-              style="width:60px; display:none;"
-              max="${q.score}"
-            >
-            <span style="color:#888;"> / ${q.score} Points</span>
-          </div>
-        `).join("")}
-
-        <button 
-            onclick="mark('${d.id}','${s.assignmentId}',${qs.length})"
-            style="background:#27ae60; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;"
-        >
-          Submit Marks
-        </button>
-      </div>
-    `;
-  });
-
-  document.getElementById("list").innerHTML = count === 0 ? "<p>No pending submissions to mark.</p>" : html;
+if(
+  !user
+  ||
+  user.role !== "teacher"
+){
+  location.href = "login.html";
 }
 
-window.togglePartial = function(id, i) {
-  const mode = document.getElementById(`mode_${id}_${i}`).value;
-  const input = document.getElementById(`p_${id}_${i}`);
-  input.style.display = (mode === "partial") ? "inline-block" : "none";
-};
+document.getElementById(
+  "teacherName"
+).innerText =
+  user.name || "Teacher";
 
-window.mark = async function(subId, assignId, len) {
-  // Use the cache instead of fetching the whole assignment collection again
-  const assign = assignmentsCache[assignId];
-  if (!assign) return;
+//
+// CACHE
+//
+let assignmentsCache = {};
+let submissionCache = [];
 
-  const qs = assign.questions;
-  let totalCalculated = 0;
+//
+// ALERT
+//
+function showAlert(msg,type){
 
-  for (let i = 0; i < len; i++) {
-    const mode = document.getElementById(`mode_${subId}_${i}`).value;
-    const maxScore = qs[i].score;
+  document.getElementById(
+    "alertBox"
+  ).innerHTML = `
 
-    if (mode === "pass") {
-      totalCalculated += maxScore;
-    } else if (mode === "partial") {
-      let val = Number(document.getElementById(`p_${subId}_${i}`).value || 0);
+    <div class="${type}">
+      ${msg}
+    </div>
 
-      if (val > maxScore) {
-        alert(`Question ${i+1}: Partial score (${val}) cannot exceed max score (${maxScore})`);
-        return;
-      }
-      totalCalculated += val;
-    }
-  }
+  `;
 
-  try {
-    await updateDoc(doc(db, "submissions", subId), {
-      score: totalCalculated,
-      status: "marked",
-      markedBy: user.name,
-      markedAt: Date.now()
+  setTimeout(()=>{
+
+    document.getElementById(
+      "alertBox"
+    ).innerHTML = "";
+
+  },4000);
+
+}
+
+//
+// LOAD
+//
+window.load = async function(){
+
+  try{
+
+    document.getElementById(
+      "list"
+    ).innerHTML = `
+
+      <div class="empty">
+
+        <div class="loader"></div>
+
+        Loading submissions...
+
+      </div>
+
+    `;
+
+    const sSnap =
+      await getDocs(
+        collection(
+          db,
+          "submissions"
+        )
+      );
+
+    const aSnap =
+      await getDocs(
+        collection(
+          db,
+          "assignments"
+        )
+      );
+
+    assignmentsCache = {};
+    submissionCache = [];
+
+    //
+    // ASSIGNMENTS CACHE
+    //
+    aSnap.forEach(d=>{
+
+      assignmentsCache[d.id] = {
+
+        id:d.id,
+        ...d.data()
+
+      };
+
     });
 
-    alert(`Marks submitted! Total Score: ${totalCalculated} / ${assign.totalScore}`);
-    load(); // Refresh the list
-  } catch (error) {
-    console.error("Error updating marks:", error);
-    alert("Error saving marks.");
+    //
+    // FILTER SUBMISSIONS
+    //
+    sSnap.forEach(d=>{
+
+      const s = d.data();
+
+      const a =
+        assignmentsCache[
+          s.assignmentId
+        ];
+
+      //
+      // SECURITY
+      //
+      if(
+        !a
+        ||
+        a.teacherId !==
+        (user.id || user.userId)
+        ||
+        s.status === "marked"
+      ){
+        return;
+      }
+
+      submissionCache.push({
+
+        id:d.id,
+        ...s,
+        assignment:a
+
+      });
+
+    });
+
+    render(submissionCache);
+
   }
+
+  catch(err){
+
+    console.error(err);
+
+    document.getElementById(
+      "list"
+    ).innerHTML = `
+
+      <div class="empty">
+        Failed to load submissions.
+      </div>
+
+    `;
+
+  }
+
 };
 
-// Initial load
+//
+// FILTER
+//
+window.filterSubmissions = function(){
+
+  const search =
+    document
+    .getElementById("search")
+    .value
+    .toLowerCase();
+
+  const filtered =
+    submissionCache.filter(s=>{
+
+      return (
+
+        s.studentName
+        ?.toLowerCase()
+        .includes(search)
+
+        ||
+
+        s.studentId
+        ?.toLowerCase()
+        .includes(search)
+
+        ||
+
+        s.assignment.title
+        ?.toLowerCase()
+        .includes(search)
+
+      );
+
+    });
+
+  render(filtered);
+
+};
+
+//
+// RENDER
+//
+function render(data){
+
+  document.getElementById(
+    "pendingCount"
+  ).innerText =
+    data.length;
+
+  if(data.length === 0){
+
+    document.getElementById(
+      "list"
+    ).innerHTML = `
+
+      <div class="empty">
+
+        <h2>
+          No pending submissions 🎉
+        </h2>
+
+        <p style="
+          margin-top:10px;
+        ">
+          Everything has been marked.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  document.getElementById(
+    "list"
+  ).innerHTML =
+
+    data.map(s=>{
+
+      const qs =
+        s.assignment.questions || [];
+
+      return `
+
+        <div class="submission">
+
+          <div class="top">
+
+            <div class="student">
+
+              <div class="avatar">
+
+                ${
+                  s.studentName
+                  ?.charAt(0)
+                  ?.toUpperCase()
+                  || "S"
+                }
+
+              </div>
+
+              <div>
+
+                <h3>
+                  ${s.studentName}
+                </h3>
+
+                <div class="meta">
+
+                  ID:
+                  ${s.studentId}
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="assignment-badge">
+
+              ${s.assignment.title}
+
+            </div>
+
+          </div>
+
+          ${qs.map((q,i)=>`
+
+            <div class="question">
+
+              <div class="question-number">
+                Question ${i+1}
+              </div>
+
+              <div class="question-text">
+                ${q.q}
+              </div>
+
+              <div class="answer-box">
+
+                <b>Student Answer:</b>
+                <br><br>
+
+                ${
+                  s.answers[i]
+                  || "No answer submitted"
+                }
+
+              </div>
+
+              <div class="grading">
+
+                <div>
+
+                  <label>
+                    Grade Mode
+                  </label>
+
+                  <select
+                    id="mode_${s.id}_${i}"
+                    onchange="
+                      togglePartial(
+                        '${s.id}',
+                        ${i}
+                      )
+                    "
+                  >
+
+                    <option value="fail">
+                      Fail (0)
+                    </option>
+
+                    <option value="pass">
+                      Pass (${q.score})
+                    </option>
+
+                    <option value="partial">
+                      Partial
+                    </option>
+
+                  </select>
+
+                </div>
+
+                <div>
+
+                  <label>
+                    Partial Score
+                  </label>
+
+                  <input
+                    class="partial-input"
+                    id="p_${s.id}_${i}"
+                    type="number"
+                    min="0"
+                    max="${q.score}"
+                    placeholder="0"
+                    oninput="
+                      updatePreview(
+                        '${s.id}',
+                        '${s.assignmentId}',
+                        ${qs.length}
+                      )
+                    "
+                  >
+
+                  <div class="score-info">
+
+                    Max:
+                    ${q.score} points
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          `).join("")}
+
+          <div class="footer">
+
+            <div class="score-preview"
+                 id="preview_${s.id}">
+
+              Total:
+              0 / ${s.assignment.totalScore}
+
+            </div>
+
+            <button
+              class="submit-btn"
+              onclick="
+                mark(
+                  '${s.id}',
+                  '${s.assignmentId}',
+                  ${qs.length}
+                )
+              "
+            >
+
+              Submit Marks
+
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+//
+// TOGGLE PARTIAL
+//
+window.togglePartial = function(id,i){
+
+  const mode =
+    document.getElementById(
+      `mode_${id}_${i}`
+    ).value;
+
+  const input =
+    document.getElementById(
+      `p_${id}_${i}`
+    );
+
+  input.style.display =
+    mode === "partial"
+    ? "block"
+    : "none";
+
+  updatePreview(
+    id,
+    null,
+    null
+  );
+
+};
+
+//
+// UPDATE PREVIEW
+//
+window.updatePreview = function(subId){
+
+  const sub =
+    submissionCache.find(
+      x=>x.id === subId
+    );
+
+  if(!sub) return;
+
+  const qs =
+    sub.assignment.questions;
+
+  let total = 0;
+
+  qs.forEach((q,i)=>{
+
+    const mode =
+      document.getElementById(
+        `mode_${subId}_${i}`
+      )?.value;
+
+    if(mode === "pass"){
+
+      total += q.score;
+
+    }
+
+    else if(mode === "partial"){
+
+      total += Number(
+        document.getElementById(
+          `p_${subId}_${i}`
+        )?.value || 0
+      );
+
+    }
+
+  });
+
+  document.getElementById(
+    `preview_${subId}`
+  ).innerHTML = `
+
+    Total:
+    ${total}
+    /
+    ${sub.assignment.totalScore}
+
+  `;
+
+};
+
+//
+// MARK
+//
+window.mark = async function(
+  subId,
+  assignId,
+  len
+){
+
+  try{
+
+    const assign =
+      assignmentsCache[
+        assignId
+      ];
+
+    if(!assign){
+
+      throw new Error(
+        "Assignment missing."
+      );
+
+    }
+
+    const qs =
+      assign.questions;
+
+    let total = 0;
+
+    for(let i=0;i<len;i++){
+
+      const mode =
+        document.getElementById(
+          `mode_${subId}_${i}`
+        ).value;
+
+      const max =
+        qs[i].score;
+
+      //
+      // PASS
+      //
+      if(mode === "pass"){
+
+        total += max;
+
+      }
+
+      //
+      // PARTIAL
+      //
+      else if(
+        mode === "partial"
+      ){
+
+        const val =
+          Number(
+            document.getElementById(
+              `p_${subId}_${i}`
+            ).value || 0
+          );
+
+        if(val > max){
+
+          throw new Error(
+            `Question ${i+1} exceeds max score.`
+          );
+
+        }
+
+        if(val < 0){
+
+          throw new Error(
+            `Question ${i+1} cannot be negative.`
+          );
+
+        }
+
+        total += val;
+
+      }
+
+    }
+
+    //
+    // UPDATE FIREBASE
+    //
+    await updateDoc(
+
+      doc(
+        db,
+        "submissions",
+        subId
+      ),
+
+      {
+
+        score:total,
+
+        status:"marked",
+
+        markedBy:
+          user.name,
+
+        markedAt:
+          Date.now()
+
+      }
+
+    );
+
+    //
+    // SUCCESS
+    //
+    showAlert(
+
+      `
+        Marks submitted successfully ✅
+        <br><br>
+        Final Score:
+        <b>
+          ${total}
+          /
+          ${assign.totalScore}
+        </b>
+      `,
+
+      "success"
+
+    );
+
+    //
+    // REFRESH
+    //
+    load();
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showAlert(
+      err.message,
+      "error"
+    );
+
+  }
+
+};
+
+//
+// START
+//
 load();
+
 </script>
 
 </body>
