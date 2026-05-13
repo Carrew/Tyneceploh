@@ -2,56 +2,132 @@
 <html>
 <head>
   <title>Attendance Admin View</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    :root{
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --glass:rgba(255,255,255,0.08);
+      --text:#fff;
+      --blue:#3498db;
+      --orange:#e67e22;
+      --red:#c0392b;
+      --green:#27ae60;
+    }
 
     body{
-      font-family:sans-serif;
+      margin:0;
+      font-family:system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color:var(--text);
       padding:20px;
-      background:#f4f4f4;
     }
 
     .top{
+      position:sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,0.4);
+      padding:15px;
+      border-radius:12px;
       display:flex;
       justify-content:space-between;
       align-items:center;
       margin-bottom:20px;
+      border:1px solid rgba(255,255,255,0.08);
     }
 
-    .card{
-      background:white;
-      padding:15px;
-      margin-bottom:15px;
+    h2{
+      margin:0;
+      color:#ffc0cb;
+      font-size:18px;
+    }
+
+    input[type="date"]{
+      padding:10px;
       border-radius:10px;
-      border-left:5px solid #3498db;
-    }
-
-    .late{
-      border-left-color:#e67e22;
-    }
-
-    .danger{
-      border-left-color:#c0392b;
-    }
-
-    button{
-      padding:8px 14px;
       border:none;
-      border-radius:5px;
-      cursor:pointer;
-      font-weight:bold;
-    }
-
-    .edit{
-      background:#2980b9;
+      background:rgba(255,255,255,0.1);
       color:white;
+      outline:none;
     }
 
     .summary{
-      background:white;
-      padding:15px;
-      border-radius:10px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:12px;
       margin-bottom:20px;
+    }
+
+    .sum-card{
+      background:var(--card);
+      padding:14px;
+      border-radius:12px;
+      text-align:center;
+      border:1px solid rgba(255,255,255,0.08);
+    }
+
+    .sum-number{
+      font-size:20px;
+      font-weight:bold;
+      margin-top:5px;
+    }
+
+    .green{color:var(--green);}
+    .orange{color:var(--orange);}
+    .red{color:var(--red);}
+
+    #list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .card{
+      background:var(--card);
+      padding:15px;
+      border-radius:14px;
+      border-left:4px solid var(--blue);
+      backdrop-filter: blur(10px);
+      transition:0.2s ease;
+    }
+
+    .card:hover{
+      transform:scale(1.01);
+    }
+
+    .late{ border-left-color:var(--orange); }
+    .danger{ border-left-color:var(--red); }
+
+    button{
+      padding:8px 12px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:bold;
+      background:linear-gradient(135deg,#800000,#ffc0cb);
+      color:white;
+    }
+
+    .meta{
+      opacity:0.8;
+      font-size:13px;
+    }
+
+    .loading{
+      opacity:0.7;
+      text-align:center;
+      padding:30px;
+    }
+
+    @media(max-width:600px){
+      .top{
+        flex-direction:column;
+        gap:10px;
+        align-items:flex-start;
+      }
     }
 
   </style>
@@ -60,32 +136,22 @@
 <body>
 
 <div class="top">
-
   <h2>Daily Attendance Report</h2>
-
   <input type="date" id="datePicker">
-
 </div>
 
 <div class="summary" id="summary">
-  Loading summary...
+  <div class="loading">Loading summary...</div>
 </div>
 
 <div id="list">
-  Loading attendance...
+  <div class="loading">Loading attendance...</div>
 </div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  collection,
-  getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -95,48 +161,32 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const user =
-  JSON.parse(localStorage.getItem("user"));
-
+const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
-const datePicker =
-  document.getElementById("datePicker");
-
-datePicker.value =
-  new Date().toISOString().split("T")[0];
-
-datePicker.addEventListener(
-  "change",
-  load
-);
+const datePicker = document.getElementById("datePicker");
+datePicker.value = new Date().toISOString().split("T")[0];
+datePicker.addEventListener("change", load);
 
 let records = [];
 
 async function load(){
 
-  const selectedDate =
-    datePicker.value;
+  document.getElementById("list").innerHTML = `<div class="loading">Loading...</div>`;
+  document.getElementById("summary").innerHTML = `<div class="loading">Loading...</div>`;
 
-  const snap =
-    await getDocs(
-      collection(db,"attendanceRecords")
-    );
+  const selectedDate = datePicker.value;
+
+  const snap = await getDocs(collection(db,"attendanceRecords"));
 
   records = [];
 
   snap.forEach(d=>{
-
     const data = d.data();
-
     if(data.date === selectedDate){
-
-      records.push({
-        ...data,
-        docId:d.id
-      });
+      records.push({...data, docId:d.id});
     }
   });
 
@@ -145,121 +195,76 @@ async function load(){
 
 function render(){
 
-  const list =
-    document.getElementById("list");
-
-  const summary =
-    document.getElementById("summary");
+  const list = document.getElementById("list");
+  const summary = document.getElementById("summary");
 
   if(records.length === 0){
-
-    list.innerHTML =
-      "No attendance records.";
-
-    summary.innerHTML =
-      "No records found.";
-
+    list.innerHTML = `<div class="loading">No attendance records.</div>`;
+    summary.innerHTML = `<div class="loading">No records found.</div>`;
     return;
   }
 
-  const lateCount =
-    records.filter(r=>
-      r.violations.includes(
-        "Late Clock In"
-      )
-    ).length;
-
-  const earlyCount =
-    records.filter(r=>
-      r.violations.includes(
-        "Early Clock Out"
-      )
-    ).length;
+  const lateCount = records.filter(r => (r.violations || []).includes("Late Clock In")).length;
+  const earlyCount = records.filter(r => (r.violations || []).includes("Early Clock Out")).length;
 
   summary.innerHTML = `
+    <div class="sum-card">
+      Total Staff
+      <div class="sum-number">${records.length}</div>
+    </div>
 
-    <b>Total Staff:</b>
-    ${records.length}
+    <div class="sum-card">
+      Late Clock In
+      <div class="sum-number orange">${lateCount}</div>
+    </div>
 
-    <br><br>
+    <div class="sum-card">
+      Early Clock Out
+      <div class="sum-number red">${earlyCount}</div>
+    </div>
 
-    <b>Late Clock Ins:</b>
-    ${lateCount}
-
-    <br><br>
-
-    <b>Early Clock Outs:</b>
-    ${earlyCount}
+    <div class="sum-card">
+      Clean Records
+      <div class="sum-number green">${records.length - (lateCount + earlyCount)}</div>
+    </div>
   `;
 
-  list.innerHTML =
-    records.map(r=>{
+  list.innerHTML = records.map(r => {
 
-      let cls = "card";
+    const violations = r.violations || [];
 
-      if(r.violations.length){
-        cls += " late";
-      }
+    let cls = "card";
+    if(violations.includes("Late Clock In")) cls += " late";
+    if(violations.includes("Missing Clock Out")) cls += " danger";
 
-      if(
-        r.violations.includes(
-          "Missing Clock Out"
-        )
-      ){
-        cls += " danger";
-      }
+    return `
+      <div class="${cls}">
+        <h3>${r.name}</h3>
 
-      return `
-
-        <div class="${cls}">
-
-          <h3>
-            ${r.name}
-          </h3>
-
-          <b>Role:</b>
-          ${r.role}
-
-          <br><br>
-
-          <b>Clock In:</b>
-          ${r.clockInReadable || "-"}
-
-          <br><br>
-
-          <b>Clock Out:</b>
-          ${r.clockOutReadable || "-"}
-
-          <br><br>
-
-          <b>Violations:</b>
-
-          <br>
-
-          ${
-            r.violations.length
-            ? r.violations.join(", ")
-            : "None"
-          }
-
-          <br><br>
-
-          <button
-            class="edit"
-            onclick="edit('${r.docId}')"
-          >
-            Edit
-          </button>
-
+        <div class="meta">
+          ${r.role || "staff"}
         </div>
-      `;
-    }).join("");
+
+        <br>
+
+        <b>Clock In:</b> ${r.clockInReadable || "-"}<br><br>
+        <b>Clock Out:</b> ${r.clockOutReadable || "-"}<br><br>
+
+        <b>Violations:</b><br>
+        ${violations.length ? violations.join(", ") : "None"}
+
+        <br><br>
+
+        <button onclick="edit('${r.docId}')">
+          Open Record
+        </button>
+      </div>
+    `;
+  }).join("");
 }
 
 window.edit = function(id){
-
-  location.href =
-    `attendance-edit.html?id=${id}`;
+  location.href = `attendance-edit.html?id=${id}`;
 };
 
 load();
@@ -267,4 +272,4 @@ load();
 </script>
 
 </body>
-  </html>
+</html>
