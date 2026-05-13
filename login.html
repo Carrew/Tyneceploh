@@ -276,14 +276,15 @@ window.login = async function() {
     snap.forEach(d => {            
       const u = d.data();            
       if (u.userId === idInput && u.pin === pinInput) {            
-        found = {            
-          id: u.userId,            
-          userId: u.userId,            
-          name: u.name || "",            
-          role: (u.role || "").toLowerCase(),            
-          status: u.status || "",            
-          classes: u.classes || []            
-        };            
+found = {
+  ...u,                 
+  id: u.userId,
+  userId: u.userId,
+  name: u.name || "",
+  role: (u.role || "").toLowerCase(),
+  status: u.status || "",
+  classes: u.classes || []
+};
         docId = d.id;            
       }            
     });            
