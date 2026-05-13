@@ -2,12 +2,64 @@
 <html>
 <head>
   <title>Submit Grades - TEF</title>
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .box{
+      max-width:500px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    input,
+    select,
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      box-sizing:border-box;
+    }
+
+    button{
+      background:#27ae60;
+      color:white;
+      font-weight:bold;
+      border:none;
+      cursor:pointer;
+    }
+
+    #msg{
+      margin-top:15px;
+      padding:10px;
+      border-radius:6px;
+      background:#d4edda;
+      color:#155724;
+      display:none;
+    }
+
+  </style>
+
 </head>
+
 <body>
+
+<div class="box">
 
 <h2>Submit Grades</h2>
 
 <select id="student"></select>
+
 <input id="subject" placeholder="Subject">
 
 <select id="period">
@@ -21,93 +73,240 @@
   <option>Final Exam</option>
 </select>
 
-<input id="score" type="number" placeholder="Score">
-<button onclick="submitGrade()">Submit</button>
-<p id="msg"></p>
+<input
+  id="score"
+  type="number"
+  placeholder="Score"
+>
+
+<button onclick="submitGrade()">
+  Submit Grade
+</button>
+
+<div id="msg"></div>
+
+</div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  sendNotification
+}
+from "./notification-helper.js";
 
 const firebaseConfig = {
+
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+
   authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
+
+  projectId: "tyneceploh"
+
 };
 
 const app = initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(
+  localStorage.getItem("user")
+);
 
-// Safety check: redirect if not a teacher
-if (!user || user.role !== "teacher") {
-  window.location.href = "login.html";
+if(!user || user.role !== "teacher"){
+
+  location.href = "login.html";
+
 }
 
-async function loadStudents() {
-  const snap = await getDocs(collection(db, "users"));
+//
+// LOAD STUDENTS
+//
+async function loadStudents(){
+
+  const snap =
+    await getDocs(collection(db,"users"));
+
   const students = [];
 
-  snap.forEach(d => {
+  snap.forEach(d=>{
+
     const data = d.data();
-    // Filter: must be a student and belong to one of the teacher's assigned classes
-    if (data.role === "student" && user.classes?.includes(data.class)) {
+
+    if(
+      data.role === "student" &&
+      user.classes?.includes(data.class)
+    ){
+
       students.push(data);
+
     }
+
   });
 
-  const select = document.getElementById("student");
-  select.innerHTML = students.map(s =>
-    // Using s.userId to ensure the ID matches your database schema
-    `<option value="${s.userId}|${s.name}|${s.class}">
+  const select =
+    document.getElementById("student");
+
+  if(students.length === 0){
+
+    select.innerHTML =
+      "<option>No students found</option>";
+
+    return;
+  }
+
+  select.innerHTML = students.map(s=>`
+
+    <option
+      value="${s.userId}|${s.name}|${s.class}"
+    >
       ${s.name} (${s.class})
-    </option>`
-  ).join("");
+    </option>
+
+  `).join("");
+
 }
 
-window.submitGrade = async function () {
-  const studentVal = document.getElementById("student").value;
-  const subject = document.getElementById("subject").value;
-  const period = document.getElementById("period").value;
-  const score = Number(document.getElementById("score").value);
+//
+// SUBMIT GRADE
+//
+window.submitGrade = async function(){
 
-  if (!studentVal) {
-    alert("No student selected");
-    return;
+  const studentVal =
+    document.getElementById("student").value;
+
+  const subject =
+    document.getElementById("subject")
+    .value
+    .trim();
+
+  const period =
+    document.getElementById("period").value;
+
+  const score =
+    Number(
+      document.getElementById("score").value
+    );
+
+  if(!studentVal){
+
+    return alert("Select student");
+
   }
 
-  const [studentId, studentName, studentClass] = studentVal.split("|");
+  const [
+    studentId,
+    studentName,
+    studentClass
+  ] = studentVal.split("|");
 
-  if (!subject || isNaN(score)) {
-    alert("Fill all fields correctly");
-    return;
+  if(!subject || isNaN(score)){
+
+    return alert("Fill all fields");
+
   }
 
-  try {
-    await addDoc(collection(db, "gradeSubmissions"), {
-      teacherId: user.id,
-      teacherName: user.name,
-      studentId: studentId,
-      studentName: studentName,
-      class: studentClass,
-      subject: subject,
-      period: period,
-      score: score,
-      status: "pending",
-      feedback: "",
-      createdAt: Date.now()
+  try{
+
+    //
+    // SAVE SUBMISSION
+    //
+    await addDoc(
+      collection(db,"gradeSubmissions"),
+      {
+
+        teacherId: user.id,
+
+        teacherName: user.name,
+
+        studentId,
+
+        studentName,
+
+        class: studentClass,
+
+        subject,
+
+        period,
+
+        score,
+
+        status:"pending",
+
+        feedback:"",
+
+        createdAt: Date.now()
+
+      }
+    );
+
+    //
+    // NOTIFY STUDENT
+    //
+    await sendNotification(db,{
+
+      userId: studentId,
+
+      title: "New Grade Submitted",
+
+      message:
+        `${subject} (${period}) score submitted and awaiting approval.`,
+
+      type:"academic"
+
     });
 
-    document.getElementById("msg").innerText = "Grade submitted (pending approval)";
+    //
+    // NOTIFY ADMINS
+    //
+    await sendNotification(db,{
+
+      role:"admin",
+
+      title:"Grade Approval Needed",
+
+      message:
+        `${user.name} submitted ${subject} grades for approval.`,
+
+      type:"approval"
+
+    });
+
+    //
+    // SUCCESS
+    //
+    const msg =
+      document.getElementById("msg");
+
+    msg.style.display = "block";
+
+    msg.innerText =
+      "Grade submitted successfully";
+
     document.getElementById("score").value = "";
-  } catch (error) {
-    console.error("Error submitting grade:", error);
-    alert("Submission failed. Check console for details.");
+
+  }catch(error){
+
+    console.error(error);
+
+    alert("Submission failed");
+
   }
+
 };
 
 loadStudents();
+
 </script>
 
 </body>
