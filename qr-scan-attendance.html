@@ -2,35 +2,74 @@
 <html>
 <head>
   <title>TEF Attendance Scan</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
 
+    :root{
+      --bg:#f4f4f4;
+      --card:#ffffff;
+      --text:#222;
+      --muted:#666;
+      --green:#27ae60;
+      --red:#c0392b;
+      --blue:#2980b9;
+      --shadow:0 10px 25px rgba(0,0,0,0.08);
+      --radius:14px;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
     body{
+      margin:0;
       font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
+      background:var(--bg);
       text-align:center;
+      padding:20px;
+      color:var(--text);
+    }
+
+    .header{
+      background:linear-gradient(135deg,#800000,#ff4d6d);
+      color:white;
+      padding:20px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      margin-bottom:20px;
+    }
+
+    .header h2{
+      margin:0;
+      font-size:24px;
+    }
+
+    .header p{
+      margin-top:8px;
+      font-size:13px;
+      opacity:0.9;
     }
 
     #reader{
       width:320px;
-      margin:auto;
+      margin:20px auto;
       background:white;
-      border-radius:12px;
+      border-radius:var(--radius);
       overflow:hidden;
-      border:2px solid #ddd;
+      box-shadow:var(--shadow);
+      border:1px solid #eee;
     }
 
     .status{
       margin-top:20px;
-      padding:15px;
-      border-radius:10px;
+      padding:14px;
+      border-radius:12px;
       font-weight:bold;
       min-height:20px;
+      transition:0.2s;
     }
 
     .ok{
@@ -48,12 +87,31 @@
       color:#0c5460;
     }
 
+    .pulse{
+      animation:pulse 1.2s infinite;
+    }
+
+    @keyframes pulse{
+      0%{transform:scale(1);}
+      50%{transform:scale(1.02);}
+      100%{transform:scale(1);}
+    }
+
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
   </style>
 </head>
 
 <body>
 
-<h2>TEF Attendance Scanner</h2>
+<div class="header">
+  <h2>TEF Attendance Scanner</h2>
+  <p>Scan. Verify. Lock attendance instantly.</p>
+</div>
 
 <div id="reader"></div>
 
@@ -61,11 +119,13 @@
   Waiting for scan...
 </div>
 
+<div class="hint">
+  Point camera at QR code. Keep it steady.
+</div>
+
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   doc,
@@ -74,492 +134,203 @@ import {
   updateDoc,
   collection,
   getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-//
-// FIREBASE
-//
 const firebaseConfig = {
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 };
 
-const app =
-  initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-const db =
-  getFirestore(app);
-
-//
-// USER
-//
-const user =
-  JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user){
-
   alert("Login required");
-
   location.href = "login.html";
-
 }
 
-//
-// STUDENTS BLOCKED
-//
 if(user.role === "student"){
-
-  alert("Students do not use attendance");
-
+  alert("Students cannot scan attendance");
   location.href = "login.html";
-
 }
 
-console.log("Logged User:", user);
+const deviceId = btoa(navigator.userAgent + screen.width + screen.height);
 
-//
-// DEVICE ID
-//
-const deviceId =
-  btoa(
-    navigator.userAgent +
-    screen.width +
-    screen.height
-  );
-
-console.log("Device ID:", deviceId);
-
-//
-// STATUS
-//
 function show(msg,type){
 
-  const el =
-    document.getElementById("status");
+  const el = document.getElementById("status");
 
   el.innerText = msg;
+  el.className = "status " + type;
 
-  el.className =
-    "status " + type;
+  if(type === "ok"){
+    el.classList.add("pulse");
+    setTimeout(()=>el.classList.remove("pulse"),1200);
+  }
 
 }
 
-//
-// TIME DIFFERENCE
-//
 function getMinutesDifference(now,timeString){
 
   if(!timeString) return 0;
 
-  const [h,m] =
-    timeString.split(":").map(Number);
+  const [h,m] = timeString.split(":").map(Number);
 
-  const target =
-    (h * 60) + m;
-
-  const current =
-    (now.getHours() * 60) +
-    now.getMinutes();
+  const target = (h*60)+m;
+  const current = (now.getHours()*60)+now.getMinutes();
 
   return current - target;
-
 }
 
-//
-// MAIN PROCESS
-//
 async function processScan(qrText){
 
   try{
 
-    show("Checking QR...","info");
+    show("Verifying QR code...","info");
 
-    console.log("QR RAW:", qrText);
-
-    //
-    // PARSE QR
-    //
     let qr;
-
     try{
-
       qr = JSON.parse(qrText);
-
+    }catch{
+      throw new Error("Invalid QR format");
     }
 
-    catch(e){
-
-      console.error(e);
-
-      throw new Error("Invalid QR");
-
-    }
-
-    console.log("QR Parsed:", qr);
-
-    //
-    // ACTIVE QR
-    //
-    const qrSnap =
-      await getDoc(
-        doc(db,"attendanceSystem","mainQR")
-      );
+    const qrSnap = await getDoc(doc(db,"attendanceSystem","mainQR"));
 
     if(!qrSnap.exists()){
-
-      throw new Error("QR not found");
-
+      throw new Error("QR system not active");
     }
 
-    const activeQR =
-      qrSnap.data();
+    const activeQR = qrSnap.data();
 
-    console.log("Active QR:", activeQR);
-
-    //
-    // TOKEN MATCH
-    //
     if(activeQR.token !== qr.token){
-
-      throw new Error("QR mismatch");
-
+      throw new Error("QR not recognized");
     }
 
-    //
-    // EXPIRY
-    //
     if(Date.now() > activeQR.expiresAt){
-
       throw new Error("QR expired");
-
     }
 
-    //
-    // FIND USER
-    //
-    show("Loading user...","info");
+    show("Loading profile...","info");
 
-    const usersSnap =
-      await getDocs(
-        collection(db,"users")
-      );
+    const usersSnap = await getDocs(collection(db,"users"));
 
     let userDocId = null;
-
     let userData = null;
 
-    usersSnap.forEach(docSnap => {
-
-      const u =
-        docSnap.data();
-
-      console.log("Checking user:", u);
-
+    usersSnap.forEach(d=>{
+      const u = d.data();
       if(u.userId === user.userId){
-
-        userDocId =
-          docSnap.id;
-
-        userData =
-          u;
-
+        userDocId = d.id;
+        userData = u;
       }
-
     });
 
-    //
-    // USER NOT FOUND
-    //
     if(!userData){
-
-      console.error("No user found");
-
-      throw new Error("User missing");
-
+      throw new Error("User not found");
     }
 
-    console.log("Matched User:", userData);
-
-    //
-    // DEVICE CHECK
-    //
-    if(
-      userData.primaryDevice &&
-      userData.primaryDevice !== deviceId
-    ){
-
-      throw new Error(
-        "Wrong device"
-      );
-
+    if(userData.primaryDevice && userData.primaryDevice !== deviceId){
+      throw new Error("Device mismatch");
     }
 
-    //
-    // REGISTER FIRST DEVICE
-    //
     if(!userData.primaryDevice){
-
-      console.log(
-        "Registering first device"
-      );
-
-      await updateDoc(
-
-        doc(
-          db,
-          "users",
-          userDocId
-        ),
-
-        {
-          primaryDevice:deviceId
-        }
-
-      );
-
+      await updateDoc(doc(db,"users",userDocId),{
+        primaryDevice:deviceId
+      });
     }
 
-    //
-    // SETTINGS
-    //
-    const settingsSnap =
-      await getDoc(
-        doc(
-          db,
-          "attendanceSettings",
-          user.userId
-        )
-      );
+    const settingsSnap = await getDoc(doc(db,"attendanceSettings",user.userId));
 
     if(!settingsSnap.exists()){
-
-      throw new Error(
-        "Attendance settings missing"
-      );
-
+      throw new Error("No attendance settings found");
     }
 
-    const settings =
-      settingsSnap.data();
+    const settings = settingsSnap.data();
 
-    console.log("Settings:", settings);
+    const today = new Date().toISOString().split("T")[0];
 
-    //
-    // TODAY
-    //
-    const today =
-      new Date()
-      .toISOString()
-      .split("T")[0];
+    const ref = doc(db,"attendanceDaily",user.userId+"_"+today);
 
-    //
-    // DAILY DOC
-    //
-    const attendanceRef =
-      doc(
-        db,
-        "attendanceDaily",
-        user.userId + "_" + today
-      );
+    const snap = await getDoc(ref);
 
-    const attendanceSnap =
-      await getDoc(attendanceRef);
+    const now = new Date();
 
-    //
-    // CURRENT TIME
-    //
-    const now =
-      new Date();
-
-    //
     // CLOCK IN
-    //
-    if(!attendanceSnap.exists()){
+    if(!snap.exists()){
 
-      console.log("Clocking In");
-
-      const diff =
-        getMinutesDifference(
-          now,
-          settings.expectedClockIn
-        );
+      const diff = getMinutesDifference(now,settings.expectedClockIn);
 
       let status = "ON_TIME";
+      if(diff > settings.graceMinutes) status = "LATE";
+      if(diff < 0) status = "EARLY";
 
-      if(diff > settings.graceMinutes){
+      await setDoc(ref,{
+        userId:user.userId,
+        name:user.name,
+        role:user.role,
+        date:today,
+        deviceId,
+        clockIn:{
+          time:Date.now(),
+          status,
+          minutes:Math.abs(diff)
+        },
+        clockOut:null,
+        createdAt:Date.now()
+      });
 
-        status = "LATE";
-
-      }
-
-      if(diff < 0){
-
-        status = "EARLY";
-
-      }
-
-      await setDoc(
-
-        attendanceRef,
-
-        {
-
-          userId:user.userId,
-
-          name:user.name,
-
-          role:user.role,
-
-          date:today,
-
-          deviceId,
-
-          clockIn:{
-
-            time:Date.now(),
-
-            status,
-
-            minutes:
-              Math.abs(diff)
-
-          },
-
-          clockOut:null,
-
-          createdAt:Date.now()
-
-        }
-
-      );
-
-      console.log("Clock In Saved");
-
-      show(
-        `Clock In Success (${status})`,
-        "ok"
-      );
-
+      show(`Clock In confirmed (${status})`,"ok");
       return;
-
     }
 
-    //
-    // ALREADY CLOCKED OUT
-    //
-    if(attendanceSnap.data().clockOut){
-
-      throw new Error(
-        "Attendance already completed"
-      );
-
+    if(snap.data().clockOut){
+      throw new Error("Attendance already completed");
     }
 
-    //
     // CLOCK OUT
-    //
-    console.log("Clocking Out");
-
-    const diff =
-      getMinutesDifference(
-        now,
-        settings.expectedClockOut
-      );
+    const diff = getMinutesDifference(now,settings.expectedClockOut);
 
     let status = "ON_TIME";
+    if(diff < 0) status = "EARLY_EXIT";
+    if(diff > 0) status = "OVERTIME";
 
-    if(diff < 0){
-
-      status = "EARLY_EXIT";
-
-    }
-
-    if(diff > 0){
-
-      status = "OVERTIME";
-
-    }
-
-    await updateDoc(
-
-      attendanceRef,
-
-      {
-
-        clockOut:{
-
-          time:Date.now(),
-
-          status,
-
-          minutes:
-            Math.abs(diff)
-
-        }
-
+    await updateDoc(ref,{
+      clockOut:{
+        time:Date.now(),
+        status,
+        minutes:Math.abs(diff)
       }
+    });
 
-    );
+    show(`Clock Out confirmed (${status})`,"ok");
 
-    console.log("Clock Out Saved");
-
-    show(
-      `Clock Out Success (${status})`,
-      "ok"
-    );
-
-  }
-
-  catch(err){
-
-    console.error("SCAN ERROR:", err);
-
+  }catch(err){
     show(err.message,"bad");
-
   }
 
 }
 
-//
-// START SCANNER
-//
-const scanner =
-  new Html5Qrcode("reader");
+const scanner = new Html5Qrcode("reader");
 
 scanner.start(
-
   { facingMode:"environment" },
-
-  {
-    fps:10,
-    qrbox:250
-  },
-
+  { fps:10, qrbox:250 },
   async(qrText)=>{
 
     scanner.pause();
 
     await processScan(qrText);
 
-    setTimeout(
-      ()=>scanner.resume(),
-      3000
-    );
+    setTimeout(()=>scanner.resume(),2500);
 
   }
+).catch(()=>{
 
-)
-
-.catch(err=>{
-
-  console.error("Camera Error:", err);
-
-  show(
-    "Camera access failed",
-    "bad"
-  );
+  show("Camera blocked or unavailable","bad");
 
 });
 
