@@ -1,42 +1,201 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Teacher Dashboard - TEF</title>
+
+  <style>
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: white;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--pink);
+    }
+
+    .sub {
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      background: rgba(255,255,255,0.04);
+      margin: 10px;
+      border-radius: 12px;
+    }
+
+    .profile img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #222;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      padding: 15px;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      border-left: 3px solid var(--pink);
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,0.09);
+    }
+
+    .section-title {
+      padding: 10px 15px;
+      opacity: 0.8;
+      font-size: 13px;
+    }
+
+    .logout {
+      width: 90%;
+      margin: 20px auto;
+      display: block;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+
 <body>
 
 <script>
 const user = JSON.parse(localStorage.getItem("user"));
+
 if(!user || user.role !== "teacher"){
   location.href = "login.html";
 }
+
+// image cache system
+const imageCache = {
+  get(key){ return localStorage.getItem("img_" + key); },
+  set(key, value){ localStorage.setItem("img_" + key, value); }
+};
 </script>
 
-<h2>Teacher Dashboard</h2>
-<p>Welcome, <b id="name"></b></p>
+<header>
+  <h1>Teacher Control Center</h1>
+  <div class="sub">Manage your academic workspace</div>
+</header>
 
-<div>
-  <h3>Academics</h3>
-  <button onclick="go('teacher-submit-grades.html')">Submit Grades</button>
-  <button onclick="go('teacher-notes.html')">Send Notes</button>
+<div class="profile">
+  <img id="photo" />
+  <div>
+    <b id="name"></b><br>
+    <span id="id"></span>
+  </div>
 </div>
 
-<div>
-  <h3>Assignments</h3>
-  <button onclick="go('teacher-create-assignment.html')">Create</button>
-  <button onclick="go('teacher-mark-assignment.html')">Mark</button>
+<div class="stats">
+  <div class="stat">
+    <b>Classes</b><br>
+    --
+  </div>
+  <div class="stat">
+    <b>Assignments</b><br>
+    --
+  </div>
+  <div class="stat">
+    <b>Quizzes</b><br>
+    --
+  </div>
 </div>
 
-<div>
-  <h3>Quizzes</h3>
-  <button onclick="go('teacher-create-quizs.html')">Create Quiz</button>
-  <button onclick="go('teacher-quiz-review.html')">View Results</button>
+<div class="section-title">Academic Tools</div>
+
+<div class="grid">
+  <div class="card" onclick="go('teacher-create-assignment.html')">📝 Create Assignment</div>
+  <div class="card" onclick="go('teacher-mark-assignments.html')">📊 Mark Assignments</div>
+  <div class="card" onclick="go('teacher-create-quizs.html')">🧠 Create Quiz</div>
+  <div class="card" onclick="go('teacher-quiz-review.html')">📋 Review Quizzes</div>
 </div>
 
-<br>
-<button onclick="logout()">Logout</button>
+<div class="section-title">Teaching Resources</div>
+
+<div class="grid">
+  <div class="card" onclick="go('teacher-notes.html')">📚 Notes</div>
+  <div class="card" onclick="go('student-assignments.html')">📂 Student Work</div>
+  <div class="card" onclick="go('teacher-submit-grades.html')">📈 Submit Grades</div>
+  <div class="card" onclick="go('teacher-rejected-grades.html')">❌ Rejected Grades</div>
+</div>
+
+<div class="section-title">Operations</div>
+
+<div class="grid">
+  <div class="card" onclick="go('teacher-attendance-control.html')">📌 Attendance Control</div>
+  <div class="card" onclick="go('staff-attendance.html')">🕒 Staff Attendance</div>
+</div>
+
+<button class="logout" onclick="logout()">Logout</button>
 
 <script>
 document.getElementById("name").innerText = user.name;
+document.getElementById("id").innerText = user.userId || "";
 
-function go(p){ location.href = p; }
+// IMAGE CACHE LOGIC
+const cachedImg = localStorage.getItem("img_" + user.userId);
+
+if(cachedImg){
+  document.getElementById("photo").src = cachedImg;
+} else if(user.photoURL){
+  document.getElementById("photo").src = user.photoURL;
+  localStorage.setItem("img_" + user.userId, user.photoURL);
+} else {
+  document.getElementById("photo").src = "https://via.placeholder.com/60";
+}
+
+function go(page){
+  location.href = page;
+}
 
 function logout(){
   localStorage.removeItem("user");
