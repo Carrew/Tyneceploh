@@ -55,5 +55,19 @@
     <h1>Welcome</h1>
     <a class="login-btn" href="login.html">Login</a>
   </div>
+
+  <script type="module">
+    import { enableNotifications } from "./enable-notifications.js";
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (user) {
+      await enableNotifications(user);
+
+      console.log("Notifications enabled");
+    } else {
+      console.log("No logged in user found");
+    }
+  </script>
 </body>
 </html>
