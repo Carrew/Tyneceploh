@@ -7,18 +7,16 @@
 <body>
 
 <h2>Login</h2>
-
 <input id="id" placeholder="User ID">
 <input id="pin" type="password" placeholder="PIN">
-
 <button onclick="login()">Login</button>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
+// FIXED: Placeholders replaced with your actual project values
 const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
@@ -29,21 +27,46 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 let messaging = null;
 
-// safe init messaging
-(async () => {
-  if (await isSupported()) {
-    messaging = getMessaging(app);
-  }
-})();
+// Register Service Worker and Init Messaging
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(async (registration) => {
+      console.log('SW Registered');
+      if (await isSupported()) {
+        messaging = getMessaging(app);
+      }
+    });
+}
 
-// 🔥 SAFE PUSH TOKEN REGISTER
-async function registerPush(docId) {
+// 🔥 FIXED NOTIFICATION SYSTEM (NO ILLEGAL CONSTRUCTOR)
+async function safeNotify(title, body) {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return;
+
+    // Wait for SW to be ready and use showNotification (Legal on Mobile)
+    const reg = await navigator.serviceWorker.ready;
+    if (reg && reg.showNotification) {
+      await reg.showNotification(title, {
+        body: body,
+        icon: "/icon.png",
+        badge: "/icon.png"
+      });
+    } else {
+      // Final fallback for very old desktop browsers
+      new Notification(title, { body });
+    }
+  } catch (err) {
+    console.warn("Notification error:", err);
+  }
+}
+
+// 🔥 PUSH REGISTRATION
+async function registerPush(userDocId) {
   try {
     if (!messaging) return;
-
     const permission = await Notification.requestPermission();
     if (permission !== "granted") return;
 
@@ -52,38 +75,18 @@ async function registerPush(docId) {
     });
 
     if (token) {
-      await updateDoc(doc(db, "users", docId), {
+      await updateDoc(doc(db, "users", userDocId), {
         fcmToken: token,
         notificationEnabled: true,
         lastLogin: Date.now()
       });
     }
-  } catch (e) {
-    console.log("Push error:", e);
-  }
-}
-
-// 🔥 MOBILE SAFE NOTIFICATION (NO new Notification EVER)
-async function notifySafe(title, body) {
-  try {
-    if (!("serviceWorker" in navigator)) return;
-
-    const reg = await navigator.serviceWorker.ready;
-
-    if (reg && reg.showNotification) {
-      await reg.showNotification(title, {
-        body,
-        icon: "/icon.png",
-        badge: "/icon.png"
-      });
-    }
-  } catch (e) {
-    console.log("Notify error:", e);
+  } catch (err) {
+    console.log("Push error:", err);
   }
 }
 
 window.login = async function() {
-
   const idInput = document.getElementById("id").value.trim().toUpperCase();
   const pinInput = document.getElementById("pin").value.trim();
 
@@ -93,7 +96,6 @@ window.login = async function() {
   }
 
   const snap = await getDocs(collection(db, "users"));
-
   let found = null;
   let docId = null;
 
@@ -124,12 +126,12 @@ window.login = async function() {
   }
 
   localStorage.setItem("user", JSON.stringify(found));
-
-  // 🔥 PUSH + LOGIN NOTIFICATION
+  
+  // Register push and show success notification
   await registerPush(docId);
-  await notifySafe("Login Successful", `Welcome back ${found.name || found.userId}`);
+  await safeNotify("Login Successful", `Welcome ${found.name || found.userId}`);
 
-  // routing
+  // Routing
   const routes = {
     admin: "admin-dashboard.html",
     teacher: "teacher-dashboard.html",
@@ -141,8 +143,6 @@ window.login = async function() {
 
   location.href = routes[found.role] || "index.html";
 };
-
 </script>
-
 </body>
 </html>
