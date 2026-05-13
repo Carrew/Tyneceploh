@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -468,7 +467,7 @@ document.getElementById("name").innerText =
 user.name || "Student";
 
 document.getElementById("studentId").innerText =
-user.userId || "";
+"ID: " + (user.userId || "N/A");
 
 document.getElementById("roleBadge").innerText =
 (user.role || "student").toUpperCase();
@@ -477,33 +476,92 @@ document.getElementById("photo").src =
 user.photoURL ||
 "https://via.placeholder.com/100";
 
-// HIDE UNNECESSARY FIELDS
+// FORMAT DATE
 
-const ignored = [
-  "pin",
-  "photoURL",
-  "role"
+function formatDate(timestamp){
+
+  if(!timestamp) return "N/A";
+
+  const d = new Date(timestamp);
+
+  return d.toLocaleDateString(
+    undefined,
+    {
+      year:"numeric",
+      month:"short",
+      day:"numeric"
+    }
+  );
+
+}
+
+// IMPORTANT PROFILE INFO ONLY
+
+const profileFields = [
+
+  {
+    label:"Class",
+    value:
+      user.class ||
+      user.studentClass ||
+      user.grade
+  },
+
+  {
+    label:"Gender",
+    value:user.gender
+  },
+
+  {
+    label:"Date of Birth",
+    value:user.dob
+  },
+
+  {
+    label:"Email",
+    value:user.email
+  },
+
+  {
+    label:"Phone",
+    value:user.phone
+  },
+
+  {
+    label:"Address",
+    value:user.address
+  },
+
+  {
+    label:"Guardian",
+    value:user.guardian
+  },
+
+  {
+    label:"Nationality",
+    value:user.nationality
+  },
+
+  {
+    label:"Status",
+    value:user.status
+  },
+
+  {
+    label:"Last Login",
+    value:formatDate(user.lastLogin)
+  }
+
 ];
 
 const infoGrid =
 document.getElementById("infoGrid");
 
-// AUTO GENERATE CARDS
+// CREATE INFO CARDS
 
-Object.keys(user).forEach(key => {
+profileFields.forEach(field => {
 
-  if(
-    ignored.includes(key)
-    || !user[key]
-    || Array.isArray(user[key])
-  ){
-    return;
-  }
-
-  const label =
-  key
-  .replace(/([A-Z])/g," $1")
-  .replace(/^./,str => str.toUpperCase());
+  if(!field.value) return;
 
   const card =
   document.createElement("div");
@@ -511,13 +569,15 @@ Object.keys(user).forEach(key => {
   card.className = "info-card";
 
   card.innerHTML = `
+  
     <div class="info-label">
-      ${label}
+      ${field.label}
     </div>
 
     <div class="info-value">
-      ${user[key]}
+      ${field.value}
     </div>
+
   `;
 
   infoGrid.appendChild(card);
