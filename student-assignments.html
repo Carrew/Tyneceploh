@@ -2,20 +2,144 @@
 <html>
 <head>
   <title>My Assignments - TEF</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PDF LIB -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
-    .card { border: 1px solid #ddd; padding: 15px; margin: 15px 0; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .q-box { margin-bottom: 15px; padding: 10px; border-left: 4px solid #007bff; background: #fdfdfd; }
-    input[type="text"] { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-    button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    .status-tag { font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f4f9;
+      margin:0;
+    }
+
+    h2{
+      text-align:center;
+      margin-bottom:20px;
+    }
+
+    .container{
+      max-width:1000px;
+      margin:auto;
+    }
+
+    .card{
+      background:white;
+      padding:16px;
+      margin:15px 0;
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.08);
+      transition:0.2s;
+    }
+
+    .card:hover{
+      transform:translateY(-2px);
+    }
+
+    .top-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .q-box{
+      margin:12px 0;
+      padding:10px;
+      border-left:4px solid #007bff;
+      background:#fdfdfd;
+      border-radius:6px;
+    }
+
+    input[type="text"]{
+      width:100%;
+      padding:10px;
+      margin-top:6px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      outline:none;
+    }
+
+    button{
+      background:#007bff;
+      color:white;
+      border:none;
+      padding:10px 14px;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      margin-top:10px;
+    }
+
+    button:disabled{
+      background:#999;
+      cursor:not-allowed;
+    }
+
+    .btn-row{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .secondary{
+      background:#27ae60;
+    }
+
+    .pdf{
+      background:#8e44ad;
+    }
+
+    .status-tag{
+      padding:5px 10px;
+      border-radius:20px;
+      font-size:12px;
+      font-weight:bold;
+      display:inline-block;
+    }
+
+    .toast{
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      padding:12px 15px;
+      border-radius:8px;
+      color:white;
+      font-size:14px;
+      opacity:0;
+      transform:translateY(10px);
+      transition:0.3s;
+    }
+
+    .show{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    .success{ background:#27ae60; }
+    .error{ background:#c0392b; }
+    .info{ background:#2980b9; }
+
+    .loading{
+      text-align:center;
+      padding:20px;
+      color:#666;
+    }
   </style>
 </head>
+
 <body>
 
-<h2>My Assignments</h2>
-<div id="list">Loading assignments...</div>
+<div class="container">
+  <h2>My Assignments</h2>
+
+  <div id="toast" class="toast"></div>
+
+  <div id="list" class="loading">Loading assignments...</div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -33,115 +157,185 @@ const user = JSON.parse(localStorage.getItem("user"));
 if (!user || user.role !== "student") location.href = "login.html";
 
 let submittedMap = {};
-let assignmentsCache = [];
+let submissionsMap = {};
 
-async function load() {
-  const aSnap = await getDocs(collection(db, "assignments"));
-  const sSnap = await getDocs(collection(db, "submissions"));
+function toast(msg,type="info"){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
 
-  submittedMap = {};
-  const mySubmissions = {};
-
-  // Map submissions to assignments for this specific student
-  sSnap.forEach(d => {
-    const s = d.data();
-    if (s.studentId === user.userId) {
-      submittedMap[s.assignmentId] = true;
-      mySubmissions[s.assignmentId] = s;
-    }
-  });
-
-  let html = "";
-  let count = 0;
-
-  aSnap.forEach(d => {
-    const a = d.data();
-    // Only show assignments for the student's specific class
-    if (a.class !== user.class) return;
-
-    count++;
-    const aId = d.id;
-    const qs = Array.isArray(a.questions) ? a.questions : [];
-    const sub = mySubmissions[aId];
-    const isSubmitted = !!sub;
-    const isMarked = sub?.status === "marked";
-
-    html += `
-      <div class="card">
-        <div style="display:flex; justify-content:space-between;">
-            <h3>${a.title}</h3>
-            <small>${a.subject}</small>
-        </div>
-        <hr>
-
-        ${qs.map((q, i) => {
-          const studentAns = sub?.answers?.[i] || "";
-          
-          return `
-            <div class="q-box">
-              <b>Q${i+1}: ${q.q}</b> <small>(${q.score} pts)</small><br>
-              
-              ${!isSubmitted 
-                ? `<input type="text" id="ans_${aId}_${i}" placeholder="Type your answer here...">`
-                : `<p style="margin-top:5px; color:#555;"><b>Your Answer:</b> ${studentAns}</p>`
-              }
-            </div>
-          `;
-        }).join("")}
-
-        <div style="margin-top:15px; text-align:right;">
-          ${
-            !isSubmitted
-            ? `<button onclick="submitAssignment('${aId}', ${qs.length})">Submit Assignment</button>`
-            : isMarked
-              ? `<span class="status-tag" style="background:#d4edda; color:#155724;">Marked - Score: ${sub.score} / ${a.totalScore}</span>`
-              : `<span class="status-tag" style="background:#fff3cd; color:#856404;">Submitted - Awaiting Grade</span>`
-          }
-        </div>
-      </div>
-    `;
-  });
-
-  document.getElementById("list").innerHTML = count === 0 ? "No assignments found for your class." : html;
+  setTimeout(()=>{
+    t.classList.remove("show");
+  },3000);
 }
 
-window.submitAssignment = async function(id, len) {
-  if (submittedMap[id]) return;
+async function load(){
 
-  const answers = [];
-  for (let i = 0; i < len; i++) {
-    const input = document.getElementById(`ans_${id}_${i}`);
-    const val = input ? input.value.trim() : "";
+  const list = document.getElementById("list");
+  list.innerHTML = "Loading assignments...";
 
-    if (!val) {
-      alert("Please answer all questions before submitting.");
-      return;
-    }
-    answers.push(val);
-  }
+  try{
 
-  if (!confirm("Are you sure you want to submit? You cannot edit after submitting.")) return;
+    const aSnap = await getDocs(collection(db,"assignments"));
+    const sSnap = await getDocs(collection(db,"submissions"));
 
-  try {
-    await addDoc(collection(db, "submissions"), {
-      assignmentId: id,
-      studentId: user.userId, // Matches our database identity logic
-      studentName: user.name,
-      answers: answers,
-      score: 0,
-      status: "submitted",
-      createdAt: Date.now()
+    submittedMap = {};
+    submissionsMap = {};
+
+    sSnap.forEach(d=>{
+      const s = d.data();
+      if(s.studentId === user.userId){
+        submittedMap[s.assignmentId] = true;
+        submissionsMap[s.assignmentId] = s;
+      }
     });
 
-    alert("Assignment submitted successfully!");
+    let html = "";
+    let count = 0;
+
+    aSnap.forEach(d=>{
+      const a = d.data();
+
+      if(a.class !== user.class) return;
+
+      count++;
+
+      const id = d.id;
+      const qs = Array.isArray(a.questions) ? a.questions : [];
+      const sub = submissionsMap[id];
+
+      const submitted = !!sub;
+      const marked = sub?.status === "marked";
+
+      html += `
+        <div class="card">
+
+          <div class="top-row">
+            <h3>${a.title}</h3>
+            <small>${a.subject}</small>
+          </div>
+
+          <hr>
+
+          ${qs.map((q,i)=>`
+            <div class="q-box">
+              <b>Q${i+1}: ${q.q}</b> (${q.score} pts)
+
+              ${!submitted
+                ? `<input type="text" id="ans_${id}_${i}" placeholder="Your answer...">`
+                : `<p><b>Your Answer:</b> ${sub?.answers?.[i] || "-"}</p>`
+              }
+            </div>
+          `).join("")}
+
+          <div class="btn-row">
+
+            ${!submitted ? `
+              <button onclick="submit('${id}',${qs.length})">Submit</button>
+            ` : ""}
+
+            ${submitted ? `
+              <button class="pdf" onclick="downloadPDF('${id}')">
+                Download PDF
+              </button>
+            ` : ""}
+
+            ${marked ? `
+              <span class="status-tag" style="background:#d4edda;color:#155724;">
+                Marked ${sub.score}/${a.totalScore}
+              </span>
+            ` : `
+              ${submitted ? `
+                <span class="status-tag" style="background:#fff3cd;color:#856404;">
+                  Pending Marking
+                </span>
+              ` : ""}
+            `}
+
+          </div>
+
+        </div>
+      `;
+    });
+
+    list.innerHTML = count ? html : "No assignments for your class.";
+
+  }catch(err){
+    console.error(err);
+    toast("Failed to load assignments","error");
+    document.getElementById("list").innerHTML = "Error loading data.";
+  }
+}
+
+window.submit = async function(id,len){
+
+  try{
+
+    const answers = [];
+
+    for(let i=0;i<len;i++){
+      const el = document.getElementById(`ans_${id}_${i}`);
+      const val = el?.value?.trim();
+
+      if(!val){
+        toast("Answer all questions first","error");
+        return;
+      }
+
+      answers.push(val);
+    }
+
+    if(!confirm("Submit now? You can't edit later.")) return;
+
+    await addDoc(collection(db,"submissions"),{
+      assignmentId:id,
+      studentId:user.userId,
+      studentName:user.name,
+      answers,
+      status:"submitted",
+      createdAt:Date.now()
+    });
+
+    toast("Submitted successfully","success");
     load();
-  } catch (error) {
-    console.error("Submission Error:", error);
-    alert("Error submitting assignment.");
+
+  }catch(err){
+    console.error(err);
+    toast("Submission failed","error");
   }
 };
 
+window.downloadPDF = function(id){
+
+  const sub = submissionsMap[id];
+  if(!sub){
+    toast("No submission found","error");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(14);
+  doc.text("TEF Assignment Submission", 10, 10);
+
+  doc.setFontSize(11);
+  doc.text(`Student: ${user.name}`, 10, 20);
+  doc.text(`ID: ${user.userId}`, 10, 30);
+
+  let y = 45;
+
+  sub.answers.forEach((a,i)=>{
+    doc.text(`Q${i+1}: ${a}`, 10, y);
+    y += 10;
+  });
+
+  doc.save(`${id}_submission.pdf`);
+  toast("PDF downloaded","success");
+};
+
 load();
+
 </script>
 
 </body>
