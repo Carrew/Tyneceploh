@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TEF Financial Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .box{
+      max-width:900px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom:20px;
+    }
+
+    input,select,button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      box-sizing:border-box;
+    }
+
+    button{
+      background:#27ae60;
+      color:white;
+      border:none;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:15px;
+    }
+
+    .card{
+      background:#fafafa;
+      padding:15px;
+      border-radius:10px;
+      margin-top:15px;
+      border-left:6px solid #3498db;
+    }
+
+    .danger{ background:#c0392b; }
+    .blue{ background:#2980b9; }
+
+    .msg{
+      margin-top:10px;
+      padding:10px;
+      border-radius:6px;
+    }
+
+    .ok{ background:#d4edda; color:#155724; }
+    .bad{ background:#f8d7da; color:#721c24; }
+
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>Class Fee Setup</h2>
+
+  <label>Select Class</label>
+  <select id="classBox"></select>
+
+  <label>Fee Amount (USD)</label>
+  <input id="feeAmount" type="number" placeholder="Enter class fee">
+
+  <button onclick="saveFee()">Save Fee Structure</button>
+
+  <div id="msg"></div>
+
+</div>
+
+<div class="box">
+
+  <h2>Student Financial Management</h2>
+
+  <label>Select Student</label>
+  <select id="studentBox"></select>
+
+  <label>Amount Paid</label>
+  <input id="paidAmount" type="number">
+
+  <button onclick="updatePayment()">Update Payment</button>
+
+</div>
+
+<div class="box">
+
+  <h2>Financial Overview</h2>
+
+  <div id="overview">Loading...</div>
+
+</div>
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "admin"){
+  location.href = "login.html";
+}
+
+// caches
+let students = [];
+let classes = new Set();
+
+// --------------------
+// LOAD USERS
+// --------------------
+async function loadUsers(){
+
+  const snap = await getDocs(collection(db,"users"));
+
+  students = [];
+  classes = new Set();
+
+  snap.forEach(d=>{
+    const u = d.data();
+
+    if(u.role === "student"){
+      students.push(u);
+      if(u.class) classes.add(u.class);
+    }
+  });
+
+  renderDropdowns();
+  loadOverview();
+}
+
+// --------------------
+// DROPDOWNS
+// --------------------
+function renderDropdowns(){
+
+  const classBox = document.getElementById("classBox");
+  const studentBox = document.getElementById("studentBox");
+
+  if(classes.size === 0){
+    classBox.innerHTML = `<option>No Classes Available</option>`;
+  }else{
+    classBox.innerHTML = [...classes]
+      .map(c=>`<option>${c}</option>`).join("");
+  }
+
+  if(students.length === 0){
+    studentBox.innerHTML = `<option>No Students Available</option>`;
+  }else{
+    studentBox.innerHTML = students
+      .map(s=>`
+        <option value="${s.userId}">
+          ${s.name} (${s.userId})
+        </option>
+      `).join("");
+  }
+}
+
+// --------------------
+// SAVE CLASS FEE
+// --------------------
+window.saveFee = async function(){
+
+  const cls = classBox.value;
+  const fee = Number(feeAmount.value);
+
+  if(!cls || !fee){
+    return show("Fill all fields","bad");
+  }
+
+  await setDoc(doc(db,"classFees",cls),{
+    class:cls,
+    fee,
+    updatedAt:Date.now()
+  });
+
+  show("Class fee saved","ok");
+};
+
+// --------------------
+// UPDATE PAYMENT
+// --------------------
+window.updatePayment = async function(){
+
+  const studentId = studentBox.value;
+  const paid = Number(paidAmount.value);
+
+  if(!studentId || !paid){
+    alert("Fill fields");
+    return;
+  }
+
+  const ref = doc(db,"financials",studentId);
+  const snap = await getDoc(ref);
+
+  let existing = snap.exists() ? snap.data() : {
+    studentId,
+    totalPaid:0,
+    history:[]
+  };
+
+  existing.totalPaid += paid;
+  existing.history.push({
+    amount:paid,
+    time:Date.now(),
+    by:user.userId
+  });
+
+  await setDoc(ref, existing);
+
+  alert("Payment updated");
+
+  paidAmount.value = "";
+
+  loadOverview();
+};
+
+// --------------------
+// OVERVIEW ANALYTICS
+// --------------------
+async function loadOverview(){
+
+  const feeSnap = await getDocs(collection(db,"classFees"));
+  const finSnap = await getDocs(collection(db,"financials"));
+
+  let feeMap = {};
+  let totalExpected = 0;
+  let totalCollected = 0;
+
+  feeSnap.forEach(d=>{
+    feeMap[d.id] = d.data().fee;
+  });
+
+  students.forEach(s=>{
+    const fee = feeMap[s.class] || 0;
+    totalExpected += fee;
+  });
+
+  finSnap.forEach(d=>{
+    totalCollected += d.data().totalPaid || 0;
+  });
+
+  overview.innerHTML = `
+    <div class="card">
+      <h3>Analytics</h3>
+      <p><b>Total Expected:</b> $${totalExpected}</p>
+      <p><b>Total Collected:</b> $${totalCollected}</p>
+      <p><b>Outstanding:</b> $${totalExpected - totalCollected}</p>
+    </div>
+  `;
+}
+
+// --------------------
+function show(msg,type){
+  const el = document.getElementById("msg");
+  el.className = "msg " + type;
+  el.textContent = msg;
+}
+
+loadUsers();
+
+</script>
+
+</body>
+</html>
