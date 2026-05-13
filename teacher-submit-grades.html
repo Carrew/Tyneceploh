@@ -6,28 +6,31 @@
   <style>
     body{
       font-family:sans-serif;
-      background:#f4f4f4;
+      background:#f4f6f9;
       padding:20px;
     }
 
     .box{
-      max-width:500px;
+      max-width:520px;
       margin:auto;
       background:white;
       padding:20px;
-      border-radius:10px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.08);
     }
 
-    input,
-    select,
-    button{
+    h2{
+      margin-bottom:15px;
+    }
+
+    input, select, button{
       width:100%;
       padding:12px;
       margin-top:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
+      border-radius:8px;
+      border:1px solid #ddd;
       box-sizing:border-box;
+      font-size:14px;
     }
 
     button{
@@ -36,15 +39,44 @@
       font-weight:bold;
       border:none;
       cursor:pointer;
+      transition:0.2s;
     }
 
-    #msg{
+    button:hover{
+      background:#219150;
+    }
+
+    .hint{
+      font-size:12px;
+      color:#777;
+      margin-top:5px;
+    }
+
+    .status-box{
       margin-top:15px;
       padding:10px;
-      border-radius:6px;
+      border-radius:8px;
+      display:none;
+      font-size:14px;
+    }
+
+    .ok{
       background:#d4edda;
       color:#155724;
-      display:none;
+    }
+
+    .warn{
+      background:#fff3cd;
+      color:#856404;
+    }
+
+    .preview{
+      margin-top:10px;
+      font-size:13px;
+      color:#555;
+      background:#f8f9fa;
+      padding:10px;
+      border-radius:8px;
     }
   </style>
 </head>
@@ -53,28 +85,33 @@
 
 <div class="box">
 
-<h2>Submit Grades</h2>
+  <h2>Submit Grades</h2>
 
-<select id="student"></select>
+  <select id="student"></select>
+  <div class="hint">Select a student in your assigned classes</div>
 
-<input id="subject" placeholder="Subject">
+  <input id="subject" placeholder="Subject">
 
-<select id="period">
-  <option>1st Period</option>
-  <option>2nd Period</option>
-  <option>3rd Period</option>
-  <option>Semester Exam</option>
-  <option>4th Period</option>
-  <option>5th Period</option>
-  <option>6th Period</option>
-  <option>Final Exam</option>
-</select>
+  <select id="period">
+    <option>1st Period</option>
+    <option>2nd Period</option>
+    <option>3rd Period</option>
+    <option>Semester Exam</option>
+    <option>4th Period</option>
+    <option>5th Period</option>
+    <option>6th Period</option>
+    <option>Final Exam</option>
+  </select>
 
-<input id="score" type="number" placeholder="Score">
+  <input id="score" type="number" placeholder="Score">
 
-<button onclick="submitGrade()">Submit Grade</button>
+  <div class="preview" id="preview">
+    Status preview will appear here
+  </div>
 
-<div id="msg"></div>
+  <button onclick="submitGrade()">Submit Grade</button>
+
+  <div id="msg" class="status-box"></div>
 
 </div>
 
@@ -90,13 +127,12 @@ import {
 
 import { sendNotification } from "./notification-helper.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh"
-};
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
@@ -105,60 +141,103 @@ if(!user || user.role !== "teacher"){
   location.href = "login.html";
 }
 
-async function loadStudents(){
+const studentSelect = document.getElementById("student");
+const scoreInput = document.getElementById("score");
+const subjectInput = document.getElementById("subject");
+const periodSelect = document.getElementById("period");
+const preview = document.getElementById("preview");
 
-  const snap = await getDocs(collection(db,"users"));
-  const students = [];
+function updatePreview(){
+  const studentVal = studentSelect.value;
+  const subject = subjectInput.value.trim();
+  const period = periodSelect.value;
+  const score = scoreInput.value;
 
-  snap.forEach(d=>{
-    const data = d.data();
-
-    if(
-      data.role === "student" &&
-      user.classes?.includes(data.class)
-    ){
-      students.push(data);
-    }
-  });
-
-  const select = document.getElementById("student");
-
-  if(students.length === 0){
-    select.innerHTML = "<option>No students found</option>";
+  if(!studentVal || !subject || !score){
+    preview.innerText = "Fill fields to see preview...";
     return;
   }
 
-  select.innerHTML = students.map(s=>`
-    <option value="${s.userId}|${s.name}|${s.class}">
-      ${s.name} (${s.class})
-    </option>
-  `).join("");
+  const [, name] = studentVal.split("|");
+
+  preview.innerText =
+    `${name} will receive ${subject} (${period}) = ${score} marks`;
+}
+
+studentSelect.onchange = updatePreview;
+subjectInput.oninput = updatePreview;
+scoreInput.oninput = updatePreview;
+periodSelect.onchange = updatePreview;
+
+async function loadStudents(){
+
+  studentSelect.innerHTML = "<option>Loading students...</option>";
+
+  try{
+
+    const snap = await getDocs(collection(db,"users"));
+    const students = [];
+
+    snap.forEach(d=>{
+      const data = d.data();
+
+      if(
+        data.role === "student" &&
+        user.classes?.includes(data.class)
+      ){
+        students.push(data);
+      }
+    });
+
+    if(students.length === 0){
+      studentSelect.innerHTML = "<option>No students found</option>";
+      return;
+    }
+
+    studentSelect.innerHTML = `
+      <option value="">Select student</option>
+      ${students.map(s=>`
+        <option value="${s.userId}|${s.name}|${s.class}">
+          ${s.name} (${s.class})
+        </option>
+      `).join("")}
+    `;
+
+  } catch(err){
+    console.error(err);
+    studentSelect.innerHTML = "<option>Error loading students</option>";
+  }
 }
 
 window.submitGrade = async function(){
 
-  const studentVal = document.getElementById("student").value;
-  const subject = document.getElementById("subject").value.trim();
-  const period = document.getElementById("period").value;
-  const score = Number(document.getElementById("score").value);
+  const studentVal = studentSelect.value;
+  const subject = subjectInput.value.trim();
+  const period = periodSelect.value;
+  const score = Number(scoreInput.value);
 
   if(!studentVal){
     alert("Select student");
     return;
   }
 
-  const [studentId, studentName, studentClass] = studentVal.split("|");
-
-  if(!subject || isNaN(score)){
-    alert("Fill all fields correctly");
+  if(!subject){
+    alert("Subject required");
     return;
   }
 
+  if(isNaN(score) || score < 0){
+    alert("Invalid score");
+    return;
+  }
+
+  const confirmSubmit = confirm("Submit this grade?");
+  if(!confirmSubmit) return;
+
+  const [studentId, studentName, studentClass] = studentVal.split("|");
+
   try {
 
-    // -----------------------------------
-    // SAVE GRADE SUBMISSION
-    // -----------------------------------
     await addDoc(collection(db,"gradeSubmissions"),{
 
       teacherId: user.userId,
@@ -177,9 +256,6 @@ window.submitGrade = async function(){
       createdAt: Date.now()
     });
 
-    // -----------------------------------
-    // NOTIFY STUDENT
-    // -----------------------------------
     await sendNotification(db,{
       userId: studentId,
       title: "New Grade Posted",
@@ -188,9 +264,6 @@ window.submitGrade = async function(){
       link: "student-results.html"
     });
 
-    // -----------------------------------
-    // NOTIFY ADMINS
-    // -----------------------------------
     await sendNotification(db,{
       role: "admin",
       title: "Grade Awaiting Approval",
@@ -199,18 +272,21 @@ window.submitGrade = async function(){
       link: "grade-approval.html"
     });
 
-    // -----------------------------------
-    // SUCCESS UI
-    // -----------------------------------
     const msg = document.getElementById("msg");
     msg.style.display = "block";
+    msg.className = "status-box ok";
     msg.innerText = "Grade submitted successfully";
 
-    document.getElementById("score").value = "";
+    scoreInput.value = "";
+    updatePreview();
 
   } catch(err){
     console.error(err);
-    alert("Submission failed");
+
+    const msg = document.getElementById("msg");
+    msg.style.display = "block";
+    msg.className = "status-box warn";
+    msg.innerText = "Submission failed. Try again.";
   }
 };
 
