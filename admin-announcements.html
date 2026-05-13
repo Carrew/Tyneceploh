@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Announcement Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .box{
+      max-width:800px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+    }
+
+    input,textarea,select,button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      box-sizing:border-box;
+    }
+
+    button{
+      background:#27ae60;
+      color:white;
+      border:none;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .hidden{
+      display:none;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>Create Announcement</h2>
+
+  <input id="title" placeholder="Title">
+  <textarea id="message" placeholder="Message"></textarea>
+
+  <label>Audience Type</label>
+  <select id="type" onchange="toggleFields()">
+    <option value="public">Public</option>
+    <option value="role">Role Based</option>
+    <option value="class">Class Based</option>
+    <option value="private">Private</option>
+  </select>
+
+  <div id="roleBox" class="hidden">
+    <label>Target Roles</label>
+    <select id="roles" multiple>
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+      <option value="staff">Staff</option>
+    </select>
+  </div>
+
+  <div id="classBox" class="hidden">
+    <label>Target Class</label>
+    <select id="classes"></select>
+  </div>
+
+  <button onclick="send()">Publish</button>
+
+  <p id="msg"></p>
+
+</div>
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+// -------------------
+// LOAD CLASSES
+// -------------------
+async function loadClasses(){
+
+  const snap = await getDocs(collection(db,"users"));
+  const set = new Set();
+
+  snap.forEach(d=>{
+    const u = d.data();
+    if(u.class) set.add(u.class);
+  });
+
+  classes.innerHTML = [...set]
+    .map(c=>`<option>${c}</option>`)
+    .join("");
+
+}
+
+loadClasses();
+
+// -------------------
+window.toggleFields = function(){
+
+  const type = document.getElementById("type").value;
+
+  roleBox.classList.add("hidden");
+  classBox.classList.add("hidden");
+
+  if(type === "role") roleBox.classList.remove("hidden");
+  if(type === "class") classBox.classList.remove("hidden");
+
+};
+
+// -------------------
+window.send = async function(){
+
+  const type = document.getElementById("type").value;
+
+  const roles = [...document.getElementById("roles").selectedOptions]
+    .map(o=>o.value);
+
+  const cls = document.getElementById("classes").value;
+
+  await addDoc(collection(db,"announcements"),{
+
+    title:title.value,
+    message:message.value,
+    type,
+    targetRoles:roles,
+    targetClass:cls,
+    createdBy:user.name,
+    createdAt:Date.now()
+
+  });
+
+  msg.innerHTML = "Announcement sent";
+
+};
+
+</script>
+
+</body>
+</html>
