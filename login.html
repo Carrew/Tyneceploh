@@ -15,7 +15,7 @@
 <button onclick="login()">Login</button>
 
 
-<script type="module">
+  <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -30,50 +30,78 @@ const app = initializeApp({
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
-  messagingSenderId: "161024255934",
-  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 });
 
 const db = getFirestore(app);
 
 let messaging = null;
 
-// safer init (prevents crashes on unsupported devices like some iOS cases)
+// safe messaging init
 (async () => {
-  const supported = await isSupported();
-  if (supported) {
+  if (await isSupported()) {
     messaging = getMessaging(app);
   }
 })();
 
-function localNotify(title, body){
 
-  if("Notification" in window){
+// 🔥 SAFE NOTIFICATION SYSTEM (FIXED FOR MOBILE)
+async function safeNotify(title, body){
 
-    if(Notification.permission === "granted"){
+  try{
+
+    // Desktop (safe path)
+    if("Notification" in window && Notification.permission === "granted"){
+
+      // Mobile fix: avoid constructor error
+      if(typeof ServiceWorkerRegistration !== "undefined"){
+
+        const reg = await navigator.serviceWorker.getRegistration();
+
+        if(reg && reg.showNotification){
+
+          reg.showNotification(title, {
+            body,
+            icon: "/icon.png"
+          });
+
+          return;
+
+        }
+
+      }
+
+      // fallback desktop
       new Notification(title, { body });
+
     }
+
+  }catch(err){
+
+    console.log("Notification fallback used:", err);
 
   }
 
 }
 
-// 🔥 push registration (safe across devices)
+
+// 🔥 PUSH REGISTRATION
 async function registerPush(userDocId){
 
   try{
 
-    if(!messaging) return null;
+    if(!messaging) return;
 
     const permission = await Notification.requestPermission();
 
-    if(permission !== "granted") return null;
+    if(permission !== "granted") return;
 
     const token = await getToken(messaging, {
       vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
     });
 
-    if(!token) return null;
+    if(!token) return;
 
     await updateDoc(doc(db, "users", userDocId), {
       fcmToken: token,
@@ -81,14 +109,12 @@ async function registerPush(userDocId){
       lastLogin: Date.now()
     });
 
-    return token;
-
   }catch(err){
-    console.log("Push register failed:", err);
-    return null;
+    console.log("Push error:", err);
   }
 
 }
+
 
 window.login = async function(){
 
@@ -130,7 +156,6 @@ window.login = async function(){
     return;
   }
 
-  // access rule
   if(found.role !== "student" && found.status !== "active"){
     alert("Account restricted. Contact admin.");
     return;
@@ -138,15 +163,15 @@ window.login = async function(){
 
   localStorage.setItem("user", JSON.stringify(found));
 
-  console.log("Login success:", found.role);
+  console.log("Logged in:", found.role);
 
-  // 🔥 REGISTER PUSH SAFELY
+  // 🔥 PUSH REGISTRATION
   await registerPush(docId);
 
-  // 🔔 LOCAL NOTIFICATION (works everywhere)
-  localNotify(
-    "Welcome back",
-    `${found.name || found.userId} logged in successfully`
+  // 🔥 SAFE NOTIFICATION (NO MOBILE ERROR)
+  await safeNotify(
+    "Login Successful",
+    `Welcome ${found.name || found.userId}`
   );
 
   // ROUTING (UNCHANGED)
@@ -182,7 +207,7 @@ window.login = async function(){
 
 };
 
-</script>
+  </script>
 
 </body>
 </html>
