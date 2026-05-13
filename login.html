@@ -2,110 +2,282 @@
 <html>
 <head>
   <title>Login - TEF System</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:30px;
+    }
+
+    .box{
+      max-width:400px;
+      margin:auto;
+      background:white;
+      padding:25px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    input,
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      box-sizing:border-box;
+    }
+
+    button{
+      background:#007bff;
+      color:white;
+      border:none;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+  </style>
+
 </head>
+
 <body>
+
+<div class="box">
 
 <h2>Login</h2>
 
-<input id="id" placeholder="User ID">
-<input id="pin" type="password" placeholder="PIN">
+<input
+  id="id"
+  placeholder="User ID"
+>
 
-<button onclick="login()">Login</button>
+<input
+  id="pin"
+  type="password"
+  placeholder="PIN"
+>
+
+<button onclick="login()">
+  Login
+</button>
+
+</div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  enableNotifications
+}
+from "./enable-notifications.js";
 
 const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
+
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+
+  authDomain:"tyneceploh.firebaseapp.com",
+
+  projectId:"tyneceploh",
+
+  messagingSenderId:"YOUR_SENDER_ID",
+
+  appId:"YOUR_APP_ID"
+
 });
 
 const db = getFirestore(app);
 
+//
+// LOGIN
+//
 window.login = async function(){
 
-  const idInput = document.getElementById("id").value.trim().toUpperCase();
-  const pinInput = document.getElementById("pin").value.trim();
+  const idInput =
+    document.getElementById("id")
+    .value
+    .trim()
+    .toUpperCase();
+
+  const pinInput =
+    document.getElementById("pin")
+    .value
+    .trim();
 
   if(!idInput || !pinInput){
+
     alert("Enter ID and PIN");
+
     return;
+
   }
 
-  // Note: For large databases, use a Firestore query instead of fetching all docs
-  const snap = await getDocs(collection(db, "users"));
+  try{
 
-  let found = null;
+    const snap =
+      await getDocs(collection(db,"users"));
 
-  snap.forEach(d => {
-    const u = d.data();
+    let found = null;
 
-    // Check matching ID and PIN (Plaintext)
-    if(u.userId === idInput && u.pin === pinInput){
-      found = {
-        id: u.userId,         // Mapping userId to 'id' for use in other pages
-        userId: u.userId,
-        name: u.name || "",
-        role: (u.role || "").toLowerCase(),
-        class: u.class || "",
-        classes: u.classes || [],
-        status: u.status || ""
-      };
+    snap.forEach(d=>{
+
+      const u = d.data();
+
+      //
+      // CHECK LOGIN
+      //
+      if(
+        u.userId === idInput &&
+        u.pin === pinInput
+      ){
+
+        found = {
+
+          //
+          // IMPORTANT
+          //
+          docId: d.id,
+
+          id: u.userId,
+
+          userId: u.userId,
+
+          name: u.name || "",
+
+          role:
+            (u.role || "")
+            .toLowerCase(),
+
+          class: u.class || "",
+
+          classes: u.classes || [],
+
+          status: u.status || ""
+
+        };
+
+      }
+
+    });
+
+    //
+    // INVALID
+    //
+    if(!found){
+
+      alert("Invalid ID or PIN");
+
+      return;
+
     }
-  });
 
-  if(!found){
-    alert("Invalid ID or PIN");
-    return;
+    //
+    // STATUS CHECK
+    //
+    if(
+      found.role !== "student" &&
+      found.status !== "active"
+    ){
+
+      alert(
+        "Account restricted."
+      );
+
+      return;
+
+    }
+
+    //
+    // SAVE SESSION
+    //
+    localStorage.setItem(
+      "user",
+      JSON.stringify(found)
+    );
+
+    //
+    // ENABLE PUSH NOTIFICATIONS
+    //
+    await enableNotifications(found);
+
+    console.log(
+      "Logged in as:",
+      found.role
+    );
+
+    //
+    // ROUTING
+    //
+    switch(found.role){
+
+      case "admin":
+
+        location.href =
+          "admin-dashboard.html";
+
+        break;
+
+      case "teacher":
+
+        location.href =
+          "teacher-dashboard.html";
+
+        break;
+
+      case "student":
+
+        location.href =
+          "student-dashboard.html";
+
+        break;
+
+      case "janitor":
+
+        location.href =
+          "janitor-dashboard.html";
+
+        break;
+
+      case "security":
+
+        location.href =
+          "security-dashboard.html";
+
+        break;
+
+      case "coordinator":
+
+        location.href =
+          "coordinator-dashboard.html";
+
+        break;
+
+      default:
+
+        location.href = "index.html";
+
+    }
+
+  }catch(err){
+
+    console.error(err);
+
+    alert("Login failed");
+
   }
 
-  // --- 🚀 STATUS LOGIC UPDATE ---
-  // If the user is NOT a student, they MUST be "active" to log in.
-  // If the user IS a student, we ignore the status (New/Old) and let them in.
-  if(found.role !== "student" && found.status !== "active"){
-    alert("Account restricted. Please contact administration.");
-    return;
-  }
-
-  // Save the user object to localStorage for session management
-  localStorage.setItem("user", JSON.stringify(found));
-
-  console.log("✅ Logged in successfully as:", found.role);
-
-  // --- 🚀 ROLE ROUTING ---
-  switch(found.role){
-    case "admin":
-      location.href = "admin-dashboard.html";
-      break;
-
-    case "teacher":
-      location.href = "teacher-dashboard.html";
-      break;
-
-    case "student":
-      location.href = "student-dashboard.html";
-      break;
-
-    case "janitor":
-      location.href = "janitor-dashboard.html";
-      break;
-
-    case "security":
-      location.href = "security-dashboard.html";
-      break;
-
-    case "coordinator":
-      location.href = "coordinator-dashboard.html";
-      break;
-
-    default:
-      alert("Role not recognized. Redirecting to home.");
-      location.href = "index.html";
-  }
 };
 
 </script>
