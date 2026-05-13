@@ -2,68 +2,144 @@
 <html>
 <head>
   <title>TEF Honor Board</title>
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    :root{
+      --bg:#f4f4f4;
+      --card:#ffffff;
+      --text:#222;
+      --muted:#666;
+      --green:#27ae60;
+      --blue:#2980b9;
+      --purple:#8e44ad;
+      --shadow:0 8px 20px rgba(0,0,0,0.08);
+      --radius:14px;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
 
     body{
+      margin:0;
       font-family:sans-serif;
-      background:#f4f4f4;
+      background:var(--bg);
+      color:var(--text);
       padding:20px;
     }
 
-    .box{
+    .container{
       max-width:1000px;
       margin:auto;
     }
 
-    .top{
-      background:white;
-      padding:20px;
-      border-radius:12px;
+    .header{
+      background:linear-gradient(135deg,#800000,#ff4d6d);
+      color:white;
+      padding:25px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       margin-bottom:20px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .header h2{
+      margin:0;
+      font-size:28px;
+    }
+
+    .header p{
+      margin-top:8px;
+      opacity:0.9;
+      font-size:14px;
+    }
+
+    .panel{
+      background:var(--card);
+      padding:18px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      margin-bottom:20px;
     }
 
     select{
       width:100%;
       padding:12px;
       margin-top:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
+      border-radius:10px;
+      border:1px solid #ddd;
+      outline:none;
+      transition:0.2s;
+    }
+
+    select:focus{
+      border-color:var(--blue);
+      box-shadow:0 0 0 3px rgba(41,128,185,0.15);
+    }
+
+    .board{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:15px;
     }
 
     .student{
-      background:white;
-      padding:15px;
-      margin-bottom:12px;
-      border-radius:10px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.08);
-      border-left:6px solid #27ae60;
+      background:var(--card);
+      padding:16px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border-left:6px solid var(--green);
+      transition:0.2s;
+    }
+
+    .student:hover{
+      transform:translateY(-3px);
+    }
+
+    .name{
+      font-size:18px;
+      font-weight:bold;
+      margin-bottom:8px;
+    }
+
+    .meta{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:10px;
+    }
+
+    .avg{
+      font-size:16px;
+      font-weight:bold;
+      margin-bottom:10px;
     }
 
     .badge{
       display:inline-block;
-      padding:5px 12px;
+      padding:6px 12px;
       border-radius:20px;
-      color:white;
       font-size:12px;
       font-weight:bold;
-      margin-top:8px;
+      color:white;
     }
 
-    .proprietor{
-      background:#8e44ad;
+    .proprietor{background:var(--purple);}
+    .principal{background:var(--blue);}
+    .honor{background:var(--green);}
+
+    .empty{
+      text-align:center;
+      color:var(--muted);
+      padding:30px;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
     }
 
-    .principal{
-      background:#2980b9;
-    }
-
-    .honor{
-      background:#27ae60;
+    .loading{
+      text-align:center;
+      color:var(--muted);
+      padding:20px;
     }
 
   </style>
@@ -71,35 +147,37 @@
 
 <body>
 
-<div class="box">
+<div class="container">
 
-  <div class="top">
-
+  <div class="header">
     <h2>TEF Honor Board</h2>
+    <p>Top performers, academic excellence, and recognition lists</p>
+  </div>
 
-    <label>Available Honor Lists</label>
+  <div class="panel">
 
-    <select id="datasetBox"
-            onchange="loadBoard()">
+    <label>Select Honor Dataset</label>
+
+    <select id="datasetBox" onchange="loadBoard()">
+      <option>Loading...</option>
     </select>
 
   </div>
 
-  <div id="board"></div>
+  <div id="board" class="board">
+    <div class="loading">Loading honor lists...</div>
+  </div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   collection,
   getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -111,140 +189,78 @@ const db = getFirestore(app);
 
 let datasets = [];
 
-// ----------------------------------
-// LOAD AVAILABLE LISTS
-// ----------------------------------
+// LOAD LISTS
 async function loadDatasets(){
 
-  const snap =
-    await getDocs(collection(db,"honorResults"));
+  const snap = await getDocs(collection(db,"honorResults"));
 
   datasets = [];
 
   snap.forEach(d=>{
-
-    datasets.push({
-      id:d.id,
-      ...d.data()
-    });
-
+    datasets.push({id:d.id, ...d.data()});
   });
 
+  const box = document.getElementById("datasetBox");
+
   if(datasets.length === 0){
-
-    datasetBox.innerHTML =
-      `<option>No Honor Lists Yet</option>`;
-
+    box.innerHTML = `<option>No Honor Lists</option>`;
+    document.getElementById("board").innerHTML =
+      `<div class="empty">No data available yet.</div>`;
     return;
   }
 
-  datasetBox.innerHTML =
-    datasets.map(d=>`
-
-      <option value="${d.id}">
-        ${d.class}
-        →
-        ${d.datasetName}
-      </option>
-
-    `).join("");
+  box.innerHTML = datasets.map(d=>`
+    <option value="${d.id}">
+      ${d.class} → ${d.datasetName}
+    </option>
+  `).join("");
 
   loadBoard();
-
 }
 
 loadDatasets();
 
-// ----------------------------------
 // LOAD BOARD
-// ----------------------------------
 window.loadBoard = function(){
 
-  const id = datasetBox.value;
+  const id = document.getElementById("datasetBox").value;
 
-  const data =
-    datasets.find(d=>d.id === id);
+  const data = datasets.find(d=>d.id === id);
 
-  if(!data) return;
+  const board = document.getElementById("board");
 
-  const board =
-    document.getElementById("board");
-
-  if(
-    !data.students
-    ||
-    data.students.length === 0
-  ){
-
-    board.innerHTML =
-      "<p>No students found</p>";
-
+  if(!data || !data.students?.length){
+    board.innerHTML = `<div class="empty">No students found</div>`;
     return;
   }
 
-  board.innerHTML = `
+  board.innerHTML = data.students.map(s=>`
 
-    <div style="
-      background:white;
-      padding:15px;
-      border-radius:10px;
-      margin-bottom:20px;
-    ">
+    <div class="student">
 
-      <h3>
-        ${data.class}
-        •
-        ${data.datasetName}
-      </h3>
+      <div class="name">${s.studentName}</div>
 
-      Generated:
-      ${
-        new Date(
-          data.generatedAt
-        ).toLocaleString()
-      }
+      <div class="meta">
+        ID: ${s.studentId}
+      </div>
+
+      <div class="avg">
+        Average: ${s.average}%
+      </div>
+
+      <div class="badge ${
+        s.category === "Proprietor"
+          ? "proprietor"
+          : s.category === "Principal"
+          ? "principal"
+          : "honor"
+      }">
+        ${s.category} List
+      </div>
 
     </div>
 
-    ${data.students.map(s=>`
-
-      <div class="student">
-
-        <h3>
-          ${s.studentName}
-        </h3>
-
-        Student ID:
-        ${s.studentId}
-        <br><br>
-
-        Average:
-        <b>${s.average}%</b>
-
-        <br>
-
-        <span class="
-          badge
-          ${
-            s.category === "Proprietor"
-            ? "proprietor"
-            :
-            s.category === "Principal"
-            ? "principal"
-            :
-            "honor"
-          }
-        ">
-
-          ${s.category} List
-
-        </span>
-
-      </div>
-
-    `).join("")}
-
-  `;
+  `).join("");
 
 };
 
