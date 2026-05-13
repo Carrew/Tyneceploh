@@ -1,76 +1,183 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Dashboard - TEF</title>
+  <title>Admin Control Center - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
+
+    :root{
+      --bg:#07070b;
+      --panel:#11111a;
+      --panel2:#0e0e15;
+      --accent:#ff4d6d;
+      --text:#ffffff;
+      --muted:rgba(255,255,255,0.6);
+      --border:rgba(255,255,255,0.08);
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:system-ui;
     }
 
-    header {
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    body{
+      background:var(--bg);
+      color:var(--text);
+      display:flex;
+      height:100vh;
+      overflow:hidden;
     }
 
-    h1 {
-      margin: 0;
-      color: var(--pink);
+    /* SIDEBAR */
+    .sidebar{
+      width:260px;
+      background:linear-gradient(180deg,#0d0d14,#07070b);
+      border-right:1px solid var(--border);
+      padding:20px;
     }
 
-    .welcome {
-      opacity: 0.8;
-      margin-top: 5px;
+    .brand{
+      font-size:18px;
+      font-weight:bold;
+      color:var(--accent);
+      margin-bottom:25px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      padding: 15px;
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
-    .card {
-      background: var(--card);
-      padding: 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: 0.2s;
-      border-left: 3px solid var(--pink);
+    .nav button{
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:10px;
+      border-radius:10px;
+      text-align:left;
+      cursor:pointer;
+      transition:.2s;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      background: rgba(255,255,255,0.09);
+    .nav button:hover{
+      background:var(--panel);
+      border-color:var(--accent);
+      transform:translateX(3px);
     }
 
-    .section-title {
-      padding: 10px 15px;
-      font-size: 14px;
-      opacity: 0.8;
+    /* MAIN */
+    .main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      overflow:auto;
     }
 
-    button.logout {
-      width: 90%;
-      margin: 20px auto;
-      display: block;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #222;
-      color: white;
+    /* TOP BAR */
+    .topbar{
+      padding:20px;
+      background:var(--panel2);
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
+
+    .userbox{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .userbox img{
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid var(--accent);
+    }
+
+    .muted{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* STATS */
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:12px;
+      padding:20px;
+    }
+
+    .stat{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:15px;
+      border-radius:12px;
+    }
+
+    .stat b{
+      color:var(--accent);
+      font-size:13px;
+    }
+
+    .stat h2{
+      margin-top:8px;
+      font-size:20px;
+    }
+
+    /* MODULES */
+    .section{
+      padding:0 20px 20px;
+    }
+
+    .section h3{
+      margin:15px 0;
+      font-size:14px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:1px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:12px;
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:15px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    .card:hover{
+      border-color:var(--accent);
+      transform:translateY(-3px);
+    }
+
+    .logout{
+      margin:20px;
+      padding:12px;
+      background:#1b1b25;
+      border:1px solid var(--border);
+      color:white;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .logout:hover{
+      border-color:var(--accent);
+    }
+
   </style>
 </head>
 
@@ -82,77 +189,114 @@ const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
-
-// simple image cache system
-const imageCache = {
-  get(key){ return localStorage.getItem("img_" + key); },
-  set(key, value){ localStorage.setItem("img_" + key, value); }
-};
 </script>
 
-<header>
-  <h1>Admin Control Center</h1>
-  <div class="welcome">Welcome, <b id="name"></b></div>
-</header>
+<!-- SIDEBAR -->
+<div class="sidebar">
 
-<div class="section-title">User Management</div>
-<div class="grid">
+  <div class="brand">TEF ADMIN</div>
 
-  <div class="card" onclick="go('admin-create-student.html')">👨‍🎓 Students</div>
-  <div class="card" onclick="go('admin-create-teacher.html')">👨‍🏫 Teachers</div>
-  <div class="card" onclick="go('admin-create-admin.html')">🧑‍💼 Admins</div>
+  <div class="nav">
 
-</div>
+    <button onclick="go('admin-create-student.html')">Students</button>
+    <button onclick="go('admin-create-teacher.html')">Teachers</button>
+    <button onclick="go('admin-results.html')">Results</button>
+    <button onclick="go('admin-attendance-analytics.html')">Analytics</button>
+    <button onclick="go('admin-announcements.html')">Announcements</button>
+    <button onclick="go('admin-financials.html')">Finance</button>
+    <button onclick="go('admin-qr-manager.html')">QR System</button>
 
-<div class="section-title">Staff Management</div>
-<div class="grid">
-
-  <div class="card" onclick="go('admin-create-janitor.html')">🧹 Janitors</div>
-  <div class="card" onclick="go('admin-create-security.html')">🛡️ Security</div>
-  <div class="card" onclick="go('admin-create-coordinator.html')">📋 Coordinators</div>
+  </div>
 
 </div>
 
-<div class="section-title">Academic Control</div>
-<div class="grid">
+<!-- MAIN -->
+<div class="main">
 
-  <div class="card" onclick="go('admin-grade-approval.html')">📊 Grade Approval</div>
-  <div class="card" onclick="go('admin-results.html')">🏆 Results</div>
-  <div class="card" onclick="go('honor-board.html')">🎖 Honor Board</div>
+  <!-- TOP BAR -->
+  <div class="topbar">
+
+    <div>
+      <b>Control Room</b><br>
+      <span class="muted">System overview & management</span>
+    </div>
+
+    <div class="userbox">
+
+      <div>
+        <b id="name"></b><br>
+        <span class="muted">Administrator</span>
+      </div>
+
+      <img id="photo">
+
+    </div>
+
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+
+    <div class="stat">
+      <b>Total Students</b>
+      <h2>--</h2>
+    </div>
+
+    <div class="stat">
+      <b>Total Teachers</b>
+      <h2>--</h2>
+    </div>
+
+    <div class="stat">
+      <b>Pending Grades</b>
+      <h2>--</h2>
+    </div>
+
+    <div class="stat">
+      <b>System Status</b>
+      <h2>Active</h2>
+    </div>
+
+  </div>
+
+  <!-- MODULES -->
+  <div class="section">
+
+    <h3>Quick Actions</h3>
+
+    <div class="grid">
+
+      <div class="card" onclick="go('admin-create-admin.html')">
+        Create Admin
+      </div>
+
+      <div class="card" onclick="go('admin-grade-approval.html')">
+        Approve Grades
+      </div>
+
+      <div class="card" onclick="go('attendance-settings.html')">
+        Attendance Settings
+      </div>
+
+      <div class="card" onclick="go('users-announcement.html')">
+        Broadcast Message
+      </div>
+
+    </div>
+
+  </div>
+
+  <button class="logout" onclick="logout()">Logout</button>
 
 </div>
-
-<div class="section-title">Operations</div>
-<div class="grid">
-
-  <div class="card" onclick="go('admin-attendance-analytics.html')">📈 Attendance Analytics</div>
-  <div class="card" onclick="go('admin-view-attendance.html')">🧾 View Attendance</div>
-  <div class="card" onclick="go('admin-qr-manager.html')">📱 QR Manager</div>
-
-</div>
-
-<div class="section-title">System Tools</div>
-<div class="grid">
-
-  <div class="card" onclick="go('admin-announcements.html')">📢 Announcements</div>
-  <div class="card" onclick="go('admin-financials.html')">💰 Financials</div>
-  <div class="card" onclick="go('admin-calender.html')">📅 Calendar</div>
-  <div class="card" onclick="go('attendance-settings.html')">⚙️ Attendance Settings</div>
-
-</div>
-
-<div class="section-title">Communication</div>
-<div class="grid">
-
-  <div class="card" onclick="go('users-announcement.html')">📣 User Broadcasts</div>
-  <div class="card" onclick="go('notifications-engine.js')">🔔 Notifications Engine</div>
-
-</div>
-
-<button class="logout" onclick="logout()">Logout</button>
 
 <script>
-document.getElementById("name").innerText = user.name;
+
+document.getElementById("name").innerText =
+user.name || "Admin";
+
+document.getElementById("photo").src =
+user.photoURL || "https://via.placeholder.com/100";
 
 function go(page){
   location.href = page;
@@ -162,6 +306,7 @@ function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
+
 </script>
 
 </body>
