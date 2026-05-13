@@ -1,205 +1,565 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
   <title>Student Dashboard - TEF</title>
 
+  <meta name="viewport"
+  content="width=device-width, initial-scale=1.0">
+
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
+
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.05);
+      --glass:rgba(255,255,255,0.04);
+      --border:rgba(255,255,255,0.08);
+      --text:#fff;
+      --shadow:0 15px 40px rgba(0,0,0,0.45);
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:system-ui,sans-serif;
     }
 
-    header {
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    body{
+      background:
+      radial-gradient(circle at top left,#240012,var(--bg));
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
     }
 
-    h1 {
-      margin: 0;
-      color: var(--pink);
+    body::before{
+      content:"";
+      position:fixed;
+      width:320px;
+      height:320px;
+      background:var(--maroon);
+      filter:blur(120px);
+      opacity:.25;
+      top:-100px;
+      left:-100px;
+      z-index:-1;
     }
 
-    .sub {
-      opacity: 0.8;
-      margin-top: 5px;
+    body::after{
+      content:"";
+      position:fixed;
+      width:320px;
+      height:320px;
+      background:var(--pink);
+      filter:blur(120px);
+      opacity:.15;
+      bottom:-100px;
+      right:-100px;
+      z-index:-1;
     }
 
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 15px;
-      margin: 10px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 12px;
+    header{
+      padding:28px 20px;
+      text-align:center;
+      background:
+      linear-gradient(135deg,var(--maroon),#150008);
+      box-shadow:var(--shadow);
     }
 
-    .profile img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #222;
+    header h1{
+      color:var(--pink);
+      font-size:30px;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 10px;
+    .sub{
+      margin-top:6px;
+      opacity:.75;
+      font-size:14px;
     }
 
-    .stat {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
+    .profile-panel{
+      margin:18px;
+      padding:22px;
+      border-radius:24px;
+      background:var(--glass);
+      backdrop-filter:blur(14px);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
     }
 
-    .section-title {
-      padding: 10px 15px;
-      font-size: 13px;
-      opacity: 0.8;
+    .profile-top{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      margin-bottom:22px;
+      flex-wrap:wrap;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      padding: 15px;
+    .profile-top img{
+      width:95px;
+      height:95px;
+      border-radius:50%;
+      object-fit:cover;
+      border:3px solid var(--pink);
+      background:#222;
     }
 
-    .card {
-      background: var(--card);
-      padding: 14px;
-      border-radius: 12px;
-      border-left: 3px solid var(--pink);
-      cursor: pointer;
-      transition: 0.2s;
+    .profile-main h2{
+      font-size:24px;
+      margin-bottom:8px;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      background: rgba(255,255,255,0.09);
+    .role-badge{
+      display:inline-block;
+      padding:6px 14px;
+      border-radius:999px;
+      background:
+      linear-gradient(135deg,var(--maroon),#b00055);
+      font-size:12px;
+      margin-bottom:8px;
     }
 
-    .logout {
-      width: 90%;
-      margin: 20px auto;
-      display: block;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #222;
-      color: white;
+    .small-id{
+      opacity:.7;
+      font-size:14px;
     }
+
+    .info-grid{
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(180px,1fr));
+      gap:14px;
+    }
+
+    .info-card{
+      background:var(--card);
+      border-radius:18px;
+      padding:16px;
+      border:1px solid var(--border);
+      transition:.25s;
+      backdrop-filter:blur(10px);
+    }
+
+    .info-card:hover{
+      transform:translateY(-4px);
+      background:rgba(255,255,255,0.07);
+    }
+
+    .info-label{
+      font-size:11px;
+      opacity:.6;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      margin-bottom:8px;
+    }
+
+    .info-value{
+      font-size:15px;
+      line-height:1.4;
+      word-break:break-word;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(130px,1fr));
+      gap:14px;
+      padding:0 18px;
+    }
+
+    .stat{
+      background:var(--card);
+      border-radius:18px;
+      padding:18px;
+      text-align:center;
+      border:1px solid var(--border);
+      backdrop-filter:blur(12px);
+      transition:.25s;
+    }
+
+    .stat:hover{
+      transform:translateY(-4px);
+    }
+
+    .stat b{
+      color:var(--pink);
+      font-size:14px;
+    }
+
+    .stat-number{
+      margin-top:10px;
+      font-size:22px;
+      font-weight:bold;
+    }
+
+    .section-title{
+      padding:26px 20px 12px;
+      opacity:.7;
+      font-size:13px;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .class-box{
+      margin:18px;
+      padding:18px;
+      border-radius:20px;
+      background:var(--glass);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+    }
+
+    .class-pill{
+      display:inline-block;
+      margin-top:12px;
+      background:
+      linear-gradient(135deg,var(--maroon),#b00055);
+      padding:10px 16px;
+      border-radius:999px;
+      font-size:14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(170px,1fr));
+      gap:14px;
+      padding:0 18px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:18px;
+      padding:20px;
+      cursor:pointer;
+      border:1px solid var(--border);
+      transition:.25s;
+      backdrop-filter:blur(10px);
+      box-shadow:var(--shadow);
+    }
+
+    .card:hover{
+      transform:translateY(-5px) scale(1.02);
+      background:rgba(255,255,255,0.08);
+    }
+
+    .card-title{
+      font-size:15px;
+      font-weight:600;
+    }
+
+    .logout{
+      width:90%;
+      margin:30px auto;
+      display:block;
+      padding:15px;
+      border:none;
+      border-radius:16px;
+      background:#1c1c22;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+      transition:.25s;
+    }
+
+    .logout:hover{
+      transform:translateY(-2px);
+      background:#292930;
+    }
+
   </style>
 </head>
 
 <body>
 
 <script>
-const user = JSON.parse(localStorage.getItem("user"));
+
+const user =
+JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "student"){
   location.href = "login.html";
 }
 
-// image cache system
-const imageCache = {
-  get(key){ return localStorage.getItem("img_" + key); },
-  set(key, value){ localStorage.setItem("img_" + key, value); }
-};
 </script>
 
 <header>
-  <h1>Student Learning Hub</h1>
-  <div class="sub">Everything you need in one place</div>
+
+  <h1>
+    Student Learning Hub
+  </h1>
+
+  <div class="sub">
+    Everything you need in one place
+  </div>
+
 </header>
 
-<div class="profile">
-  <img id="photo" />
-  <div>
-    <b id="name"></b><br>
-    <span id="id"></span>
+<!-- PROFILE -->
+
+<div class="profile-panel">
+
+  <div class="profile-top">
+
+    <img id="photo">
+
+    <div class="profile-main">
+
+      <h2 id="name"></h2>
+
+      <div class="role-badge"
+      id="roleBadge">
+      </div>
+
+      <div class="small-id"
+      id="studentId"></div>
+
+    </div>
+
   </div>
+
+  <div class="info-grid"
+  id="infoGrid"></div>
+
 </div>
+
+<!-- STATS -->
 
 <div class="stats">
+
   <div class="stat">
-    <b>Assignments</b><br>
-    --
+    <b>Class</b>
+
+    <div class="stat-number"
+    id="classText">
+      --
+    </div>
   </div>
+
   <div class="stat">
-    <b>Results</b><br>
-    --
+    <b>Results</b>
+
+    <div class="stat-number">
+      --
+    </div>
   </div>
+
   <div class="stat">
-    <b>Attendance</b><br>
-    --
+    <b>Attendance</b>
+
+    <div class="stat-number">
+      --
+    </div>
   </div>
+
 </div>
 
-<div class="section-title">Academics</div>
+<!-- CLASS -->
+
+<div class="section-title">
+  Academic Class
+</div>
+
+<div class="class-box">
+
+  <div id="classContainer"></div>
+
+</div>
+
+<!-- ACADEMICS -->
+
+<div class="section-title">
+  Academics
+</div>
 
 <div class="grid">
-  <div class="card" onclick="go('student-assignments.html')">📝 Assignments</div>
-  <div class="card" onclick="go('student-results.html')">📊 Results</div>
-  <div class="card" onclick="go('student-quiz.html')">🧠 Quizzes</div>
+
+  <div class="card"
+  onclick="go('student-assignments.html')">
+    <div class="card-title">
+      📝 Assignments
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('student-results.html')">
+    <div class="card-title">
+      📊 Results
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('student-quiz.html')">
+    <div class="card-title">
+      🧠 Quizzes
+    </div>
+  </div>
+
 </div>
 
-<div class="section-title">Learning Tools</div>
+<!-- LEARNING -->
+
+<div class="section-title">
+  Learning Tools
+</div>
 
 <div class="grid">
-  <div class="card" onclick="go('student-notes.html')">📚 Notes</div>
-  <div class="card" onclick="go('student-attendance.html')">📌 Attendance</div>
-  <div class="card" onclick="go('student-financials.html')">💰 Financials</div>
+
+  <div class="card"
+  onclick="go('student-notes.html')">
+    <div class="card-title">
+      📚 Notes
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('student-attendance.html')">
+    <div class="card-title">
+      📌 Attendance
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('student-financials.html')">
+    <div class="card-title">
+      💰 Financials
+    </div>
+  </div>
+
 </div>
 
-<div class="section-title">School System</div>
+<!-- SYSTEM -->
+
+<div class="section-title">
+  School System
+</div>
 
 <div class="grid">
-  <div class="card" onclick="go('calender.html')">📅 Calendar</div>
-  <div class="card" onclick="go('users-announcement.html')">📢 Announcements</div>
+
+  <div class="card"
+  onclick="go('calender.html')">
+    <div class="card-title">
+      📅 Calendar
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('users-announcement.html')">
+    <div class="card-title">
+      📢 Announcements
+    </div>
+  </div>
+
 </div>
 
-<button class="logout" onclick="logout()">Logout</button>
+<button class="logout"
+onclick="logout()">
+  Logout
+</button>
 
 <script>
-document.getElementById("name").innerText = user.name;
-document.getElementById("id").innerText = user.userId || "";
 
-// IMAGE CACHE
-const cachedImg = localStorage.getItem("img_" + user.userId);
+// PROFILE
 
-if(cachedImg){
-  document.getElementById("photo").src = cachedImg;
-} else if(user.photoURL){
-  document.getElementById("photo").src = user.photoURL;
-  localStorage.setItem("img_" + user.userId, user.photoURL);
-} else {
-  document.getElementById("photo").src = "https://via.placeholder.com/60";
-}
+document.getElementById("name").innerText =
+user.name || "Student";
+
+document.getElementById("studentId").innerText =
+user.userId || "";
+
+document.getElementById("roleBadge").innerText =
+(user.role || "student").toUpperCase();
+
+document.getElementById("photo").src =
+user.photoURL ||
+"https://via.placeholder.com/100";
+
+// HIDE UNNECESSARY FIELDS
+
+const ignored = [
+  "pin",
+  "photoURL",
+  "role"
+];
+
+const infoGrid =
+document.getElementById("infoGrid");
+
+// AUTO GENERATE CARDS
+
+Object.keys(user).forEach(key => {
+
+  if(
+    ignored.includes(key)
+    || !user[key]
+    || Array.isArray(user[key])
+  ){
+    return;
+  }
+
+  const label =
+  key
+  .replace(/([A-Z])/g," $1")
+  .replace(/^./,str => str.toUpperCase());
+
+  const card =
+  document.createElement("div");
+
+  card.className = "info-card";
+
+  card.innerHTML = `
+    <div class="info-label">
+      ${label}
+    </div>
+
+    <div class="info-value">
+      ${user[key]}
+    </div>
+  `;
+
+  infoGrid.appendChild(card);
+
+});
+
+// CLASS DISPLAY
+
+const studentClass =
+user.class ||
+user.studentClass ||
+user.grade ||
+"Not Assigned";
+
+document.getElementById("classText").innerText =
+studentClass;
+
+document.getElementById("classContainer").innerHTML =
+`
+<div class="class-pill">
+  📘 ${studentClass}
+</div>
+`;
+
+// NAVIGATION
 
 function go(page){
   location.href = page;
 }
 
+// LOGOUT
+
 function logout(){
+
   localStorage.removeItem("user");
+
   location.href = "login.html";
+
 }
+
 </script>
 
 </body>
 </html>
+```
