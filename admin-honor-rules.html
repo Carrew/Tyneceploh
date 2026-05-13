@@ -5,80 +5,140 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --text:#fff;
+      --green:#27ae60;
+      --red:#c0392b;
     }
 
-    .box{
-      max-width:700px;
-      margin:auto;
-      background:white;
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:radial-gradient(circle at top,#1a0010,var(--bg));
+      color:white;
       padding:20px;
-      border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
 
     h2{
       text-align:center;
+      color:var(--pink);
+      margin-bottom:20px;
+      letter-spacing:1px;
+    }
+
+    .box{
+      max-width:750px;
+      margin:auto;
+      background:var(--card);
+      backdrop-filter:blur(10px);
+      padding:20px;
+      border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+      border:1px solid rgba(255,255,255,0.08);
+    }
+
+    .rule-box{
+      margin-top:10px;
+      background:rgba(255,255,255,0.04);
+      padding:15px;
+      border-radius:14px;
+      border-left:4px solid var(--pink);
+    }
+
+    h3{
+      margin-top:0;
+      color:var(--pink);
     }
 
     .row{
-      display:flex;
+      display:grid;
+      grid-template-columns:1fr 1fr;
       gap:10px;
       margin-bottom:10px;
     }
 
     input{
-      flex:1;
-      padding:10px;
-      border:1px solid #ccc;
-      border-radius:6px;
+      padding:12px;
+      border-radius:10px;
+      border:none;
+      outline:none;
+      background:rgba(255,255,255,0.08);
+      color:white;
+      transition:0.3s;
+    }
+
+    input:focus{
+      box-shadow:0 0 0 2px var(--pink);
+      background:rgba(255,255,255,0.12);
     }
 
     button{
       width:100%;
-      padding:10px;
-      margin-top:10px;
+      padding:12px;
+      margin-top:12px;
       border:none;
-      border-radius:6px;
-      background:#27ae60;
-      color:white;
-      font-weight:bold;
+      border-radius:12px;
       cursor:pointer;
+      font-weight:bold;
+      color:white;
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
+      transition:0.3s;
     }
 
-    .rule-box{
-      margin-top:20px;
-      background:#fafafa;
-      padding:10px;
-      border-radius:8px;
-      border:1px solid #ddd;
+    button:hover{
+      transform:translateY(-2px);
+    }
+
+    button:active{
+      transform:scale(0.98);
     }
 
     .msg{
-      margin-top:10px;
-      padding:10px;
-      border-radius:6px;
+      margin-top:15px;
+      padding:12px;
+      border-radius:10px;
       font-size:14px;
+      text-align:center;
     }
 
-    .ok{ background:#d4edda; color:#155724; }
-    .bad{ background:#f8d7da; color:#721c24; }
+    .ok{
+      background:rgba(39,174,96,0.2);
+      border:1px solid var(--green);
+      color:#b8f5c9;
+    }
+
+    .bad{
+      background:rgba(192,57,43,0.2);
+      border:1px solid var(--red);
+      color:#ffb3b3;
+    }
+
+    .hint{
+      font-size:12px;
+      opacity:0.7;
+      margin-top:6px;
+    }
 
   </style>
 </head>
 
 <body>
 
-<h2>Honor Rules Admin Panel</h2>
+<h2>Honor Rules Control Panel</h2>
 
 <div class="box">
 
   <div class="rule-box">
 
-    <h3>Score Bands</h3>
+    <h3>Score Bands Configuration</h3>
+
+    <div class="hint">
+      Define academic performance ranges for classification
+    </div>
 
     <div class="row">
       <input id="propMin" placeholder="Proprietor Min (e.g 90)">
@@ -99,11 +159,11 @@
 
   <button onclick="saveRules()">Save Rules</button>
 
+  <button onclick="loadRules()" style="opacity:0.9; margin-top:8px;">
+    Load Current Rules
+  </button>
+
   <div id="msg"></div>
-
-  <hr>
-
-  <button onclick="loadRules()">Load Current Rules</button>
 
 </div>
 
@@ -127,54 +187,34 @@ const db = getFirestore(app);
 
 const msg = document.getElementById("msg");
 
-// -------------------------
 // SAVE RULES
-// -------------------------
 window.saveRules = async function(){
 
   const rules = {
     bands:[
-      {
-        name:"Proprietor",
-        min:Number(propMin.value),
-        max:Number(propMax.value)
-      },
-      {
-        name:"Principal",
-        min:Number(prinMin.value),
-        max:Number(prinMax.value)
-      },
-      {
-        name:"Honor",
-        min:Number(honMin.value),
-        max:Number(honMax.value)
-      }
+      { name:"Proprietor", min:Number(propMin.value), max:Number(propMax.value) },
+      { name:"Principal", min:Number(prinMin.value), max:Number(prinMax.value) },
+      { name:"Honor", min:Number(honMin.value), max:Number(honMax.value) }
     ],
     updatedAt:Date.now()
   };
 
-  if(
-    isNaN(rules.bands[0].min) ||
-    isNaN(rules.bands[0].max)
-  ){
-    return show("Invalid values", "bad");
+  if(isNaN(rules.bands[0].min) || isNaN(rules.bands[0].max)){
+    return show("Fix invalid numbers first", "bad");
   }
 
   await setDoc(doc(db,"honorRules","main"),rules);
 
   show("Rules saved successfully", "ok");
-
 };
 
-// -------------------------
 // LOAD RULES
-// -------------------------
 window.loadRules = async function(){
 
   const snap = await getDoc(doc(db,"honorRules","main"));
 
   if(!snap.exists()){
-    return show("No rules found", "bad");
+    return show("No rules found yet", "bad");
   }
 
   const r = snap.data();
@@ -189,10 +229,8 @@ window.loadRules = async function(){
   honMax.value = r.bands[2].max;
 
   show("Rules loaded", "ok");
-
 };
 
-// -------------------------
 function show(text,type){
   msg.className = "msg " + type;
   msg.textContent = text;
