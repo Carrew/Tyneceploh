@@ -2,103 +2,188 @@
 <html>
 <head>
   <title>My Lessons - TEF</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
-    .lesson-card { 
-      background: white; 
-      border: 1px solid #ddd; 
-      border-radius: 8px; 
-      padding: 20px; 
-      margin-bottom: 20px; 
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    body{
+      font-family:sans-serif;
+      padding:20px;
+      background:#f4f6f9;
+      margin:0;
     }
-    .lesson-header { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 15px; }
-    .lesson-content { 
-      white-space: pre-wrap; /* Keeps line breaks from the teacher's textarea */
-      line-height: 1.6;
-      color: #333;
+
+    h2{
+      text-align:center;
+      margin-bottom:20px;
     }
-    .meta { font-size: 0.85em; color: #666; }
+
+    .container{
+      max-width:900px;
+      margin:auto;
+    }
+
+    .lesson-card{
+      background:white;
+      border-radius:12px;
+      padding:18px;
+      margin-bottom:16px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.06);
+      border-left:5px solid #007bff;
+    }
+
+    .lesson-header{
+      padding-bottom:10px;
+      margin-bottom:12px;
+      border-bottom:1px solid #eee;
+    }
+
+    .subject{
+      font-size:18px;
+      font-weight:bold;
+    }
+
+    .topic{
+      color:#007bff;
+      margin-top:4px;
+      display:inline-block;
+    }
+
+    .lesson-content{
+      white-space:pre-wrap;
+      line-height:1.7;
+      color:#333;
+      font-size:15px;
+    }
+
+    .meta{
+      margin-top:15px;
+      font-size:13px;
+      color:#666;
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .teacher{
+      font-weight:bold;
+      color:#2c3e50;
+    }
+
+    .empty{
+      text-align:center;
+      padding:30px;
+      color:#777;
+    }
+
+    .loading{
+      text-align:center;
+      color:#777;
+      padding:20px;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>My Classroom Lessons</h2>
+<div class="container">
 
-<div id="lessons">Loading lessons...</div>
+  <h2>My Classroom Lessons</h2>
+
+  <div id="lessons" class="loading">Loading lessons...</div>
+
+</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
-};
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
-// Verification: Redirect if session is invalid or user is not a student
 if (!user || user.role !== "student") {
-  window.location.href = "login.html";
+  location.href = "login.html";
 }
 
-async function loadLessons() {
-  try {
-    const snap = await getDocs(collection(db, "lessons"));
-    const myLessons = [];
+async function loadLessons(){
 
-    // Filter logic to match student's specific class
-    snap.forEach(d => {
+  const container = document.getElementById("lessons");
+
+  try{
+
+    const snap = await getDocs(collection(db,"lessons"));
+
+    const lessons = [];
+
+    snap.forEach(d=>{
       const data = d.data();
-      if (
+
+      if(
         data.class?.trim().toLowerCase() ===
         user.class?.trim().toLowerCase()
-      ) {
-        myLessons.push(data);
+      ){
+        lessons.push(data);
       }
     });
 
-    // Sort by newest first
-    myLessons.sort((a, b) => b.createdAt - a.createdAt);
+    lessons.sort((a,b)=>
+      (b.createdAt || 0) - (a.createdAt || 0)
+    );
 
-    render(myLessons);
-  } catch (error) {
-    console.error("Error loading lessons:", error);
-    document.getElementById("lessons").innerHTML = "Error loading lessons. Please try again.";
-  }
-}
+    if(lessons.length === 0){
+      container.innerHTML = `<div class="empty">No lessons posted yet for your class.</div>`;
+      return;
+    }
 
-function render(lessons) {
-  const container = document.getElementById("lessons");
+    container.innerHTML = lessons.map(l=>`
+      <div class="lesson-card">
 
-  if (lessons.length === 0) {
-    container.innerHTML = "<p>No lessons posted for your class yet.</p>";
-    return;
-  }
+        <div class="lesson-header">
 
-  container.innerHTML = lessons.map(l => `
-    <div class="lesson-card">
-      <div class="lesson-header">
-        <b style="font-size: 1.2em;">${l.subject}</b><br>
-        <span style="color: #007bff;">Topic: ${l.topic}</span>
+          <div class="subject">
+            ${l.subject || "No subject"}
+          </div>
+
+          <div class="topic">
+            Topic: ${l.topic || "Untitled"}
+          </div>
+
+        </div>
+
+        <div class="lesson-content">
+          ${l.content || "No content available"}
+        </div>
+
+        <div class="meta">
+
+          <div class="teacher">
+            Teacher: ${l.teacherName || "Unknown"}
+          </div>
+
+          <div>
+            ${l.createdAt
+              ? new Date(l.createdAt).toLocaleDateString()
+              : "No date"}
+          </div>
+
+        </div>
+
       </div>
-      
-      <div class="lesson-content">${l.content}</div>
-      
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-      <div class="meta">
-        Posted by: <b>Teacher ${l.teacherName || 'Unknown'}</b><br>
-        Date: ${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : 'N/A'}
-      </div>
-    </div>
-  `).join("");
+    `).join("");
+
+  }catch(err){
+    console.error(err);
+    container.innerHTML = `<div class="empty">Failed to load lessons.</div>`;
+  }
 }
 
 loadLessons();
