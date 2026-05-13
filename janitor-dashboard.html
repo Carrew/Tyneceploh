@@ -3,114 +3,159 @@
 <head>
   <title>Janitor Dashboard - TEF</title>
 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
+
+    :root{
+      --bg:#0b0b0f;
+      --panel:rgba(255,255,255,0.05);
+      --border:rgba(255,255,255,0.08);
+      --pink:#ffc0cb;
+      --text:#fff;
+      --shadow:0 15px 40px rgba(0,0,0,0.4);
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:system-ui;
     }
 
-    header {
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    body{
+      background: radial-gradient(circle at top,#1a0010,var(--bg));
+      color:var(--text);
+      min-height:100vh;
     }
 
-    h1 {
-      margin: 0;
-      color: var(--pink);
+    header{
+      padding:24px;
+      text-align:center;
+      background:linear-gradient(135deg,#800000,#1a0010);
     }
 
-    .sub {
-      opacity: 0.8;
-      margin-top: 5px;
+    header h1{
+      color:var(--pink);
     }
 
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 15px;
-      margin: 10px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 12px;
+    .sub{
+      opacity:.7;
+      margin-top:6px;
+      font-size:13px;
     }
 
-    .profile img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #222;
+    /* PROFILE */
+    .profile{
+      margin:16px;
+      padding:18px;
+      border-radius:16px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      gap:14px;
+      box-shadow:var(--shadow);
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      padding: 10px;
+    .profile img{
+      width:70px;
+      height:70px;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid var(--pink);
+      background:#222;
     }
 
-    .stat {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
+    .profile h2{
+      font-size:18px;
     }
 
-    .section-title {
-      padding: 10px 15px;
-      font-size: 13px;
-      opacity: 0.8;
+    .meta{
+      font-size:13px;
+      opacity:.7;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      padding: 15px;
+    /* STATS */
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:10px;
+      padding:0 16px;
     }
 
-    .card {
-      background: var(--card);
-      padding: 14px;
-      border-radius: 12px;
-      border-left: 3px solid var(--pink);
-      cursor: pointer;
-      transition: 0.2s;
+    .stat{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:14px;
+      border-radius:14px;
+      text-align:center;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      background: rgba(255,255,255,0.09);
+    .stat b{
+      color:var(--pink);
+      font-size:13px;
     }
 
-    .task {
-      margin: 10px 15px;
-      padding: 10px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 10px;
-      border-left: 3px solid #aaa;
+    .stat h3{
+      margin-top:8px;
     }
 
-    .logout {
-      width: 90%;
-      margin: 20px auto;
-      display: block;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #222;
-      color: white;
+    /* TASKS */
+    .section-title{
+      padding:18px 16px 8px;
+      font-size:13px;
+      opacity:.7;
+      text-transform:uppercase;
+      letter-spacing:1px;
     }
+
+    .task{
+      margin:10px 16px;
+      padding:12px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      border-left:3px solid var(--pink);
+    }
+
+    .task small{
+      opacity:.7;
+    }
+
+    /* GRID */
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:10px;
+      padding:12px 16px;
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:14px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    .card:hover{
+      border-color:var(--pink);
+      transform:translateY(-3px);
+    }
+
+    .logout{
+      width:90%;
+      margin:25px auto;
+      display:block;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background:#1b1b25;
+      color:white;
+    }
+
   </style>
 </head>
 
@@ -122,12 +167,6 @@ const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "janitor"){
   location.href = "login.html";
 }
-
-// image cache system
-const imageCache = {
-  get(key){ return localStorage.getItem("img_" + key); },
-  set(key, value){ localStorage.setItem("img_" + key, value); }
-};
 </script>
 
 <header>
@@ -135,72 +174,117 @@ const imageCache = {
   <div class="sub">Daily facility management hub</div>
 </header>
 
+<!-- PROFILE -->
 <div class="profile">
-  <img id="photo" />
+
+  <img id="photo">
+
   <div>
-    <b id="name"></b><br>
-    <span id="id"></span>
+
+    <h2 id="name"></h2>
+
+    <div class="meta">
+      ID: <span id="id"></span>
+    </div>
+
+    <div class="meta">
+      Role: <span id="role"></span>
+    </div>
+
   </div>
+
 </div>
 
+<!-- STATS -->
 <div class="stats">
+
   <div class="stat">
-    <b>Tasks</b><br>--
+    <b>Assigned Tasks</b>
+    <h3 id="tasksCount">--</h3>
   </div>
+
   <div class="stat">
-    <b>Completed</b><br>--
+    <b>Status</b>
+    <h3>Active</h3>
   </div>
+
 </div>
 
+<!-- TASKS -->
 <div class="section-title">Daily Operations</div>
 
-<div class="task">
-  🧹 Clean assigned classrooms<br>
-  <small>Check daily schedule from admin</small>
-</div>
+<div id="taskList"></div>
 
-<div class="task">
-  🚮 Waste management zones<br>
-  <small>Ensure compound cleanliness</small>
-</div>
-
-<div class="task">
-  🧽 Sanitize key areas<br>
-  <small>Focus on toilets and entry points</small>
-</div>
-
+<!-- TOOLS -->
 <div class="section-title">System Tools</div>
 
 <div class="grid">
-  <div class="card" onclick="go('staff-attendance.html')">🕒 Attendance Check</div>
-  <div class="card" onclick="go('admin-announcements.html')">📢 Announcements</div>
-  <div class="card" onclick="go('admin-calender.html')">📅 Schedule</div>
+
+  <div class="card" onclick="go('staff-attendance.html')">
+    🕒 Attendance
+  </div>
+
+  <div class="card" onclick="go('admin-announcements.html')">
+    📢 Announcements
+  </div>
+
+  <div class="card" onclick="go('admin-calender.html')">
+    📅 Schedule
+  </div>
+
 </div>
 
+<!-- SUPPORT -->
 <div class="section-title">Support</div>
 
 <div class="grid">
-  <div class="card" onclick="go('security-dashboard.html')">🛡 Security View</div>
-  <div class="card" onclick="go('admin-dashboard.html')">🏠 Admin Panel</div>
+
+  <div class="card" onclick="go('security-dashboard.html')">
+    🛡 Security
+  </div>
+
+  <div class="card" onclick="go('admin-dashboard.html')">
+    🏠 Admin
+  </div>
+
 </div>
 
 <button class="logout" onclick="logout()">Logout</button>
 
 <script>
-document.getElementById("name").innerText = user.name;
-document.getElementById("id").innerText = user.userId || "";
 
-// IMAGE CACHE
-const cachedImg = localStorage.getItem("img_" + user.userId);
+/* PROFILE */
+document.getElementById("name").innerText = user.name || "Janitor";
+document.getElementById("id").innerText = user.userId || "-";
+document.getElementById("role").innerText = (user.role || "").toUpperCase();
 
-if(cachedImg){
-  document.getElementById("photo").src = cachedImg;
-} else if(user.photoURL){
-  document.getElementById("photo").src = user.photoURL;
-  localStorage.setItem("img_" + user.userId, user.photoURL);
-} else {
-  document.getElementById("photo").src = "https://via.placeholder.com/60";
-}
+const img = user.photoURL || "https://via.placeholder.com/100";
+document.getElementById("photo").src = img;
+
+/* TASKS (REAL DATA OR DEFAULT) */
+const tasks = user.tasks || [
+  { title:"Clean assigned classrooms", desc:"Follow daily schedule" },
+  { title:"Waste management", desc:"Maintain compound cleanliness" },
+  { title:"Sanitize key areas", desc:"Focus on toilets & entry points" }
+];
+
+document.getElementById("tasksCount").innerText = tasks.length;
+
+const list = document.getElementById("taskList");
+
+tasks.forEach(t => {
+
+  const div = document.createElement("div");
+  div.className = "task";
+
+  div.innerHTML = `
+    <b>${t.title}</b><br>
+    <small>${t.desc}</small>
+  `;
+
+  list.appendChild(div);
+
+});
 
 function go(page){
   location.href = page;
@@ -210,6 +294,7 @@ function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
+
 </script>
 
 </body>
