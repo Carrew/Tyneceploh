@@ -2,27 +2,119 @@
 <html>
 <head>
   <title>Teacher Management - TEF</title>
+
+  <style>
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+      --text: #fff;
+    }
+
+    body {
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--pink);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .stat {
+      background: var(--card);
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: white;
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--maroon), var(--pink));
+      color: white;
+      cursor: pointer;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 12px;
+      border-left: 4px solid var(--pink);
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-top: 5px;
+    }
+  </style>
 </head>
 
 <body>
 
-<h2>Teacher Management (CRUD)</h2>
+<h2>👨‍🏫 Teacher Management System</h2>
 
+<div class="stats">
+  <div class="stat">Total <div id="total">0</div></div>
+  <div class="stat">Active <div id="active">0</div></div>
+  <div class="stat">Inactive <div id="inactive">0</div></div>
+</div>
+
+<input id="search" placeholder="Search teacher..." oninput="renderTeachers()">
+
+<hr>
+
+<!-- FORM -->
 <input id="name" placeholder="Teacher Name">
 <input id="classes" placeholder="Classes (e.g. JSS1, JSS2)">
+<input id="dob" placeholder="Date of Birth">
+<input id="gender" placeholder="Gender">
+<input id="contact" placeholder="Contact">
+<input id="nationality" placeholder="Nationality">
+<input id="address" placeholder="Address">
 
 <select id="status">
   <option value="active">Active</option>
   <option value="inactive">Inactive</option>
 </select>
 
+<input type="file" id="photo">
+
 <input type="hidden" id="editId">
 
 <button onclick="saveTeacher()">Save Teacher</button>
-
-<hr>
-
-<input id="search" placeholder="Search teacher..." oninput="renderTeachers()">
 
 <hr>
 
@@ -42,19 +134,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🆔 ID GENERATOR
+// safer ID
 function generateTeacherId(count) {
-  return `TCH${String(count + 1).padStart(3, "0")}`;
+  return `TCH${Date.now().toString().slice(-4)}${count}`;
 }
 
-// 🔑 PIN GENERATOR
 function generatePin() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 let teachersCache = [];
 
-// 📥 LOAD TEACHERS
 async function loadTeachers() {
   const snap = await getDocs(collection(db, "users"));
   teachersCache = [];
@@ -62,100 +152,125 @@ async function loadTeachers() {
   snap.forEach(d => {
     const data = d.data();
     if (data.role === "teacher") {
-      teachersCache.push({
-        ...data,
-        userId: data.userId,
-        docId: d.id
-      });
+      teachersCache.push({ ...data, docId: d.id });
     }
   });
 
+  updateStats();
   renderTeachers();
 }
 
-// 🎨 RENDER
+function updateStats() {
+  document.getElementById("total").innerText = teachersCache.length;
+  document.getElementById("active").innerText =
+    teachersCache.filter(t => t.status === "active").length;
+  document.getElementById("inactive").innerText =
+    teachersCache.filter(t => t.status === "inactive").length;
+}
+
+// CLOUDINARY
+async function uploadImage(file) {
+  if (!file) return "";
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "Tyneceploh");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  return data.secure_url || "";
+}
+
 window.renderTeachers = function () {
   const search = document.getElementById("search").value.toLowerCase();
-  const list = document.getElementById("list");
 
-  let filtered = teachersCache.filter(t =>
-    t.name.toLowerCase().includes(search) ||
+  const filtered = teachersCache.filter(t =>
+    (t.name || "").toLowerCase().includes(search) ||
     (t.userId || "").toLowerCase().includes(search)
   );
 
-  list.innerHTML = filtered.map(t => `
-    <div style="border:1px solid #ccc; margin:10px; padding:10px; border-radius: 8px;">
-      <b>ID: ${t.userId}</b> - ${t.name} <br>
-      Classes: <span style="color: green;">${(t.classes || []).join(", ")}</span> <br>
-      Status: <b>${t.status}</b>
+  document.getElementById("list").innerHTML = filtered.map(t => `
+    <div class="card">
+      <b>🆔 ${t.userId}</b> | ${t.name}
 
-      <br><br>
+      <div class="small">
+        Classes: ${(t.classes || []).join(", ")} <br>
+        Status: ${t.status} <br>
+        DOB: ${t.dob || "-"} <br>
+        Contact: ${t.contact || "-"} <br>
+        Nationality: ${t.nationality || "-"} <br>
+        Address: ${t.address || "-"}
+      </div>
 
-      <button onclick="editTeacher('${t.docId}', '${t.name}', '${(t.classes || []).join(", ")}', '${t.status}')">Edit</button>
+      ${t.photoURL ? `<img src="${t.photoURL}">` : ""}
+
+      <button onclick="editTeacher('${t.docId}')">Edit</button>
       <button onclick="deleteTeacher('${t.docId}')">Delete</button>
     </div>
   `).join("");
 };
 
-// 💾 SAVE (CREATE / UPDATE)
 window.saveTeacher = async function () {
-  const name = document.getElementById("name").value;
-  const classesInput = document.getElementById("classes").value;
-  const status = document.getElementById("status").value;
   const editId = document.getElementById("editId").value;
 
-  if (!name || !classesInput) {
-    alert("Fill all fields");
-    return;
-  }
+  const file = document.getElementById("photo").files[0];
+  const photoURL = await uploadImage(file);
 
-  // Convert comma-string to clean Array
-  const classesArray = classesInput.split(",").map(c => c.trim()).filter(c => c !== "");
+  const data = {
+    name: document.getElementById("name").value,
+    classes: document.getElementById("classes").value.split(",").map(c => c.trim()),
+    dob: document.getElementById("dob").value,
+    gender: document.getElementById("gender").value,
+    contact: document.getElementById("contact").value,
+    nationality: document.getElementById("nationality").value,
+    address: document.getElementById("address").value,
+    status: document.getElementById("status").value,
+    role: "teacher",
+    createdAt: Date.now()
+  };
+
+  if (photoURL) data.photoURL = photoURL;
 
   if (!editId) {
-    // CREATE
     const snap = await getDocs(collection(db, "users"));
-    const count = snap.docs.filter(d => d.data().role === "teacher").length;
-
-    const userId = generateTeacherId(count);
+    const userId = generateTeacherId(snap.docs.length);
     const pin = generatePin();
 
-    await addDoc(collection(db, "users"), {
-      userId: userId,
-      pin: pin,           // MATCHES LOGIN: Plaintext
-      name: name,
-      classes: classesArray,
-      status: status,     // lowercase "active" or "inactive"
-      role: "teacher",
-      createdAt: Date.now()
-    });
+    data.userId = userId;
+    data.pin = pin;
 
-    alert(`Teacher created!\nID: ${userId}\nPIN: ${pin}`);
+    await addDoc(collection(db, "users"), data);
+
+    alert(`Teacher Created\nID: ${userId}\nPIN: ${pin}`);
   } else {
-    // UPDATE
-    const ref = doc(db, "users", editId);
-    await updateDoc(ref, {
-      name: name,
-      classes: classesArray,
-      status: status
-    });
+    await updateDoc(doc(db, "users", editId), data);
     document.getElementById("editId").value = "";
   }
 
-  document.getElementById("name").value = "";
-  document.getElementById("classes").value = "";
   loadTeachers();
 };
 
-window.editTeacher = function (id, name, classes, status) {
+window.editTeacher = function (id) {
+  const t = teachersCache.find(x => x.docId === id);
+  if (!t) return;
+
   document.getElementById("editId").value = id;
-  document.getElementById("name").value = name;
-  document.getElementById("classes").value = classes;
-  document.getElementById("status").value = status;
+  document.getElementById("name").value = t.name || "";
+  document.getElementById("classes").value = (t.classes || []).join(", ");
+  document.getElementById("dob").value = t.dob || "";
+  document.getElementById("gender").value = t.gender || "";
+  document.getElementById("contact").value = t.contact || "";
+  document.getElementById("nationality").value = t.nationality || "";
+  document.getElementById("address").value = t.address || "";
+  document.getElementById("status").value = t.status || "active";
 };
 
 window.deleteTeacher = async function (id) {
-  if(confirm("Delete this teacher record?")) {
+  if (confirm("Delete teacher?")) {
     await deleteDoc(doc(db, "users", id));
     loadTeachers();
   }
@@ -164,5 +279,6 @@ window.deleteTeacher = async function (id) {
 loadTeachers();
 
 </script>
+
 </body>
 </html>
