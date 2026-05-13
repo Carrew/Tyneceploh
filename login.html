@@ -14,20 +14,16 @@
 
 <button onclick="login()">Login</button>
 
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  doc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
   getMessaging,
-  getToken
+  getToken,
+  isSupported
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 const app = initializeApp({
@@ -39,50 +35,61 @@ const app = initializeApp({
 });
 
 const db = getFirestore(app);
-const messaging = getMessaging(app);
 
-//
-// PUSH NOTIFICATION SETUP
-//
-async function enableNotifications(userDocId){
+let messaging = null;
+
+// safer init (prevents crashes on unsupported devices like some iOS cases)
+(async () => {
+  const supported = await isSupported();
+  if (supported) {
+    messaging = getMessaging(app);
+  }
+})();
+
+function localNotify(title, body){
+
+  if("Notification" in window){
+
+    if(Notification.permission === "granted"){
+      new Notification(title, { body });
+    }
+
+  }
+
+}
+
+// 🔥 push registration (safe across devices)
+async function registerPush(userDocId){
 
   try{
 
+    if(!messaging) return null;
+
     const permission = await Notification.requestPermission();
 
-    if(permission !== "granted") return;
+    if(permission !== "granted") return null;
 
     const token = await getToken(messaging, {
       vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
     });
 
-    if(!token) return;
+    if(!token) return null;
 
     await updateDoc(doc(db, "users", userDocId), {
       fcmToken: token,
-      notificationEnabled: true
+      notificationEnabled: true,
+      lastLogin: Date.now()
     });
 
+    return token;
+
   }catch(err){
-    console.log("Notification error:", err);
+    console.log("Push register failed:", err);
+    return null;
   }
 
 }
 
-//
-// LOCAL BROWSER NOTIFICATION
-//
-function notify(title, body){
-
-  if(Notification.permission === "granted"){
-    new Notification(title, { body });
-  }
-
-}
-
-//
-// LOGIN FUNCTION (UNCHANGED LOGIC)
-//
 window.login = async function(){
 
   const idInput = document.getElementById("id").value.trim().toUpperCase();
@@ -99,7 +106,6 @@ window.login = async function(){
   let docId = null;
 
   snap.forEach(d => {
-
     const u = d.data();
 
     if(u.userId === idInput && u.pin === pinInput){
@@ -115,7 +121,6 @@ window.login = async function(){
       };
 
       docId = d.id;
-
     }
 
   });
@@ -125,31 +130,26 @@ window.login = async function(){
     return;
   }
 
+  // access rule
   if(found.role !== "student" && found.status !== "active"){
-    alert("Account restricted. Please contact administration.");
+    alert("Account restricted. Contact admin.");
     return;
   }
 
   localStorage.setItem("user", JSON.stringify(found));
 
-  console.log("Logged in successfully:", found.role);
+  console.log("Login success:", found.role);
 
-  //
-  // ENABLE NOTIFICATIONS AFTER LOGIN
-  //
-  await enableNotifications(docId);
+  // 🔥 REGISTER PUSH SAFELY
+  await registerPush(docId);
 
-  //
-  // SELF LOGIN NOTIFICATION
-  //
-  notify(
-    "Login Successful",
-    `Welcome back ${found.name || found.userId}`
+  // 🔔 LOCAL NOTIFICATION (works everywhere)
+  localNotify(
+    "Welcome back",
+    `${found.name || found.userId} logged in successfully`
   );
 
-  //
   // ROUTING (UNCHANGED)
-  //
   switch(found.role){
 
     case "admin":
@@ -177,9 +177,7 @@ window.login = async function(){
       break;
 
     default:
-      alert("Role not recognized. Redirecting to home.");
       location.href = "index.html";
-
   }
 
 };
