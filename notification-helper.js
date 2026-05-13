@@ -8,8 +8,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /**
- * Send notification to users or roles
- * Works with your existing Firestore + FCM system
+ * SEND NOTIFICATION SYSTEM
+ * Works for:
+ * - single user (userId)
+ * - role-based (admin, teacher, etc.)
  */
 export async function sendNotification(db, payload) {
   try {
@@ -18,52 +20,100 @@ export async function sendNotification(db, payload) {
       role,
       title,
       message,
-      type = "general",
-      link = null,
-      refId = null
+      type,
+      link,
+      refId
     } = payload;
 
-    let targets = [];
-
-    // 1. Direct user notification
-    if (userId) {
-      targets.push(userId);
+    if (!title || !message) {
+      throw new Error("Notification must have title and message");
     }
 
-    // 2. Role-based notification
-    if (role) {
-      const snap = await getDocs(collection(db, "users"));
+    const baseData = {
+      title,
+      message,
+      type: type || "general",
+      link: link || null,
+      refId: refId || null,
+      read: false,
+      createdAt: Date.now(),
+      createdAtServer: serverTimestamp()
+    };
 
-      snap.forEach(doc => {
-        const u = doc.data();
-        if ((u.role || "").toLowerCase() === role) {
-          targets.push(u.userId);
+    // --------------------------------------------------
+    // CASE 1: SEND TO SINGLE USER
+    // --------------------------------------------------
+    if (userId) {
+      await addDoc(collection(db, "notifications"), {
+        ...baseData,
+        userId
+      });
+
+      return true;
+    }
+
+    // --------------------------------------------------
+    // CASE 2: SEND TO ROLE (admin, teacher, etc.)
+    // --------------------------------------------------
+    if (role) {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("role", "==", role));
+      const snap = await getDocs(q);
+
+      const promises = [];
+
+      snap.forEach(docSnap => {
+        const u = docSnap.data();
+
+        if (u.userId) {
+          promises.push(
+            addDoc(collection(db, "notifications"), {
+              ...baseData,
+              userId: u.userId
+            })
+          );
         }
       });
+
+      await Promise.all(promises);
+
+      return true;
     }
 
-    // Remove duplicates
-    targets = [...new Set(targets)];
-
-    // 3. Save notifications in Firestore
-    const promises = targets.map(id =>
-      addDoc(collection(db, "notifications"), {
-        userId: id,
-        title,
-        message,
-        type,
-        link,
-        refId,
-        read: false,
-        createdAt: Date.now()
-      })
-    );
-
-    await Promise.all(promises);
-
-    console.log("Notification sent:", payload);
+    throw new Error("Must provide userId or role");
 
   } catch (err) {
-    console.error("Notification Error:", err);
+    console.error("Notification error:", err);
+    return false;
+  }
+}
+
+/**
+ * GET NOTIFICATIONS FOR USER
+ * (for future inbox page)
+ */
+export async function getNotifications(db, userId) {
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", userId)
+    );
+
+    const snap = await getDocs(q);
+
+    const list = [];
+
+    snap.forEach(doc => {
+      list.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    return list.sort((a, b) => b.createdAt - a.createdAt);
+
+  } catch (err) {
+    console.error("Fetch notifications error:", err);
+    return [];
   }
 }
