@@ -1,235 +1,258 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>My Results - TEF</title>
+<!DOCTYPE html>  
+<html>  
+<head>  
+  <title>My Results - TEF</title>  
 
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
-      background: #f4f7f6;
-    }
+  <style>  
+    body {  
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  
+      padding: 20px;  
+      background: #f4f7f6;  
+    }  
 
-    h2 { color: #2c3e50; }
+    h2 { color: #2c3e50; }  
 
-    #table-container {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      overflow-x: auto;
-    }
+    #table-container {  
+      background: white;  
+      padding: 20px;  
+      border-radius: 8px;  
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);  
+      overflow-x: auto;  
+    }  
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 800px;
-    }
+    table {  
+      width: 100%;  
+      border-collapse: collapse;  
+      min-width: 800px;  
+    }  
 
-    th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: center;
-    }
+    th, td {  
+      border: 1px solid #ddd;  
+      padding: 12px;  
+      text-align: center;  
+    }  
 
-    th {
-      background-color: #007bff;
-      color: white;
-    }
+    th {  
+      background-color: #007bff;  
+      color: white;  
+    }  
 
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
+    tr:nth-child(even) {  
+      background-color: #f9f9f9;  
+    }  
 
-    .avg-cell {
-      font-weight: bold;
-      background-color: #e9ecef;
-    }
+    .avg-cell {  
+      font-weight: bold;  
+      background-color: #e9ecef;  
+    }  
 
-    .badge {
-      margin-top: 15px;
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      background: #28a745;
-      color: white;
-      font-size: 13px;
-    }
+    .badge {  
+      margin-top: 15px;  
+      display: inline-block;  
+      padding: 6px 12px;  
+      border-radius: 20px;  
+      background: #28a745;  
+      color: white;  
+      font-size: 13px;  
+    }  
 
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #dc3545;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+    button {  
+      margin-top: 20px;  
+      padding: 10px 20px;  
+      background: #dc3545;  
+      color: white;  
+      border: none;  
+      border-radius: 5px;  
+      cursor: pointer;  
+    }  
 
-    button:hover {
-      background: #c82333;
-    }
-  </style>
-</head>
+    button:hover {  
+      background: #c82333;  
+    }  
 
-<body>
+    /* SCORE COLORS */  
+    .score-low {  
+      color: #e74c3c;  
+      font-weight: bold;  
+    }  
 
-<h2>Academic Performance Report</h2>
+    .score-high {  
+      color: #2980b9;  
+      font-weight: bold;  
+    }  
+  </style>  
+</head>  
 
-<div id="table-container">
-  <div id="badge"></div>
-  <div id="table">Loading your results...</div>
-</div>
+<body>  
 
-<button onclick="logout()">Logout</button>
+<h2>Academic Performance Report</h2>  
 
-<script type="module">
+<div id="table-container">  
+  <div id="badge"></div>  
+  <div id="table">Loading your results...</div>  
+</div>  
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<button onclick="logout()">Logout</button>  
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
-};
+<script type="module">  
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";  
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";  
 
-const user = JSON.parse(localStorage.getItem("user"));
+const firebaseConfig = {  
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",  
+  authDomain: "tyneceploh.firebaseapp.com",  
+  projectId: "tyneceploh",  
+};  
 
-if (!user || user.role !== "student") {
-  localStorage.removeItem("user");
-  window.location.href = "login.html";
-}
+const app = initializeApp(firebaseConfig);  
+const db = getFirestore(app);  
 
-const periods = [
-  "1st Period","2nd Period","3rd Period","Semester Exam",
-  "4th Period","5th Period","6th Period","Final Exam"
-];
+const user = JSON.parse(localStorage.getItem("user"));  
 
-let allResults = [];
+if (!user || user.role !== "student") {  
+  localStorage.removeItem("user");  
+  window.location.href = "login.html";  
+}  
 
-async function loadResults() {
-  try {
+const periods = [  
+  "1st Period","2nd Period","3rd Period","Semester Exam",  
+  "4th Period","5th Period","6th Period","Final Exam"  
+];  
 
-    const snap = await getDocs(collection(db, "results"));
+let allResults = [];  
 
-    const myResults = [];
+async function loadResults() {  
+  try {  
 
-    const uid = user.userId?.toString().trim().toLowerCase();
+    const snap = await getDocs(collection(db, "results"));  
 
-    snap.forEach(d => {
-      const r = d.data();
-      if (r.studentId?.toString().trim().toLowerCase() === uid) {
-        myResults.push(r);
-      }
-    });
+    const myResults = [];  
 
-    allResults = myResults;
+    const uid = user.userId?.toString().trim().toLowerCase();  
 
-    renderTable(myResults);
-    renderBadge(myResults);
+    snap.forEach(d => {  
+      const r = d.data();  
+      if (r.studentId?.toString().trim().toLowerCase() === uid) {  
+        myResults.push(r);  
+      }  
+    });  
 
-  } catch (err) {
-    console.error(err);
-    document.getElementById("table").innerHTML = "Error loading data.";
-  }
-}
+    allResults = myResults;  
 
-function renderTable(results) {
+    renderTable(myResults);  
+    renderBadge(myResults);  
 
-  if (!results.length) {
-    document.getElementById("table").innerHTML =
-      "<p>No results yet. Keep going.</p>";
-    return;
-  }
+  } catch (err) {  
+    console.error(err);  
+    document.getElementById("table").innerHTML = "Error loading data.";  
+  }  
+}  
 
-  const subjects = {};
+function formatScore(score){  
+  if(score === "-" || score === undefined || score === null) return "-";  
 
-  results.forEach(r => {
-    if (!subjects[r.subject]) subjects[r.subject] = {};
-    subjects[r.subject][r.period] = r.score;
-  });
+  const num = Number(score);  
 
-  let html = `
-    <table>
-      <thead>
-        <tr>
-          <th>Subject</th>
-          ${periods.map(p => `<th>${p}</th>`).join("")}
-          <th>Average</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
+  if(num < 70){  
+    return `<span class="score-low">${num}</span>`;  
+  }  
 
-  Object.keys(subjects).sort().forEach(subject => {
+  return `<span class="score-high">${num}</span>`;  
+}  
 
-    let total = 0;
-    let count = 0;
+function renderTable(results) {  
 
-    html += `<tr><td><b>${subject}</b></td>`;
+  if (!results.length) {  
+    document.getElementById("table").innerHTML =  
+      "<p>No results yet. Keep going.</p>";  
+    return;  
+  }  
 
-    periods.forEach(p => {
+  const subjects = {};  
 
-      const score = subjects[subject][p] ?? "-";
-      html += `<td>${score}</td>`;
+  results.forEach(r => {  
+    if (!subjects[r.subject]) subjects[r.subject] = {};  
+    subjects[r.subject][r.period] = r.score;  
+  });  
 
-      if (score !== "-") {
-        total += Number(score);
-        count++;
-      }
+  let html = `  
+    <table>  
+      <thead>  
+        <tr>  
+          <th>Subject</th>  
+          ${periods.map(p => `<th>${p}</th>`).join("")}  
+          <th>Average</th>  
+        </tr>  
+      </thead>  
+      <tbody>  
+  `;  
 
-    });
+  Object.keys(subjects).sort().forEach(subject => {  
 
-    const avg = count ? (total / count).toFixed(1) : "-";
+    let total = 0;  
+    let count = 0;  
 
-    html += `<td class="avg-cell">${avg}</td></tr>`;
-  });
+    html += `<tr><td><b>${subject}</b></td>`;  
 
-  html += "</tbody></table>";
+    periods.forEach(p => {  
 
-  document.getElementById("table").innerHTML = html;
-}
+      const raw = subjects[subject][p] ?? "-";  
 
-function renderBadge(results) {
+      html += `<td>${formatScore(raw)}</td>`;  
 
-  const badge = document.getElementById("badge");
+      if (raw !== "-") {  
+        total += Number(raw);  
+        count++;  
+      }  
 
-  if (!results.length) return;
+    });  
 
-  let total = 0;
-  let count = 0;
+    const avg = count ? (total / count).toFixed(1) : "-";  
 
-  results.forEach(r => {
-    total += Number(r.score);
-    count++;
-  });
+    html += `<td class="avg-cell">${formatScore(avg)}</td></tr>`;  
+  });  
 
-  const avg = count ? (total / count).toFixed(1) : 0;
+  html += "</tbody></table>";  
 
-  let title = "";
+  document.getElementById("table").innerHTML = html;  
+}  
 
-  if (avg >= 90) title = "Proprietor List";
-  else if (avg >= 85) title = "Principal List";
-  else if (avg >= 80) title = "Honor Roll";
+function renderBadge(results) {  
 
-  if (title) {
-    badge.innerHTML = `<div class="badge">🏅 ${title}</div>`;
-  }
+  const badge = document.getElementById("badge");  
 
-}
+  if (!results.length) return;  
 
-window.logout = function () {
-  localStorage.removeItem("user");
-  location.href = "login.html";
-};
+  let total = 0;  
+  let count = 0;  
 
-loadResults();
+  results.forEach(r => {  
+    total += Number(r.score);  
+    count++;  
+  });  
 
-</script>
+  const avg = count ? (total / count).toFixed(1) : 0;  
 
-</body>
+  let title = "";  
+
+  if (avg >= 90) title = "Proprietor List";  
+  else if (avg >= 85) title = "Principal List";  
+  else if (avg >= 80) title = "Honor Roll";  
+
+  if (title) {  
+    badge.innerHTML = `<div class="badge">🏅 ${title}</div>`;  
+  }  
+}  
+
+window.logout = function () {  
+  localStorage.removeItem("user");  
+  location.href = "login.html";  
+};  
+
+loadResults();  
+
+</script>  
+
+</body>  
 </html>
