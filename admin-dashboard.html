@@ -26,7 +26,7 @@
       background:var(--bg);
       color:var(--text);
       display:flex;
-      height:100vh;
+      min-height:100vh;
     }
 
     /* SIDEBAR */
@@ -158,7 +158,46 @@
       border-radius:10px;
       cursor:pointer;
     }
+@media (max-width: 768px) {
 
+  body {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 10px;
+  }
+
+  .sidebar button {
+    flex: 0 0 auto;
+    margin-right: 10px;
+    margin-bottom: 0;
+  }
+
+  .main {
+    overflow: visible;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .profile {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
   </style>
 </head>
 
