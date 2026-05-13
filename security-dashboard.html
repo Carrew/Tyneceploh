@@ -2,124 +2,160 @@
 <html>
 <head>
   <title>Security Dashboard - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
+
+    :root{
+      --bg:#0b0b0f;
+      --panel:rgba(255,255,255,0.05);
+      --border:rgba(255,255,255,0.08);
+      --pink:#ffc0cb;
+      --danger:#ff3b3b;
+      --text:#fff;
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #120008, var(--bg));
-      color: white;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:system-ui;
     }
 
-    header {
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    body{
+      background:radial-gradient(circle at top,#120008,var(--bg));
+      color:var(--text);
+      min-height:100vh;
     }
 
-    h1 {
-      margin: 0;
-      color: var(--pink);
+    header{
+      padding:22px;
+      text-align:center;
+      background:linear-gradient(135deg,#800000,#1a0010);
     }
 
-    .sub {
-      opacity: 0.8;
-      margin-top: 5px;
+    header h1{
+      color:var(--pink);
     }
 
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 15px;
-      margin: 10px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 12px;
+    .sub{
+      opacity:.7;
+      margin-top:6px;
+      font-size:13px;
     }
 
-    .profile img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #222;
+    /* PROFILE */
+    .profile{
+      margin:16px;
+      padding:18px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      gap:14px;
     }
 
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      background: rgba(255,255,255,0.1);
-      margin-top: 4px;
+    .profile img{
+      width:70px;
+      height:70px;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid var(--pink);
+      background:#222;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 10px;
+    .meta{
+      font-size:13px;
+      opacity:.8;
+      margin-top:3px;
     }
 
-    .stat {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
+    .badge{
+      display:inline-block;
+      margin-top:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.08);
+      font-size:12px;
     }
 
-    .section-title {
-      padding: 10px 15px;
-      font-size: 13px;
-      opacity: 0.8;
+    /* ALERT */
+    .alert{
+      margin:12px 16px;
+      padding:12px;
+      border-radius:12px;
+      background:rgba(255,59,59,0.08);
+      border:1px solid rgba(255,59,59,0.3);
+      font-size:13px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      padding: 15px;
+    /* STATS */
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+      padding:0 16px;
     }
 
-    .card {
-      background: var(--card);
-      padding: 14px;
-      border-radius: 12px;
-      border-left: 3px solid var(--pink);
-      cursor: pointer;
-      transition: 0.2s;
+    .stat{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:14px;
+      border-radius:12px;
+      text-align:center;
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      background: rgba(255,255,255,0.09);
+    .stat b{
+      color:var(--pink);
+      font-size:13px;
     }
 
-    .alert {
-      margin: 10px 15px;
-      padding: 10px;
-      background: rgba(255, 0, 0, 0.1);
-      border-left: 3px solid red;
-      border-radius: 8px;
+    .stat h3{
+      margin-top:6px;
     }
 
-    .logout {
-      width: 90%;
-      margin: 20px auto;
-      display: block;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #222;
-      color: white;
+    /* GRID */
+    .section-title{
+      padding:18px 16px 8px;
+      font-size:12px;
+      opacity:.7;
+      letter-spacing:1px;
+      text-transform:uppercase;
     }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:10px;
+      padding:12px 16px;
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:14px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:.2s;
+    }
+
+    .card:hover{
+      border-color:var(--pink);
+      transform:translateY(-3px);
+    }
+
+    .logout{
+      width:90%;
+      margin:25px auto;
+      display:block;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background:#1b1b25;
+      color:white;
+    }
+
   </style>
 </head>
 
@@ -131,84 +167,112 @@ const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "security"){
   location.href = "login.html";
 }
-
-// image cache system
-const imageCache = {
-  get(key){ return localStorage.getItem("img_" + key); },
-  set(key, value){ localStorage.setItem("img_" + key, value); }
-};
 </script>
 
 <header>
   <h1>Security Control Panel</h1>
-  <div class="sub">Monitoring & campus safety hub</div>
+  <div class="sub">Campus safety & monitoring system</div>
 </header>
 
+<!-- PROFILE -->
 <div class="profile">
-  <img id="photo" />
+
+  <img id="photo">
+
   <div>
-    <b id="name"></b><br>
-    <span id="id"></span><br>
-    <span class="badge" id="shift"></span>
+
+    <b id="name"></b>
+
+    <div class="meta">ID: <span id="id"></span></div>
+
+    <div class="badge" id="shift"></div>
+
   </div>
+
 </div>
 
+<!-- ALERT -->
 <div class="alert">
-  ⚠️ Stay alert. Report incidents immediately to admin dashboard.
+  Stay alert. Report incidents immediately through the admin system.
 </div>
 
+<!-- STATS (REAL ONLY — NO FAKE VALUES) -->
 <div class="stats">
+
   <div class="stat">
-    <b>Checkpoints</b><br>--
+    <b>Status</b>
+    <h3>Active</h3>
   </div>
+
   <div class="stat">
-    <b>Incidents</b><br>--
+    <b>Shift</b>
+    <h3 id="shiftBox">--</h3>
   </div>
-  <div class="stat">
-    <b>Attendance</b><br>--
-  </div>
+
 </div>
 
+<!-- TOOLS -->
 <div class="section-title">Security Tools</div>
 
 <div class="grid">
-  <div class="card" onclick="go('staff-attendance.html')">🕒 Staff Attendance</div>
-  <div class="card" onclick="go('qr-scan-attendance.html')">📱 QR Scan</div>
-  <div class="card" onclick="go('admin-view-attendance.html')">📌 View Logs</div>
+
+  <div class="card" onclick="go('staff-attendance.html')">
+    🕒 Attendance
+  </div>
+
+  <div class="card" onclick="go('qr-scan-attendance.html')">
+    📱 QR Scan
+  </div>
+
+  <div class="card" onclick="go('admin-view-attendance.html')">
+    📌 Logs
+  </div>
+
 </div>
 
+<!-- COMMUNICATION -->
 <div class="section-title">Communication</div>
 
 <div class="grid">
-  <div class="card" onclick="go('admin-announcements.html')">📢 Announcements</div>
-  <div class="card" onclick="go('users-announcement.html')">📣 Broadcasts</div>
+
+  <div class="card" onclick="go('admin-announcements.html')">
+    📢 Announcements
+  </div>
+
+  <div class="card" onclick="go('users-announcement.html')">
+    📣 Broadcasts
+  </div>
+
 </div>
 
+<!-- SUPPORT -->
 <div class="section-title">Support</div>
 
 <div class="grid">
-  <div class="card" onclick="go('admin-dashboard.html')">🏠 Admin Panel</div>
+
+  <div class="card" onclick="go('admin-dashboard.html')">
+    🏠 Admin Panel
+  </div>
+
 </div>
 
 <button class="logout" onclick="logout()">Logout</button>
 
 <script>
-document.getElementById("name").innerText = user.name;
-document.getElementById("id").innerText = user.userId || "";
-document.getElementById("shift").innerText = user.shift ? `Shift: ${user.shift}` : "";
 
-// IMAGE CACHE
-const cachedImg = localStorage.getItem("img_" + user.userId);
+/* PROFILE DATA */
+document.getElementById("name").innerText = user.name || "Security";
+document.getElementById("id").innerText = user.userId || "-";
 
-if(cachedImg){
-  document.getElementById("photo").src = cachedImg;
-} else if(user.photoURL){
-  document.getElementById("photo").src = user.photoURL;
-  localStorage.setItem("img_" + user.userId, user.photoURL);
-} else {
-  document.getElementById("photo").src = "https://via.placeholder.com/60";
-}
+const shift = user.shift || "Not assigned";
+document.getElementById("shift").innerText = shift;
+document.getElementById("shiftBox").innerText = shift;
 
+/* IMAGE */
+const img = user.photoURL || "https://via.placeholder.com/100";
+document.getElementById("photo").src = img;
+
+/* NAV */
 function go(page){
   location.href = page;
 }
@@ -217,6 +281,7 @@ function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
+
 </script>
 
 </body>
