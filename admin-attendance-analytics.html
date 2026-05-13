@@ -7,13 +7,15 @@
   <style>
     body{
       font-family:sans-serif;
-      background:#f4f4f4;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
       padding:20px;
+      color:white;
     }
 
     h2{
       text-align:center;
       margin-bottom:20px;
+      color:#ffc0cb;
     }
 
     .grid{
@@ -23,11 +25,11 @@
     }
 
     .card{
-      background:white;
+      background: rgba(255,255,255,0.06);
       padding:15px;
-      border-radius:10px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      border-radius:12px;
       text-align:center;
+      border-left:3px solid #ffc0cb;
     }
 
     .big{
@@ -40,32 +42,25 @@
       width:100%;
       margin-top:20px;
       border-collapse:collapse;
-      background:white;
+      background: rgba(255,255,255,0.04);
       border-radius:10px;
       overflow:hidden;
     }
 
     th,td{
       padding:10px;
-      border:1px solid #eee;
+      border:1px solid rgba(255,255,255,0.1);
       text-align:center;
+      font-size:14px;
     }
 
     th{
-      background:#2980b9;
+      background:#800000;
       color:white;
     }
 
-    .warn{
-      color:#c0392b;
-      font-weight:bold;
-    }
-
-    .good{
-      color:#27ae60;
-      font-weight:bold;
-    }
-
+    .warn{ color:#ff6b6b; font-weight:bold; }
+    .good{ color:#2ecc71; font-weight:bold; }
   </style>
 </head>
 
@@ -75,35 +70,12 @@
 
 <div class="grid">
 
-  <div class="card">
-    Total Staff
-    <div class="big" id="total">0</div>
-  </div>
-
-  <div class="card">
-    Present Today
-    <div class="big good" id="present">0</div>
-  </div>
-
-  <div class="card">
-    Late Arrivals
-    <div class="big warn" id="late">0</div>
-  </div>
-
-  <div class="card">
-    Early Exit
-    <div class="big warn" id="early">0</div>
-  </div>
-
-  <div class="card">
-    Overtime
-    <div class="big good" id="overtime">0</div>
-  </div>
-
-  <div class="card">
-    Flags (Issues)
-    <div class="big warn" id="flags">0</div>
-  </div>
+  <div class="card">Total Staff<div class="big" id="total">0</div></div>
+  <div class="card">Present Today<div class="big good" id="present">0</div></div>
+  <div class="card">Late Arrivals<div class="big warn" id="late">0</div></div>
+  <div class="card">Early Exit<div class="big warn" id="early">0</div></div>
+  <div class="card">Overtime<div class="big good" id="overtime">0</div></div>
+  <div class="card">Flags<div class="big warn" id="flags">0</div></div>
 
 </div>
 
@@ -115,7 +87,7 @@
       <th>Clock In</th>
       <th>Clock Out</th>
       <th>Status</th>
-      <th>Duration (hrs)</th>
+      <th>Hours</th>
       <th>Flags</th>
     </tr>
   </thead>
@@ -132,35 +104,43 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
-};
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
-if(!user || user.role !== "admin"){
+// 🔐 ROLE SAFETY
+if(!user || !["admin","coordinator"].includes(user.role)){
   location.href = "login.html";
 }
+
+// ⚡ simple cache (reduces repeated lookups feeling slow)
+const userCache = new Map();
 
 function hoursDiff(a,b){
   if(!a || !b) return 0;
   return ((b - a) / (1000*60*60)).toFixed(2);
 }
 
+async function loadUsers(){
+  const snap = await getDocs(collection(db,"users"));
+
+  snap.forEach(d=>{
+    const u = d.data();
+    userCache.set(u.userId, u);
+  });
+}
+
 async function load(){
 
-  const snap = await getDocs(collection(db,"attendanceDaily"));
-  const usersSnap = await getDocs(collection(db,"users"));
+  await loadUsers();
 
-  const users = {};
-  usersSnap.forEach(d=>{
-    users[d.data().userId] = d.data();
-  });
+  const snap = await getDocs(collection(db,"attendanceDaily"));
 
   let total = 0;
   let present = 0;
@@ -176,7 +156,7 @@ async function load(){
     const a = d.data();
     total++;
 
-    const u = users[a.userId] || {};
+    const u = userCache.get(a.userId) || {};
 
     let status = "ABSENT";
     let duration = 0;
@@ -192,17 +172,11 @@ async function load(){
       if(status === "EARLY") early++;
 
       if(a.clockOut){
+        duration = hoursDiff(a.clockIn.time, a.clockOut.time);
 
-        duration =
-          hoursDiff(
-            a.clockIn.time,
-            a.clockOut.time
-          );
-
-        if(duration > 9){
+        if(Number(duration) > 9){
           overtime++;
         }
-
       }
 
       if(a.clockIn.flag){
@@ -214,16 +188,15 @@ async function load(){
         flagList.push(a.clockOut.flag);
         flags++;
       }
-
     }
 
     rows.push(`
       <tr>
-        <td>${u.name || a.name}</td>
-        <td>${a.role}</td>
+        <td>${u.name || a.name || "-"}</td>
+        <td>${a.role || "-"}</td>
         <td>${a.clockIn ? new Date(a.clockIn.time).toLocaleTimeString() : "-"}</td>
         <td>${a.clockOut ? new Date(a.clockOut.time).toLocaleTimeString() : "-"}</td>
-        <td>${status}</td>
+        <td class="${status === "LATE" ? "warn" : "good"}">${status}</td>
         <td>${duration}</td>
         <td class="warn">${flagList.join(", ") || "OK"}</td>
       </tr>
@@ -231,16 +204,25 @@ async function load(){
 
   });
 
-  document.getElementById("body").innerHTML = rows.join("");
+  body.innerHTML = rows.join("");
 
-  document.getElementById("total").innerText = total;
-  document.getElementById("present").innerText = present;
-  document.getElementById("late").innerText = late;
-  document.getElementById("early").innerText = early;
-  document.getElementById("overtime").innerText = overtime;
-  document.getElementById("flags").innerText = flags;
-
+  totalEl.innerText = total;
+  presentEl.innerText = present;
+  lateEl.innerText = late;
+  earlyEl.innerText = early;
+  overtimeEl.innerText = overtime;
+  flagsEl.innerText = flags;
 }
+
+// DOM refs (cleaner + faster access)
+const body = document.getElementById("body");
+
+const totalEl = document.getElementById("total");
+const presentEl = document.getElementById("present");
+const lateEl = document.getElementById("late");
+const earlyEl = document.getElementById("early");
+const overtimeEl = document.getElementById("overtime");
+const flagsEl = document.getElementById("flags");
 
 load();
 
