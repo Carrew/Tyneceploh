@@ -1,14 +1,103 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Coordinator Management - TEF</title>
+
+  <style>
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+      --text: #fff;
+    }
+
+    body {
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--pink);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--maroon), var(--pink));
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 15px;
+      border-left: 4px solid var(--pink);
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .notify {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(0,0,0,0.7);
+      border-left: 4px solid var(--pink);
+      padding: 10px 14px;
+      border-radius: 8px;
+      transform: translateX(120%);
+      transition: 0.3s;
+    }
+
+    .notify.show {
+      transform: translateX(0);
+    }
+  </style>
+</head>
+
 <body>
 
-<h2>Create Coordinator</h2>
+<h2>🧑‍💼 Create Coordinator</h2>
+
+<div id="notify" class="notify"></div>
 
 <input id="name" placeholder="Full Name">
 <input id="department" placeholder="Department">
-<input id="pin" placeholder="PIN (optional)">
+<input id="gender" placeholder="Gender">
+<input id="contact" placeholder="Contact">
+<input id="nationality" placeholder="Nationality">
+<input id="address" placeholder="Address">
+<input id="dob" placeholder="Date of Birth">
 
-<button onclick="create()">Create Coordinator</button>
+<input id="pin" placeholder="PIN (optional)">
+<input type="file" id="photo">
+
+<button onclick="create()" id="btn">Create Coordinator</button>
+
+<div id="list"></div>
 
 <script type="module">
 
@@ -23,38 +112,87 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
+function notify(msg){
+  const n = document.getElementById("notify");
+  n.innerText = msg;
+  n.classList.add("show");
+  setTimeout(()=>n.classList.remove("show"), 2500);
+}
+
 function genID(num){
-  return "COO" + String(num).padStart(3,"0");
+  return "COO" + Date.now().toString().slice(-4) + num;
 }
 
 function genPIN(){
   return Math.floor(1000 + Math.random()*9000).toString();
 }
 
+// CLOUDINARY UPLOAD
+async function uploadImage(file){
+  if(!file) return "";
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "Tyneceploh");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
+    method:"POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  return data.secure_url || "";
+}
+
 window.create = async function(){
 
-  const snap = await getDocs(collection(db,"users"));
+  const btn = document.getElementById("btn");
+  btn.disabled = true;
+  btn.innerText = "Creating...";
 
-  let count = 0;
+  try {
+    const snap = await getDocs(collection(db,"users"));
 
-  snap.forEach(d=>{
-    if(d.data().role === "coordinator") count++;
-  });
+    let count = 0;
+    snap.forEach(d=>{
+      if(d.data().role === "coordinator") count++;
+    });
 
-  const id = genID(count+1);
-  const pin = document.getElementById("pin").value || genPIN();
+    const file = document.getElementById("photo").files[0];
+    const photoURL = await uploadImage(file);
 
-  await addDoc(collection(db,"users"),{
-    userId:id,
-    name:document.getElementById("name").value,
-    department:document.getElementById("department").value,
-    pin,
-    role:"coordinator",
-    status:"active",
-    createdAt:Date.now()
-  });
+    const id = genID(count+1);
+    const pin = document.getElementById("pin").value || genPIN();
 
-  alert("Coordinator created: " + id);
+    const data = {
+      userId: id,
+      name: document.getElementById("name").value,
+      department: document.getElementById("department").value,
+      gender: document.getElementById("gender").value,
+      contact: document.getElementById("contact").value,
+      nationality: document.getElementById("nationality").value,
+      address: document.getElementById("address").value,
+      dob: document.getElementById("dob").value,
+      pin,
+      role: "coordinator",
+      status: "active",
+      createdAt: Date.now()
+    };
+
+    if(photoURL) data.photoURL = photoURL;
+
+    await addDoc(collection(db,"users"), data);
+
+    notify("Coordinator created: " + id);
+
+    document.querySelectorAll("input").forEach(i => i.value = "");
+
+  } catch(err){
+    notify("Error creating coordinator");
+  }
+
+  btn.disabled = false;
+  btn.innerText = "Create Coordinator";
 };
 
 </script>
