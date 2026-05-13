@@ -2,106 +2,224 @@
 <html>
 <head>
   <title>Teacher Dashboard - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --glass:rgba(255,255,255,0.04);
+      --text:#fff;
+      --shadow:0 15px 40px rgba(0,0,0,0.45);
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:system-ui,sans-serif;
     }
 
-    header {
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    body{
+      background:
+      radial-gradient(circle at top left,#2a0018,var(--bg));
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
     }
 
-    h1 {
-      margin: 0;
-      color: var(--pink);
+    body::before{
+      content:"";
+      position:fixed;
+      width:300px;
+      height:300px;
+      background:var(--maroon);
+      filter:blur(120px);
+      opacity:0.25;
+      top:-100px;
+      left:-100px;
+      z-index:-1;
     }
 
-    .sub {
-      opacity: 0.8;
-      margin-top: 5px;
+    body::after{
+      content:"";
+      position:fixed;
+      width:300px;
+      height:300px;
+      background:var(--pink);
+      filter:blur(120px);
+      opacity:0.15;
+      bottom:-100px;
+      right:-100px;
+      z-index:-1;
     }
 
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 15px;
-      background: rgba(255,255,255,0.04);
-      margin: 10px;
-      border-radius: 12px;
+    header{
+      padding:25px 20px;
+      text-align:center;
+      background:linear-gradient(135deg,var(--maroon),#140008);
+      box-shadow:var(--shadow);
     }
 
-    .profile img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #222;
+    header h1{
+      color:var(--pink);
+      font-size:28px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      padding: 15px;
+    .sub{
+      opacity:0.8;
+      margin-top:6px;
+      font-size:14px;
     }
 
-    .card {
-      background: var(--card);
-      padding: 14px;
-      border-radius: 12px;
-      cursor: pointer;
-      border-left: 3px solid var(--pink);
-      transition: 0.2s;
+    .profile{
+      margin:18px;
+      padding:18px;
+      background:var(--glass);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:18px;
+      display:flex;
+      align-items:center;
+      gap:15px;
+      backdrop-filter:blur(14px);
+      box-shadow:var(--shadow);
     }
 
-    .card:hover {
-      transform: translateY(-3px);
-      background: rgba(255,255,255,0.09);
+    .profile img{
+      width:75px;
+      height:75px;
+      border-radius:50%;
+      object-fit:cover;
+      border:3px solid var(--pink);
+      background:#222;
     }
 
-    .section-title {
-      padding: 10px 15px;
-      opacity: 0.8;
-      font-size: 13px;
+    .profile-info b{
+      font-size:18px;
     }
 
-    .logout {
-      width: 90%;
-      margin: 20px auto;
-      display: block;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #222;
-      color: white;
+    .profile-info span{
+      opacity:0.7;
+      font-size:14px;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 10px;
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+      gap:12px;
+      padding:0 18px;
     }
 
-    .stat {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
+    .stat{
+      background:var(--card);
+      border-radius:16px;
+      padding:18px;
+      text-align:center;
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,0.06);
+      transition:0.25s;
+    }
+
+    .stat:hover{
+      transform:translateY(-4px);
+      background:rgba(255,255,255,0.08);
+    }
+
+    .stat b{
+      color:var(--pink);
+      font-size:14px;
+    }
+
+    .section-title{
+      padding:24px 20px 10px;
+      font-size:13px;
+      opacity:0.7;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+      gap:14px;
+      padding:0 18px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:16px;
+      padding:18px;
+      cursor:pointer;
+      transition:0.25s;
+      border:1px solid rgba(255,255,255,0.06);
+      backdrop-filter:blur(12px);
+      box-shadow:var(--shadow);
+    }
+
+    .card:hover{
+      transform:translateY(-5px) scale(1.02);
+      background:rgba(255,255,255,0.09);
+    }
+
+    .card-title{
+      font-size:15px;
+      font-weight:600;
+    }
+
+    .classes-box{
+      margin:18px;
+      padding:18px;
+      background:var(--glass);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,0.06);
+      box-shadow:var(--shadow);
+    }
+
+    .classes{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .class-pill{
+      background:linear-gradient(135deg,var(--maroon),#aa0044);
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:13px;
+      animation:fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        transform:translateY(8px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    .logout{
+      width:90%;
+      margin:30px auto;
+      display:block;
+      padding:14px;
+      border:none;
+      border-radius:14px;
+      background:#1d1d22;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.25s;
+    }
+
+    .logout:hover{
+      background:#2b2b30;
+      transform:translateY(-2px);
     }
   </style>
 </head>
@@ -114,111 +232,211 @@ const user = JSON.parse(localStorage.getItem("user"));
 if(!user || user.role !== "teacher"){
   location.href = "login.html";
 }
-
-// image cache system
-const imageCache = {
-  get(key){ return localStorage.getItem("img_" + key); },
-  set(key, value){ localStorage.setItem("img_" + key, value); }
-};
 </script>
 
 <header>
   <h1>Teacher Control Center</h1>
-  <div class="sub">Manage your academic workspace</div>
+  <div class="sub">
+    Manage your academic workspace
+  </div>
 </header>
 
 <div class="profile">
-  <img id="photo" />
-  <div>
+  <img id="photo">
+
+  <div class="profile-info">
     <b id="name"></b><br>
     <span id="id"></span>
   </div>
 </div>
 
-<div class="stat">
-  <b>Classes</b><br>
-  <span id="teacherClasses"></span>
-</div>
+<div class="stats">
+
   <div class="stat">
-    <b>Assignments</b><br>
-    --
+    <b>Classes</b><br><br>
+    <span id="classCount">0</span>
   </div>
+
   <div class="stat">
-    <b>Quizzes</b><br>
-    --
+    <b>Assignments</b><br><br>
+    <span>--</span>
   </div>
+
+  <div class="stat">
+    <b>Quizzes</b><br><br>
+    <span>--</span>
+  </div>
+
 </div>
 
-<div class="section-title">Academic Tools</div>
+<div class="classes-box">
+  <b style="color:var(--pink)">
+    Your Classes
+  </b>
+
+  <div class="classes" id="classesContainer"></div>
+</div>
+
+<div class="section-title">
+  Academic Tools
+</div>
 
 <div class="grid">
-  <div class="card" onclick="go('teacher-create-assignment.html')">📝 Create Assignment</div>
-  <div class="card" onclick="go('teacher-mark-assignments.html')">📊 Mark Assignments</div>
-  <div class="card" onclick="go('teacher-create-quizs.html')">🧠 Create Quiz</div>
-  <div class="card" onclick="go('teacher-quiz-review.html')">📋 Review Quizzes</div>
+
+  <div class="card"
+  onclick="go('teacher-create-assignment.html')">
+    <div class="card-title">
+      📝 Create Assignment
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('teacher-mark-assignments.html')">
+    <div class="card-title">
+      📊 Mark Assignments
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('teacher-create-quizs.html')">
+    <div class="card-title">
+      🧠 Create Quiz
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('teacher-quiz-review.html')">
+    <div class="card-title">
+      📋 Review Quizzes
+    </div>
+  </div>
+
 </div>
 
-<div class="section-title">Teaching Resources</div>
+<div class="section-title">
+  Teaching Resources
+</div>
 
 <div class="grid">
-  <div class="card" onclick="go('teacher-notes.html')">📚 Notes</div>
-  <div class="card" onclick="go('student-assignments.html')">📂 Student Work</div>
-  <div class="card" onclick="go('teacher-submit-grades.html')">📈 Submit Grades</div>
-  <div class="card" onclick="go('teacher-rejected-grades.html')">❌ Rejected Grades</div>
+
+  <div class="card"
+  onclick="go('teacher-notes.html')">
+    <div class="card-title">
+      📚 Notes
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('student-assignments.html')">
+    <div class="card-title">
+      📂 Student Work
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('teacher-submit-grades.html')">
+    <div class="card-title">
+      📈 Submit Grades
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('teacher-rejected-grades.html')">
+    <div class="card-title">
+      ❌ Rejected Grades
+    </div>
+  </div>
+
 </div>
 
-<div class="section-title">Operations</div>
+<div class="section-title">
+  Operations
+</div>
 
 <div class="grid">
-  <div class="card" onclick="go('teacher-attendance-control.html')">📌 Attendance Control</div>
-  <div class="card" onclick="go('staff-attendance.html')">🕒 Staff Attendance</div>
+
+  <div class="card"
+  onclick="go('teacher-attendance-control.html')">
+    <div class="card-title">
+      📌 Attendance Control
+    </div>
+  </div>
+
+  <div class="card"
+  onclick="go('staff-attendance.html')">
+    <div class="card-title">
+      🕒 Staff Attendance
+    </div>
+  </div>
+
 </div>
 
-<button class="logout" onclick="logout()">Logout</button>
+<button class="logout" onclick="logout()">
+  Logout
+</button>
 
 <script>
-document.getElementById("name").innerText = user.name;
-document.getElementById("id").innerText = user.userId || "";
 
-// IMAGE CACHE LOGIC
-const cachedImg = localStorage.getItem("img_" + user.userId);
+document.getElementById("name").innerText =
+user.name || "Teacher";
 
-if(cachedImg){
-  document.getElementById("photo").src = cachedImg;
-} else if(user.photoURL){
-  document.getElementById("photo").src = user.photoURL;
-  localStorage.setItem("img_" + user.userId, user.photoURL);
-} else {
-  document.getElementById("photo").src = "https://via.placeholder.com/60";
+document.getElementById("id").innerText =
+user.userId || "";
+
+// profile image
+const photo =
+user.photoURL ||
+"https://via.placeholder.com/100";
+
+document.getElementById("photo").src = photo;
+
+// classes
+const teacherClasses =
+user.classes || [];
+
+document.getElementById("classCount").innerText =
+teacherClasses.length;
+
+const container =
+document.getElementById("classesContainer");
+
+if(teacherClasses.length){
+
+  teacherClasses.forEach(cls => {
+
+    const div =
+    document.createElement("div");
+
+    div.className = "class-pill";
+
+    div.innerText = "📘 " + cls;
+
+    container.appendChild(div);
+
+  });
+
+}else{
+
+  container.innerHTML =
+  "<span style='opacity:.7'>No classes assigned</span>";
+
 }
 
+// navigation
 function go(page){
   location.href = page;
 }
 
+// logout
 function logout(){
+
   localStorage.removeItem("user");
+
   location.href = "login.html";
+
 }
-  // teacher classes from localStorage
-const classes = JSON.parse(localStorage.getItem("classes")) || [];
-
-// count only this teacher's classes
-const teacherClasses = classes.filter(
-  cls => cls.teacherId === user.userId
-);
-
-const teacherClasses = user.classes || [];
-
-document.getElementById("teacherClasses").innerText =
-  teacherClasses.length
-    ? teacherClasses.join(", ")
-    : "No Classes";
-  document.getElementById("teacherClasses").innerHTML =
-  teacherClasses.length
-    ? teacherClasses.map(c => `📘 ${c}`).join("<br>")
-    : "No Classes";
 </script>
 
 </body>
 </html>
+```
