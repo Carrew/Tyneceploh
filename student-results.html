@@ -2,17 +2,73 @@
 <html>
 <head>
   <title>My Results - TEF</title>
+
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f4f7f6; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: #f4f7f6;
+    }
+
     h2 { color: #2c3e50; }
-    #table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-    th { background-color: #007bff; color: white; }
-    tr:nth-child(even) { background-color: #f9f9f9; }
-    .avg-cell { font-weight: bold; background-color: #e9ecef; }
-    button { margin-top: 20px; padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #c82333; }
+
+    #table-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .avg-cell {
+      font-weight: bold;
+      background-color: #e9ecef;
+    }
+
+    .badge {
+      margin-top: 15px;
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #28a745;
+      color: white;
+      font-size: 13px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #c82333;
+    }
   </style>
 </head>
 
@@ -21,12 +77,14 @@
 <h2>Academic Performance Report</h2>
 
 <div id="table-container">
-    <div id="table">Loading your results...</div>
+  <div id="badge"></div>
+  <div id="table">Loading your results...</div>
 </div>
 
 <button onclick="logout()">Logout</button>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -41,8 +99,6 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
-// FIX: Removed the "active" status check to honor your rule that student status 
-// (New/Old) does not affect their ability to use the system.
 if (!user || user.role !== "student") {
   localStorage.removeItem("user");
   window.location.href = "login.html";
@@ -53,42 +109,47 @@ const periods = [
   "4th Period","5th Period","6th Period","Final Exam"
 ];
 
+let allResults = [];
+
 async function loadResults() {
   try {
+
     const snap = await getDocs(collection(db, "results"));
+
     const myResults = [];
 
-    const currentUserId = user.userId?.toString().trim().toLowerCase();
+    const uid = user.userId?.toString().trim().toLowerCase();
 
     snap.forEach(d => {
-      const data = d.data();
-      const resultStudentId = data.studentId?.toString().trim().toLowerCase();
-
-      if (resultStudentId === currentUserId) {
-        myResults.push(data);
+      const r = d.data();
+      if (r.studentId?.toString().trim().toLowerCase() === uid) {
+        myResults.push(r);
       }
     });
 
-    buildTable(myResults);
-  } catch (error) {
-    console.error("Firebase Error:", error);
+    allResults = myResults;
+
+    renderTable(myResults);
+    renderBadge(myResults);
+
+  } catch (err) {
+    console.error(err);
     document.getElementById("table").innerHTML = "Error loading data.";
   }
 }
 
-function buildTable(results) {
-  if (results.length === 0) {
-    document.getElementById("table").innerHTML = "<p>No results have been uploaded for your ID yet.</p>";
+function renderTable(results) {
+
+  if (!results.length) {
+    document.getElementById("table").innerHTML =
+      "<p>No results yet. Keep going.</p>";
     return;
   }
 
   const subjects = {};
 
-  // Organize data: { "Math": { "1st Period": 85, "2nd Period": 90 } }
   results.forEach(r => {
-    if (!subjects[r.subject]) {
-      subjects[r.subject] = {};
-    }
+    if (!subjects[r.subject]) subjects[r.subject] = {};
     subjects[r.subject][r.period] = r.score;
   });
 
@@ -98,19 +159,21 @@ function buildTable(results) {
         <tr>
           <th>Subject</th>
           ${periods.map(p => `<th>${p}</th>`).join("")}
-          <th>Cumulative Avg</th>
+          <th>Average</th>
         </tr>
       </thead>
       <tbody>
   `;
 
   Object.keys(subjects).sort().forEach(subject => {
+
     let total = 0;
     let count = 0;
 
     html += `<tr><td><b>${subject}</b></td>`;
 
     periods.forEach(p => {
+
       const score = subjects[subject][p] ?? "-";
       html += `<td>${score}</td>`;
 
@@ -118,22 +181,54 @@ function buildTable(results) {
         total += Number(score);
         count++;
       }
+
     });
 
     const avg = count ? (total / count).toFixed(1) : "-";
+
     html += `<td class="avg-cell">${avg}</td></tr>`;
   });
 
   html += "</tbody></table>";
+
   document.getElementById("table").innerHTML = html;
+}
+
+function renderBadge(results) {
+
+  const badge = document.getElementById("badge");
+
+  if (!results.length) return;
+
+  let total = 0;
+  let count = 0;
+
+  results.forEach(r => {
+    total += Number(r.score);
+    count++;
+  });
+
+  const avg = count ? (total / count).toFixed(1) : 0;
+
+  let title = "";
+
+  if (avg >= 90) title = "Proprietor List";
+  else if (avg >= 85) title = "Principal List";
+  else if (avg >= 80) title = "Honor Roll";
+
+  if (title) {
+    badge.innerHTML = `<div class="badge">🏅 ${title}</div>`;
+  }
+
 }
 
 window.logout = function () {
   localStorage.removeItem("user");
-  window.location.href = "login.html";
+  location.href = "login.html";
 };
 
 loadResults();
+
 </script>
 
 </body>
