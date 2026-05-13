@@ -1,83 +1,238 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Manage Admins - TEF</title>
+  <title>Security Staff - TEF</title>
+
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .admin-list { margin-top: 20px; border-top: 2px solid #ccc; padding-top: 20px; }
-    .card { border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+      --text: #fff;
+    }
+
+    body {
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--pink);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: white;
+      outline: none;
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 2px var(--pink);
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--maroon), var(--pink));
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .notify {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(0,0,0,0.75);
+      border-left: 4px solid var(--pink);
+      padding: 10px 14px;
+      border-radius: 8px;
+      transform: translateX(120%);
+      transition: 0.3s;
+    }
+
+    .notify.show {
+      transform: translateX(0);
+    }
+
+    .card {
+      background: var(--card);
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 15px;
+      border-left: 4px solid var(--pink);
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .preview {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-top: 8px;
+    }
   </style>
 </head>
+
 <body>
 
-<h2>Add New Administrator</h2>
+<h2>🛡️ Create Security Staff</h2>
 
-<input id="newName" placeholder="Full Name">
-<input id="newPin" placeholder="PIN (optional)">
-<button onclick="addNewAdmin()">Create Admin</button>
+<div id="notify" class="notify"></div>
 
-<div class="admin-list">
-  <h3>Existing Administrators</h3>
-  <div id="displayList"></div>
-</div>
+<input id="name" placeholder="Full Name">
+<input id="shift" placeholder="Shift (Day / Night)">
+<input id="phone" placeholder="Phone">
+<input id="gender" placeholder="Gender">
+<input id="address" placeholder="Address">
+<input id="dob" placeholder="Date of Birth">
+<input id="emergency" placeholder="Emergency Contact">
+
+<input id="pin" placeholder="PIN (optional)">
+<input type="file" id="photo">
+
+<button onclick="create()" id="btn">Create Security</button>
+
+<div id="list"></div>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 });
+
 const db = getFirestore(app);
 
-const currentUser = JSON.parse(localStorage.getItem("user"));
-if(!currentUser || currentUser.role !== "admin"){
-  location.href = "login.html";
+function notify(msg){
+  const n = document.getElementById("notify");
+  n.innerText = msg;
+  n.classList.add("show");
+  setTimeout(()=>n.classList.remove("show"), 2500);
 }
 
-async function loadAdmins() {
-  const q = query(collection(db, "users"), where("role", "==", "admin"));
-  const snap = await getDocs(q);
-  const listDiv = document.getElementById("displayList");
-  
-  let admins = [];
-  snap.forEach(d => admins.push(d.data()));
-  
-  listDiv.innerHTML = admins.map(a => `
-    <div class="card">
-      <b>${a.name}</b> (ID: ${a.userId}) <br>
-      Status: ${a.status}
-    </div>
-  `).join("");
-
-  return admins.length;
+function genID(num){
+  return "SEC" + Date.now().toString().slice(-4) + num;
 }
 
-window.addNewAdmin = async function(){
-  const name = document.getElementById("newName").value.trim();
-  if(!name) return alert("Enter a name");
+function genPIN(){
+  return Math.floor(1000 + Math.random()*9000).toString();
+}
 
-  const currentCount = await loadAdmins();
-  const nextId = "ADM" + String(currentCount + 1).padStart(3, "0");
-  const pin = document.getElementById("newPin").value || Math.floor(1000 + Math.random()*9000).toString();
+// CLOUDINARY UPLOAD
+async function uploadImage(file){
+  if(!file) return "";
 
-  await addDoc(collection(db, "users"), {
-    userId: nextId,
-    name: name,
-    pin: pin,
-    role: "admin",
-    status: "active",
-    createdAt: Date.now()
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "Tyneceploh");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
+    method:"POST",
+    body: formData
   });
 
-  alert(`New Admin Created!\nID: ${nextId}\nPIN: ${pin}`);
-  document.getElementById("newName").value = "";
-  loadAdmins();
+  const data = await res.json();
+  return data.secure_url || "";
+}
+
+window.create = async function(){
+
+  const btn = document.getElementById("btn");
+
+  const name = document.getElementById("name").value;
+  if(!name){
+    notify("Name is required");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Creating...";
+
+  try {
+    const snap = await getDocs(collection(db,"users"));
+
+    let count = 0;
+    snap.forEach(d=>{
+      if(d.data().role === "security") count++;
+    });
+
+    const file = document.getElementById("photo").files[0];
+    const photoURL = await uploadImage(file);
+
+    const id = genID(count+1);
+    const pin = document.getElementById("pin").value || genPIN();
+
+    const data = {
+      userId: id,
+      name,
+      shift: document.getElementById("shift").value,
+      phone: document.getElementById("phone").value,
+      gender: document.getElementById("gender").value,
+      address: document.getElementById("address").value,
+      dob: document.getElementById("dob").value,
+      emergency: document.getElementById("emergency").value,
+      pin,
+      role: "security",
+      status: "active",
+      createdAt: Date.now()
+    };
+
+    if(photoURL) data.photoURL = photoURL;
+
+    await addDoc(collection(db,"users"), data);
+
+    notify("Security created: " + id);
+
+    document.querySelectorAll("input").forEach(i => i.value = "");
+
+    if(photoURL){
+      const img = document.createElement("img");
+      img.src = photoURL;
+      img.className = "preview";
+      document.getElementById("list").prepend(img);
+    }
+
+  } catch(err){
+    notify("Error creating security staff");
+  }
+
+  btn.disabled = false;
+  btn.innerText = "Create Security";
 };
 
-loadAdmins();
 </script>
+
 </body>
 </html>
