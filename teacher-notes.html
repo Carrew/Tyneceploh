@@ -1,97 +1,843 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Teacher Notes - TEF</title>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Teacher Notes • TEF</title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    input, select, textarea { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-    button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
-    button:hover { background: #0056b3; }
-    #msg { color: green; font-weight: bold; }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:'Poppins',sans-serif;
+      background:
+      linear-gradient(
+        135deg,
+        #fff0f5,
+        #f5f7ff
+      );
+      min-height:100vh;
+      padding:20px;
+      color:#222;
+    }
+
+    .container{
+      max-width:950px;
+      margin:auto;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:25px;
+      flex-wrap:wrap;
+      gap:15px;
+    }
+
+    .title-box h1{
+      font-size:32px;
+      color:#7b1034;
+      font-weight:700;
+    }
+
+    .title-box p{
+      color:#666;
+      margin-top:5px;
+      font-size:14px;
+    }
+
+    .teacher-chip{
+      background:white;
+      padding:12px 18px;
+      border-radius:14px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.08);
+      font-size:14px;
+      font-weight:600;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.85);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,0.4);
+      border-radius:24px;
+      padding:25px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(240px,1fr));
+      gap:18px;
+      margin-bottom:20px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+    }
+
+    .field label{
+      font-size:14px;
+      margin-bottom:8px;
+      color:#555;
+      font-weight:600;
+    }
+
+    .input,
+    .select,
+    textarea{
+      border:none;
+      background:#f7f7fb;
+      border-radius:14px;
+      padding:14px;
+      font-size:15px;
+      outline:none;
+      transition:0.3s;
+      border:2px solid transparent;
+    }
+
+    .input:focus,
+    .select:focus,
+    textarea:focus{
+      border-color:#800000;
+      background:white;
+      box-shadow:0 0 0 4px rgba(128,0,0,0.08);
+    }
+
+    textarea{
+      resize:vertical;
+      min-height:260px;
+      line-height:1.7;
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+
+    .tool-btn{
+      border:none;
+      padding:10px 14px;
+      border-radius:10px;
+      background:#f0f0f5;
+      cursor:pointer;
+      font-weight:600;
+      transition:0.2s;
+    }
+
+    .tool-btn:hover{
+      background:#800000;
+      color:white;
+    }
+
+    .bottom{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:25px;
+      flex-wrap:wrap;
+      gap:15px;
+    }
+
+    .stats{
+      display:flex;
+      gap:15px;
+      flex-wrap:wrap;
+    }
+
+    .stat{
+      background:#fafafa;
+      padding:12px 16px;
+      border-radius:14px;
+      font-size:13px;
+      font-weight:600;
+      color:#555;
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      padding:14px 24px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:600;
+      transition:0.3s;
+      font-size:15px;
+    }
+
+    .draft{
+      background:#ececf3;
+      color:#444;
+    }
+
+    .draft:hover{
+      background:#ddd;
+    }
+
+    .publish{
+      background:linear-gradient(
+      135deg,
+      #800000,
+      #b3003c
+      );
+
+      color:white;
+      box-shadow:
+      0 10px 20px rgba(128,0,0,0.2);
+    }
+
+    .publish:hover{
+      transform:translateY(-2px);
+    }
+
+    .msg{
+      margin-top:20px;
+      padding:15px;
+      border-radius:14px;
+      display:none;
+      font-weight:600;
+    }
+
+    .success{
+      background:#d4edda;
+      color:#155724;
+      display:block;
+    }
+
+    .error{
+      background:#f8d7da;
+      color:#721c24;
+      display:block;
+    }
+
+    .loading{
+      opacity:0.6;
+      pointer-events:none;
+    }
+
+    .attachment-box{
+      margin-top:20px;
+      padding:18px;
+      background:#fafafa;
+      border-radius:16px;
+      border:2px dashed #ccc;
+    }
+
+    .attachment-box input{
+      margin-top:10px;
+    }
+
+    .preview{
+      margin-top:25px;
+      background:white;
+      border-radius:20px;
+      padding:20px;
+      border:1px solid #eee;
+    }
+
+    .preview h2{
+      color:#800000;
+      margin-bottom:10px;
+    }
+
+    .preview-content{
+      white-space:pre-wrap;
+      line-height:1.8;
+      color:#333;
+    }
+
+    .char-count{
+      margin-top:10px;
+      text-align:right;
+      color:#777;
+      font-size:13px;
+    }
+
+    @media(max-width:600px){
+
+      .title-box h1{
+        font-size:25px;
+      }
+
+      .card{
+        padding:18px;
+      }
+
+    }
+
   </style>
 </head>
 
 <body>
 
-<h2>Create Lesson Note</h2>
+<div class="container">
 
-<label>Target Class:</label>
-<select id="class"></select>
+  <div class="topbar">
 
-<input id="subject" placeholder="Subject (e.g., Microbiology)">
-<input id="topic" placeholder="Topic (e.g., Bacterial Cell Structure)">
+    <div class="title-box">
+      <h1>📚 Teacher Lesson Studio</h1>
+      <p>Create smart classroom lessons for students</p>
+    </div>
 
-<textarea id="content" placeholder="Type your lesson notes here..." rows="12"></textarea>
+    <div class="teacher-chip">
+      Logged in as:
+      <span id="teacherName"></span>
+    </div>
 
-<button onclick="submitLesson()">Publish Lesson</button>
+  </div>
 
-<p id="msg"></p>
+  <div class="card" id="mainCard">
+
+    <div class="grid">
+
+      <div class="field">
+        <label>Target Class</label>
+        <select id="class" class="select"></select>
+      </div>
+
+      <div class="field">
+        <label>Subject</label>
+        <input
+          id="subject"
+          class="input"
+          placeholder="Biology"
+        >
+      </div>
+
+    </div>
+
+    <div class="field" style="margin-bottom:20px;">
+      <label>Lesson Topic</label>
+
+      <input
+        id="topic"
+        class="input"
+        placeholder="Cell Structure"
+      >
+    </div>
+
+    <div class="toolbar">
+
+      <button
+        class="tool-btn"
+        onclick="insertText('• ')"
+      >
+        Bullet
+      </button>
+
+      <button
+        class="tool-btn"
+        onclick="insertText('IMPORTANT: ')"
+      >
+        Important
+      </button>
+
+      <button
+        class="tool-btn"
+        onclick="insertText('\\nSummary:\\n')"
+      >
+        Summary
+      </button>
+
+      <button
+        class="tool-btn"
+        onclick="insertText('\\nAssignment:\\n')"
+      >
+        Assignment
+      </button>
+
+    </div>
+
+    <div class="field">
+
+      <label>Lesson Content</label>
+
+      <textarea
+        id="content"
+        placeholder="Type your classroom lesson..."
+      ></textarea>
+
+      <div class="char-count">
+        <span id="chars">0</span>
+        characters
+      </div>
+
+    </div>
+
+    <div class="attachment-box">
+
+      <b>📎 Attach Files</b>
+
+      <p style="margin-top:8px;color:#666;font-size:14px;">
+        PDFs, images, PowerPoints, documents
+      </p>
+
+      <input
+        type="file"
+        id="file"
+        multiple
+      >
+
+    </div>
+
+    <div class="bottom">
+
+      <div class="stats">
+
+        <div class="stat">
+          Draft Autosave Enabled
+        </div>
+
+        <div class="stat">
+          Mobile Optimized
+        </div>
+
+        <div class="stat">
+          Teacher Protected
+        </div>
+
+      </div>
+
+      <div class="actions">
+
+        <button
+          class="btn draft"
+          onclick="saveDraft()"
+        >
+          Save Draft
+        </button>
+
+        <button
+          class="btn publish"
+          onclick="submitLesson()"
+        >
+          Publish Lesson
+        </button>
+
+      </div>
+
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+  </div>
+
+  <div class="preview">
+
+    <h2>Live Preview</h2>
+
+    <div
+      class="preview-content"
+      id="preview"
+    >
+      Nothing typed yet...
+    </div>
+
+  </div>
+
+</div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
+
+  apiKey:
+  "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+
+  authDomain:
+  "tyneceploh.firebaseapp.com",
+
+  projectId:
+  "tyneceploh"
+
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app =
+initializeApp(firebaseConfig);
 
-const user = JSON.parse(localStorage.getItem("user"));
+const db =
+getFirestore(app);
 
-// Ensure the user is logged in as a teacher
-if (!user || user.role !== "teacher") {
-  window.location.href = "login.html";
+const user =
+JSON.parse(
+  localStorage.getItem("user")
+);
+
+if(
+  !user ||
+  user.role !== "teacher"
+){
+
+  localStorage.removeItem("user");
+
+  location.href =
+  "login.html";
+
 }
 
-// 🎯 Load the specific classes this teacher is assigned to
-const classSelect = document.getElementById("class");
-classSelect.innerHTML = (user.classes || []).map(c =>
-  `<option value="${c}">${c}</option>`
-).join("");
+document.getElementById(
+  "teacherName"
+).innerText = user.name || "Teacher";
 
-// 🚀 SUBMIT LESSON TO FIRESTORE
-window.submitLesson = async function () {
+//
+// LOAD CLASSES
+//
+const classSelect =
+document.getElementById("class");
 
-  const className = document.getElementById("class").value;
-  const subject = document.getElementById("subject").value.trim();
-  const topic = document.getElementById("topic").value.trim();
-  const content = document.getElementById("content").value.trim();
+classSelect.innerHTML =
+(user.classes || [])
+.map(c=>`
 
-  if (!className || !subject || !topic || !content) {
-    alert("Please fill in all fields before sending.");
-    return;
+<option value="${c}">
+${c}
+</option>
+
+`).join("");
+
+//
+// AUTOSAVE
+//
+const draftKey =
+"tef_lesson_draft";
+
+window.addEventListener(
+  "beforeunload",
+  autoSave
+);
+
+function autoSave(){
+
+  const draft = {
+
+    subject:
+    subject.value,
+
+    topic:
+    topic.value,
+
+    content:
+    content.value,
+
+    className:
+    classSelect.value
+
+  };
+
+  localStorage.setItem(
+    draftKey,
+    JSON.stringify(draft)
+  );
+
+}
+
+function restoreDraft(){
+
+  const raw =
+  localStorage.getItem(draftKey);
+
+  if(!raw) return;
+
+  try{
+
+    const d =
+    JSON.parse(raw);
+
+    subject.value =
+    d.subject || "";
+
+    topic.value =
+    d.topic || "";
+
+    content.value =
+    d.content || "";
+
+    classSelect.value =
+    d.className || "";
+
+    updatePreview();
+
   }
 
-  try {
-    await addDoc(collection(db, "lessons"), {
-      teacherId: user.id,   // Matches the userId from our login fix
-      teacherName: user.name,
-      class: className,
-      subject: subject,
-      topic: topic,
-      content: content,
-      createdAt: Date.now()
-    });
-
-    document.getElementById("msg").innerText = "✅ Lesson published successfully!";
-    
-    // Clear the form
-    document.getElementById("subject").value = "";
-    document.getElementById("topic").value = "";
-    document.getElementById("content").value = "";
-    
-    // Reset message after 3 seconds
-    setTimeout(() => { document.getElementById("msg").innerText = ""; }, 3000);
-
-  } catch (error) {
-    console.error("Error saving lesson:", error);
-    alert("Failed to send lesson. Check your connection.");
+  catch(err){
+    console.log(err);
   }
+
+}
+
+restoreDraft();
+
+//
+// CHARACTER COUNT
+//
+content.addEventListener(
+  "input",
+  ()=>{
+
+    chars.innerText =
+    content.value.length;
+
+    updatePreview();
+
+    autoSave();
+
+  }
+);
+
+//
+// PREVIEW
+//
+function updatePreview(){
+
+  preview.innerText =
+  content.value ||
+  "Nothing typed yet...";
+
+}
+
+//
+// INSERT TOOLBAR TEXT
+//
+window.insertText = function(text){
+
+  const start =
+  content.selectionStart;
+
+  const end =
+  content.selectionEnd;
+
+  const val =
+  content.value;
+
+  content.value =
+  val.substring(0,start)
+  +
+  text
+  +
+  val.substring(end);
+
+  updatePreview();
+
+};
+
+//
+// SHOW MESSAGE
+//
+function showMessage(msg,type){
+
+  const box =
+  document.getElementById("msg");
+
+  box.innerText = msg;
+
+  box.className =
+  "msg " + type;
+
+}
+
+//
+// SAVE DRAFT
+//
+window.saveDraft = function(){
+
+  autoSave();
+
+  showMessage(
+    "Draft saved locally",
+    "success"
+  );
+
+};
+
+//
+// SUBMIT LESSON
+//
+window.submitLesson =
+async function(){
+
+  const card =
+  document.getElementById("mainCard");
+
+  card.classList.add("loading");
+
+  try{
+
+    const className =
+    classSelect.value;
+
+    const sub =
+    subject.value.trim();
+
+    const top =
+    topic.value.trim();
+
+    const cont =
+    content.value.trim();
+
+    if(
+      !className ||
+      !sub ||
+      !top ||
+      !cont
+    ){
+
+      throw new Error(
+        "Please complete all fields"
+      );
+
+    }
+
+    //
+    // FILES
+    //
+    const fileInput =
+    document.getElementById("file");
+
+    const fileNames =
+    [];
+
+    for(
+      let i = 0;
+      i < fileInput.files.length;
+      i++
+    ){
+
+      fileNames.push(
+        fileInput.files[i].name
+      );
+
+    }
+
+    //
+    // SAVE TO FIRESTORE
+    //
+    await addDoc(
+
+      collection(db,"lessons"),
+
+      {
+
+        teacherId:
+        user.id || user.userId,
+
+        teacherName:
+        user.name,
+
+        class:
+        className,
+
+        subject:
+        sub,
+
+        topic:
+        top,
+
+        content:
+        cont,
+
+        attachments:
+        fileNames,
+
+        createdAt:
+        Date.now(),
+
+        status:
+        "published"
+
+      }
+
+    );
+
+    //
+    // CLEAR
+    //
+    subject.value = "";
+    topic.value = "";
+    content.value = "";
+    fileInput.value = "";
+
+    chars.innerText = 0;
+
+    preview.innerText =
+    "Nothing typed yet...";
+
+    localStorage.removeItem(
+      draftKey
+    );
+
+    showMessage(
+      "Lesson published successfully!",
+      "success"
+    );
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showMessage(
+      err.message ||
+      "Failed to publish lesson",
+      "error"
+    );
+
+  }
+
+  finally{
+
+    card.classList.remove("loading");
+
+  }
+
 };
 
 </script>
