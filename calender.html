@@ -2,17 +2,24 @@
 <html>
 <head>
   <title>TEF Academic Calendar</title>
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    :root{
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --text:#fff;
+      --pink:#ffc0cb;
+      --maroon:#800000;
+      --blue:#3498db;
+    }
 
     body{
       margin:0;
+      font-family:system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color:var(--text);
       padding:20px;
-      background:#f4f4f4;
-      font-family:sans-serif;
     }
 
     .container{
@@ -20,166 +27,149 @@
       margin:auto;
     }
 
+    /* HERO */
     .hero{
-      background:linear-gradient(135deg,#800000,#ff4d6d);
+      background:linear-gradient(135deg,var(--maroon),#ff4d6d);
       color:white;
-      padding:30px;
-      border-radius:16px;
+      padding:28px;
+      border-radius:18px;
       margin-bottom:20px;
-      box-shadow:0 4px 15px rgba(0,0,0,0.15);
+      box-shadow:0 10px 40px rgba(0,0,0,0.4);
     }
 
     .hero h1{
       margin:0;
-      font-size:32px;
+      font-size:28px;
     }
 
     .hero p{
-      margin-top:10px;
-      opacity:0.9;
+      opacity:0.85;
+      margin-top:8px;
     }
 
-    .box{
-      background:white;
-      padding:20px;
-      border-radius:14px;
-      margin-bottom:20px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .timeline{
-      position:relative;
-      margin-top:20px;
-    }
-
-    .timeline::before{
-      content:"";
-      position:absolute;
-      left:20px;
-      top:0;
-      bottom:0;
-      width:4px;
-      background:#ddd;
-    }
-
-    .event{
-      position:relative;
-      margin-left:60px;
-      background:#fafafa;
-      padding:18px;
-      border-radius:12px;
-      margin-bottom:20px;
-      border-left:6px solid #3498db;
-    }
-
-    .event::before{
-      content:"";
-      position:absolute;
-      left:-49px;
-      top:22px;
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      background:#3498db;
-      border:4px solid white;
-      box-shadow:0 0 0 2px #3498db;
-    }
-
-    .badge{
-      display:inline-block;
-      padding:5px 12px;
-      border-radius:20px;
-      color:white;
-      font-size:12px;
-      font-weight:bold;
-      margin-top:10px;
-    }
-
-    .Holiday{
-      background:#e74c3c;
-    }
-
-    .Exam{
-      background:#8e44ad;
-    }
-
-    .Sports{
-      background:#27ae60;
-    }
-
-    .Meeting{
-      background:#2980b9;
-    }
-
-    .Academic{
-      background:#f39c12;
-    }
-
-    .Deadline{
-      background:#d35400;
-    }
-
-    .Celebration{
-      background:#16a085;
-    }
-
-    .Emergency{
-      background:#2c3e50;
-    }
-
-    .Other{
-      background:#7f8c8d;
-    }
-
-    .meta{
+    .active-session{
       margin-top:15px;
-      color:#666;
-      font-size:14px;
+      display:inline-block;
+      background:rgba(255,255,255,0.15);
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:600;
+      backdrop-filter:blur(10px);
+    }
+
+    /* FILTER BOX */
+    .box{
+      background:var(--card);
+      padding:16px;
+      border-radius:14px;
+      margin-bottom:18px;
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,0.08);
     }
 
     .filters{
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:15px;
+      gap:12px;
     }
 
-    select,
-    input{
+    select,input{
       width:100%;
-      padding:12px;
-      border-radius:8px;
-      border:1px solid #ccc;
-      box-sizing:border-box;
+      padding:10px;
+      border-radius:10px;
+      border:none;
+      outline:none;
+      background:rgba(255,255,255,0.08);
+      color:white;
+    }
+
+    /* TIMELINE */
+    .timeline{
+      position:relative;
+      margin-top:10px;
+    }
+
+    .timeline::before{
+      content:"";
+      position:absolute;
+      left:18px;
+      top:0;
+      bottom:0;
+      width:3px;
+      background:rgba(255,255,255,0.1);
+    }
+
+    .event{
+      position:relative;
+      margin-left:55px;
+      background:var(--card);
+      padding:16px;
+      border-radius:14px;
+      margin-bottom:16px;
+      border-left:4px solid var(--blue);
+      backdrop-filter:blur(10px);
+      transition:0.2s ease;
+    }
+
+    .event:hover{
+      transform:scale(1.01);
+    }
+
+    .event::before{
+      content:"";
+      position:absolute;
+      left:-45px;
+      top:20px;
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:var(--blue);
+      border:3px solid white;
+      box-shadow:0 0 0 2px var(--blue);
+    }
+
+    .badge{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      margin-top:8px;
+      color:white;
+    }
+
+    .Holiday{ background:#e74c3c; }
+    .Exam{ background:#8e44ad; }
+    .Sports{ background:#27ae60; }
+    .Meeting{ background:#2980b9; }
+    .Academic{ background:#f39c12; }
+    .Deadline{ background:#d35400; }
+    .Celebration{ background:#16a085; }
+    .Emergency{ background:#2c3e50; }
+    .Other{ background:#7f8c8d; }
+
+    .meta{
+      margin-top:12px;
+      opacity:0.8;
+      font-size:13px;
+      line-height:1.5;
     }
 
     .empty{
       text-align:center;
-      color:#666;
+      opacity:0.7;
       padding:30px;
     }
 
-    .active-session{
-      background:#d4edda;
-      color:#155724;
-      padding:10px 15px;
-      border-radius:8px;
-      display:inline-block;
-      font-weight:bold;
-      margin-top:15px;
-    }
-
     @media(max-width:700px){
-
       .filters{
         grid-template-columns:1fr;
       }
 
       .hero h1{
-        font-size:25px;
+        font-size:22px;
       }
-
     }
-
   </style>
 </head>
 
@@ -187,53 +177,27 @@
 
 <div class="container">
 
-  <!-- HERO -->
-
   <div class="hero">
-
     <h1>TEF Academic Calendar</h1>
-
-    <p>
-      School events, exams, vacations,
-      meetings, deadlines and academic schedules.
-    </p>
+    <p>Events, exams, holidays, and the rhythm of the school year.</p>
 
     <div id="activeSessionBox"></div>
-
   </div>
 
-  <!-- FILTERS -->
-
   <div class="box">
-
     <div class="filters">
 
       <div>
-
-        <label>Academic Session</label>
-
-        <select id="sessionFilter"
-                onchange="renderEvents()">
-
-          <option value="all">
-            All Sessions
-          </option>
-
+        <label>Session</label>
+        <select id="sessionFilter" onchange="renderEvents()">
+          <option value="all">All Sessions</option>
         </select>
-
       </div>
 
       <div>
-
         <label>Category</label>
-
-        <select id="categoryFilter"
-                onchange="renderEvents()">
-
-          <option value="all">
-            All Categories
-          </option>
-
+        <select id="categoryFilter" onchange="renderEvents()">
+          <option value="all">All Categories</option>
           <option>Holiday</option>
           <option>Exam</option>
           <option>Sports</option>
@@ -243,61 +207,35 @@
           <option>Celebration</option>
           <option>Emergency</option>
           <option>Other</option>
-
         </select>
-
       </div>
 
     </div>
 
-    <input
-      id="searchBox"
-      placeholder="Search calendar events..."
-      oninput="renderEvents()"
-      style="margin-top:15px;"
-    >
-
+    <input id="searchBox"
+           placeholder="Search events..."
+           oninput="renderEvents()"
+           style="margin-top:12px;">
   </div>
 
-  <!-- EVENTS -->
-
   <div class="box">
-
-    <h2>Timeline</h2>
-
-    <div class="timeline"
-         id="timeline">
-
+    <h2 style="margin:0 0 10px 0;">Timeline</h2>
+    <div class="timeline" id="timeline">
       Loading calendar...
-
     </div>
-
   </div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  orderBy
-
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
-
 });
 
 const db = getFirestore(app);
@@ -305,280 +243,114 @@ const db = getFirestore(app);
 let sessionsCache = [];
 let eventsCache = [];
 
-// -----------------------------------
-// LOAD EVERYTHING
-// -----------------------------------
-async function loadData(){
-
-  await loadSessions();
-
-  await loadEvents();
-
-}
-
-loadData();
-
-// -----------------------------------
-// LOAD SESSIONS
-// -----------------------------------
 async function loadSessions(){
 
-  const snap =
-    await getDocs(
-      query(
-        collection(db,"academicSessions"),
-        orderBy("createdAt","desc")
-      )
-    );
+  const snap = await getDocs(
+    query(collection(db,"academicSessions"), orderBy("createdAt","desc"))
+  );
 
   sessionsCache = [];
 
-  let activeSession = null;
+  let active = null;
 
   snap.forEach(d=>{
-
-    const data = d.data();
-
-    sessionsCache.push(data);
-
-    if(data.active){
-      activeSession = data.name;
-    }
-
+    const s = d.data();
+    sessionsCache.push(s);
+    if(s.active) active = s.name;
   });
 
-  renderSessionDropdown();
+  document.getElementById("sessionFilter").innerHTML =
+    `<option value="all">All Sessions</option>` +
+    sessionsCache.map(s=>`<option value="${s.name}">${s.name}</option>`).join("");
 
-  if(activeSession){
-
-    document.getElementById(
-      "activeSessionBox"
-    ).innerHTML = `
-
-      <div class="active-session">
-        Active Session:
-        ${activeSession}
-      </div>
-
-    `;
-
+  if(active){
+    document.getElementById("activeSessionBox").innerHTML =
+      `<div class="active-session">Active Session: ${active}</div>`;
   }
-
 }
 
-// -----------------------------------
-// SESSION DROPDOWN
-// -----------------------------------
-function renderSessionDropdown(){
-
-  const box =
-    document.getElementById(
-      "sessionFilter"
-    );
-
-  box.innerHTML = `
-
-    <option value="all">
-      All Sessions
-    </option>
-
-  `;
-
-  box.innerHTML +=
-    sessionsCache.map(s=>`
-
-      <option value="${s.name}">
-        ${s.name}
-      </option>
-
-    `).join("");
-
-}
-
-// -----------------------------------
-// LOAD EVENTS
-// -----------------------------------
 async function loadEvents(){
 
-  const snap =
-    await getDocs(
-      query(
-        collection(db,"schoolCalendar"),
-        orderBy("startDate","asc")
-      )
-    );
+  const snap = await getDocs(
+    query(collection(db,"schoolCalendar"), orderBy("startDate","asc"))
+  );
 
   eventsCache = [];
 
   snap.forEach(d=>{
-
     const e = d.data();
-
-    if(
-      e.visibility === "public"
-      &&
-      e.status === "active"
-    ){
-
+    if(e.visibility==="public" && e.status==="active"){
       eventsCache.push(e);
-
     }
-
   });
 
   renderEvents();
-
 }
 
-// -----------------------------------
-// RENDER EVENTS
-// -----------------------------------
 window.renderEvents = function(){
 
-  const timeline =
-    document.getElementById(
-      "timeline"
-    );
+  const search = document.getElementById("searchBox").value.toLowerCase();
+  const session = document.getElementById("sessionFilter").value;
+  const category = document.getElementById("categoryFilter").value;
 
-  const search =
-    document
-      .getElementById("searchBox")
-      .value
-      .toLowerCase();
+  let filtered = eventsCache.filter(e=>{
 
-  const session =
-    document
-      .getElementById("sessionFilter")
-      .value;
+    const matchSearch =
+      e.title.toLowerCase().includes(search) ||
+      (e.description||"").toLowerCase().includes(search);
 
-  const category =
-    document
-      .getElementById("categoryFilter")
-      .value;
+    const matchSession = session==="all" || e.session===session;
+    const matchCategory = category==="all" || e.category===category;
 
-  let filtered =
-    eventsCache.filter(e=>{
+    return matchSearch && matchSession && matchCategory;
+  });
 
-      const searchMatch =
+  filtered.sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
 
-        e.title
-          .toLowerCase()
-          .includes(search)
+  const box = document.getElementById("timeline");
 
-        ||
-
-        (e.description || "")
-          .toLowerCase()
-          .includes(search);
-
-      const sessionMatch =
-
-        session === "all"
-        ||
-        e.session === session;
-
-      const categoryMatch =
-
-        category === "all"
-        ||
-        e.category === category;
-
-      return (
-        searchMatch
-        &&
-        sessionMatch
-        &&
-        categoryMatch
-      );
-
-    });
-
-  // SORT
-  filtered.sort((a,b)=>
-
-    new Date(a.startDate)
-    -
-    new Date(b.startDate)
-
-  );
-
-  // EMPTY
-  if(filtered.length === 0){
-
-    timeline.innerHTML = `
-
-      <div class="empty">
-        No calendar events available.
-      </div>
-
-    `;
-
+  if(filtered.length===0){
+    box.innerHTML = `<div class="empty">No events found.</div>`;
     return;
   }
 
-  // RENDER
-  timeline.innerHTML =
-    filtered.map(e=>`
+  box.innerHTML = filtered.map(e=>`
 
-      <div class="event">
+    <div class="event">
 
-        <h3>${e.title}</h3>
+      <h3>${e.title}</h3>
 
-        <div class="
-          badge
-          ${e.category}
-        ">
-          ${e.category}
-        </div>
-
-        <p style="margin-top:15px;">
-
-          ${
-            e.description ||
-            "No description"
-          }
-
-        </p>
-
-        <div class="meta">
-
-          <b>Session:</b>
-          ${e.session}
-
-          <br><br>
-
-          <b>Start:</b>
-          ${formatDate(e.startDate)}
-
-          <br><br>
-
-          <b>End:</b>
-          ${formatDate(e.endDate)}
-
-        </div>
-
+      <div class="badge ${e.category}">
+        ${e.category}
       </div>
 
-    `).join("");
+      <p>${e.description || "No description"}</p>
 
+      <div class="meta">
+        <b>Session:</b> ${e.session}<br>
+        <b>Start:</b> ${format(e.startDate)}<br>
+        <b>End:</b> ${format(e.endDate)}
+      </div>
+
+    </div>
+
+  `).join("");
 };
 
-// -----------------------------------
-// DATE FORMAT
-// -----------------------------------
-function formatDate(date){
-
-  return new Date(date)
-    .toLocaleDateString(
-      undefined,
-      {
-        year:"numeric",
-        month:"long",
-        day:"numeric"
-      }
-    );
-
+function format(d){
+  return new Date(d).toLocaleDateString(undefined,{
+    year:"numeric",
+    month:"long",
+    day:"numeric"
+  });
 }
+
+async function init(){
+  await loadSessions();
+  await loadEvents();
+}
+
+init();
 
 </script>
 
