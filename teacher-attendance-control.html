@@ -1,68 +1,547 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Teacher Attendance Marking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>TEF Teacher Attendance</title>
+
+  <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
   <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    :root{
+      --primary:#800000;
+      --primary2:#ff4d6d;
+      --bg:#f3f5f9;
+      --card:#ffffff;
+      --text:#1e293b;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --green:#16a34a;
+      --red:#dc2626;
+      --blue:#2563eb;
+      --shadow:0 10px 30px rgba(0,0,0,0.08);
+    }
+
     body{
-      font-family:sans-serif;
-      background:#f4f4f4;
+      font-family:"Inter",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
       padding:20px;
     }
 
-    .box{
-      max-width:900px;
+    .container{
+      max-width:1100px;
       margin:auto;
-      background:white;
-      padding:20px;
-      border-radius:12px;
     }
 
-    select,button{
+    .hero{
+      background:
+      linear-gradient(
+        135deg,
+        #800000,
+        #ff4d6d
+      );
+
+      color:white;
+      padding:28px;
+      border-radius:24px;
+      margin-bottom:20px;
+      box-shadow:var(--shadow);
+
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      width:250px;
+      height:250px;
+      background:rgba(255,255,255,0.08);
+      border-radius:50%;
+      right:-80px;
+      top:-80px;
+    }
+
+    .hero h1{
+      font-size:32px;
+      font-weight:800;
+      margin-bottom:8px;
+      position:relative;
+      z-index:2;
+    }
+
+    .hero p{
+      opacity:0.92;
+      line-height:1.5;
+      position:relative;
+      z-index:2;
+    }
+
+    .stats{
+      margin-top:22px;
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(160px,1fr));
+      gap:15px;
+      position:relative;
+      z-index:2;
+    }
+
+    .stat{
+      background:rgba(255,255,255,0.12);
+      border:1px solid rgba(255,255,255,0.18);
+      padding:15px;
+      border-radius:18px;
+      backdrop-filter:blur(10px);
+    }
+
+    .stat small{
+      display:block;
+      opacity:0.8;
+      margin-bottom:5px;
+    }
+
+    .stat h2{
+      font-size:28px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:22px;
+      padding:22px;
+      box-shadow:var(--shadow);
+      margin-bottom:20px;
+    }
+
+    .top-grid{
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(250px,1fr));
+      gap:18px;
+    }
+
+    label{
+      display:block;
+      margin-bottom:8px;
+      font-size:14px;
+      font-weight:700;
+      color:var(--muted);
+    }
+
+    select,
+    input{
       width:100%;
-      padding:12px;
-      margin-top:10px;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-size:15px;
+      outline:none;
+      transition:0.2s;
+    }
+
+    select:focus,
+    input:focus{
+      border-color:var(--primary2);
+      box-shadow:0 0 0 4px rgba(255,77,109,0.15);
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      transition:0.2s;
+      font-weight:700;
+      border-radius:14px;
+      padding:14px 18px;
+      font-size:15px;
+    }
+
+    .primary-btn{
+      background:
+      linear-gradient(
+        135deg,
+        #800000,
+        #ff4d6d
+      );
+      color:white;
+      flex:1;
+      min-width:200px;
+    }
+
+    .primary-btn:hover{
+      transform:translateY(-2px);
+    }
+
+    .secondary-btn{
+      background:#eef2ff;
+      color:#3730a3;
+      min-width:170px;
+    }
+
+    .secondary-btn:hover{
+      background:#dbe4ff;
+    }
+
+    .student-list{
+      margin-top:25px;
+      display:grid;
+      gap:14px;
     }
 
     .student{
+      background:#fafafa;
+      border:1px solid #eee;
+      border-radius:18px;
+      padding:18px;
       display:flex;
       justify-content:space-between;
-      padding:10px;
-      border-bottom:1px solid #ddd;
+      align-items:center;
+      gap:15px;
+      transition:0.2s;
     }
 
-    .btn{
-      background:#27ae60;
+    .student:hover{
+      transform:translateY(-2px);
+      box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    .left{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .avatar{
+      width:52px;
+      height:52px;
+      border-radius:50%;
+      background:
+      linear-gradient(
+        135deg,
+        #800000,
+        #ff4d6d
+      );
+
       color:white;
-      border:none;
-      padding:12px;
-      margin-top:15px;
-      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      font-size:18px;
     }
 
-    .ok{color:green}
+    .student h3{
+      font-size:16px;
+      margin-bottom:5px;
+    }
+
+    .meta{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .toggle{
+      position:relative;
+      width:70px;
+      height:36px;
+    }
+
+    .toggle input{
+      opacity:0;
+      width:0;
+      height:0;
+    }
+
+    .slider{
+      position:absolute;
+      cursor:pointer;
+      inset:0;
+      background:#d1d5db;
+      transition:.3s;
+      border-radius:100px;
+    }
+
+    .slider::before{
+      content:"";
+      position:absolute;
+      width:28px;
+      height:28px;
+      left:4px;
+      top:4px;
+      background:white;
+      border-radius:50%;
+      transition:.3s;
+    }
+
+    .toggle input:checked + .slider{
+      background:var(--green);
+    }
+
+    .toggle input:checked + .slider::before{
+      transform:translateX(34px);
+    }
+
+    .status{
+      margin-top:20px;
+      padding:16px;
+      border-radius:16px;
+      display:none;
+      font-weight:600;
+    }
+
+    .success{
+      display:block;
+      background:#dcfce7;
+      color:#166534;
+    }
+
+    .error{
+      display:block;
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .info{
+      display:block;
+      background:#dbeafe;
+      color:#1d4ed8;
+    }
+
+    .toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+      flex-wrap:wrap;
+      margin-bottom:15px;
+    }
+
+    .search{
+      flex:1;
+      min-width:220px;
+    }
+
+    .empty{
+      text-align:center;
+      padding:40px 20px;
+      color:var(--muted);
+    }
+
+    .present-tag{
+      color:var(--green);
+      font-weight:700;
+      font-size:13px;
+      margin-top:5px;
+    }
+
+    .absent-tag{
+      color:var(--red);
+      font-weight:700;
+      font-size:13px;
+      margin-top:5px;
+    }
+
+    .footer-note{
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      margin-top:20px;
+    }
+
+    @media(max-width:700px){
+
+      body{
+        padding:15px;
+      }
+
+      .hero{
+        padding:22px;
+      }
+
+      .hero h1{
+        font-size:25px;
+      }
+
+      .student{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .toggle{
+        align-self:flex-end;
+      }
+
+    }
+
   </style>
+
 </head>
 
 <body>
 
-<div class="box">
+<div class="container">
 
-  <h2>Mark Attendance</h2>
+  <!-- HERO -->
 
-  <label>Class</label>
-  <select id="classBox"></select>
+  <div class="hero">
 
-  <button onclick="loadStudents()">Load Students</button>
+    <h1>
+      Teacher Attendance Dashboard
+    </h1>
 
-  <div id="list"></div>
+    <p>
+      Mark student attendance quickly,
+      track class participation,
+      and manage daily records with ease.
+    </p>
 
-  <button class="btn" onclick="submitAttendance()">
-    Submit Attendance
-  </button>
+    <div class="stats">
 
-  <p id="msg"></p>
+      <div class="stat">
+        <small>Total Students</small>
+        <h2 id="totalStudents">0</h2>
+      </div>
+
+      <div class="stat">
+        <small>Present</small>
+        <h2 id="presentCount">0</h2>
+      </div>
+
+      <div class="stat">
+        <small>Absent</small>
+        <h2 id="absentCount">0</h2>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- CONTROLS -->
+
+  <div class="card">
+
+    <div class="top-grid">
+
+      <div>
+
+        <label>Select Class</label>
+
+        <select id="classBox"></select>
+
+      </div>
+
+      <div>
+
+        <label>Search Student</label>
+
+        <input type="text"
+               id="searchBox"
+               placeholder="Search by name..."
+               oninput="render()">
+
+      </div>
+
+    </div>
+
+    <div class="actions">
+
+      <button class="primary-btn"
+              onclick="loadStudents()">
+
+        Load Students
+
+      </button>
+
+      <button class="secondary-btn"
+              onclick="markAll(true)">
+
+        Mark All Present
+
+      </button>
+
+      <button class="secondary-btn"
+              onclick="markAll(false)">
+
+        Mark All Absent
+
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- STUDENTS -->
+
+  <div class="card">
+
+    <div class="toolbar">
+
+      <h2>
+        Student Attendance
+      </h2>
+
+      <small id="todayDate"></small>
+
+    </div>
+
+    <div id="list"
+         class="student-list">
+
+      <div class="empty">
+        Load a class to begin.
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- SUBMIT -->
+
+  <div class="card">
+
+    <button class="primary-btn"
+            onclick="submitAttendance()">
+
+      Save Attendance Record
+
+    </button>
+
+    <div id="msg"
+         class="status"></div>
+
+  </div>
+
+  <div class="footer-note">
+    Tyneceploh Educational Foundation • Attendance System
+  </div>
 
 </div>
 
@@ -70,127 +549,498 @@
 
 import {
   initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
   collection,
   getDocs,
-  addDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  addDoc,
+  query,
+  where
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
+
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
+
 });
 
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
+const user =
+  JSON.parse(
+    localStorage.getItem("user")
+  );
 
-if(!user || user.role !== "teacher"){
-  location.href="login.html";
+if(
+  !user
+  ||
+  user.role !== "teacher"
+){
+  location.href = "login.html";
 }
+
+const classBox =
+  document.getElementById("classBox");
+
+const list =
+  document.getElementById("list");
+
+const msg =
+  document.getElementById("msg");
 
 let students = [];
 let selected = {};
+let attendanceLoaded = false;
 
-// -------------------
+// -------------------------
+// DATE
+// -------------------------
+document.getElementById(
+  "todayDate"
+).innerText =
+  new Date().toLocaleDateString(
+    undefined,
+    {
+      weekday:"long",
+      year:"numeric",
+      month:"long",
+      day:"numeric"
+    }
+  );
+
+// -------------------------
+// STATUS MESSAGE
+// -------------------------
+function showMessage(text,type){
+
+  msg.className =
+    `status ${type}`;
+
+  msg.innerText = text;
+
+}
+
+// -------------------------
 // LOAD CLASSES
-// -------------------
+// -------------------------
 async function loadClasses(){
 
-  const snap = await getDocs(collection(db,"users"));
-  const set = new Set();
+  try{
 
-  snap.forEach(d=>{
-    const u = d.data();
-    if(u.role === "student") set.add(u.class);
-  });
+    const snap =
+      await getDocs(
+        collection(db,"users")
+      );
 
-  classBox.innerHTML = [...set]
-    .map(c=>`<option>${c}</option>`)
-    .join("");
+    const set = new Set();
+
+    snap.forEach(d=>{
+
+      const u = d.data();
+
+      if(
+        u.role === "student"
+        &&
+        u.class
+      ){
+        set.add(u.class);
+      }
+
+    });
+
+    const classes =
+      [...set].sort();
+
+    if(!classes.length){
+
+      classBox.innerHTML =
+        `<option>No classes found</option>`;
+
+      return;
+
+    }
+
+    classBox.innerHTML =
+      classes.map(c=>`
+
+        <option value="${c}">
+          ${c}
+        </option>
+
+      `).join("");
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "Failed to load classes",
+      "error"
+    );
+
+  }
 
 }
 
 loadClasses();
 
-// -------------------
+// -------------------------
 // LOAD STUDENTS
-// -------------------
-window.loadStudents = async function(){
+// -------------------------
+window.loadStudents =
+async function(){
 
-  const cls = classBox.value;
+  try{
 
-  const snap = await getDocs(collection(db,"users"));
+    showMessage(
+      "Loading students...",
+      "info"
+    );
 
-  students = [];
+    const cls =
+      classBox.value;
 
-  snap.forEach(d=>{
-    const u = d.data();
-    if(u.role === "student" && u.class === cls){
-      students.push(u);
-    }
+    const snap =
+      await getDocs(
+
+        query(
+          collection(db,"users"),
+          where("role","==","student"),
+          where("class","==",cls)
+        )
+
+      );
+
+    students = [];
+    selected = {};
+
+    snap.forEach(d=>{
+
+      const u = d.data();
+
+      students.push({
+        ...u,
+        docId:d.id
+      });
+
+      selected[u.userId] = true;
+
+    });
+
+    attendanceLoaded = true;
+
+    render();
+
+    updateStats();
+
+    showMessage(
+      `${students.length} students loaded`,
+      "success"
+    );
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "Error loading students",
+      "error"
+    );
+
+  }
+
+};
+
+// -------------------------
+// RENDER
+// -------------------------
+window.render = function(){
+
+  const search =
+    document.getElementById(
+      "searchBox"
+    ).value.toLowerCase();
+
+  const filtered =
+    students.filter(s=>
+
+      s.name
+      ?.toLowerCase()
+      .includes(search)
+
+    );
+
+  if(!filtered.length){
+
+    list.innerHTML = `
+
+      <div class="empty">
+        No students found.
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  list.innerHTML =
+    filtered.map(s=>`
+
+      <div class="student">
+
+        <div class="left">
+
+          <div class="avatar">
+            ${
+              s.name
+              ?.charAt(0)
+              ?.toUpperCase() || "S"
+            }
+          </div>
+
+          <div>
+
+            <h3>${s.name}</h3>
+
+            <div class="meta">
+
+              ID:
+              ${s.userId}
+
+              <br>
+
+              Class:
+              ${s.class}
+
+            </div>
+
+            <div class="
+              ${
+                selected[s.userId]
+                ? "present-tag"
+                : "absent-tag"
+              }
+            ">
+
+              ${
+                selected[s.userId]
+                ? "Present"
+                : "Absent"
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <label class="toggle">
+
+          <input
+            type="checkbox"
+            ${
+              selected[s.userId]
+              ? "checked"
+              : ""
+            }
+            onchange="
+              mark(
+                '${s.userId}',
+                this.checked
+              )
+            "
+          >
+
+          <span class="slider"></span>
+
+        </label>
+
+      </div>
+
+    `).join("");
+
+};
+
+// -------------------------
+// MARK
+// -------------------------
+window.mark = function(id,val){
+
+  selected[id] = val;
+
+  render();
+
+  updateStats();
+
+};
+
+// -------------------------
+// MARK ALL
+// -------------------------
+window.markAll = function(state){
+
+  if(!attendanceLoaded) return;
+
+  students.forEach(s=>{
+
+    selected[s.userId] = state;
+
   });
 
   render();
+
+  updateStats();
+
 };
 
-function render(){
+// -------------------------
+// UPDATE STATS
+// -------------------------
+function updateStats(){
 
-  const list = document.getElementById("list");
+  const total =
+    students.length;
 
-  list.innerHTML = students.map(s=>`
+  let present = 0;
 
-    <div class="student">
+  students.forEach(s=>{
 
-      <span>${s.name}</span>
-
-      <input type="checkbox"
-        onchange="mark('${s.userId}',this.checked)"
-      >
-
-    </div>
-
-  `).join("");
-
-}
-
-// -------------------
-// MARK ATTENDANCE
-// -------------------
-window.mark = function(id, val){
-  selected[id] = val;
-};
-
-// -------------------
-// SUBMIT
-// -------------------
-window.submitAttendance = async function(){
-
-  const cls = classBox.value;
-
-  const records = students.map(s=>({
-
-    studentId:s.userId,
-    status:selected[s.userId] ? "present" : "absent"
-
-  }));
-
-  await addDoc(collection(db,"attendanceRecords"),{
-
-    class:cls,
-    date:new Date().toISOString().split("T")[0],
-    teacherId:user.userId,
-    teacherName:user.name,
-    students:records,
-    createdAt:Date.now()
+    if(selected[s.userId]){
+      present++;
+    }
 
   });
 
-  msg.innerHTML = "Attendance saved successfully";
+  const absent =
+    total - present;
+
+  document.getElementById(
+    "totalStudents"
+  ).innerText = total;
+
+  document.getElementById(
+    "presentCount"
+  ).innerText = present;
+
+  document.getElementById(
+    "absentCount"
+  ).innerText = absent;
+
+}
+
+// -------------------------
+// SUBMIT
+// -------------------------
+window.submitAttendance =
+async function(){
+
+  try{
+
+    if(!students.length){
+
+      showMessage(
+        "Load students first",
+        "error"
+      );
+
+      return;
+
+    }
+
+    const cls =
+      classBox.value;
+
+    const today =
+      new Date()
+      .toISOString()
+      .split("T")[0];
+
+    const records =
+      students.map(s=>({
+
+        studentId:s.userId,
+
+        studentName:s.name,
+
+        status:
+          selected[s.userId]
+          ? "present"
+          : "absent"
+
+      }));
+
+    const presentCount =
+      records.filter(r=>
+        r.status === "present"
+      ).length;
+
+    const absentCount =
+      records.filter(r=>
+        r.status === "absent"
+      ).length;
+
+    showMessage(
+      "Saving attendance...",
+      "info"
+    );
+
+    await addDoc(
+
+      collection(db,"attendanceRecords"),
+
+      {
+
+        class:cls,
+
+        date:today,
+
+        teacherId:user.userId,
+
+        teacherName:user.name,
+
+        students:records,
+
+        totalStudents:students.length,
+
+        presentCount,
+
+        absentCount,
+
+        createdAt:Date.now()
+
+      }
+
+    );
+
+    showMessage(
+      "Attendance saved successfully",
+      "success"
+    );
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "Failed to save attendance",
+      "error"
+    );
+
+  }
+
 };
 
 </script>
