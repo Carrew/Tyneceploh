@@ -4,7 +4,6 @@
   <title>Login - TEF System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-
 <body>
 
 <h2>Login</h2>
@@ -14,115 +13,81 @@
 
 <button onclick="login()">Login</button>
 
-
-  <script type="module">
+<script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
-import {
-  getMessaging,
-  getToken,
-  isSupported
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
-
-const app = initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
-  messagingSenderId: "161024255934", // Matches Service Worker
-  appId: "1:161024255934:web:2bca05f1d6af871cc57bef" // Matches Service Worker
-});
+  messagingSenderId: "161024255934",
+  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"
+};
 
-
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let messaging = null;
 
-// safe messaging init
+// safe init messaging
 (async () => {
   if (await isSupported()) {
     messaging = getMessaging(app);
   }
 })();
 
-
-// 🔥 SAFE NOTIFICATION SYSTEM (FIXED FOR MOBILE)
-async function safeNotify(title, body){
-
-  try{
-
-    // Desktop (safe path)
-    if("Notification" in window && Notification.permission === "granted"){
-
-      // Mobile fix: avoid constructor error
-      if(typeof ServiceWorkerRegistration !== "undefined"){
-
-        const reg = await navigator.serviceWorker.getRegistration();
-
-        if(reg && reg.showNotification){
-
-          reg.showNotification(title, {
-            body,
-            icon: "/icon.png"
-          });
-
-          return;
-
-        }
-
-      }
-
-      // fallback desktop
-      new Notification(title, { body });
-
-    }
-
-  }catch(err){
-
-    console.log("Notification fallback used:", err);
-
-  }
-
-}
-
-
-// 🔥 PUSH REGISTRATION
-async function registerPush(userDocId){
-
-  try{
-
-    if(!messaging) return;
+// 🔥 SAFE PUSH TOKEN REGISTER
+async function registerPush(docId) {
+  try {
+    if (!messaging) return;
 
     const permission = await Notification.requestPermission();
-
-    if(permission !== "granted") return;
+    if (permission !== "granted") return;
 
     const token = await getToken(messaging, {
       vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
     });
 
-    if(!token) return;
-
-    await updateDoc(doc(db, "users", userDocId), {
-      fcmToken: token,
-      notificationEnabled: true,
-      lastLogin: Date.now()
-    });
-
-  }catch(err){
-    console.log("Push error:", err);
+    if (token) {
+      await updateDoc(doc(db, "users", docId), {
+        fcmToken: token,
+        notificationEnabled: true,
+        lastLogin: Date.now()
+      });
+    }
+  } catch (e) {
+    console.log("Push error:", e);
   }
-
 }
 
+// 🔥 MOBILE SAFE NOTIFICATION (NO new Notification EVER)
+async function notifySafe(title, body) {
+  try {
+    if (!("serviceWorker" in navigator)) return;
 
-window.login = async function(){
+    const reg = await navigator.serviceWorker.ready;
+
+    if (reg && reg.showNotification) {
+      await reg.showNotification(title, {
+        body,
+        icon: "/icon.png",
+        badge: "/icon.png"
+      });
+    }
+  } catch (e) {
+    console.log("Notify error:", e);
+  }
+}
+
+window.login = async function() {
 
   const idInput = document.getElementById("id").value.trim().toUpperCase();
   const pinInput = document.getElementById("pin").value.trim();
 
-  if(!idInput || !pinInput){
+  if (!idInput || !pinInput) {
     alert("Enter ID and PIN");
     return;
   }
@@ -134,9 +99,7 @@ window.login = async function(){
 
   snap.forEach(d => {
     const u = d.data();
-
-    if(u.userId === idInput && u.pin === pinInput){
-
+    if (u.userId === idInput && u.pin === pinInput) {
       found = {
         id: u.userId,
         userId: u.userId,
@@ -146,69 +109,40 @@ window.login = async function(){
         classes: u.classes || [],
         status: u.status || ""
       };
-
       docId = d.id;
     }
-
   });
 
-  if(!found){
+  if (!found) {
     alert("Invalid ID or PIN");
     return;
   }
 
-  if(found.role !== "student" && found.status !== "active"){
+  if (found.role !== "student" && found.status !== "active") {
     alert("Account restricted. Contact admin.");
     return;
   }
 
   localStorage.setItem("user", JSON.stringify(found));
 
-  console.log("Logged in:", found.role);
-
-  // 🔥 PUSH REGISTRATION
+  // 🔥 PUSH + LOGIN NOTIFICATION
   await registerPush(docId);
+  await notifySafe("Login Successful", `Welcome back ${found.name || found.userId}`);
 
-  // 🔥 SAFE NOTIFICATION (NO MOBILE ERROR)
-  await safeNotify(
-    "Login Successful",
-    `Welcome ${found.name || found.userId}`
-  );
+  // routing
+  const routes = {
+    admin: "admin-dashboard.html",
+    teacher: "teacher-dashboard.html",
+    student: "student-dashboard.html",
+    janitor: "janitor-dashboard.html",
+    security: "security-dashboard.html",
+    coordinator: "coordinator-dashboard.html"
+  };
 
-  // ROUTING (UNCHANGED)
-  switch(found.role){
-
-    case "admin":
-      location.href = "admin-dashboard.html";
-      break;
-
-    case "teacher":
-      location.href = "teacher-dashboard.html";
-      break;
-
-    case "student":
-      location.href = "student-dashboard.html";
-      break;
-
-    case "janitor":
-      location.href = "janitor-dashboard.html";
-      break;
-
-    case "security":
-      location.href = "security-dashboard.html";
-      break;
-
-    case "coordinator":
-      location.href = "coordinator-dashboard.html";
-      break;
-
-    default:
-      location.href = "index.html";
-  }
-
+  location.href = routes[found.role] || "index.html";
 };
 
-  </script>
+</script>
 
 </body>
 </html>
