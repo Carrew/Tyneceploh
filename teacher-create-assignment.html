@@ -1,116 +1,1352 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Create Assignment - TEF</title>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Create Assignment • TEF</title>
+
+  <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    :root{
+
+      --primary:#800000;
+      --primary2:#ff4d6d;
+
+      --bg:#f4f6fb;
+      --card:#ffffff;
+
+      --text:#1e293b;
+      --muted:#64748b;
+
+      --line:#e2e8f0;
+
+      --green:#16a34a;
+      --red:#dc2626;
+      --orange:#ea580c;
+      --blue:#2563eb;
+
+      --shadow:
+      0 10px 30px rgba(0,0,0,0.08);
+
+    }
+
+    body{
+      font-family:"Inter",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding:20px;
+    }
+
+    .container{
+      max-width:1100px;
+      margin:auto;
+    }
+
+    .hero{
+
+      background:
+      linear-gradient(
+        135deg,
+        #800000,
+        #ff4d6d
+      );
+
+      color:white;
+      padding:30px;
+      border-radius:26px;
+      margin-bottom:22px;
+      box-shadow:var(--shadow);
+
+      position:relative;
+      overflow:hidden;
+
+    }
+
+    .hero::before{
+
+      content:"";
+
+      position:absolute;
+
+      width:260px;
+      height:260px;
+
+      background:
+      rgba(255,255,255,0.08);
+
+      border-radius:50%;
+
+      right:-90px;
+      top:-90px;
+
+    }
+
+    .hero h1{
+      font-size:34px;
+      font-weight:800;
+      margin-bottom:10px;
+      position:relative;
+      z-index:2;
+    }
+
+    .hero p{
+      opacity:0.92;
+      line-height:1.6;
+      max-width:700px;
+      position:relative;
+      z-index:2;
+    }
+
+    .stats{
+
+      display:grid;
+
+      grid-template-columns:
+      repeat(auto-fit,minmax(170px,1fr));
+
+      gap:15px;
+
+      margin-top:24px;
+
+      position:relative;
+      z-index:2;
+
+    }
+
+    .stat{
+
+      background:
+      rgba(255,255,255,0.12);
+
+      border:
+      1px solid rgba(255,255,255,0.16);
+
+      padding:16px;
+      border-radius:18px;
+
+      backdrop-filter:blur(8px);
+
+    }
+
+    .stat small{
+      display:block;
+      opacity:0.85;
+      margin-bottom:5px;
+    }
+
+    .stat h2{
+      font-size:28px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:24px;
+      padding:24px;
+      box-shadow:var(--shadow);
+      margin-bottom:20px;
+    }
+
+    .grid{
+
+      display:grid;
+
+      grid-template-columns:
+      repeat(auto-fit,minmax(250px,1fr));
+
+      gap:18px;
+
+    }
+
+    label{
+
+      display:block;
+
+      margin-bottom:8px;
+
+      font-size:14px;
+      font-weight:700;
+
+      color:var(--muted);
+
+    }
+
+    input,
+    select,
+    textarea{
+
+      width:100%;
+
+      padding:14px;
+
+      border-radius:16px;
+
+      border:
+      1px solid var(--line);
+
+      background:white;
+
+      outline:none;
+
+      font-size:15px;
+
+      transition:0.2s;
+
+      font-family:inherit;
+
+    }
+
+    textarea{
+      resize:vertical;
+      min-height:110px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus{
+
+      border-color:var(--primary2);
+
+      box-shadow:
+      0 0 0 4px rgba(255,77,109,0.14);
+
+    }
+
+    .section-title{
+
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+
+      margin-bottom:18px;
+
+      flex-wrap:wrap;
+
+    }
+
+    .section-title h2{
+      font-size:22px;
+    }
+
+    .question-list{
+      display:grid;
+      gap:18px;
+    }
+
+    .question-card{
+
+      background:#fafafa;
+
+      border:
+      1px solid #eee;
+
+      border-radius:22px;
+
+      padding:20px;
+
+      position:relative;
+
+      transition:0.2s;
+
+    }
+
+    .question-card:hover{
+
+      transform:translateY(-2px);
+
+      box-shadow:
+      0 10px 24px rgba(0,0,0,0.06);
+
+    }
+
+    .question-head{
+
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+
+      margin-bottom:16px;
+
+      gap:12px;
+
+      flex-wrap:wrap;
+
+    }
+
+    .question-badge{
+
+      background:
+      linear-gradient(
+        135deg,
+        #800000,
+        #ff4d6d
+      );
+
+      color:white;
+
+      padding:7px 14px;
+
+      border-radius:999px;
+
+      font-size:13px;
+      font-weight:700;
+
+    }
+
+    .danger-btn{
+
+      background:#fee2e2;
+      color:#991b1b;
+
+      border:none;
+
+      padding:10px 14px;
+
+      border-radius:12px;
+
+      cursor:pointer;
+
+      font-weight:700;
+
+      transition:0.2s;
+
+    }
+
+    .danger-btn:hover{
+      background:#fecaca;
+    }
+
+    .row{
+
+      display:grid;
+
+      grid-template-columns:
+      1fr 120px;
+
+      gap:14px;
+
+      margin-bottom:12px;
+
+    }
+
+    .helper{
+
+      color:var(--muted);
+
+      font-size:13px;
+
+      margin-top:8px;
+
+    }
+
+    .toolbar{
+
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top:20px;
+
+    }
+
+    button{
+
+      border:none;
+      cursor:pointer;
+
+      transition:0.2s;
+
+      font-weight:700;
+
+      font-size:15px;
+
+      border-radius:16px;
+
+      padding:15px 20px;
+
+    }
+
+    .primary-btn{
+
+      background:
+      linear-gradient(
+        135deg,
+        #800000,
+        #ff4d6d
+      );
+
+      color:white;
+
+      flex:1;
+      min-width:220px;
+
+    }
+
+    .primary-btn:hover{
+      transform:translateY(-2px);
+    }
+
+    .secondary-btn{
+
+      background:#eef2ff;
+      color:#3730a3;
+
+      min-width:180px;
+
+    }
+
+    .secondary-btn:hover{
+      background:#dbe4ff;
+    }
+
+    .preview{
+
+      background:#f8fafc;
+
+      border:
+      1px dashed #cbd5e1;
+
+      border-radius:18px;
+
+      padding:18px;
+
+      margin-top:20px;
+
+    }
+
+    .preview h3{
+      margin-bottom:10px;
+    }
+
+    .preview-item{
+
+      padding:14px;
+
+      border-radius:14px;
+
+      background:white;
+
+      margin-bottom:12px;
+
+      border:
+      1px solid #e5e7eb;
+
+    }
+
+    .success-box,
+    .error-box{
+
+      padding:16px;
+      border-radius:16px;
+      margin-top:18px;
+      display:none;
+      font-weight:600;
+
+    }
+
+    .success-box{
+      background:#dcfce7;
+      color:#166534;
+    }
+
+    .error-box{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+
+    .empty{
+      text-align:center;
+      color:var(--muted);
+      padding:30px;
+    }
+
+    .footer-note{
+
+      text-align:center;
+
+      color:var(--muted);
+
+      font-size:13px;
+
+      margin-top:20px;
+
+    }
+
+    @media(max-width:700px){
+
+      body{
+        padding:14px;
+      }
+
+      .hero{
+        padding:22px;
+      }
+
+      .hero h1{
+        font-size:27px;
+      }
+
+      .row{
+        grid-template-columns:1fr;
+      }
+
+    }
+
+  </style>
+
 </head>
+
 <body>
 
-<h2>Create Assignment</h2>
+<div class="container">
 
-<label>Class:</label>
-<select id="class"></select>
-<br><br>
-<input id="subject" placeholder="Subject">
-<input id="title" placeholder="Title">
+  <!-- HERO -->
 
-<div id="questions" style="margin-top: 20px;"></div>
+  <div class="hero">
 
-<button onclick="addQ()">+ Add Question</button>
-<br><br>
+    <h1>
+      Create Assignment
+    </h1>
 
-<button onclick="create()">Create Assignment</button>
+    <p>
+      Build classroom assignments with a cleaner workflow,
+      automatic scoring,
+      question management,
+      and a polished TEF teacher experience.
+    </p>
+
+    <div class="stats">
+
+      <div class="stat">
+        <small>Total Questions</small>
+        <h2 id="questionCount">0</h2>
+      </div>
+
+      <div class="stat">
+        <small>Total Points</small>
+        <h2 id="totalPoints">0</h2>
+      </div>
+
+      <div class="stat">
+        <small>Selected Class</small>
+        <h2 id="classStat">—</h2>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- BASIC INFO -->
+
+  <div class="card">
+
+    <div class="section-title">
+      <h2>Assignment Information</h2>
+    </div>
+
+    <div class="grid">
+
+      <div>
+
+        <label>Class</label>
+
+        <select id="class"
+                onchange="updateStats()">
+        </select>
+
+      </div>
+
+      <div>
+
+        <label>Subject</label>
+
+        <input id="subject"
+               placeholder="Example: Mathematics">
+
+      </div>
+
+    </div>
+
+    <div style="margin-top:18px;">
+
+      <label>Assignment Title</label>
+
+      <input id="title"
+             placeholder="Example: Algebra Weekly Assignment">
+
+    </div>
+
+    <div style="margin-top:18px;">
+
+      <label>Instructions</label>
+
+      <textarea id="instructions"
+                placeholder="Optional instructions for students..."></textarea>
+
+    </div>
+
+  </div>
+
+  <!-- QUESTIONS -->
+
+  <div class="card">
+
+    <div class="section-title">
+
+      <h2>Questions</h2>
+
+      <button class="secondary-btn"
+              onclick="addQ()">
+
+        + Add Question
+
+      </button>
+
+    </div>
+
+    <div id="questions"
+         class="question-list">
+
+      <div class="empty">
+        No questions added yet.
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- PREVIEW -->
+
+  <div class="card">
+
+    <div class="section-title">
+      <h2>Live Preview</h2>
+    </div>
+
+    <div class="preview"
+         id="preview">
+
+      Assignment preview will appear here.
+
+    </div>
+
+  </div>
+
+  <!-- ACTIONS -->
+
+  <div class="card">
+
+    <div class="toolbar">
+
+      <button class="primary-btn"
+              onclick="create()">
+
+        Publish Assignment
+
+      </button>
+
+      <button class="secondary-btn"
+              onclick="resetForm()">
+
+        Clear Form
+
+      </button>
+
+    </div>
+
+    <div id="success"
+         class="success-box"></div>
+
+    <div id="error"
+         class="error-box"></div>
+
+  </div>
+
+  <div class="footer-note">
+    Tyneceploh Educational Foundation • Assignment Management
+  </div>
+
+</div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
-});
+import {
+  initializeApp
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-const db = getFirestore(app);
+import {
+  getFirestore,
+  collection,
+  addDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const user = JSON.parse(localStorage.getItem("user"));
-if (!user || user.role !== "teacher") {
+const app =
+  initializeApp({
+
+    apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+    authDomain:"tyneceploh.firebaseapp.com",
+    projectId:"tyneceploh"
+
+  });
+
+const db =
+  getFirestore(app);
+
+const user =
+  JSON.parse(
+    localStorage.getItem("user")
+  );
+
+if(
+  !user
+  ||
+  user.role !== "teacher"
+){
   location.href = "login.html";
 }
 
-// Load teacher's assigned classes into dropdown
-document.getElementById("class").innerHTML =
-  (user.classes || []).map(c => `<option value="${c}">${c}</option>`).join("");
+// ----------------------
+// LOAD CLASSES
+// ----------------------
+document.getElementById(
+  "class"
+).innerHTML =
 
+  (user.classes || [])
+
+  .map(c=>`
+
+    <option value="${c}">
+      ${c}
+    </option>
+
+  `)
+
+  .join("");
+
+// ----------------------
+// GLOBALS
+// ----------------------
 let count = 0;
 
-window.addQ = function() {
+// ----------------------
+// MESSAGE
+// ----------------------
+function showSuccess(text){
+
+  const box =
+    document.getElementById(
+      "success"
+    );
+
+  box.style.display = "block";
+  box.innerText = text;
+
+  document.getElementById(
+    "error"
+  ).style.display = "none";
+
+}
+
+function showError(text){
+
+  const box =
+    document.getElementById(
+      "error"
+    );
+
+  box.style.display = "block";
+  box.innerText = text;
+
+  document.getElementById(
+    "success"
+  ).style.display = "none";
+
+}
+
+// ----------------------
+// ADD QUESTION
+// ----------------------
+window.addQ = function(){
+
   count++;
-  const container = document.getElementById("questions");
-  
-  // FIX: Use insertAdjacentHTML so existing inputs don't get cleared/wiped
-  const qHtml = `
-    <div id="row${count}" style="margin:10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-      <b>Q${count}:</b>
-      <input id="q${count}" placeholder="Question" style="width: 250px;">
-      Score:
-      <input id="s${count}" type="number" style="width:60px" value="5">
+
+  const container =
+    document.getElementById(
+      "questions"
+    );
+
+  if(
+    container.querySelector(".empty")
+  ){
+    container.innerHTML = "";
+  }
+
+  const html = `
+
+    <div class="question-card"
+         id="row${count}">
+
+      <div class="question-head">
+
+        <div class="question-badge">
+          Question ${count}
+        </div>
+
+        <button class="danger-btn"
+                onclick="removeQ(${count})">
+
+          Remove
+
+        </button>
+
+      </div>
+
+      <div class="row">
+
+        <div>
+
+          <label>
+            Question
+          </label>
+
+          <textarea
+            id="q${count}"
+            placeholder="Enter assignment question..."
+            oninput="updatePreview()"
+          ></textarea>
+
+        </div>
+
+        <div>
+
+          <label>
+            Score
+          </label>
+
+          <input
+            id="s${count}"
+            type="number"
+            min="1"
+            value="5"
+            oninput="updateStats();updatePreview()"
+          >
+
+        </div>
+
+      </div>
+
+      <div class="helper">
+        Students will answer this question during assignment submission.
+      </div>
+
     </div>
+
   `;
-  container.insertAdjacentHTML('beforeend', qHtml);
+
+  container.insertAdjacentHTML(
+    "beforeend",
+    html
+  );
+
+  updateStats();
+
+  updatePreview();
+
 };
 
-window.create = async function() {
-  const subject = document.getElementById("subject").value;
-  const title = document.getElementById("title").value;
-  const className = document.getElementById("class").value;
+// ----------------------
+// REMOVE QUESTION
+// ----------------------
+window.removeQ = function(id){
 
-  if (!subject || !title || count === 0) {
-    alert("Please fill in subject, title, and add at least one question.");
+  const row =
+    document.getElementById(
+      `row${id}`
+    );
+
+  if(row){
+    row.remove();
+  }
+
+  const container =
+    document.getElementById(
+      "questions"
+    );
+
+  if(
+    !container.children.length
+  ){
+
+    container.innerHTML = `
+
+      <div class="empty">
+        No questions added yet.
+      </div>
+
+    `;
+
+  }
+
+  updateStats();
+
+  updatePreview();
+
+};
+
+// ----------------------
+// UPDATE STATS
+// ----------------------
+window.updateStats = function(){
+
+  let total = 0;
+  let questions = 0;
+
+  for(
+    let i = 1;
+    i <= count;
+    i++
+  ){
+
+    const q =
+      document.getElementById(
+        `q${i}`
+      );
+
+    const s =
+      document.getElementById(
+        `s${i}`
+      );
+
+    if(q && s){
+
+      const score =
+        Number(s.value) || 0;
+
+      total += score;
+      questions++;
+
+    }
+
+  }
+
+  document.getElementById(
+    "questionCount"
+  ).innerText = questions;
+
+  document.getElementById(
+    "totalPoints"
+  ).innerText = total;
+
+  document.getElementById(
+    "classStat"
+  ).innerText =
+
+    document.getElementById(
+      "class"
+    ).value || "—";
+
+};
+
+// ----------------------
+// PREVIEW
+// ----------------------
+window.updatePreview = function(){
+
+  const preview =
+    document.getElementById(
+      "preview"
+    );
+
+  const title =
+    document.getElementById(
+      "title"
+    ).value || "Untitled Assignment";
+
+  const subject =
+    document.getElementById(
+      "subject"
+    ).value || "No Subject";
+
+  const instructions =
+    document.getElementById(
+      "instructions"
+    ).value;
+
+  let html = `
+
+    <h3>${title}</h3>
+
+    <p>
+      <b>Subject:</b>
+      ${subject}
+    </p>
+
+  `;
+
+  if(instructions){
+
+    html += `
+
+      <p style="
+        margin-top:12px;
+        color:#475569;
+      ">
+
+        ${instructions}
+
+      </p>
+
+    `;
+
+  }
+
+  html += `<hr style="
+    margin:18px 0;
+    border:none;
+    border-top:1px solid #e2e8f0;
+  ">`;
+
+  let hasQuestion = false;
+
+  for(
+    let i = 1;
+    i <= count;
+    i++
+  ){
+
+    const q =
+      document.getElementById(
+        `q${i}`
+      );
+
+    const s =
+      document.getElementById(
+        `s${i}`
+      );
+
+    if(
+      q &&
+      q.value.trim()
+    ){
+
+      hasQuestion = true;
+
+      html += `
+
+        <div class="preview-item">
+
+          <b>
+            Q${i}:
+          </b>
+
+          ${q.value}
+
+          <br><br>
+
+          <small>
+            ${s.value} points
+          </small>
+
+        </div>
+
+      `;
+
+    }
+
+  }
+
+  if(!hasQuestion){
+
+    html += `
+
+      <div class="empty">
+        No questions to preview.
+      </div>
+
+    `;
+
+  }
+
+  preview.innerHTML = html;
+
+};
+
+// ----------------------
+// RESET FORM
+// ----------------------
+window.resetForm = function(){
+
+  if(
+    !confirm(
+      "Clear all assignment data?"
+    )
+  ){
     return;
   }
 
-  const questions = [];
-  let total = 0;
+  document.getElementById(
+    "subject"
+  ).value = "";
 
-  for (let i = 1; i <= count; i++) {
-    const qEl = document.getElementById(`q${i}`);
-    const sEl = document.getElementById(`s${i}`);
+  document.getElementById(
+    "title"
+  ).value = "";
 
-    if (qEl && sEl) {
-      const q = qEl.value.trim();
-      const s = Number(sEl.value);
+  document.getElementById(
+    "instructions"
+  ).value = "";
 
-      if (q && s) {
-        questions.push({ q, score: s });
-        total += s;
-      }
-    }
-  }
+  document.getElementById(
+    "questions"
+  ).innerHTML = `
 
-  try {
-    await addDoc(collection(db, "assignments"), {
-      teacherId: user.id, // Consistent with your login mapping (userId -> id)
-      teacherName: user.name,
-      class: className,
-      subject: subject,
-      title: title,
-      questions: questions,
-      totalScore: total,
-      createdAt: Date.now()
-    });
+    <div class="empty">
+      No questions added yet.
+    </div>
 
-    alert("Assignment created successfully!");
-    location.reload(); // Clear form for next assignment
-  } catch (e) {
-    console.error("Error adding document: ", e);
-    alert("Error saving assignment.");
-  }
+  `;
+
+  count = 0;
+
+  updateStats();
+
+  updatePreview();
+
 };
 
-// Start with one question automatically
+// ----------------------
+// CREATE
+// ----------------------
+window.create = async function(){
+
+  try{
+
+    const subject =
+      document.getElementById(
+        "subject"
+      ).value.trim();
+
+    const title =
+      document.getElementById(
+        "title"
+      ).value.trim();
+
+    const instructions =
+      document.getElementById(
+        "instructions"
+      ).value.trim();
+
+    const className =
+      document.getElementById(
+        "class"
+      ).value;
+
+    if(
+      !subject
+      ||
+      !title
+    ){
+
+      showError(
+        "Subject and title are required."
+      );
+
+      return;
+
+    }
+
+    const questions = [];
+
+    let total = 0;
+
+    for(
+      let i = 1;
+      i <= count;
+      i++
+    ){
+
+      const qEl =
+        document.getElementById(
+          `q${i}`
+        );
+
+      const sEl =
+        document.getElementById(
+          `s${i}`
+        );
+
+      if(
+        qEl &&
+        sEl
+      ){
+
+        const q =
+          qEl.value.trim();
+
+        const s =
+          Number(sEl.value);
+
+        if(q){
+
+          if(s <= 0){
+
+            showError(
+              "Question scores must be above 0."
+            );
+
+            return;
+
+          }
+
+          questions.push({
+            q,
+            score:s
+          });
+
+          total += s;
+
+        }
+
+      }
+
+    }
+
+    if(!questions.length){
+
+      showError(
+        "Add at least one question."
+      );
+
+      return;
+
+    }
+
+    const btn =
+      document.querySelector(
+        ".primary-btn"
+      );
+
+    btn.disabled = true;
+
+    btn.innerText =
+      "Publishing...";
+
+    await addDoc(
+
+      collection(db,"assignments"),
+
+      {
+
+        teacherId:
+          user.id || user.userId,
+
+        teacherName:
+          user.name,
+
+        class:className,
+
+        subject,
+
+        title,
+
+        instructions,
+
+        questions,
+
+        totalScore:total,
+
+        createdAt:Date.now()
+
+      }
+
+    );
+
+    btn.disabled = false;
+
+    btn.innerText =
+      "Publish Assignment";
+
+    showSuccess(
+      "Assignment created successfully!"
+    );
+
+    setTimeout(()=>{
+
+      location.reload();
+
+    },1200);
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showError(
+      "Error saving assignment."
+    );
+
+  }
+
+};
+
+// ----------------------
+// AUTO PREVIEW
+// ----------------------
+document.getElementById(
+  "title"
+).addEventListener(
+  "input",
+  updatePreview
+);
+
+document.getElementById(
+  "subject"
+).addEventListener(
+  "input",
+  updatePreview
+);
+
+document.getElementById(
+  "instructions"
+).addEventListener(
+  "input",
+  updatePreview
+);
+
+// ----------------------
+// INITIAL
+// ----------------------
 addQ();
+
+updateStats();
+
+updatePreview();
 
 </script>
 
 </body>
-</html>
+  </html>
