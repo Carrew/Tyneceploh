@@ -138,7 +138,7 @@ const imageCache = {
 <div class="stats">
   <div class="stat">
     <b>Classes</b><br>
-    --
+    <span id="classCount">0</span>
   </div>
   <div class="stat">
     <b>Assignments</b><br>
@@ -201,6 +201,16 @@ function logout(){
   localStorage.removeItem("user");
   location.href = "login.html";
 }
+  // teacher classes from localStorage
+const classes = JSON.parse(localStorage.getItem("classes")) || [];
+
+// count only this teacher's classes
+const teacherClasses = classes.filter(
+  cls => cls.teacherId === user.userId
+);
+
+document.getElementById("classCount").innerText =
+  teacherClasses.length;
 </script>
 
 </body>
