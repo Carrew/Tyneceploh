@@ -9,6 +9,7 @@
       font-family:sans-serif;
       background:#f4f4f4;
       padding:20px;
+      margin:0;
     }
 
     .box{
@@ -16,18 +17,57 @@
       margin:auto;
       background:white;
       padding:20px;
-      border-radius:12px;
+      border-radius:14px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    h2{
+      text-align:center;
+      margin-bottom:20px;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-bottom:20px;
+    }
+
+    .stat{
+      background:#f8f9fa;
+      padding:12px;
+      border-radius:10px;
+      text-align:center;
+    }
+
+    .big{
+      font-size:20px;
+      font-weight:bold;
+      margin-top:5px;
     }
 
     .card{
       background:#fafafa;
-      padding:15px;
+      padding:12px;
       margin-bottom:10px;
       border-radius:10px;
+      border-left:4px solid #3498db;
     }
 
-    .good{color:green}
-    .bad{color:red}
+    .good{color:#27ae60;font-weight:bold}
+    .bad{color:#c0392b;font-weight:bold}
+
+    .empty{
+      text-align:center;
+      padding:20px;
+      color:#777;
+    }
+
+    @media(max-width:600px){
+      .stats{
+        grid-template-columns:1fr;
+      }
+    }
   </style>
 </head>
 
@@ -37,21 +77,31 @@
 
   <h2>My Attendance</h2>
 
+  <div class="stats">
+    <div class="stat">
+      Total
+      <div class="big" id="total">0</div>
+    </div>
+
+    <div class="stat">
+      Present
+      <div class="big good" id="present">0</div>
+    </div>
+
+    <div class="stat">
+      Rate
+      <div class="big" id="rate">0%</div>
+    </div>
+  </div>
+
   <div id="list">Loading...</div>
 
 </div>
 
 <script type="module">
 
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  collection,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -69,44 +119,60 @@ if(!user){
 
 async function load(){
 
-  const snap = await getDocs(collection(db,"attendanceRecords"));
+  const list = document.getElementById("list");
 
-  let total = 0;
-  let present = 0;
+  try{
 
-  let html = "";
+    const snap = await getDocs(collection(db,"attendanceRecords"));
 
-  snap.forEach(d=>{
+    let total = 0;
+    let present = 0;
 
-    const r = d.data();
+    let html = "";
 
-    const found = r.students.find(s=>s.studentId === user.userId);
+    snap.forEach(d=>{
 
-    if(found){
+      const r = d.data();
+
+      const students = r.students || [];
+      const found = students.find(s => s?.studentId === user.userId);
+
+      if(!found) return;
 
       total++;
 
-      if(found.status === "present") present++;
+      const status = found.status || "absent";
+
+      if(status === "present") present++;
 
       html += `
         <div class="card">
-          <b>${r.date}</b><br>
+          <b>${r.date}</b><br><br>
           Status:
-          <span class="${found.status === "present" ? "good":"bad"}">
-            ${found.status}
+          <span class="${status === "present" ? "good" : "bad"}">
+            ${status.toUpperCase()}
           </span>
         </div>
       `;
+    });
+
+    const rate = total ? Math.round((present/total)*100) : 0;
+
+    document.getElementById("total").innerText = total;
+    document.getElementById("present").innerText = present;
+    document.getElementById("rate").innerText = rate + "%";
+
+    if(!html){
+      list.innerHTML = `<div class="empty">No attendance records yet.</div>`;
+      return;
     }
 
-  });
+    list.innerHTML = html;
 
-  const percent = total ? Math.round((present/total)*100) : 0;
-
-  document.getElementById("list").innerHTML = `
-    <h3>Attendance Rate: ${percent}%</h3>
-    ${html}
-  `;
+  }catch(err){
+    console.error(err);
+    list.innerHTML = `<div class="empty">Failed to load attendance.</div>`;
+  }
 }
 
 load();
