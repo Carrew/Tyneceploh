@@ -1,11 +1,8 @@
-```html
 <!DOCTYPE html>
 <html>
 <head>
   <title>Teacher Dashboard - TEF</title>
-
-  <meta name="viewport"
-  content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
 
@@ -28,8 +25,7 @@
     }
 
     body{
-      background:
-      radial-gradient(circle at top left,#240012,var(--bg));
+      background: radial-gradient(circle at top left,#240012,var(--bg));
       color:var(--text);
       min-height:100vh;
       overflow-x:hidden;
@@ -64,8 +60,7 @@
     header{
       padding:28px 20px;
       text-align:center;
-      background:
-      linear-gradient(135deg,var(--maroon),#150008);
+      background:linear-gradient(135deg,var(--maroon),#150008);
       box-shadow:var(--shadow);
     }
 
@@ -85,8 +80,8 @@
       padding:22px;
       border-radius:24px;
       background:var(--glass);
-      backdrop-filter:blur(14px);
       border:1px solid var(--border);
+      backdrop-filter:blur(14px);
       box-shadow:var(--shadow);
     }
 
@@ -94,8 +89,8 @@
       display:flex;
       align-items:center;
       gap:18px;
-      margin-bottom:22px;
       flex-wrap:wrap;
+      margin-bottom:20px;
     }
 
     .profile-top img{
@@ -109,15 +104,14 @@
 
     .profile-main h2{
       font-size:24px;
-      margin-bottom:8px;
+      margin-bottom:6px;
     }
 
     .role-badge{
       display:inline-block;
       padding:6px 14px;
       border-radius:999px;
-      background:
-      linear-gradient(135deg,var(--maroon),#b00055);
+      background:linear-gradient(135deg,var(--maroon),#b00055);
       font-size:12px;
       margin-bottom:8px;
     }
@@ -129,8 +123,7 @@
 
     .info-grid{
       display:grid;
-      grid-template-columns:
-      repeat(auto-fit,minmax(180px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
       gap:14px;
     }
 
@@ -140,7 +133,6 @@
       padding:16px;
       border:1px solid var(--border);
       transition:.25s;
-      backdrop-filter:blur(10px);
     }
 
     .info-card:hover{
@@ -158,14 +150,12 @@
 
     .info-value{
       font-size:15px;
-      line-height:1.4;
       word-break:break-word;
     }
 
     .stats{
       display:grid;
-      grid-template-columns:
-      repeat(auto-fit,minmax(130px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
       gap:14px;
       padding:0 18px;
     }
@@ -176,12 +166,6 @@
       padding:18px;
       text-align:center;
       border:1px solid var(--border);
-      backdrop-filter:blur(12px);
-      transition:.25s;
-    }
-
-    .stat:hover{
-      transform:translateY(-4px);
     }
 
     .stat b{
@@ -190,8 +174,8 @@
     }
 
     .stat-number{
-      margin-top:10px;
       font-size:22px;
+      margin-top:10px;
       font-weight:bold;
     }
 
@@ -199,8 +183,8 @@
       padding:26px 20px 12px;
       opacity:.7;
       font-size:13px;
-      letter-spacing:1px;
       text-transform:uppercase;
+      letter-spacing:1px;
     }
 
     .classes-box{
@@ -209,40 +193,25 @@
       border-radius:20px;
       background:var(--glass);
       border:1px solid var(--border);
-      box-shadow:var(--shadow);
     }
 
     .classes{
       display:flex;
       flex-wrap:wrap;
       gap:10px;
-      margin-top:14px;
+      margin-top:12px;
     }
 
     .class-pill{
-      background:
-      linear-gradient(135deg,var(--maroon),#b00055);
+      background:linear-gradient(135deg,var(--maroon),#b00055);
       padding:9px 14px;
       border-radius:999px;
       font-size:13px;
-      animation:fade .3s ease;
-    }
-
-    @keyframes fade{
-      from{
-        opacity:0;
-        transform:translateY(8px);
-      }
-      to{
-        opacity:1;
-        transform:translateY(0);
-      }
     }
 
     .grid{
       display:grid;
-      grid-template-columns:
-      repeat(auto-fit,minmax(170px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
       gap:14px;
       padding:0 18px;
     }
@@ -251,21 +220,14 @@
       background:var(--card);
       border-radius:18px;
       padding:20px;
-      cursor:pointer;
       border:1px solid var(--border);
+      cursor:pointer;
       transition:.25s;
-      backdrop-filter:blur(10px);
-      box-shadow:var(--shadow);
     }
 
     .card:hover{
       transform:translateY(-5px) scale(1.02);
       background:rgba(255,255,255,0.08);
-    }
-
-    .card-title{
-      font-size:15px;
-      font-weight:600;
     }
 
     .logout{
@@ -278,8 +240,6 @@
       background:#1c1c22;
       color:white;
       font-weight:bold;
-      cursor:pointer;
-      transition:.25s;
     }
 
     .logout:hover{
@@ -293,26 +253,25 @@
 <body>
 
 <script>
-
-const user =
-JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "teacher"){
   location.href = "login.html";
 }
 
+function formatDate(t){
+  if(!t) return "N/A";
+  return new Date(t).toLocaleDateString(undefined,{
+    year:"numeric",
+    month:"short",
+    day:"numeric"
+  });
+}
 </script>
 
 <header>
-
-  <h1>
-    Teacher Control Center
-  </h1>
-
-  <div class="sub">
-    Manage your academic workspace
-  </div>
-
+  <h1>Teacher Control Center</h1>
+  <div class="sub">Manage your academic workspace</div>
 </header>
 
 <!-- PROFILE -->
@@ -327,19 +286,15 @@ if(!user || user.role !== "teacher"){
 
       <h2 id="name"></h2>
 
-      <div class="role-badge"
-      id="roleBadge">
-      </div>
+      <div class="role-badge" id="roleBadge"></div>
 
-      <div class="small-id"
-      id="teacherId"></div>
+      <div class="small-id" id="teacherId"></div>
 
     </div>
 
   </div>
 
-  <div class="info-grid"
-  id="infoGrid"></div>
+  <div class="info-grid" id="infoGrid"></div>
 
 </div>
 
@@ -349,255 +304,100 @@ if(!user || user.role !== "teacher"){
 
   <div class="stat">
     <b>Classes</b>
-
-    <div class="stat-number"
-    id="classCount">
-      0
-    </div>
+    <div class="stat-number" id="classCount">0</div>
   </div>
 
   <div class="stat">
     <b>Assignments</b>
-
-    <div class="stat-number">
-      --
-    </div>
+    <div class="stat-number">--</div>
   </div>
 
   <div class="stat">
     <b>Quizzes</b>
-
-    <div class="stat-number">
-      --
-    </div>
+    <div class="stat-number">--</div>
   </div>
 
 </div>
 
 <!-- CLASSES -->
 
-<div class="section-title">
-  Your Classes
-</div>
+<div class="section-title">Your Classes</div>
 
 <div class="classes-box">
-
-  <div class="classes"
-  id="classesContainer"></div>
-
+  <div class="classes" id="classesContainer"></div>
 </div>
 
 <!-- TOOLS -->
 
-<div class="section-title">
-  Academic Tools
-</div>
+<div class="section-title">Academic Tools</div>
 
 <div class="grid">
 
-  <div class="card"
-  onclick="go('teacher-create-assignment.html')">
-    <div class="card-title">
-      📝 Create Assignment
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('teacher-mark-assignments.html')">
-    <div class="card-title">
-      📊 Mark Assignments
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('teacher-create-quizs.html')">
-    <div class="card-title">
-      🧠 Create Quiz
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('teacher-quiz-review.html')">
-    <div class="card-title">
-      📋 Review Quizzes
-    </div>
-  </div>
+  <div class="card" onclick="go('teacher-create-assignment.html')">📝 Create Assignment</div>
+  <div class="card" onclick="go('teacher-mark-assignments.html')">📊 Mark Assignments</div>
+  <div class="card" onclick="go('teacher-create-quizs.html')">🧠 Create Quiz</div>
+  <div class="card" onclick="go('teacher-quiz-review.html')">📋 Review Quizzes</div>
 
 </div>
 
-<div class="section-title">
-  Teaching Resources
-</div>
-
-<div class="grid">
-
-  <div class="card"
-  onclick="go('teacher-notes.html')">
-    <div class="card-title">
-      📚 Notes
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('student-assignments.html')">
-    <div class="card-title">
-      📂 Student Work
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('teacher-submit-grades.html')">
-    <div class="card-title">
-      📈 Submit Grades
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('teacher-rejected-grades.html')">
-    <div class="card-title">
-      ❌ Rejected Grades
-    </div>
-  </div>
-
-</div>
-
-<div class="section-title">
-  Operations
-</div>
-
-<div class="grid">
-
-  <div class="card"
-  onclick="go('teacher-attendance-control.html')">
-    <div class="card-title">
-      📌 Attendance Control
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('staff-attendance.html')">
-    <div class="card-title">
-      🕒 Staff Attendance
-    </div>
-  </div>
-
-</div>
-
-<button class="logout"
-onclick="logout()">
-  Logout
-</button>
+<button class="logout" onclick="logout()">Logout</button>
 
 <script>
 
-// PROFILE
+// PROFILE BASIC
+document.getElementById("name").innerText = user.name || "Teacher";
+document.getElementById("teacherId").innerText = "ID: " + (user.userId || "");
+document.getElementById("roleBadge").innerText = (user.role || "teacher").toUpperCase();
+document.getElementById("photo").src = user.photoURL || "https://via.placeholder.com/100";
 
-document.getElementById("name").innerText =
-user.name || "Teacher";
+// CLEAN PROFILE FIELDS ONLY
+const fields = [
 
-document.getElementById("teacherId").innerText =
-user.userId || "";
+  { label:"Email", value:user.email },
+  { label:"Phone", value:user.phone },
+  { label:"Gender", value:user.gender },
+  { label:"Address", value:user.address },
+  { label:"Date of Birth", value:user.dob },
+  { label:"Qualification", value:user.qualification },
+  { label:"Department", value:user.department },
+  { label:"Nationality", value:user.nationality },
+  { label:"Status", value:user.status },
+  { label:"Last Login", value:formatDate(user.lastLogin) }
 
-document.getElementById("roleBadge").innerText =
-(user.role || "teacher").toUpperCase();
-
-document.getElementById("photo").src =
-user.photoURL ||
-"https://via.placeholder.com/100";
-
-// REMOVE USELESS FIELDS
-const ignored = [
-  "pin",
-  "photoURL",
-  "role",
-  "classes"
 ];
 
-const infoGrid =
-document.getElementById("infoGrid");
+const infoGrid = document.getElementById("infoGrid");
 
-// AUTO GENERATE USER DATA CARDS
-Object.keys(user).forEach(key => {
+fields.forEach(f => {
 
-  if(
-    ignored.includes(key)
-    || !user[key]
-    || Array.isArray(user[key])
-  ){
-    return;
-  }
+  if(!f.value) return;
 
-  const label =
-  key
-  .replace(/([A-Z])/g," $1")
-  .replace(/^./,str => str.toUpperCase());
-
-  const card =
-  document.createElement("div");
-
-  card.className = "info-card";
-
-  card.innerHTML = `
-    <div class="info-label">
-      ${label}
-    </div>
-
-    <div class="info-value">
-      ${user[key]}
-    </div>
+  const div = document.createElement("div");
+  div.className = "info-card";
+  div.innerHTML = `
+    <div class="info-label">${f.label}</div>
+    <div class="info-value">${f.value}</div>
   `;
 
-  infoGrid.appendChild(card);
-
+  infoGrid.appendChild(div);
 });
 
 // CLASSES
+const classes = user.classes || [];
 
-const classes =
-user.classes || [];
+document.getElementById("classCount").innerText = classes.length;
 
-document.getElementById("classCount").innerText =
-classes.length;
+const container = document.getElementById("classesContainer");
 
-const container =
-document.getElementById("classesContainer");
+container.innerHTML = classes.length
+  ? classes.map(c => `<div class="class-pill">📘 ${c}</div>`).join("")
+  : "<span style='opacity:.7'>No classes assigned</span>";
 
-if(classes.length){
-
-  classes.forEach(cls => {
-
-    const div =
-    document.createElement("div");
-
-    div.className = "class-pill";
-
-    div.innerText = "📘 " + cls;
-
-    container.appendChild(div);
-
-  });
-
-}else{
-
-  container.innerHTML =
-  "<span style='opacity:.7'>No classes assigned</span>";
-
-}
-
-// NAVIGATION
-
-function go(page){
-  location.href = page;
-}
-
-// LOGOUT
+function go(p){ location.href = p; }
 
 function logout(){
-
   localStorage.removeItem("user");
-
   location.href = "login.html";
-
 }
 
 </script>
