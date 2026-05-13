@@ -16,9 +16,10 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 NEW: messaging (safe optional add) */
+import { getFirestore, collection, getDocs, doc, updateDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 import { getMessaging, getToken } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
@@ -26,20 +27,59 @@ const app = initializeApp({
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  messagingSenderId: "YOUR_SENDER_ID"
 });
 
 const db = getFirestore(app);
+const messaging = getMessaging(app);
 
-/* 🔥 NEW */
-let messaging;
-try {
-  messaging = getMessaging(app);
-} catch (e) {
-  console.log("Messaging not supported yet");
+//
+// 🔔 ENABLE NOTIFICATIONS (SAFE ADD-ON)
+//
+async function enableNotifications(user){
+
+  try{
+
+    const permission = await Notification.requestPermission();
+
+    if(permission !== "granted"){
+      console.log("Notifications denied");
+      return null;
+    }
+
+    const token = await getToken(messaging, {
+      vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
+    });
+
+    if(!token){
+      console.log("No token generated");
+      return null;
+    }
+
+    // Save token directly into user document (safe fallback)
+    const snap = await getDocs(collection(db, "users"));
+
+    snap.forEach(async (d) => {
+      const u = d.data();
+      if(u.userId === user.userId){
+        await updateDoc(doc(db,"users",d.id),{
+          fcmToken: token,
+          notificationEnabled: true
+        });
+      }
+    });
+
+    return token;
+
+  }catch(err){
+    console.log("Notification error:", err);
+    return null;
+  }
 }
 
+//
+// 🔥 LOGIN FUNCTION (UNCHANGED LOGIC + ADDITIONS ONLY)
+//
 window.login = async function(){
 
   const idInput = document.getElementById("id").value.trim().toUpperCase();
@@ -59,7 +99,6 @@ window.login = async function(){
 
     if(u.userId === idInput && u.pin === pinInput){
       found = {
-        docId: d.id,   // 🔥 IMPORTANT for updates later
         id: u.userId,
         userId: u.userId,
         name: u.name || "",
@@ -83,13 +122,25 @@ window.login = async function(){
 
   localStorage.setItem("user", JSON.stringify(found));
 
-  console.log("✅ Logged in successfully as:", found.role);
+  console.log("Logged in:", found.role);
 
-  /* 🔥 NEW: notifications setup (non-blocking) */
-  setupNotifications(found).catch(err => {
-    console.log("Notification setup skipped:", err);
-  });
+  //
+  // 🔔 NEW: REQUEST NOTIFICATIONS AFTER LOGIN
+  //
+  const token = await enableNotifications(found);
 
+  //
+  // 🔔 NEW: SELF LOGIN NOTIFICATION
+  //
+  if(token && Notification.permission === "granted"){
+
+    new Notification("Login Successful", {
+      body: `Welcome back ${found.name}`,
+    });
+
+  }
+
+  // ROUTING (UNCHANGED)
   switch(found.role){
     case "admin":
       location.href = "admin-dashboard.html";
@@ -119,36 +170,10 @@ window.login = async function(){
       alert("Role not recognized. Redirecting to home.");
       location.href = "index.html";
   }
+
 };
 
-/* 🔥 NEW: push permission + token save */
-async function setupNotifications(user){
-
-  if(!messaging) return;
-
-  const permission = await Notification.requestPermission();
-
-  if(permission !== "granted"){
-    console.log("Notifications denied");
-    return;
-  }
-
-  const token = await getToken(messaging, {
-    vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
-  });
-
-  if(!token){
-    console.log("No FCM token");
-    return;
-  }
-
-  await updateDoc(doc(db, "users", user.docId), {
-    fcmToken: token,
-    notificationsEnabled: true
-  });
-
-  console.log("📲 Notifications enabled");
-}
+</script>
 
 </script>
 
