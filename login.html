@@ -1,161 +1,336 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Login - TEF System</title>
+<!DOCTYPE html>            
+<html>            
+<head>            
+  <title>Login - TEF System</title>            
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
 
-<h2>Login</h2>
-<input id="id" placeholder="User ID">
-<input id="pin" type="password" placeholder="PIN">
-<button onclick="login()">Login</button>
+  <style>
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+      --text: #ffffff;
+      --shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, sans-serif;
+    }
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
-  messagingSenderId: "161024255934",
-  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"
-};
+    body {
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-let messaging = null;
+    /* floating glow background */
+    body::before {
+      content: "";
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: var(--maroon);
+      filter: blur(120px);
+      opacity: 0.4;
+      top: -100px;
+      left: -100px;
+    }
 
-// 🔥 Fix 1: Register Service Worker using relative path for GitHub Pages
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('firebase-messaging-sw.js')
-      .then(async (registration) => {
-        console.log('Service Worker registered with scope:', registration.scope);
-        if (await isSupported()) {
-          messaging = getMessaging(app);
-        }
-      })
-      .catch((err) => console.error('Service Worker registration failed:', err));
-  });
+    body::after {
+      content: "";
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: var(--pink);
+      filter: blur(120px);
+      opacity: 0.3;
+      bottom: -100px;
+      right: -100px;
+    }
+
+    .login-box {
+      width: 90%;
+      max-width: 360px;
+      background: var(--card);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: var(--shadow);
+      transform: perspective(900px) rotateX(6deg);
+      transition: 0.4s ease;
+      z-index: 2;
+    }
+
+    .login-box:hover {
+      transform: perspective(900px) rotateX(0deg) scale(1.02);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--pink);
+      letter-spacing: 1px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background: rgba(255,255,255,0.08);
+      color: white;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      background: rgba(255,255,255,0.15);
+      box-shadow: 0 0 0 2px var(--pink);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--maroon), var(--pink));
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(255,192,203,0.2);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* loader */
+    .loader {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* notification system */
+    .notify {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.7);
+      border-left: 4px solid var(--pink);
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      transform: translateX(120%);
+      transition: 0.4s;
+      z-index: 999;
+    }
+
+    .notify.show {
+      transform: translateX(0);
+    }
+  </style>
+</head>            
+
+<body>            
+
+<div class="notify" id="notify"></div>
+
+<div class="login-box">
+
+<h2>TEF LOGIN</h2>            
+
+<input id="id" placeholder="User ID">            
+<input id="pin" type="password" placeholder="PIN">            
+
+<button onclick="login()" id="loginBtn">
+  <span id="btnText">Login</span>
+  <div class="loader" id="loader"></div>
+</button>            
+
+</div>
+
+<script type="module">            
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";            
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";            
+import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";            
+
+const firebaseConfig = {            
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",            
+  authDomain: "tyneceploh.firebaseapp.com",            
+  projectId: "tyneceploh",            
+  messagingSenderId: "161024255934",            
+  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"            
+};            
+
+const app = initializeApp(firebaseConfig);            
+const db = getFirestore(app);            
+let messaging = null;            
+
+function notify(msg) {
+  const box = document.getElementById("notify");
+  box.textContent = msg;
+  box.classList.add("show");
+  setTimeout(() => box.classList.remove("show"), 2500);
 }
 
-// 🔥 Fix 2: Safe Notification (Fixes "Illegal Constructor" error on Mobile)
-async function safeNotify(title, body) {
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return;
+// Service worker            
+if ('serviceWorker' in navigator) {            
+  window.addEventListener('load', () => {            
+    navigator.serviceWorker.register('firebase-messaging-sw.js')            
+      .then(async (registration) => {            
+        if (await isSupported()) {            
+          messaging = getMessaging(app);            
+        }            
+      });            
+  });            
+}            
 
-    // Wait for the Service Worker to be active
-    const reg = await navigator.serviceWorker.ready;
-    
-    if (reg && reg.showNotification) {
-      // Correct way to show notifications on modern mobile browsers
-      await reg.showNotification(title, {
-        body: body,
-        icon: "icon.png", // Relative path
-        badge: "icon.png"
-      });
-    } else if ("Notification" in window) {
-      // Desktop fallback
-      new Notification(title, { body });
-    }
-  } catch (err) {
-    console.warn("Notification system error:", err);
-  }
-}
+async function safeNotify(title, body) {            
+  try {            
+    const permission = await Notification.requestPermission();            
+    if (permission !== "granted") return;            
 
-// Push Registration Logic
-async function registerPush(userDocId) {
-  try {
-    if (!messaging) return;
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return;
+    const reg = await navigator.serviceWorker.ready;            
 
-    const token = await getToken(messaging, {
-      vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
-    });
+    if (reg && reg.showNotification) {            
+      await reg.showNotification(title, { body });            
+    } else {            
+      new Notification(title, { body });            
+    }            
+  } catch (err) {}            
+}            
 
-    if (token) {
-      await updateDoc(doc(db, "users", userDocId), {
-        fcmToken: token,
-        notificationEnabled: true,
-        lastLogin: Date.now()
-      });
-      console.log("Push token updated");
-    }
-  } catch (err) {
-    console.error("FCM Token error:", err);
-  }
-}
+async function registerPush(userDocId) {            
+  try {            
+    if (!messaging) return;            
 
-window.login = async function() {
-  const idInput = document.getElementById("id").value.trim().toUpperCase();
-  const pinInput = document.getElementById("pin").value.trim();
+    const permission = await Notification.requestPermission();            
+    if (permission !== "granted") return;            
 
-  if (!idInput || !pinInput) {
-    alert("Enter ID and PIN");
-    return;
-  }
+    const token = await getToken(messaging, {            
+      vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"            
+    });            
 
-  try {
-    const snap = await getDocs(collection(db, "users"));
-    let found = null;
-    let docId = null;
+    if (token) {            
+      await updateDoc(doc(db, "users", userDocId), {            
+        fcmToken: token,            
+        notificationEnabled: true,            
+        lastLogin: Date.now()            
+      });            
+    }            
+  } catch (err) {}            
+}            
 
-    snap.forEach(d => {
-      const u = d.data();
-      if (u.userId === idInput && u.pin === pinInput) {
-        found = {
-  id: u.userId,
-  userId: u.userId,
-  name: u.name || "",
-  role: (u.role || "").toLowerCase(),
-  status: u.status || "",
-  classes: u.classes || []
-};
-        
-        docId = d.id;
-      }
-    });
+window.login = async function() {            
+  const btn = document.getElementById("loginBtn");
+  const loader = document.getElementById("loader");
+  const text = document.getElementById("btnText");
 
-    if (!found) {
-      alert("Invalid ID or PIN");
-      return;
-    }
+  const idInput = document.getElementById("id").value.trim().toUpperCase();            
+  const pinInput = document.getElementById("pin").value.trim();            
 
-    if (found.role !== "student" && found.status !== "active") {
-      alert("Account restricted. Contact admin.");
-      return;
-    }
+  if (!idInput || !pinInput) {            
+    notify("Enter ID and PIN");            
+    return;            
+  }            
 
-    localStorage.setItem("user", JSON.stringify(found));
-    
-    // Attempt to register push token and send notification
-    await registerPush(docId);
-    await safeNotify("Login Successful", `Welcome ${found.name || found.userId}`);
+  try {            
+    btn.disabled = true;
+    loader.style.display = "block";
+    text.style.display = "none";
 
-    // Routing Logic
-    const routes = {
-      admin: "admin-dashboard.html",
-      teacher: "teacher-dashboard.html",
-      student: "student-dashboard.html",
-      janitor: "janitor-dashboard.html",
-      security: "security-dashboard.html",
-      coordinator: "coordinator-dashboard.html"
-    };
+    const snap = await getDocs(collection(db, "users"));            
+    let found = null;            
+    let docId = null;            
 
-    setTimeout(() => {
-      location.href = routes[found.role] || "index.html";
-    }, 1000); // Small delay to allow notification to trigger
+    snap.forEach(d => {            
+      const u = d.data();            
+      if (u.userId === idInput && u.pin === pinInput) {            
+        found = {            
+          id: u.userId,            
+          userId: u.userId,            
+          name: u.name || "",            
+          role: (u.role || "").toLowerCase(),            
+          status: u.status || "",            
+          classes: u.classes || []            
+        };            
+        docId = d.id;            
+      }            
+    });            
 
-  } catch (error) {
-    console.error("Login Error:", error);
-    alert("Login failed. Check connection.");
-  }
-};
-</script>
-</body>
+    if (!found) {            
+      notify("Invalid ID or PIN");            
+      btn.disabled = false;
+      loader.style.display = "none";
+      text.style.display = "block";
+      return;            
+    }            
+
+    if (found.role !== "student" && found.status !== "active") {            
+      notify("Account restricted");            
+      btn.disabled = false;
+      loader.style.display = "none";
+      text.style.display = "block";
+      return;            
+    }            
+
+    localStorage.setItem("user", JSON.stringify(found));            
+
+    await registerPush(docId);            
+    await safeNotify("Login Successful", `Welcome ${found.name || found.userId}`);            
+    notify("Login successful... redirecting");
+
+    const routes = {            
+      admin: "admin-dashboard.html",            
+      teacher: "teacher-dashboard.html",            
+      student: "student-dashboard.html",            
+      janitor: "janitor-dashboard.html",            
+      security: "security-dashboard.html",            
+      coordinator: "coordinator-dashboard.html"            
+    };            
+
+    setTimeout(() => {            
+      location.href = routes[found.role] || "index.html";            
+    }, 1200);            
+
+  } catch (error) {            
+    notify("Login failed. Check connection.");            
+    btn.disabled = false;
+    loader.style.display = "none";
+    text.style.display = "block";
+  }            
+};            
+</script>            
+
+</body>            
 </html>
