@@ -16,7 +16,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
-// FIXED: Placeholders replaced with your actual project values
 const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
@@ -29,41 +28,46 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 let messaging = null;
 
-// Register Service Worker and Init Messaging
+// 🔥 Fix 1: Register Service Worker using relative path for GitHub Pages
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    .then(async (registration) => {
-      console.log('SW Registered');
-      if (await isSupported()) {
-        messaging = getMessaging(app);
-      }
-    });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('firebase-messaging-sw.js')
+      .then(async (registration) => {
+        console.log('Service Worker registered with scope:', registration.scope);
+        if (await isSupported()) {
+          messaging = getMessaging(app);
+        }
+      })
+      .catch((err) => console.error('Service Worker registration failed:', err));
+  });
 }
 
-// 🔥 FIXED NOTIFICATION SYSTEM (NO ILLEGAL CONSTRUCTOR)
+// 🔥 Fix 2: Safe Notification (Fixes "Illegal Constructor" error on Mobile)
 async function safeNotify(title, body) {
   try {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") return;
 
-    // Wait for SW to be ready and use showNotification (Legal on Mobile)
+    // Wait for the Service Worker to be active
     const reg = await navigator.serviceWorker.ready;
+    
     if (reg && reg.showNotification) {
+      // Correct way to show notifications on modern mobile browsers
       await reg.showNotification(title, {
         body: body,
-        icon: "/icon.png",
-        badge: "/icon.png"
+        icon: "icon.png", // Relative path
+        badge: "icon.png"
       });
-    } else {
-      // Final fallback for very old desktop browsers
+    } else if ("Notification" in window) {
+      // Desktop fallback
       new Notification(title, { body });
     }
   } catch (err) {
-    console.warn("Notification error:", err);
+    console.warn("Notification system error:", err);
   }
 }
 
-// 🔥 PUSH REGISTRATION
+// Push Registration Logic
 async function registerPush(userDocId) {
   try {
     if (!messaging) return;
@@ -80,9 +84,10 @@ async function registerPush(userDocId) {
         notificationEnabled: true,
         lastLogin: Date.now()
       });
+      console.log("Push token updated");
     }
   } catch (err) {
-    console.log("Push error:", err);
+    console.error("FCM Token error:", err);
   }
 }
 
@@ -95,53 +100,59 @@ window.login = async function() {
     return;
   }
 
-  const snap = await getDocs(collection(db, "users"));
-  let found = null;
-  let docId = null;
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    let found = null;
+    let docId = null;
 
-  snap.forEach(d => {
-    const u = d.data();
-    if (u.userId === idInput && u.pin === pinInput) {
-      found = {
-        id: u.userId,
-        userId: u.userId,
-        name: u.name || "",
-        role: (u.role || "").toLowerCase(),
-        class: u.class || "",
-        classes: u.classes || [],
-        status: u.status || ""
-      };
-      docId = d.id;
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.userId === idInput && u.pin === pinInput) {
+        found = {
+          id: u.userId,
+          userId: u.userId,
+          name: u.name || "",
+          role: (u.role || "").toLowerCase(),
+          status: u.status || ""
+        };
+        docId = d.id;
+      }
+    });
+
+    if (!found) {
+      alert("Invalid ID or PIN");
+      return;
     }
-  });
 
-  if (!found) {
-    alert("Invalid ID or PIN");
-    return;
+    if (found.role !== "student" && found.status !== "active") {
+      alert("Account restricted. Contact admin.");
+      return;
+    }
+
+    localStorage.setItem("user", JSON.stringify(found));
+    
+    // Attempt to register push token and send notification
+    await registerPush(docId);
+    await safeNotify("Login Successful", `Welcome ${found.name || found.userId}`);
+
+    // Routing Logic
+    const routes = {
+      admin: "admin-dashboard.html",
+      teacher: "teacher-dashboard.html",
+      student: "student-dashboard.html",
+      janitor: "janitor-dashboard.html",
+      security: "security-dashboard.html",
+      coordinator: "coordinator-dashboard.html"
+    };
+
+    setTimeout(() => {
+      location.href = routes[found.role] || "index.html";
+    }, 1000); // Small delay to allow notification to trigger
+
+  } catch (error) {
+    console.error("Login Error:", error);
+    alert("Login failed. Check connection.");
   }
-
-  if (found.role !== "student" && found.status !== "active") {
-    alert("Account restricted. Contact admin.");
-    return;
-  }
-
-  localStorage.setItem("user", JSON.stringify(found));
-  
-  // Register push and show success notification
-  await registerPush(docId);
-  await safeNotify("Login Successful", `Welcome ${found.name || found.userId}`);
-
-  // Routing
-  const routes = {
-    admin: "admin-dashboard.html",
-    teacher: "teacher-dashboard.html",
-    student: "student-dashboard.html",
-    janitor: "janitor-dashboard.html",
-    security: "security-dashboard.html",
-    coordinator: "coordinator-dashboard.html"
-  };
-
-  location.href = routes[found.role] || "index.html";
 };
 </script>
 </body>
