@@ -7,45 +7,57 @@
   <style>
     body{
       font-family:sans-serif;
-      background:#f4f4f4;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
       padding:20px;
+      color:white;
     }
 
     .box{
       max-width:800px;
       margin:auto;
-      background:white;
+      background: rgba(255,255,255,0.05);
       padding:20px;
-      border-radius:12px;
+      border-radius:14px;
+      backdrop-filter: blur(10px);
     }
 
     input,textarea,select,button{
       width:100%;
       padding:12px;
       margin-top:10px;
-      border-radius:8px;
-      border:1px solid #ccc;
+      border-radius:10px;
+      border:none;
       box-sizing:border-box;
+      background: rgba(255,255,255,0.08);
+      color:white;
+      outline:none;
+    }
+
+    textarea{
+      min-height:120px;
+      resize:none;
     }
 
     button{
-      background:#27ae60;
-      color:white;
-      border:none;
+      background: linear-gradient(135deg, #800000, #ffc0cb);
       font-weight:bold;
       cursor:pointer;
+      transition:0.2s;
     }
 
-    .row{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
+    button:hover{
+      transform: translateY(-2px);
     }
 
-    .hidden{
-      display:none;
-    }
+    .hidden{ display:none; }
 
+    .toast{
+      margin-top:10px;
+      padding:10px;
+      border-left:3px solid #ffc0cb;
+      background: rgba(0,0,0,0.4);
+      border-radius:8px;
+    }
   </style>
 </head>
 
@@ -53,7 +65,7 @@
 
 <div class="box">
 
-  <h2>Create Announcement</h2>
+  <h2>📢 Create Announcement</h2>
 
   <input id="title" placeholder="Title">
   <textarea id="message" placeholder="Message"></textarea>
@@ -71,7 +83,9 @@
     <select id="roles" multiple>
       <option value="student">Student</option>
       <option value="teacher">Teacher</option>
-      <option value="staff">Staff</option>
+      <option value="janitor">Janitor</option>
+      <option value="security">Security</option>
+      <option value="coordinator">Coordinator</option>
     </select>
   </div>
 
@@ -80,18 +94,15 @@
     <select id="classes"></select>
   </div>
 
-  <button onclick="send()">Publish</button>
+  <button onclick="send()" id="btn">Publish</button>
 
-  <p id="msg"></p>
+  <div id="msg"></div>
 
 </div>
 
 <script type="module">
 
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   collection,
@@ -109,11 +120,15 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
+// 🔐 ROLE GUARD (IMPORTANT)
+if(!user || !["admin","coordinator"].includes(user.role)){
+  location.href = "login.html";
+}
+
 // -------------------
 // LOAD CLASSES
 // -------------------
 async function loadClasses(){
-
   const snap = await getDocs(collection(db,"users"));
   const set = new Set();
 
@@ -123,16 +138,14 @@ async function loadClasses(){
   });
 
   classes.innerHTML = [...set]
-    .map(c=>`<option>${c}</option>`)
+    .map(c=>`<option value="${c}">${c}</option>`)
     .join("");
-
 }
 
 loadClasses();
 
 // -------------------
 window.toggleFields = function(){
-
   const type = document.getElementById("type").value;
 
   roleBox.classList.add("hidden");
@@ -140,33 +153,59 @@ window.toggleFields = function(){
 
   if(type === "role") roleBox.classList.remove("hidden");
   if(type === "class") classBox.classList.remove("hidden");
-
 };
+
+// -------------------
+function toast(msg){
+  msgBox.innerHTML = `<div class="toast">${msg}</div>`;
+}
 
 // -------------------
 window.send = async function(){
 
-  const type = document.getElementById("type").value;
+  const btn = document.getElementById("btn");
+  btn.disabled = true;
+  btn.innerText = "Publishing...";
 
-  const roles = [...document.getElementById("roles").selectedOptions]
-    .map(o=>o.value);
+  try{
 
-  const cls = document.getElementById("classes").value;
+    const type = document.getElementById("type").value;
 
-  await addDoc(collection(db,"announcements"),{
+    const roles = [...document.getElementById("roles").selectedOptions]
+      .map(o => o.value);
 
-    title:title.value,
-    message:message.value,
-    type,
-    targetRoles:roles,
-    targetClass:cls,
-    createdBy:user.name,
-    createdAt:Date.now()
+    const cls = document.getElementById("classes").value;
 
-  });
+    if(!title.value || !message.value){
+      toast("Fill all fields");
+      btn.disabled = false;
+      btn.innerText = "Publish";
+      return;
+    }
 
-  msg.innerHTML = "Announcement sent";
+    await addDoc(collection(db,"announcements"),{
+      title: title.value,
+      message: message.value,
+      type,
+      targetRoles: roles,
+      targetClass: cls,
+      createdBy: user.name,
+      createdByRole: user.role,
+      createdAt: Date.now()
+    });
 
+    toast("Announcement published successfully");
+
+    title.value = "";
+    message.value = "";
+    roles.length = 0;
+
+  }catch(err){
+    toast("Failed to publish announcement");
+  }
+
+  btn.disabled = false;
+  btn.innerText = "Publish";
 };
 
 </script>
