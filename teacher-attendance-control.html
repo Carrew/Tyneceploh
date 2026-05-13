@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Attendance Marking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .box{
+      max-width:900px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+    }
+
+    select,button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+    }
+
+    .student{
+      display:flex;
+      justify-content:space-between;
+      padding:10px;
+      border-bottom:1px solid #ddd;
+    }
+
+    .btn{
+      background:#27ae60;
+      color:white;
+      border:none;
+      padding:12px;
+      margin-top:15px;
+      width:100%;
+    }
+
+    .ok{color:green}
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>Mark Attendance</h2>
+
+  <label>Class</label>
+  <select id="classBox"></select>
+
+  <button onclick="loadStudents()">Load Students</button>
+
+  <div id="list"></div>
+
+  <button class="btn" onclick="submitAttendance()">
+    Submit Attendance
+  </button>
+
+  <p id="msg"></p>
+
+</div>
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "teacher"){
+  location.href="login.html";
+}
+
+let students = [];
+let selected = {};
+
+// -------------------
+// LOAD CLASSES
+// -------------------
+async function loadClasses(){
+
+  const snap = await getDocs(collection(db,"users"));
+  const set = new Set();
+
+  snap.forEach(d=>{
+    const u = d.data();
+    if(u.role === "student") set.add(u.class);
+  });
+
+  classBox.innerHTML = [...set]
+    .map(c=>`<option>${c}</option>`)
+    .join("");
+
+}
+
+loadClasses();
+
+// -------------------
+// LOAD STUDENTS
+// -------------------
+window.loadStudents = async function(){
+
+  const cls = classBox.value;
+
+  const snap = await getDocs(collection(db,"users"));
+
+  students = [];
+
+  snap.forEach(d=>{
+    const u = d.data();
+    if(u.role === "student" && u.class === cls){
+      students.push(u);
+    }
+  });
+
+  render();
+};
+
+function render(){
+
+  const list = document.getElementById("list");
+
+  list.innerHTML = students.map(s=>`
+
+    <div class="student">
+
+      <span>${s.name}</span>
+
+      <input type="checkbox"
+        onchange="mark('${s.userId}',this.checked)"
+      >
+
+    </div>
+
+  `).join("");
+
+}
+
+// -------------------
+// MARK ATTENDANCE
+// -------------------
+window.mark = function(id, val){
+  selected[id] = val;
+};
+
+// -------------------
+// SUBMIT
+// -------------------
+window.submitAttendance = async function(){
+
+  const cls = classBox.value;
+
+  const records = students.map(s=>({
+
+    studentId:s.userId,
+    status:selected[s.userId] ? "present" : "absent"
+
+  }));
+
+  await addDoc(collection(db,"attendanceRecords"),{
+
+    class:cls,
+    date:new Date().toISOString().split("T")[0],
+    teacherId:user.userId,
+    teacherName:user.name,
+    students:records,
+    createdAt:Date.now()
+
+  });
+
+  msg.innerHTML = "Attendance saved successfully";
+};
+
+</script>
+
+</body>
+</html>
