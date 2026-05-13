@@ -2,25 +2,99 @@
 <html>
 <head>
   <title>Quiz Review - TEF</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th { background-color: #f2f2f2; }
-    .student-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 15px 0; background: #fff; }
-    .score-high { color: green; font-weight: bold; }
-    .score-low { color: red; font-weight: bold; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f4f6f9;
+    }
+
+    h2 { margin-bottom: 10px; }
+
+    select {
+      padding: 10px;
+      width: 100%;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .big {
+      font-size: 22px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #eee;
+      text-align: center;
+    }
+
+    th {
+      background: #2c3e50;
+      color: white;
+    }
+
+    .high { color: #2980b9; font-weight: bold; }
+    .low { color: #e74c3c; font-weight: bold; }
+
+    .student-card {
+      background: white;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      background: #27ae60;
+      color: white;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
 
 <h2>Quiz Review Dashboard</h2>
 
-<label>Select Quiz:</label>
 <select id="quizSelect"></select>
 
-<hr>
+<div class="grid" id="stats"></div>
 
-<div id="summary"></div>
+<button onclick="downloadPDF()">Download PDF Report</button>
+
 <div id="list"></div>
 
 <script type="module">
@@ -40,6 +114,7 @@ if(!user || user.role !== "teacher") location.href = "login.html";
 
 let quizzes = [];
 let submissions = [];
+let currentQuiz = null;
 
 async function load() {
   const qSnap = await getDocs(collection(db, "quizzes"));
@@ -50,99 +125,112 @@ async function load() {
 
   qSnap.forEach(d => {
     const q = d.data();
-    // Use user.id (which contains the userId) to filter
     if(q.teacherId === user.id) {
       quizzes.push({ id: d.id, ...q });
     }
   });
 
-  sSnap.forEach(d => {
-    submissions.push({ id: d.id, ...d.data() });
-  });
+  sSnap.forEach(d => submissions.push({ id: d.id, ...d.data() }));
 
-  const select = document.getElementById("quizSelect");
-  select.innerHTML = quizzes.map(q => `<option value="${q.id}">${q.title}</option>`).join("");
+  document.getElementById("quizSelect").innerHTML =
+    quizzes.map(q => `<option value="${q.id}">${q.title}</option>`).join("");
 
-  // Initial render after data is fetched
-  if (quizzes.length > 0) render();
-  else document.getElementById("list").innerHTML = "No quizzes found for your account.";
+  render();
 }
 
 function render() {
-  const quizId = document.getElementById("quizSelect").value;
-  const quiz = quizzes.find(q => q.id === quizId);
-  const results = submissions.filter(s => s.quizId === quizId);
+  const id = document.getElementById("quizSelect").value;
+  const quiz = quizzes.find(q => q.id === id);
+  currentQuiz = quiz;
 
-  if(!quiz) {
-    document.getElementById("list").innerHTML = "Select a quiz to view results.";
-    return;
-  }
+  if(!quiz) return;
 
-  let totalStudents = results.length;
-  let totalClassPoints = 0;
+  const results = submissions.filter(s => s.quizId === id);
+
+  let total = results.length;
+  let sum = 0;
+  let highest = 0;
+  let lowest = 100;
 
   results.forEach(r => {
-    const total = r.total || 1; // Prevent division by zero
-    totalClassPoints += (r.score / total) * 100;
+    const p = (r.score / (r.total || 1)) * 100;
+    sum += p;
+    if(p > highest) highest = p;
+    if(p < lowest) lowest = p;
   });
 
-  const classAvg = totalStudents ? (totalClassPoints / totalStudents).toFixed(1) : 0;
+  const avg = total ? (sum / total).toFixed(1) : 0;
+
+  document.getElementById("stats").innerHTML = `
+    <div class="card"><div>Total</div><div class="big">${total}</div></div>
+    <div class="card"><div>Average</div><div class="big">${avg}%</div></div>
+    <div class="card"><div>Highest</div><div class="big">${highest.toFixed(1)}%</div></div>
+    <div class="card"><div>Lowest</div><div class="big">${lowest.toFixed(1)}%</div></div>
+  `;
 
   let html = `
-    <div style="background:#eef; padding:15px; border-radius:5px;">
-        <h3>Analytics: ${quiz.title}</h3>
-        <p><b>Total Submissions:</b> ${totalStudents}</p>
-        <p><b>Class Average:</b> ${classAvg}%</p>
-    </div>
-
-    <table border="1" cellpadding="10">
+    <table class="table">
       <thead>
         <tr>
-          <th>Student Name</th>
+          <th>Name</th>
           <th>Score</th>
-          <th>Total Available</th>
-          <th>Percentage</th>
+          <th>Total</th>
+          <th>%</th>
         </tr>
       </thead>
       <tbody>
   `;
 
   results.forEach(r => {
-    const total = r.total || 1;
-    const percent = ((r.score / total) * 100).toFixed(1);
-    const scoreClass = percent >= 50 ? "score-high" : "score-low";
+    const totalScore = r.total || 1;
+    const percent = ((r.score / totalScore) * 100).toFixed(1);
 
     html += `
       <tr>
         <td>${r.studentName}</td>
         <td>${r.score}</td>
-        <td>${total}</td>
-        <td class="${scoreClass}">${percent}%</td>
+        <td>${totalScore}</td>
+        <td class="${percent >= 50 ? "high" : "low"}">${percent}%</td>
       </tr>
     `;
   });
 
-  html += `</tbody></table><br><h3>Detailed Student Answers</h3>`;
+  html += "</tbody></table>";
+
+  html += "<h3>Student Answers</h3>";
 
   results.forEach(r => {
     html += `
       <div class="student-card">
-        <b>${r.studentName} (${r.studentId})</b><br>
-        <span style="font-size: 0.9em; color: #555;">Submitted: ${new Date(r.createdAt).toLocaleString()}</span>
-        <hr>
-        <ul style="list-style-type: none; padding-left: 0;">
-          ${(r.answers || []).map((a, i) => `
-            <li style="margin-bottom:5px;">
-                <b>Q${i+1}:</b> Selected [${a}]
-            </li>
-          `).join("")}
-        </ul>
+        <b>${r.studentName}</b><br>
+        ${r.answers?.map((a,i)=>`Q${i+1}: ${a}`).join("<br>") || "No answers"}
       </div>
     `;
   });
 
   document.getElementById("list").innerHTML = html;
 }
+
+window.downloadPDF = function () {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  let text = `Quiz Report\n\n`;
+
+  const id = document.getElementById("quizSelect").value;
+  const quiz = quizzes.find(q => q.id === id);
+  const results = submissions.filter(s => s.quizId === id);
+
+  text += `Title: ${quiz?.title || ""}\n\n`;
+
+  results.forEach((r, i) => {
+    const p = ((r.score / (r.total || 1)) * 100).toFixed(1);
+    text += `${i+1}. ${r.studentName} - ${p}%\n`;
+  });
+
+  doc.text(text, 10, 10);
+  doc.save("quiz-report.pdf");
+};
 
 document.getElementById("quizSelect").addEventListener("change", render);
 
