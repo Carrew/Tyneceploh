@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .box{
+      max-width:800px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+    }
+
+    .card{
+      background:#fafafa;
+      padding:15px;
+      margin-bottom:10px;
+      border-radius:10px;
+    }
+
+    .good{color:green}
+    .bad{color:red}
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2>My Attendance</h2>
+
+  <div id="list">Loading...</div>
+
+</div>
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+  location.href="login.html";
+}
+
+async function load(){
+
+  const snap = await getDocs(collection(db,"attendanceRecords"));
+
+  let total = 0;
+  let present = 0;
+
+  let html = "";
+
+  snap.forEach(d=>{
+
+    const r = d.data();
+
+    const found = r.students.find(s=>s.studentId === user.userId);
+
+    if(found){
+
+      total++;
+
+      if(found.status === "present") present++;
+
+      html += `
+        <div class="card">
+          <b>${r.date}</b><br>
+          Status:
+          <span class="${found.status === "present" ? "good":"bad"}">
+            ${found.status}
+          </span>
+        </div>
+      `;
+    }
+
+  });
+
+  const percent = total ? Math.round((present/total)*100) : 0;
+
+  document.getElementById("list").innerHTML = `
+    <h3>Attendance Rate: ${percent}%</h3>
+    ${html}
+  `;
+}
+
+load();
+
+</script>
+
+</body>
+</html>
