@@ -4,6 +4,7 @@
   <title>Login - TEF System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+
 <body>
 
 <h2>Login</h2>
@@ -16,69 +17,71 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { getFirestore, collection, getDocs, doc, updateDoc } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import { getMessaging, getToken } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+import {
+  getMessaging,
+  getToken
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
-  messagingSenderId: "YOUR_SENDER_ID"
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 });
 
 const db = getFirestore(app);
 const messaging = getMessaging(app);
 
 //
-// 🔔 ENABLE NOTIFICATIONS (SAFE ADD-ON)
+// PUSH NOTIFICATION SETUP
 //
-async function enableNotifications(user){
+async function enableNotifications(userDocId){
 
   try{
 
     const permission = await Notification.requestPermission();
 
-    if(permission !== "granted"){
-      console.log("Notifications denied");
-      return null;
-    }
+    if(permission !== "granted") return;
 
     const token = await getToken(messaging, {
       vapidKey: "BH3wQ-GoLtUvWYWd_KeHcg9DQeU24hkNRAAdmzyknuPQekDgIj4JnCQfFtpydFpQmVo-5NODlf1Eyc0t7MNIrOc"
     });
 
-    if(!token){
-      console.log("No token generated");
-      return null;
-    }
+    if(!token) return;
 
-    // Save token directly into user document (safe fallback)
-    const snap = await getDocs(collection(db, "users"));
-
-    snap.forEach(async (d) => {
-      const u = d.data();
-      if(u.userId === user.userId){
-        await updateDoc(doc(db,"users",d.id),{
-          fcmToken: token,
-          notificationEnabled: true
-        });
-      }
+    await updateDoc(doc(db, "users", userDocId), {
+      fcmToken: token,
+      notificationEnabled: true
     });
-
-    return token;
 
   }catch(err){
     console.log("Notification error:", err);
-    return null;
   }
+
 }
 
 //
-// 🔥 LOGIN FUNCTION (UNCHANGED LOGIC + ADDITIONS ONLY)
+// LOCAL BROWSER NOTIFICATION
+//
+function notify(title, body){
+
+  if(Notification.permission === "granted"){
+    new Notification(title, { body });
+  }
+
+}
+
+//
+// LOGIN FUNCTION (UNCHANGED LOGIC)
 //
 window.login = async function(){
 
@@ -93,11 +96,14 @@ window.login = async function(){
   const snap = await getDocs(collection(db, "users"));
 
   let found = null;
+  let docId = null;
 
   snap.forEach(d => {
+
     const u = d.data();
 
     if(u.userId === idInput && u.pin === pinInput){
+
       found = {
         id: u.userId,
         userId: u.userId,
@@ -107,7 +113,11 @@ window.login = async function(){
         classes: u.classes || [],
         status: u.status || ""
       };
+
+      docId = d.id;
+
     }
+
   });
 
   if(!found){
@@ -122,26 +132,26 @@ window.login = async function(){
 
   localStorage.setItem("user", JSON.stringify(found));
 
-  console.log("Logged in:", found.role);
+  console.log("Logged in successfully:", found.role);
 
   //
-  // 🔔 NEW: REQUEST NOTIFICATIONS AFTER LOGIN
+  // ENABLE NOTIFICATIONS AFTER LOGIN
   //
-  const token = await enableNotifications(found);
+  await enableNotifications(docId);
 
   //
-  // 🔔 NEW: SELF LOGIN NOTIFICATION
+  // SELF LOGIN NOTIFICATION
   //
-  if(token && Notification.permission === "granted"){
+  notify(
+    "Login Successful",
+    `Welcome back ${found.name || found.userId}`
+  );
 
-    new Notification("Login Successful", {
-      body: `Welcome back ${found.name}`,
-    });
-
-  }
-
+  //
   // ROUTING (UNCHANGED)
+  //
   switch(found.role){
+
     case "admin":
       location.href = "admin-dashboard.html";
       break;
@@ -169,11 +179,10 @@ window.login = async function(){
     default:
       alert("Role not recognized. Redirecting to home.");
       location.href = "index.html";
+
   }
 
 };
-
-</script>
 
 </script>
 
