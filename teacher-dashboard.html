@@ -135,11 +135,10 @@ const imageCache = {
   </div>
 </div>
 
-<div class="stats">
-  <div class="stat">
-    <b>Classes</b><br>
-    <span id="classCount">0</span>
-  </div>
+<div class="stat">
+  <b>Classes</b><br>
+  <span id="teacherClasses"></span>
+</div>
   <div class="stat">
     <b>Assignments</b><br>
     --
@@ -209,8 +208,16 @@ const teacherClasses = classes.filter(
   cls => cls.teacherId === user.userId
 );
 
-document.getElementById("classCount").innerText =
-  teacherClasses.length;
+const teacherClasses = user.classes || [];
+
+document.getElementById("teacherClasses").innerText =
+  teacherClasses.length
+    ? teacherClasses.join(", ")
+    : "No Classes";
+  document.getElementById("teacherClasses").innerHTML =
+  teacherClasses.length
+    ? teacherClasses.map(c => `📘 ${c}`).join("<br>")
+    : "No Classes";
 </script>
 
 </body>
