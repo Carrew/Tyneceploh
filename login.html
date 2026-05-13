@@ -109,11 +109,13 @@ window.login = async function() {
       const u = d.data();
       if (u.userId === idInput && u.pin === pinInput) {
         found = {
-          id: u.userId,
-          userId: u.userId,
-          name: u.name || "",
-          role: (u.role || "").toLowerCase(),
-          status: u.status || ""
+  id: u.userId,
+  userId: u.userId,
+  name: u.name || "",
+  role: (u.role || "").toLowerCase(),
+  status: u.status || "",
+  classes: u.classes || []
+};
         };
         docId = d.id;
       }
