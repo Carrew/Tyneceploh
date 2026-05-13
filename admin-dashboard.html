@@ -1,46 +1,155 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Admin Dashboard - TEF</title>
+
+  <style>
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: white;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(135deg, var(--maroon), #1a0010);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--pink);
+    }
+
+    .welcome {
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      padding: 15px;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      border-left: 3px solid var(--pink);
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,0.09);
+    }
+
+    .section-title {
+      padding: 10px 15px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    button.logout {
+      width: 90%;
+      margin: 20px auto;
+      display: block;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+    }
+  </style>
+</head>
+
 <body>
 
 <script>
 const user = JSON.parse(localStorage.getItem("user"));
+
 if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
+
+// simple image cache system
+const imageCache = {
+  get(key){ return localStorage.getItem("img_" + key); },
+  set(key, value){ localStorage.setItem("img_" + key, value); }
+};
 </script>
 
-<h2>Admin Dashboard</h2>
-<p>Welcome, <b id="name"></b></p>
+<header>
+  <h1>Admin Control Center</h1>
+  <div class="welcome">Welcome, <b id="name"></b></div>
+</header>
 
-<div>
-  <h3>User Management</h3>
-  <button onclick="go('admin-create-student.html')">Students</button>
-  <button onclick="go('admin-create-teacher.html')">Teachers</button>
-  <button onclick="go('admin-create-admin.html')">Admins</button>
+<div class="section-title">User Management</div>
+<div class="grid">
+
+  <div class="card" onclick="go('admin-create-student.html')">👨‍🎓 Students</div>
+  <div class="card" onclick="go('admin-create-teacher.html')">👨‍🏫 Teachers</div>
+  <div class="card" onclick="go('admin-create-admin.html')">🧑‍💼 Admins</div>
+
 </div>
 
-<div>
-  <h3>Staff Management</h3>
-  <button onclick="go('admin-create-janitor.html')">Janitors</button>
-  <button onclick="go('admin-create-security.html')">Security</button>
-  <button onclick="go('admin-create-coordinator.html')">Coordinators</button>
+<div class="section-title">Staff Management</div>
+<div class="grid">
+
+  <div class="card" onclick="go('admin-create-janitor.html')">🧹 Janitors</div>
+  <div class="card" onclick="go('admin-create-security.html')">🛡️ Security</div>
+  <div class="card" onclick="go('admin-create-coordinator.html')">📋 Coordinators</div>
+
 </div>
 
-<div>
-  <h3>Academic Control</h3>
-  <button onclick="go('admin-grade-approval.html')">Approve Grades</button>
-  <button onclick="go('admin-results.html')">Results</button>
+<div class="section-title">Academic Control</div>
+<div class="grid">
+
+  <div class="card" onclick="go('admin-grade-approval.html')">📊 Grade Approval</div>
+  <div class="card" onclick="go('admin-results.html')">🏆 Results</div>
+  <div class="card" onclick="go('honor-board.html')">🎖 Honor Board</div>
+
 </div>
 
-<div>
-  <h3>System</h3>
-  <button onclick="go('notes.html')">Notes</button>
-  <button onclick="go('assignments.html')">Assignments</button>
-  <button onclick="go('quiz-review.html')">Quizzes</button>
+<div class="section-title">Operations</div>
+<div class="grid">
+
+  <div class="card" onclick="go('admin-attendance-analytics.html')">📈 Attendance Analytics</div>
+  <div class="card" onclick="go('admin-view-attendance.html')">🧾 View Attendance</div>
+  <div class="card" onclick="go('admin-qr-manager.html')">📱 QR Manager</div>
+
 </div>
 
-<br>
-<button onclick="logout()">Logout</button>
+<div class="section-title">System Tools</div>
+<div class="grid">
+
+  <div class="card" onclick="go('admin-announcements.html')">📢 Announcements</div>
+  <div class="card" onclick="go('admin-financials.html')">💰 Financials</div>
+  <div class="card" onclick="go('admin-calender.html')">📅 Calendar</div>
+  <div class="card" onclick="go('attendance-settings.html')">⚙️ Attendance Settings</div>
+
+</div>
+
+<div class="section-title">Communication</div>
+<div class="grid">
+
+  <div class="card" onclick="go('users-announcement.html')">📣 User Broadcasts</div>
+  <div class="card" onclick="go('notifications-engine.js')">🔔 Notifications Engine</div>
+
+</div>
+
+<button class="logout" onclick="logout()">Logout</button>
 
 <script>
 document.getElementById("name").innerText = user.name;
