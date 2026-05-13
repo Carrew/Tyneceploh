@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Announcements</title>
+  <title>Announcements - TEF</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -12,21 +12,35 @@
     }
 
     .box{
-      max-width:800px;
+      max-width:850px;
       margin:auto;
+    }
+
+    h2{
+      margin-bottom:10px;
+    }
+
+    .search{
+      width:100%;
+      padding:12px;
+      margin:10px 0 20px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      outline:none;
     }
 
     .card{
       background:white;
       padding:15px;
-      margin-bottom:10px;
-      border-radius:10px;
+      margin-bottom:12px;
+      border-radius:12px;
       border-left:6px solid #3498db;
+      box-shadow:0 2px 6px rgba(0,0,0,0.05);
+      transition:0.2s;
     }
 
-    .meta{
-      font-size:12px;
-      color:#666;
+    .card:hover{
+      transform:translateY(-2px);
     }
 
     .tag{
@@ -36,9 +50,37 @@
       background:#27ae60;
       color:white;
       font-size:12px;
-      margin-bottom:10px;
+      margin-bottom:8px;
     }
 
+    .title{
+      font-size:18px;
+      margin:5px 0;
+    }
+
+    .message{
+      color:#333;
+      line-height:1.5;
+    }
+
+    .meta{
+      font-size:12px;
+      color:#777;
+      margin-top:10px;
+    }
+
+    .empty{
+      text-align:center;
+      padding:40px;
+      color:#777;
+    }
+
+    .error{
+      background:#ffe6e6;
+      color:#b30000;
+      padding:10px;
+      border-radius:8px;
+    }
   </style>
 </head>
 
@@ -47,6 +89,8 @@
 <div class="box">
 
   <h2>Announcements</h2>
+
+  <input id="search" class="search" placeholder="Search announcements...">
 
   <div id="list">Loading...</div>
 
@@ -74,50 +118,87 @@ const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
+let announcements = [];
+
+if(!user){
+  document.getElementById("list").innerHTML =
+    `<div class="error">Session expired. Please login again.</div>`;
+  throw new Error("No user");
+}
+
 async function load(){
 
-  const snap = await getDocs(collection(db,"announcements"));
+  try{
 
-  let html = "";
+    const snap = await getDocs(collection(db,"announcements"));
 
-  snap.forEach(d=>{
+    announcements = [];
 
-    const a = d.data();
+    snap.forEach(d=>{
 
-    let allowed = false;
+      const a = d.data();
 
-    if(a.type === "public") allowed = true;
+      let allowed = false;
 
-    if(a.type === "role" && a.targetRoles?.includes(user.role))
-      allowed = true;
+      if(a.type === "public") allowed = true;
 
-    if(a.type === "class" && a.targetClass === user.class)
-      allowed = true;
+      if(a.type === "role" && a.targetRoles?.includes(user.role))
+        allowed = true;
 
-    if(!allowed) return;
+      if(a.type === "class" && a.targetClass === user.class)
+        allowed = true;
 
-    html += `
-      <div class="card">
+      if(!allowed) return;
 
-        <div class="tag">${a.type}</div>
+      announcements.push(a);
+    });
 
-        <h3>${a.title}</h3>
+    render(announcements);
 
-        <p>${a.message}</p>
-
-        <div class="meta">
-          By ${a.createdBy}
-        </div>
-
-      </div>
-    `;
-
-  });
-
-  document.getElementById("list").innerHTML =
-    html || "<p>No announcements</p>";
-
+  }catch(err){
+    console.error(err);
+    document.getElementById("list").innerHTML =
+      `<div class="error">Failed to load announcements.</div>`;
+  }
 }
+
+function render(list){
+
+  const div = document.getElementById("list");
+
+  if(!list.length){
+    div.innerHTML = `<div class="empty">No announcements yet.</div>`;
+    return;
+  }
+
+  div.innerHTML = list.map(a=>`
+    <div class="card">
+
+      <div class="tag">${a.type.toUpperCase()}</div>
+
+      <div class="title">${a.title}</div>
+
+      <div class="message">${a.message}</div>
+
+      <div class="meta">
+        By <b>${a.createdBy || "Unknown"}</b>
+      </div>
+
+    </div>
+  `).join("");
+}
+
+// SEARCH FILTER (live)
+document.getElementById("search").addEventListener("input", e=>{
+  const value = e.target.value.toLowerCase();
+
+  const filtered = announcements.filter(a=>
+    (a.title || "").toLowerCase().includes(value) ||
+    (a.message || "").toLowerCase().includes(value)
+  );
+
+  render(filtered);
+});
 
 load();
 
