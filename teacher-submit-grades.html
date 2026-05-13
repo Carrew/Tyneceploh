@@ -4,7 +4,6 @@
   <title>Submit Grades - TEF</title>
 
   <style>
-
     body{
       font-family:sans-serif;
       background:#f4f4f4;
@@ -47,9 +46,7 @@
       color:#155724;
       display:none;
     }
-
   </style>
-
 </head>
 
 <body>
@@ -73,15 +70,9 @@
   <option>Final Exam</option>
 </select>
 
-<input
-  id="score"
-  type="number"
-  placeholder="Score"
->
+<input id="score" type="number" placeholder="Score">
 
-<button onclick="submitGrade()">
-  Submit Grade
-</button>
+<button onclick="submitGrade()">Submit Grade</button>
 
 <div id="msg"></div>
 
@@ -89,220 +80,138 @@
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   collection,
   getDocs,
   addDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-  sendNotification
-}
-from "./notification-helper.js";
+import { sendNotification } from "./notification-helper.js";
 
 const firebaseConfig = {
-
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-
   authDomain: "tyneceploh.firebaseapp.com",
-
   projectId: "tyneceploh"
-
 };
 
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
 
-const user = JSON.parse(
-  localStorage.getItem("user")
-);
+const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "teacher"){
-
   location.href = "login.html";
-
 }
 
-//
-// LOAD STUDENTS
-//
 async function loadStudents(){
 
-  const snap =
-    await getDocs(collection(db,"users"));
-
+  const snap = await getDocs(collection(db,"users"));
   const students = [];
 
   snap.forEach(d=>{
-
     const data = d.data();
 
     if(
       data.role === "student" &&
       user.classes?.includes(data.class)
     ){
-
       students.push(data);
-
     }
-
   });
 
-  const select =
-    document.getElementById("student");
+  const select = document.getElementById("student");
 
   if(students.length === 0){
-
-    select.innerHTML =
-      "<option>No students found</option>";
-
+    select.innerHTML = "<option>No students found</option>";
     return;
   }
 
   select.innerHTML = students.map(s=>`
-
-    <option
-      value="${s.userId}|${s.name}|${s.class}"
-    >
+    <option value="${s.userId}|${s.name}|${s.class}">
       ${s.name} (${s.class})
     </option>
-
   `).join("");
-
 }
 
-//
-// SUBMIT GRADE
-//
 window.submitGrade = async function(){
 
-  const studentVal =
-    document.getElementById("student").value;
-
-  const subject =
-    document.getElementById("subject")
-    .value
-    .trim();
-
-  const period =
-    document.getElementById("period").value;
-
-  const score =
-    Number(
-      document.getElementById("score").value
-    );
+  const studentVal = document.getElementById("student").value;
+  const subject = document.getElementById("subject").value.trim();
+  const period = document.getElementById("period").value;
+  const score = Number(document.getElementById("score").value);
 
   if(!studentVal){
-
-    return alert("Select student");
-
+    alert("Select student");
+    return;
   }
 
-  const [
-    studentId,
-    studentName,
-    studentClass
-  ] = studentVal.split("|");
+  const [studentId, studentName, studentClass] = studentVal.split("|");
 
   if(!subject || isNaN(score)){
-
-    return alert("Fill all fields");
-
+    alert("Fill all fields correctly");
+    return;
   }
 
-  try{
+  try {
 
-    //
-    // SAVE SUBMISSION
-    //
-    await addDoc(
-      collection(db,"gradeSubmissions"),
-      {
+    // -----------------------------------
+    // SAVE GRADE SUBMISSION
+    // -----------------------------------
+    await addDoc(collection(db,"gradeSubmissions"),{
 
-        teacherId: user.id,
+      teacherId: user.userId,
+      teacherName: user.name,
 
-        teacherName: user.name,
+      studentId,
+      studentName,
+      class: studentClass,
 
-        studentId,
+      subject,
+      period,
+      score,
 
-        studentName,
+      status: "pending",
+      feedback: "",
+      createdAt: Date.now()
+    });
 
-        class: studentClass,
-
-        subject,
-
-        period,
-
-        score,
-
-        status:"pending",
-
-        feedback:"",
-
-        createdAt: Date.now()
-
-      }
-    );
-
-    //
+    // -----------------------------------
     // NOTIFY STUDENT
-    //
+    // -----------------------------------
     await sendNotification(db,{
-
       userId: studentId,
-
-      title: "New Grade Submitted",
-
-      message:
-        `${subject} (${period}) score submitted and awaiting approval.`,
-
-      type:"academic"
-
+      title: "New Grade Posted",
+      message: `${subject} (${period}) has been submitted.`,
+      type: "academic",
+      link: "student-results.html"
     });
 
-    //
+    // -----------------------------------
     // NOTIFY ADMINS
-    //
+    // -----------------------------------
     await sendNotification(db,{
-
-      role:"admin",
-
-      title:"Grade Approval Needed",
-
-      message:
-        `${user.name} submitted ${subject} grades for approval.`,
-
-      type:"approval"
-
+      role: "admin",
+      title: "Grade Awaiting Approval",
+      message: `${user.name} submitted ${subject} for ${studentClass}`,
+      type: "approval",
+      link: "grade-approval.html"
     });
 
-    //
-    // SUCCESS
-    //
-    const msg =
-      document.getElementById("msg");
-
+    // -----------------------------------
+    // SUCCESS UI
+    // -----------------------------------
+    const msg = document.getElementById("msg");
     msg.style.display = "block";
-
-    msg.innerText =
-      "Grade submitted successfully";
+    msg.innerText = "Grade submitted successfully";
 
     document.getElementById("score").value = "";
 
-  }catch(error){
-
-    console.error(error);
-
+  } catch(err){
+    console.error(err);
     alert("Submission failed");
-
   }
-
 };
 
 loadStudents();
