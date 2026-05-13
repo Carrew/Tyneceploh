@@ -9,9 +9,8 @@
     :root{
       --bg:#07070b;
       --panel:#11111a;
-      --panel2:#0e0e15;
       --accent:#ff4d6d;
-      --text:#ffffff;
+      --text:#fff;
       --muted:rgba(255,255,255,0.6);
       --border:rgba(255,255,255,0.08);
     }
@@ -28,45 +27,36 @@
       color:var(--text);
       display:flex;
       height:100vh;
-      overflow:hidden;
     }
 
     /* SIDEBAR */
     .sidebar{
-      width:260px;
-      background:linear-gradient(180deg,#0d0d14,#07070b);
+      width:240px;
+      background:#0d0d14;
       border-right:1px solid var(--border);
       padding:20px;
     }
 
     .brand{
-      font-size:18px;
-      font-weight:bold;
       color:var(--accent);
-      margin-bottom:25px;
+      font-weight:bold;
+      margin-bottom:20px;
     }
 
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .nav button{
-      background:transparent;
-      border:1px solid var(--border);
-      color:var(--text);
+    .sidebar button{
+      width:100%;
+      margin-bottom:10px;
       padding:10px;
       border-radius:10px;
+      border:1px solid var(--border);
+      background:transparent;
+      color:white;
       text-align:left;
       cursor:pointer;
-      transition:.2s;
     }
 
-    .nav button:hover{
-      background:var(--panel);
+    .sidebar button:hover{
       border-color:var(--accent);
-      transform:translateX(3px);
     }
 
     /* MAIN */
@@ -77,91 +67,86 @@
       overflow:auto;
     }
 
-    /* TOP BAR */
     .topbar{
-      padding:20px;
-      background:var(--panel2);
+      padding:18px;
+      background:#0f0f18;
       border-bottom:1px solid var(--border);
       display:flex;
       justify-content:space-between;
       align-items:center;
     }
 
-    .userbox{
+    .user{
       display:flex;
       align-items:center;
       gap:12px;
     }
 
-    .userbox img{
-      width:40px;
-      height:40px;
+    .user img{
+      width:45px;
+      height:45px;
       border-radius:50%;
       object-fit:cover;
       border:2px solid var(--accent);
+      background:#222;
     }
 
     .muted{
-      color:var(--muted);
       font-size:13px;
+      opacity:.7;
     }
 
-    /* STATS */
-    .stats{
+    /* PROFILE CARD */
+    .profile{
+      margin:18px;
+      padding:20px;
+      border-radius:14px;
+      background:#11111a;
+      border:1px solid var(--border);
+      display:flex;
+      gap:15px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .profile img{
+      width:80px;
+      height:80px;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid var(--accent);
+      background:#222;
+    }
+
+    .info p{
+      margin:3px 0;
+      font-size:14px;
+      opacity:.9;
+    }
+
+    .label{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* GRID */
+    .grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
       gap:12px;
-      padding:20px;
-    }
-
-    .stat{
-      background:var(--panel);
-      border:1px solid var(--border);
-      padding:15px;
-      border-radius:12px;
-    }
-
-    .stat b{
-      color:var(--accent);
-      font-size:13px;
-    }
-
-    .stat h2{
-      margin-top:8px;
-      font-size:20px;
-    }
-
-    /* MODULES */
-    .section{
-      padding:0 20px 20px;
-    }
-
-    .section h3{
-      margin:15px 0;
-      font-size:14px;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:1px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-      gap:12px;
+      padding:18px;
     }
 
     .card{
-      background:var(--panel);
+      background:#11111a;
       border:1px solid var(--border);
       padding:15px;
       border-radius:12px;
       cursor:pointer;
-      transition:.2s;
     }
 
     .card:hover{
       border-color:var(--accent);
-      transform:translateY(-3px);
     }
 
     .logout{
@@ -172,10 +157,6 @@
       color:white;
       border-radius:10px;
       cursor:pointer;
-    }
-
-    .logout:hover{
-      border-color:var(--accent);
     }
 
   </style>
@@ -196,36 +177,31 @@ if(!user || user.role !== "admin"){
 
   <div class="brand">TEF ADMIN</div>
 
-  <div class="nav">
-
-    <button onclick="go('admin-create-student.html')">Students</button>
-    <button onclick="go('admin-create-teacher.html')">Teachers</button>
-    <button onclick="go('admin-results.html')">Results</button>
-    <button onclick="go('admin-attendance-analytics.html')">Analytics</button>
-    <button onclick="go('admin-announcements.html')">Announcements</button>
-    <button onclick="go('admin-financials.html')">Finance</button>
-    <button onclick="go('admin-qr-manager.html')">QR System</button>
-
-  </div>
+  <button onclick="go('admin-create-student.html')">Students</button>
+  <button onclick="go('admin-create-teacher.html')">Teachers</button>
+  <button onclick="go('admin-results.html')">Results</button>
+  <button onclick="go('admin-attendance-analytics.html')">Analytics</button>
+  <button onclick="go('admin-announcements.html')">Announcements</button>
+  <button onclick="go('admin-financials.html')">Finance</button>
 
 </div>
 
 <!-- MAIN -->
 <div class="main">
 
-  <!-- TOP BAR -->
+  <!-- TOP -->
   <div class="topbar">
 
     <div>
-      <b>Control Room</b><br>
-      <span class="muted">System overview & management</span>
+      <b>Admin Panel</b><br>
+      <span class="muted">Live system view</span>
     </div>
 
-    <div class="userbox">
+    <div class="user">
 
       <div>
         <b id="name"></b><br>
-        <span class="muted">Administrator</span>
+        <span class="muted">Admin</span>
       </div>
 
       <img id="photo">
@@ -234,54 +210,44 @@ if(!user || user.role !== "admin"){
 
   </div>
 
-  <!-- STATS -->
-  <div class="stats">
+  <!-- PROFILE CARD (REAL DATA ONLY) -->
+  <div class="profile">
 
-    <div class="stat">
-      <b>Total Students</b>
-      <h2>--</h2>
-    </div>
+    <img id="profilePic">
 
-    <div class="stat">
-      <b>Total Teachers</b>
-      <h2>--</h2>
-    </div>
+    <div class="info">
 
-    <div class="stat">
-      <b>Pending Grades</b>
-      <h2>--</h2>
-    </div>
+      <p><span class="label">Name</span><br><b id="pName"></b></p>
 
-    <div class="stat">
-      <b>System Status</b>
-      <h2>Active</h2>
+      <p><span class="label">User ID</span><br><span id="pId"></span></p>
+
+      <p><span class="label">Email</span><br><span id="pEmail"></span></p>
+
+      <p><span class="label">Phone</span><br><span id="pPhone"></span></p>
+
+      <p><span class="label">Role</span><br><span id="pRole"></span></p>
+
     </div>
 
   </div>
 
-  <!-- MODULES -->
-  <div class="section">
+  <!-- QUICK ACTIONS -->
+  <div class="grid">
 
-    <h3>Quick Actions</h3>
+    <div class="card" onclick="go('admin-create-admin.html')">
+      Create Admin
+    </div>
 
-    <div class="grid">
+    <div class="card" onclick="go('admin-grade-approval.html')">
+      Approve Grades
+    </div>
 
-      <div class="card" onclick="go('admin-create-admin.html')">
-        Create Admin
-      </div>
+    <div class="card" onclick="go('users-announcement.html')">
+      Broadcast
+    </div>
 
-      <div class="card" onclick="go('admin-grade-approval.html')">
-        Approve Grades
-      </div>
-
-      <div class="card" onclick="go('attendance-settings.html')">
-        Attendance Settings
-      </div>
-
-      <div class="card" onclick="go('users-announcement.html')">
-        Broadcast Message
-      </div>
-
+    <div class="card" onclick="go('attendance-settings.html')">
+      Settings
     </div>
 
   </div>
@@ -292,11 +258,19 @@ if(!user || user.role !== "admin"){
 
 <script>
 
-document.getElementById("name").innerText =
-user.name || "Admin";
+document.getElementById("name").innerText = user.name || "Admin";
 
-document.getElementById("photo").src =
-user.photoURL || "https://via.placeholder.com/100";
+// PROFILE DATA (ONLY REAL STORED VALUES)
+document.getElementById("pName").innerText = user.name || "-";
+document.getElementById("pId").innerText = user.userId || "-";
+document.getElementById("pEmail").innerText = user.email || "-";
+document.getElementById("pPhone").innerText = user.phone || "-";
+document.getElementById("pRole").innerText = (user.role || "-").toUpperCase();
+
+const img = user.photoURL || "https://via.placeholder.com/100";
+
+document.getElementById("photo").src = img;
+document.getElementById("profilePic").src = img;
 
 function go(page){
   location.href = page;
