@@ -1,42 +1,152 @@
-<!DOCTYPE html>
-<html>
-<head><title>Student Management - TEF</title></head>
-<body>
+<!DOCTYPE html>    
+<html>    
+<head>
+  <title>Student Management - TEF</title>
 
-<h2>Student Management (CRUD)</h2>
+  <style>
+    :root {
+      --maroon: #800000;
+      --pink: #ffc0cb;
+      --bg: #0b0b0f;
+      --card: rgba(255,255,255,0.06);
+      --text: #ffffff;
+    }
 
+    body {
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, var(--bg));
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      color: var(--pink);
+      text-align: center;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .stat {
+      background: var(--card);
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: white;
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--maroon), var(--pink));
+      color: white;
+      cursor: pointer;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 12px;
+      border-radius: 12px;
+      margin: 10px 0;
+      border-left: 4px solid var(--pink);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-top: 5px;
+    }
+  </style>
+</head>    
+
+<body>    
+
+<h2>🎓 Student Management System</h2>
+
+<div class="stats">
+  <div class="stat">Total: <span id="total">0</span></div>
+  <div class="stat">New: <span id="newCount">0</span></div>
+  <div class="stat">Old: <span id="oldCount">0</span></div>
+</div>
+
+<input id="search" placeholder="Search student name or ID..." oninput="renderStudents()">
+
+<hr>
+
+<!-- CORE FORM (NO STRUCTURE CHANGED LOGICALLY, ONLY EXTENDED) -->
 <input id="name" placeholder="Student Name">
 <input id="class" placeholder="Class">
+<input id="dob" placeholder="Date of Birth">
+<select id="gender">
+  <option value="">Gender</option>
+  <option>Male</option>
+  <option>Female</option>
+</select>
+<input id="nationality" placeholder="Nationality">
+<input id="parent" placeholder="Parent/Guardian Name">
+<input id="contact" placeholder="Parent Contact">
 
 <select id="status">
   <option value="New">New</option>
   <option value="Old">Old</option>
 </select>
 
+<!-- CLOUDINARY PHOTO -->
+<input type="file" id="photo">
+
 <input type="hidden" id="editId">
+
 <button onclick="saveStudent()">Save Student</button>
 
-<hr>
-<input id="search" placeholder="Search by Name or ID..." oninput="renderStudents()">
 <hr>
 
 <div id="list"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";    
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";    
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
-};
+const firebaseConfig = {    
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",    
+  authDomain: "tyneceploh.firebaseapp.com",    
+  projectId: "tyneceploh",    
+};    
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);    
+const db = getFirestore(app);    
 
+// SAFE ID GENERATION (reduces duplication risk)
 function generateId(count) {
-  return `TEF${String(count + 1).padStart(4, "0")}`;
+  return `TEF${Date.now().toString().slice(-5)}${count}`;
 }
 
 function generatePin() {
@@ -48,83 +158,134 @@ let studentsCache = [];
 async function loadStudents() {
   const snap = await getDocs(collection(db, "users"));
   studentsCache = [];
+
   snap.forEach(d => {
     const data = d.data();
     if (data.role === "student") {
       studentsCache.push({ ...data, docId: d.id });
     }
   });
+
+  updateStats();
   renderStudents();
+}
+
+function updateStats() {
+  document.getElementById("total").innerText = studentsCache.length;
+  document.getElementById("newCount").innerText =
+    studentsCache.filter(s => s.status === "New").length;
+  document.getElementById("oldCount").innerText =
+    studentsCache.filter(s => s.status === "Old").length;
 }
 
 window.renderStudents = function () {
   const search = document.getElementById("search").value.toLowerCase();
-  const list = document.getElementById("list");
 
-  let filtered = studentsCache.filter(s =>
-    s.name.toLowerCase().includes(search) ||
+  const filtered = studentsCache.filter(s =>
+    (s.name || "").toLowerCase().includes(search) ||
     (s.userId || "").toLowerCase().includes(search)
   );
 
-  list.innerHTML = filtered.map(s => `
-    <div style="border:1px solid #ddd; margin:10px; padding:10px; border-radius:8px;">
-      <b>ID: ${s.userId}</b> | <b>${s.name}</b><br>
-      Class: ${s.class} | Status: <span style="color:blue">${s.status}</span>
-      <br><br>
-      <button onclick="editStudent('${s.docId}', '${s.name}', '${s.class}', '${s.status}')">Edit</button>
+  document.getElementById("list").innerHTML = filtered.map(s => `
+    <div class="card">
+      <b>🆔 ${s.userId}</b> | <b>${s.name}</b>
+      <div class="small">${s.class} | ${s.status}</div>
+
+      ${s.photoURL ? `<img src="${s.photoURL}">` : ""}
+
+      <div class="small">
+        DOB: ${s.dob || "-"} <br>
+        Gender: ${s.gender || "-"} <br>
+        Nationality: ${s.nationality || "-"} <br>
+        Parent: ${s.parent || "-"} <br>
+        Contact: ${s.contact || "-"}
+      </div>
+
+      <button onclick="editStudent('${s.docId}')">Edit</button>
       <button onclick="deleteStudent('${s.docId}')">Delete</button>
     </div>
   `).join("");
 };
 
+// CLOUDINARY UPLOAD
+async function uploadImage(file) {
+  if (!file) return "";
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "Tyneceploh");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  return data.secure_url || "";
+}
+
 window.saveStudent = async function () {
-  const name = document.getElementById("name").value;
-  const className = document.getElementById("class").value;
-  const status = document.getElementById("status").value;
   const editId = document.getElementById("editId").value;
 
-  if (!name || !className) { alert("Fill all fields"); return; }
+  const photoFile = document.getElementById("photo").files[0];
+  const photoURL = await uploadImage(photoFile);
+
+  const studentData = {
+    name: document.getElementById("name").value,
+    class: document.getElementById("class").value,
+    dob: document.getElementById("dob").value,
+    gender: document.getElementById("gender").value,
+    nationality: document.getElementById("nationality").value,
+    parent: document.getElementById("parent").value,
+    contact: document.getElementById("contact").value,
+    status: document.getElementById("status").value,
+    role: "student",
+    createdAt: Date.now()
+  };
+
+  if (!studentData.name || !studentData.class) {
+    alert("Fill required fields");
+    return;
+  }
+
+  if (photoURL) studentData.photoURL = photoURL;
 
   if (!editId) {
     const snap = await getDocs(collection(db, "users"));
-    const count = snap.docs.length; 
-    const userId = generateId(count);
+    const userId = generateId(snap.docs.length);
     const pin = generatePin();
 
-    await addDoc(collection(db, "users"), {
-      userId: userId,
-      pin: pin,
-      name: name,
-      class: className,
-      status: status, // "New" or "Old"
-      role: "student",
-      createdAt: Date.now()
-    });
+    studentData.userId = userId;
+    studentData.pin = pin;
 
-    alert(`Student Saved!\nID: ${userId}\nPIN: ${pin}`);
+    await addDoc(collection(db, "users"), studentData);
+
+    alert(`Student Created\nID: ${userId}\nPIN: ${pin}`);
   } else {
-    await updateDoc(doc(db, "users", editId), {
-      name: name,
-      class: className,
-      status: status
-    });
+    await updateDoc(doc(db, "users", editId), studentData);
     document.getElementById("editId").value = "";
   }
 
-  document.getElementById("name").value = "";
-  document.getElementById("class").value = "";
   loadStudents();
 };
 
-window.editStudent = (id, name, className, status) => {
+window.editStudent = (id) => {
+  const student = studentsCache.find(s => s.docId === id);
+  if (!student) return;
+
   document.getElementById("editId").value = id;
-  document.getElementById("name").value = name;
-  document.getElementById("class").value = className;
-  document.getElementById("status").value = status;
+  document.getElementById("name").value = student.name || "";
+  document.getElementById("class").value = student.class || "";
+  document.getElementById("dob").value = student.dob || "";
+  document.getElementById("gender").value = student.gender || "";
+  document.getElementById("nationality").value = student.nationality || "";
+  document.getElementById("parent").value = student.parent || "";
+  document.getElementById("contact").value = student.contact || "";
+  document.getElementById("status").value = student.status || "New";
 };
 
 window.deleteStudent = async (id) => {
-  if(confirm("Delete student?")) {
+  if (confirm("Delete student?")) {
     await deleteDoc(doc(db, "users", id));
     loadStudents();
   }
@@ -132,5 +293,6 @@ window.deleteStudent = async (id) => {
 
 loadStudents();
 </script>
+
 </body>
-</html>
+                           </html>
