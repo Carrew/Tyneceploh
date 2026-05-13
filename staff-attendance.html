@@ -5,50 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
+
+    :root{
+      --bg:#f4f4f4;
+      --card:#ffffff;
+      --text:#222;
+      --muted:#666;
+      --green:#27ae60;
+      --red:#c0392b;
+      --orange:#e67e22;
+      --blue:#3498db;
+      --shadow:0 10px 25px rgba(0,0,0,0.08);
+      --radius:14px;
     }
 
-    h2{
-      text-align:center;
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      font-family:sans-serif;
+      background:var(--bg);
+      padding:20px;
+      color:var(--text);
+    }
+
+    .container{
+      max-width:1100px;
+      margin:auto;
+    }
+
+    .header{
+      background:linear-gradient(135deg,#800000,#ff4d6d);
+      color:white;
+      padding:22px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       margin-bottom:20px;
+      text-align:center;
+    }
+
+    .header h2{
+      margin:0;
+      font-size:24px;
+    }
+
+    .header p{
+      margin-top:6px;
+      font-size:13px;
+      opacity:0.9;
     }
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-      gap:15px;
+      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+      gap:12px;
+      margin-bottom:20px;
     }
 
     .card{
-      background:white;
-      padding:15px;
-      border-radius:10px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      background:var(--card);
+      padding:14px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       text-align:center;
+      transition:0.2s;
+    }
+
+    .card:hover{
+      transform:translateY(-3px);
+    }
+
+    .label{
+      font-size:13px;
+      color:var(--muted);
     }
 
     .big{
       font-size:22px;
       font-weight:bold;
-      margin-top:8px;
+      margin-top:6px;
     }
 
     table{
       width:100%;
-      margin-top:20px;
       border-collapse:collapse;
-      background:white;
-      border-radius:10px;
+      background:var(--card);
+      border-radius:var(--radius);
       overflow:hidden;
+      box-shadow:var(--shadow);
     }
 
     th,td{
       padding:10px;
-      border:1px solid #eee;
       text-align:center;
+      border-bottom:1px solid #eee;
       font-size:13px;
     }
 
@@ -57,68 +109,85 @@
       color:white;
     }
 
-    .late{ color:#e67e22; font-weight:bold; }
-    .early{ color:#3498db; font-weight:bold; }
-    .bad{ color:#c0392b; font-weight:bold; }
-    .good{ color:#27ae60; font-weight:bold; }
+    tr:hover{
+      background:#fafafa;
+    }
+
+    .late{ color:var(--orange); font-weight:bold; }
+    .early{ color:var(--blue); font-weight:bold; }
+    .good{ color:var(--green); font-weight:bold; }
+    .bad{ color:var(--red); font-weight:bold; }
+
+    .empty{
+      text-align:center;
+      padding:20px;
+      color:var(--muted);
+    }
 
   </style>
 </head>
 
 <body>
 
-<h2>My Attendance Report</h2>
+<div class="container">
 
-<div class="grid">
-
-  <div class="card">
-    Total Days
-    <div class="big" id="total">0</div>
+  <div class="header">
+    <h2>My Attendance Report</h2>
+    <p>Your daily rhythm, tracked clearly and honestly</p>
   </div>
 
-  <div class="card">
-    Present
-    <div class="big good" id="present">0</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="label">Total Days</div>
+      <div class="big" id="total">0</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Present</div>
+      <div class="big good" id="present">0</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Late Days</div>
+      <div class="big late" id="late">0</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Early Exit</div>
+      <div class="big early" id="early">0</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Flags</div>
+      <div class="big bad" id="flags">0</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Avg Hours/Day</div>
+      <div class="big" id="avg">0</div>
+    </div>
+
   </div>
 
-  <div class="card">
-    Late Days
-    <div class="big late" id="late">0</div>
-  </div>
+  <table>
 
-  <div class="card">
-    Early Exit
-    <div class="big early" id="early">0</div>
-  </div>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Clock In</th>
+        <th>Clock Out</th>
+        <th>Status</th>
+        <th>Hours</th>
+        <th>Flags</th>
+      </tr>
+    </thead>
 
-  <div class="card">
-    Flags
-    <div class="big bad" id="flags">0</div>
-  </div>
+    <tbody id="body"></tbody>
 
-  <div class="card">
-    Avg Hours/Day
-    <div class="big" id="avg">0</div>
-  </div>
+  </table>
 
 </div>
-
-<table>
-
-  <thead>
-    <tr>
-      <th>Date</th>
-      <th>Clock In</th>
-      <th>Clock Out</th>
-      <th>Status</th>
-      <th>Hours</th>
-      <th>Flags</th>
-    </tr>
-  </thead>
-
-  <tbody id="body"></tbody>
-
-</table>
 
 <script type="module">
 
@@ -175,10 +244,8 @@ async function load(){
       if(status === "EARLY") early++;
 
       if(a.clockOut){
-
         hrs = hours(a.clockIn.time,a.clockOut.time);
         sumHours += hrs;
-
       }
 
       if(a.clockIn.flag) flagList.push(a.clockIn.flag);
@@ -193,13 +260,14 @@ async function load(){
         <td>${a.clockOut ? new Date(a.clockOut.time).toLocaleTimeString() : "-"}</td>
         <td class="${status==='LATE'?'late':status==='EARLY'?'early':'good'}">${status}</td>
         <td>${hrs.toFixed(2)}</td>
-        <td class="bad">${flagList.join(", ") || "OK"}</td>
+        <td class="bad">${flagList.length ? flagList.join(", ") : "OK"}</td>
       </tr>
     `;
 
   });
 
-  document.getElementById("body").innerHTML = rows;
+  document.getElementById("body").innerHTML =
+    rows || `<tr><td colspan="6" class="empty">No attendance yet</td></tr>`;
 
   document.getElementById("total").innerText = total;
   document.getElementById("present").innerText = present;
