@@ -2,21 +2,30 @@
 <html>
 <head>
   <title>TEF Attendance Control</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <style>
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --text:#fff;
+    }
 
     body{
-      font-family:sans-serif;
-      background:#f4f4f4;
+      margin:0;
+      font-family:system-ui;
+      background:radial-gradient(circle at top,#1a0010,var(--bg));
+      color:white;
       padding:20px;
     }
 
     h2{
       text-align:center;
+      color:var(--pink);
       margin-bottom:20px;
     }
 
@@ -27,19 +36,22 @@
     }
 
     .card{
-      background:white;
+      background:var(--card);
       padding:20px;
-      border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(10px);
     }
 
     input,select{
       width:100%;
       padding:10px;
       margin-top:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
-      box-sizing:border-box;
+      border-radius:8px;
+      border:none;
+      background:rgba(255,255,255,0.08);
+      color:white;
+      outline:none;
     }
 
     button{
@@ -47,151 +59,88 @@
       padding:12px;
       margin-top:10px;
       border:none;
-      border-radius:6px;
+      border-radius:10px;
       cursor:pointer;
       font-weight:bold;
+      transition:0.2s;
     }
 
-    .green{
-      background:#27ae60;
-      color:white;
+    button:hover{
+      transform:translateY(-2px);
     }
 
-    .blue{
-      background:#2980b9;
-      color:white;
-    }
-
-    .red{
-      background:#c0392b;
-      color:white;
-    }
+    .green{ background:linear-gradient(135deg,#27ae60,var(--pink)); color:white; }
+    .blue{ background:linear-gradient(135deg,#2980b9,var(--pink)); color:white; }
+    .red{ background:linear-gradient(135deg,#c0392b,var(--maroon)); color:white; }
 
     #qr{
-      margin-top:20px;
+      margin-top:15px;
       text-align:center;
+      background:rgba(255,255,255,0.05);
+      padding:15px;
+      border-radius:12px;
     }
 
-    #info{
+    .info{
       text-align:center;
       margin-top:10px;
-      font-weight:bold;
+      font-size:13px;
+      opacity:0.8;
     }
 
     @media(max-width:768px){
-
-      .grid{
-        grid-template-columns:1fr;
-      }
-
+      .grid{ grid-template-columns:1fr; }
     }
-
   </style>
 </head>
 
 <body>
 
-<h2>TEF Attendance Control</h2>
+<h2>TEF Attendance Control Panel</h2>
 
 <div class="grid">
 
-  <!-- QR SECTION -->
+  <!-- QR SYSTEM -->
   <div class="card">
+    <h3>QR System</h3>
 
-    <h3>QR Management</h3>
+    <label>Valid Hours</label>
+    <input type="number" id="hours" value="6">
 
-    <label>QR Valid Hours</label>
-
-    <input
-      type="number"
-      id="hours"
-      value="6"
-    >
-
-    <button
-      class="green"
-      onclick="generateQR()"
-    >
-      Generate New QR
-    </button>
-
-    <button
-      class="blue"
-      onclick="reprintQR()"
-    >
-      Reprint Existing QR
-    </button>
+    <button class="green" onclick="generateQR()">Generate New QR</button>
+    <button class="blue" onclick="reprintQR()">Reprint QR</button>
 
     <div id="qr"></div>
-
-    <div id="info"></div>
-
+    <div class="info" id="info">No QR generated yet</div>
   </div>
 
-  <!-- SETTINGS -->
+  <!-- STAFF SETTINGS -->
   <div class="card">
-
-    <h3>Staff Attendance Settings</h3>
+    <h3>Staff Settings</h3>
 
     <select id="staff">
-      <option value="">
-        Loading Users...
-      </option>
+      <option value="">Loading staff...</option>
     </select>
 
-    <label>
-      Expected Clock In
-    </label>
+    <label>Clock In</label>
+    <input type="time" id="clockIn">
 
-    <input
-      type="time"
-      id="clockIn"
-    >
+    <label>Clock Out</label>
+    <input type="time" id="clockOut">
 
-    <label>
-      Expected Clock Out
-    </label>
+    <label>Grace (mins)</label>
+    <input type="number" id="grace" value="10">
 
-    <input
-      type="time"
-      id="clockOut"
-    >
-
-    <label>
-      Grace Minutes
-    </label>
-
-    <input
-      type="number"
-      id="grace"
-      value="10"
-    >
-
-    <button
-      class="green"
-      onclick="saveSettings()"
-    >
-      Save Settings
-    </button>
-
-    <button
-      class="red"
-      onclick="resetDevice()"
-    >
-      Reset Device Lock
-    </button>
-
+    <button class="green" onclick="saveSettings()">Save Settings</button>
+    <button class="red" onclick="resetDevice()">Reset Device</button>
   </div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-
   getFirestore,
   doc,
   setDoc,
@@ -199,534 +148,195 @@ import {
   getDocs,
   collection,
   updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-}
-
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-//
-// FIREBASE
-//
 const firebaseConfig = {
-
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
-
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh"
 };
 
-const app =
-  initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-const db =
-  getFirestore(app);
+const user = JSON.parse(localStorage.getItem("user"));
 
-//
-// USER CHECK
-//
-const user =
-  JSON.parse(
-    localStorage.getItem("user")
-  );
-
-if(
-  !user ||
-  user.role !== "admin"
-){
-
+if(!user || user.role !== "admin"){
   location.href = "login.html";
-
 }
 
-//
-// LOAD USERS
-//
-async function loadStaffUsers(){
+/* ---------------- LOAD STAFF ---------------- */
+async function loadStaff(){
 
-  const select =
-    document.getElementById("staff");
-
-  select.innerHTML =
-    `<option value="">
-      Select Staff
-    </option>`;
+  const select = document.getElementById("staff");
+  select.innerHTML = `<option value="">Select Staff</option>`;
 
   try{
 
-    const snap =
-      await getDocs(
-        collection(db,"users")
-      );
+    const snap = await getDocs(collection(db,"users"));
 
-    snap.forEach(docSnap => {
+    snap.forEach(d => {
+      const u = d.data();
 
-      const u =
-        docSnap.data();
-
-      //
-      // EXCLUDE STUDENTS
-      //
-      if(
-        u.role &&
-        u.role.toLowerCase()
-        !== "student"
-      ){
-
-        const option =
-          document.createElement("option");
-
-        option.value =
-          u.userId;
-
-        option.textContent =
-          `${u.name}
-          (${u.userId})
-          - ${u.role}`;
-
-        select.appendChild(option);
-
+      if(u.role && u.role.toLowerCase() !== "student"){
+        const opt = document.createElement("option");
+        opt.value = u.userId;
+        opt.textContent = `${u.name} (${u.role})`;
+        select.appendChild(opt);
       }
-
     });
 
-  }
-
-  catch(err){
-
+  }catch(err){
     console.error(err);
-
-    alert(
-      "Failed loading users"
-    );
-
+    alert("Failed loading staff");
   }
-
 }
 
-loadStaffUsers();
+loadStaff();
 
-//
-// AUTO LOAD SETTINGS
-//
-document
-.getElementById("staff")
-.addEventListener(
+/* ---------------- LOAD SETTINGS ---------------- */
+document.getElementById("staff").addEventListener("change", async function(){
 
-  "change",
-
-  async function(){
-
-    const userId =
-      this.value;
-
-    if(!userId) return;
-
-    try{
-
-      const settingsRef =
-        doc(
-          db,
-          "attendanceSettings",
-          userId
-        );
-
-      const settingsSnap =
-        await getDoc(settingsRef);
-
-      //
-      // SETTINGS EXIST
-      //
-      if(settingsSnap.exists()){
-
-        const s =
-          settingsSnap.data();
-
-        document
-        .getElementById("clockIn")
-        .value =
-          s.expectedClockIn || "";
-
-        document
-        .getElementById("clockOut")
-        .value =
-          s.expectedClockOut || "";
-
-        document
-        .getElementById("grace")
-        .value =
-          s.graceMinutes || 10;
-
-        console.log(
-          "Loaded Settings:",
-          s
-        );
-
-      }
-
-      //
-      // NO SETTINGS
-      //
-      else{
-
-        document
-        .getElementById("clockIn")
-        .value = "";
-
-        document
-        .getElementById("clockOut")
-        .value = "";
-
-        document
-        .getElementById("grace")
-        .value = 10;
-
-        console.log(
-          "No settings found"
-        );
-
-      }
-
-    }
-
-    catch(err){
-
-      console.error(
-        "Load Settings Error:",
-        err
-      );
-
-      alert(
-        "Failed loading settings"
-      );
-
-    }
-
-  }
-
-);
-
-//
-// GENERATE QR
-//
-window.generateQR =
-async function(){
+  const id = this.value;
+  if(!id) return;
 
   try{
 
-    const hours =
-      Number(
-        document
-        .getElementById("hours")
-        .value
-      );
+    const snap = await getDoc(doc(db,"attendanceSettings",id));
 
-    const now =
-      Date.now();
+    if(snap.exists()){
+      const s = snap.data();
+      clockIn.value = s.expectedClockIn || "";
+      clockOut.value = s.expectedClockOut || "";
+      grace.value = s.graceMinutes || 10;
+    } else {
+      clockIn.value = "";
+      clockOut.value = "";
+      grace.value = 10;
+    }
 
-    const qrData = {
+  }catch(err){
+    console.error(err);
+    alert("Failed loading settings");
+  }
 
-      token:
-        "TEF-" + now,
+});
 
-      createdAt:
-        now,
+/* ---------------- QR GENERATION ---------------- */
+window.generateQR = async function(){
 
-      expiresAt:
-        now +
-        (hours * 3600000)
+  try{
 
+    const hours = Number(document.getElementById("hours").value);
+    const now = Date.now();
+
+    const data = {
+      token: "TEF-" + now,
+      createdAt: now,
+      expiresAt: now + (hours * 3600000)
     };
 
-    await setDoc(
+    await setDoc(doc(db,"attendanceSystem","mainQR"), data);
 
-      doc(
-        db,
-        "attendanceSystem",
-        "mainQR"
-      ),
+    renderQR(data);
 
-      qrData
+    alert("QR generated successfully");
 
-    );
-
-    renderQR(qrData);
-
-    alert(
-      "QR generated successfully"
-    );
-
-  }
-
-  catch(err){
-
+  }catch(err){
     console.error(err);
-
-    alert(
-      "QR generation failed"
-    );
-
+    alert("QR generation failed");
   }
-
 };
 
-//
-// REPRINT QR
-//
-window.reprintQR =
-async function(){
+window.reprintQR = async function(){
 
   try{
 
-    const snap =
-      await getDoc(
-        doc(
-          db,
-          "attendanceSystem",
-          "mainQR"
-        )
-      );
+    const snap = await getDoc(doc(db,"attendanceSystem","mainQR"));
 
-    if(!snap.exists()){
+    if(!snap.exists()) return alert("No QR available");
 
-      alert(
-        "No QR available"
-      );
+    renderQR(snap.data());
 
-      return;
-
-    }
-
-    renderQR(
-      snap.data()
-    );
-
-  }
-
-  catch(err){
-
+  }catch(err){
     console.error(err);
-
-    alert(
-      "Failed loading QR"
-    );
-
+    alert("Failed loading QR");
   }
-
 };
 
-//
-// RENDER QR
-//
+/* ---------------- QR RENDER ---------------- */
 function renderQR(data){
 
-  QRCode.toCanvas(
+  QRCode.toCanvas(JSON.stringify(data), { width:220 }, (err, canvas)=>{
 
-    JSON.stringify(data),
-
-    {
-      width:220
-    },
-
-    (err,canvas)=>{
-
-      if(err){
-
-        console.error(err);
-
-        return;
-
-      }
-
-      const qr =
-        document
-        .getElementById("qr");
-
-      qr.innerHTML = "";
-
-      qr.appendChild(canvas);
-
+    if(err){
+      console.error(err);
+      return;
     }
 
-  );
+    const qr = document.getElementById("qr");
+    qr.innerHTML = "";
+    qr.appendChild(canvas);
+  });
 
-  document
-  .getElementById("info")
-  .innerText =
-
-    "Expires: " +
-
-    new Date(
-      data.expiresAt
-    ).toLocaleString();
-
+  document.getElementById("info").innerText =
+    "Expires: " + new Date(data.expiresAt).toLocaleString();
 }
 
-//
-// SAVE SETTINGS
-//
-window.saveSettings =
-async function(){
+/* ---------------- SAVE SETTINGS ---------------- */
+window.saveSettings = async function(){
 
-  const userId =
-    document
-    .getElementById("staff")
-    .value;
-
-  if(!userId){
-
-    alert(
-      "Select staff"
-    );
-
-    return;
-
-  }
+  const id = document.getElementById("staff").value;
+  if(!id) return alert("Select staff");
 
   try{
 
-    await setDoc(
+    await setDoc(doc(db,"attendanceSettings",id),{
+      userId:id,
+      expectedClockIn:clockIn.value,
+      expectedClockOut:clockOut.value,
+      graceMinutes:Number(grace.value)
+    });
 
-      doc(
-        db,
-        "attendanceSettings",
-        userId
-      ),
+    alert("Settings saved");
 
-      {
-
-        userId,
-
-        expectedClockIn:
-
-          document
-          .getElementById("clockIn")
-          .value,
-
-        expectedClockOut:
-
-          document
-          .getElementById("clockOut")
-          .value,
-
-        graceMinutes:
-
-          Number(
-            document
-            .getElementById("grace")
-            .value
-          )
-
-      }
-
-    );
-
-    alert(
-      "Settings saved"
-    );
-
-  }
-
-  catch(err){
-
+  }catch(err){
     console.error(err);
-
-    alert(
-      "Failed saving settings"
-    );
-
+    alert("Failed saving settings");
   }
-
 };
 
-//
-// RESET DEVICE
-//
-window.resetDevice =
-async function(){
+/* ---------------- RESET DEVICE ---------------- */
+window.resetDevice = async function(){
 
-  const userId =
-    document
-    .getElementById("staff")
-    .value;
-
-  if(!userId){
-
-    alert(
-      "Select user"
-    );
-
-    return;
-
-  }
+  const id = document.getElementById("staff").value;
+  if(!id) return alert("Select user");
 
   try{
 
-    const snap =
-      await getDocs(
-        collection(db,"users")
-      );
+    const snap = await getDocs(collection(db,"users"));
 
     let docId = null;
 
-    snap.forEach(docSnap => {
-
-      const u =
-        docSnap.data();
-
-      if(u.userId === userId){
-
-        docId =
-          docSnap.id;
-
-      }
-
+    snap.forEach(d=>{
+      const u = d.data();
+      if(u.userId === id) docId = d.id;
     });
 
-    if(!docId){
+    if(!docId) return alert("User not found");
 
-      alert(
-        "User not found"
-      );
+    await updateDoc(doc(db,"users",docId),{
+      primaryDevice:null
+    });
 
-      return;
+    alert("Device reset successful");
 
-    }
-
-    await updateDoc(
-
-      doc(
-        db,
-        "users",
-        docId
-      ),
-
-      {
-        primaryDevice:null
-      }
-
-    );
-
-    alert(
-      "Device reset successful"
-    );
-
-  }
-
-  catch(err){
-
+  }catch(err){
     console.error(err);
-
-    alert(
-      "Reset failed"
-    );
-
+    alert("Reset failed");
   }
-
 };
 
-//
-// LOAD EXISTING QR
-//
 reprintQR();
 
 </script>
