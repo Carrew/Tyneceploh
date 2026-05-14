@@ -38,6 +38,7 @@
       background:#0d0d14;
       border-right:1px solid var(--border);
       padding:20px;
+      transition:.3s;
     }
 
     .brand{
@@ -82,6 +83,21 @@
       display:flex;
       justify-content:space-between;
       align-items:center;
+    }
+
+    .top-left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .menu-btn{
+      display:none;
+      background:transparent;
+      border:none;
+      color:white;
+      font-size:26px;
+      cursor:pointer;
     }
 
     .user{
@@ -189,34 +205,47 @@
       border-color:var(--accent);
     }
 
+    /* OVERLAY */
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.5);
+      z-index:998;
+      display:none;
+    }
+
+    .overlay.show{
+      display:block;
+    }
+
+    /* MOBILE */
+
     @media (max-width:768px){
 
       body{
-        flex-direction:column;
-        height:auto;
+        overflow-x:hidden;
       }
 
       .sidebar{
-        width:100%;
-        display:flex;
-        overflow-x:auto;
-        white-space:nowrap;
-        padding:10px;
+        position:fixed;
+        top:0;
+        left:-260px;
+        width:240px;
+        height:100vh;
+        z-index:999;
+        overflow-y:auto;
       }
 
-      .sidebar button{
-        flex:0 0 auto;
-        margin-right:10px;
-        margin-bottom:0;
+      .sidebar.show{
+        left:0;
       }
 
-      .main{
-        overflow:visible;
+      .menu-btn{
+        display:block;
       }
 
       .topbar{
-        flex-direction:column;
-        align-items:flex-start;
         gap:10px;
       }
 
@@ -226,7 +255,7 @@
       }
 
       .grid{
-        grid-template-columns:1fr 1fr;
+        grid-template-columns:1fr;
       }
 
     }
@@ -247,6 +276,11 @@ if(!user || user.role !== "admin"){
 
 </script>
 
+<!-- OVERLAY -->
+
+<div class="overlay"
+onclick="toggleMenu()"></div>
+
 <!-- SIDEBAR -->
 
 <div class="sidebar">
@@ -255,13 +289,9 @@ if(!user || user.role !== "admin"){
     TEF ADMIN
   </div>
 
-  <!-- DASHBOARD -->
-
   <button onclick="go('admin-dashboard.html')">
     🏠 Dashboard
   </button>
-
-  <!-- USER MANAGEMENT -->
 
   <button onclick="go('admin-create-student.html')">
     👨‍🎓 Students
@@ -287,8 +317,6 @@ if(!user || user.role !== "admin"){
     👮 Security
   </button>
 
-  <!-- ACADEMICS -->
-
   <button onclick="go('admin-grade-approval.html')">
     📊 Grade Approval
   </button>
@@ -304,8 +332,6 @@ if(!user || user.role !== "admin"){
   <button onclick="go('admin-honor-rules.html')">
     📜 Honor Rules
   </button>
-
-  <!-- ATTENDANCE -->
 
   <button onclick="go('admin-attendance-analytics.html')">
     📈 Attendance Analytics
@@ -323,8 +349,6 @@ if(!user || user.role !== "admin"){
     🔳 QR Manager
   </button>
 
-  <!-- COMMUNICATION -->
-
   <button onclick="go('admin-announcements.html')">
     📢 Announcements
   </button>
@@ -333,13 +357,9 @@ if(!user || user.role !== "admin"){
     🌍 Public Announcements
   </button>
 
-  <!-- FINANCE -->
-
   <button onclick="go('admin-financials.html')">
     💰 Finance
   </button>
-
-  <!-- CALENDAR -->
 
   <button onclick="go('admin-calender.html')">
     🛠️ Calendar Settings
@@ -348,8 +368,6 @@ if(!user || user.role !== "admin"){
   <button onclick="go('calender.html')">
     📅 School Calendar
   </button>
-
-  <!-- HONOR BOARD -->
 
   <button onclick="go('honor-board.html')">
     🏆 General Honor Board
@@ -365,12 +383,21 @@ if(!user || user.role !== "admin"){
 
   <div class="topbar">
 
-    <div>
-      <b>Admin Panel</b><br>
+    <div class="top-left">
 
-      <span class="muted">
-        Live system view
-      </span>
+      <button class="menu-btn"
+      onclick="toggleMenu()">
+        ☰
+      </button>
+
+      <div>
+        <b>Admin Panel</b><br>
+
+        <span class="muted">
+          Live system view
+        </span>
+      </div>
+
     </div>
 
     <div class="user">
@@ -503,8 +530,6 @@ if(!user || user.role !== "admin"){
 document.getElementById("name").innerText =
 user.name || "Admin";
 
-// PROFILE DATA
-
 document.getElementById("pName").innerText =
 user.name || "-";
 
@@ -528,13 +553,39 @@ document.getElementById("photo").src = img;
 
 document.getElementById("profilePic").src = img;
 
-// NAVIGATION
+/* NAVIGATION */
 
 function go(page){
+
+  closeMenu();
+
   location.href = page;
+
 }
 
-// LOGOUT
+/* MENU */
+
+function toggleMenu(){
+
+  document.querySelector(".sidebar")
+  .classList.toggle("show");
+
+  document.querySelector(".overlay")
+  .classList.toggle("show");
+
+}
+
+function closeMenu(){
+
+  document.querySelector(".sidebar")
+  .classList.remove("show");
+
+  document.querySelector(".overlay")
+  .classList.remove("show");
+
+}
+
+/* LOGOUT */
 
 function logout(){
 
