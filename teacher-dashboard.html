@@ -274,8 +274,6 @@ function formatDate(t){
   <div class="sub">Manage your academic workspace</div>
 </header>
 
-<!-- PROFILE -->
-
 <div class="profile-panel">
 
   <div class="profile-top">
@@ -298,8 +296,6 @@ function formatDate(t){
 
 </div>
 
-<!-- STATS -->
-
 <div class="stats">
 
   <div class="stat">
@@ -319,15 +315,11 @@ function formatDate(t){
 
 </div>
 
-<!-- CLASSES -->
-
 <div class="section-title">Your Classes</div>
 
 <div class="classes-box">
   <div class="classes" id="classesContainer"></div>
 </div>
-
-<!-- TOOLS -->
 
 <div class="section-title">Academic Tools</div>
 
@@ -337,6 +329,13 @@ function formatDate(t){
   <div class="card" onclick="go('teacher-mark-assignments.html')">📊 Mark Assignments</div>
   <div class="card" onclick="go('teacher-create-quizs.html')">🧠 Create Quiz</div>
   <div class="card" onclick="go('teacher-quiz-review.html')">📋 Review Quizzes</div>
+
+  <div class="card" onclick="go('teacher-attendance-control.html')">📅 Attendance Control</div>
+  <div class="card" onclick="go('qr-scan-attendance.html')">📷 QR Scan Attendance</div>
+
+  <div class="card" onclick="go('teacher-notes.html')">📓 Notes</div>
+  <div class="card" onclick="go('teacher-submit-grades.html')">📤 Submit Grades</div>
+  <div class="card" onclick="go('teacher-rejected-grades.html')">❌ Rejected Grades</div>
 
 </div>
 
@@ -350,7 +349,6 @@ document.getElementById("teacherId").innerText = "ID: " + (user.userId || "");
 document.getElementById("roleBadge").innerText = (user.role || "teacher").toUpperCase();
 document.getElementById("photo").src = user.photoURL || "https://via.placeholder.com/100";
 
-// CLEAN PROFILE FIELDS ONLY
 const fields = [
 
   { label:"Email", value:user.email },
@@ -382,7 +380,6 @@ fields.forEach(f => {
   infoGrid.appendChild(div);
 });
 
-// CLASSES
 const classes = user.classes || [];
 
 document.getElementById("classCount").innerText = classes.length;
