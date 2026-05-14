@@ -368,61 +368,6 @@ if(!user || user.role !== "student"){
 
 </div>
 
-<!-- ACADEMICS -->
-
-<div class="section-title">
-  Academics
-</div>
-
-<div class="grid">
-
-  <div class="card"
-  onclick="go('student-assignments.html')">
-    <div class="card-title">
-      📝 Assignments
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('student-results.html')">
-    <div class="card-title">
-      📊 Results
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('student-quiz.html')">
-    <div class="card-title">
-      🧠 Quizzes
-    </div>
-  </div>
-
-</div>
-
-<!-- LEARNING -->
-
-<div class="section-title">
-  Learning Tools
-</div>
-
-<div class="grid">
-
-  <div class="card"
-  onclick="go('student-notes.html')">
-    <div class="card-title">
-      📚 Notes
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('student-attendance.html')">
-    <div class="card-title">
-      📌 Attendance
-    </div>
-  </div>
-
-  <div class="card"
-  onclick="go('student-financials.html')">
     <div class="card-title">
       💰 Financials
     </div>
@@ -445,15 +390,68 @@ if(!user || user.role !== "student"){
     </div>
   </div>
 
-  <div class="card"
-  onclick="go('users-announcement.html')">
-    <div class="card-title">
-      📢 Announcements
-    </div>
+  <!-- ACADEMICS -->
+<div class="section-title">
+  Academics
+</div>
+
+<div class="grid">
+
+  <div class="card" onclick="go('student-dashboard.html')">
+    <div class="card-title">🏠 Dashboard</div>
+  </div>
+
+  <div class="card" onclick="go('student-assignments.html')">
+    <div class="card-title">📝 Assignments</div>
+  </div>
+
+  <div class="card" onclick="go('student-results.html')">
+    <div class="card-title">📊 Results</div>
+  </div>
+
+  <div class="card" onclick="go('student-quiz.html')">
+    <div class="card-title">🧠 Quizzes</div>
+  </div>
+
+  <div class="card" onclick="go('student-attendance.html')">
+    <div class="card-title">📌 Attendance</div>
   </div>
 
 </div>
 
+<!-- LEARNING TOOLS -->
+<div class="section-title">
+  Learning Tools
+</div>
+
+<div class="grid">
+
+  <div class="card" onclick="go('student-notes.html')">
+    <div class="card-title">📚 Notes</div>
+  </div>
+
+  <div class="card" onclick="go('student-financials.html')">
+    <div class="card-title">💰 Financials</div>
+  </div>
+
+</div>
+
+<!-- SYSTEM -->
+<div class="section-title">
+  School System
+</div>
+
+<div class="grid">
+
+  <div class="card" onclick="go('users-announcement.html')">
+    <div class="card-title">📢 Announcements</div>
+  </div>
+
+  <div class="card" onclick="go('subject-honor-board.html')">
+    <div class="card-title">🏅 Honor Board</div>
+  </div>
+
+</div>
 <button class="logout"
 onclick="logout()">
   Logout
