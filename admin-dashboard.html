@@ -2,7 +2,9 @@
 <html>
 <head>
   <title>Admin Control Center - TEF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="viewport"
+  content="width=device-width, initial-scale=1.0">
 
   <style>
 
@@ -30,6 +32,7 @@
     }
 
     /* SIDEBAR */
+
     .sidebar{
       width:240px;
       background:#0d0d14;
@@ -41,25 +44,30 @@
       color:var(--accent);
       font-weight:bold;
       margin-bottom:20px;
+      font-size:20px;
+      letter-spacing:1px;
     }
 
     .sidebar button{
       width:100%;
       margin-bottom:10px;
-      padding:10px;
+      padding:12px;
       border-radius:10px;
       border:1px solid var(--border);
       background:transparent;
       color:white;
       text-align:left;
       cursor:pointer;
+      transition:.25s;
     }
 
     .sidebar button:hover{
       border-color:var(--accent);
+      background:rgba(255,255,255,0.03);
     }
 
     /* MAIN */
+
     .main{
       flex:1;
       display:flex;
@@ -96,7 +104,8 @@
       opacity:.7;
     }
 
-    /* PROFILE CARD */
+    /* PROFILE */
+
     .profile{
       margin:18px;
       padding:20px;
@@ -129,10 +138,24 @@
       font-size:12px;
     }
 
+    /* SECTION TITLE */
+
+    .section-title{
+      padding:0 18px;
+      margin-top:10px;
+      margin-bottom:5px;
+      font-size:12px;
+      letter-spacing:1px;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
     /* GRID */
+
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      grid-template-columns:
+      repeat(auto-fit,minmax(180px,1fr));
       gap:12px;
       padding:18px;
     }
@@ -140,13 +163,15 @@
     .card{
       background:#11111a;
       border:1px solid var(--border);
-      padding:15px;
+      padding:18px;
       border-radius:12px;
       cursor:pointer;
+      transition:.25s;
     }
 
     .card:hover{
       border-color:var(--accent);
+      transform:translateY(-3px);
     }
 
     .logout{
@@ -157,112 +182,205 @@
       color:white;
       border-radius:10px;
       cursor:pointer;
+      transition:.25s;
     }
-@media (max-width: 768px) {
 
-  body {
-    flex-direction: column;
-    height: auto;
-  }
+    .logout:hover{
+      border-color:var(--accent);
+    }
 
-  .sidebar {
-    width: 100%;
-    display: flex;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding: 10px;
-  }
+    @media (max-width:768px){
 
-  .sidebar button {
-    flex: 0 0 auto;
-    margin-right: 10px;
-    margin-bottom: 0;
-  }
+      body{
+        flex-direction:column;
+        height:auto;
+      }
 
-  .main {
-    overflow: visible;
-  }
+      .sidebar{
+        width:100%;
+        display:flex;
+        overflow-x:auto;
+        white-space:nowrap;
+        padding:10px;
+      }
 
-  .topbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
+      .sidebar button{
+        flex:0 0 auto;
+        margin-right:10px;
+        margin-bottom:0;
+      }
 
-  .profile {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+      .main{
+        overflow:visible;
+      }
 
-  .grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
+      .topbar{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:10px;
+      }
+
+      .profile{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .grid{
+        grid-template-columns:1fr 1fr;
+      }
+
+    }
+
   </style>
 </head>
 
 <body>
 
 <script>
-const user = JSON.parse(localStorage.getItem("user"));
+
+const user =
+JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
+
 </script>
 
 <!-- SIDEBAR -->
+
 <div class="sidebar">
 
-  <div class="brand">TEF ADMIN</div>
+  <div class="brand">
+    TEF ADMIN
+  </div>
 
-  <button onclick="go('admin-dashboard.html')">Dashboard</button>
+  <!-- DASHBOARD -->
 
-  <button onclick="go('admin-create-student.html')">Students</button>
-  <button onclick="go('admin-create-teacher.html')">Teachers</button>
-  <button onclick="go('admin-create-coordinator.html')">Coordinators</button>
+  <button onclick="go('admin-dashboard.html')">
+    🏠 Dashboard
+  </button>
 
-  <button onclick="go('admin-create-admin.html')">Create Admin</button>
+  <!-- USER MANAGEMENT -->
 
-  <button onclick="go('admin-create-janitors.html')">Janitors</button>
-  <button onclick="go('admin-create-security.html')">Security</button>
+  <button onclick="go('admin-create-student.html')">
+    👨‍🎓 Students
+  </button>
 
-  <button onclick="go('admin-results.html')">Results</button>
-  <button onclick="go('admin-grade-approval.html')">Grade Approval</button>
+  <button onclick="go('admin-create-teacher.html')">
+    👩‍🏫 Teachers
+  </button>
 
-  <button onclick="go('admin-attendance-analytics.html')">Attendance Analytics</button>
-  <button onclick="go('admin-view-attendance.html')">View Attendance</button>
-  <button onclick="go('attendance-settings.html')">Attendance Settings</button>
+  <button onclick="go('admin-create-coordinator.html')">
+    🧭 Coordinators
+  </button>
 
-  <button onclick="go('admin-announcements.html')">Announcements</button>
+  <button onclick="go('admin-create-admin.html')">
+    🛡️ Create Admin
+  </button>
 
-  <button onclick="go('admin-financials.html')">Finance</button>
+  <button onclick="go('admin-create-janitors.html')">
+    🧹 Janitors
+  </button>
 
-  <button onclick="go('admin-qr-manager.html')">QR Manager</button>
+  <button onclick="go('admin-create-security.html')">
+    👮 Security
+  </button>
 
-  <button onclick="go('admin-honor-rules.html')">Honor Rules</button>
-  <button onclick="go('admin-subject-honor.html')">Subject Honor</button>
+  <!-- ACADEMICS -->
 
-  <button onclick="go('admin-calender.html')">Calendar Settings</button>
-  <button onclick="go('calender.html')">Calendar</button>
+  <button onclick="go('admin-grade-approval.html')">
+    📊 Grade Approval
+  </button>
+
+  <button onclick="go('admin-subject-honor.html')">
+    🏅 Subject Honor
+  </button>
+
+  <button onclick="go('honor-engine.html')">
+    🧠 Honor Engine
+  </button>
+
+  <button onclick="go('admin-honor-rules.html')">
+    📜 Honor Rules
+  </button>
+
+  <!-- ATTENDANCE -->
+
+  <button onclick="go('admin-attendance-analytics.html')">
+    📈 Attendance Analytics
+  </button>
+
+  <button onclick="go('admin-view-attendance.html')">
+    📌 View Attendance
+  </button>
+
+  <button onclick="go('attendance-settings.html')">
+    ⚙️ Attendance Settings
+  </button>
+
+  <button onclick="go('admin-qr-manager.html')">
+    🔳 QR Manager
+  </button>
+
+  <!-- COMMUNICATION -->
+
+  <button onclick="go('admin-announcements.html')">
+    📢 Announcements
+  </button>
+
+  <button onclick="go('users-announcement.html')">
+    🌍 Public Announcements
+  </button>
+
+  <!-- FINANCE -->
+
+  <button onclick="go('admin-financials.html')">
+    💰 Finance
+  </button>
+
+  <!-- CALENDAR -->
+
+  <button onclick="go('admin-calender.html')">
+    🛠️ Calendar Settings
+  </button>
+
+  <button onclick="go('calender.html')">
+    📅 School Calendar
+  </button>
+
+  <!-- HONOR BOARD -->
+
+  <button onclick="go('honor-board.html')">
+    🏆 General Honor Board
+  </button>
 
 </div>
+
 <!-- MAIN -->
+
 <div class="main">
 
-  <!-- TOP -->
+  <!-- TOPBAR -->
+
   <div class="topbar">
 
     <div>
       <b>Admin Panel</b><br>
-      <span class="muted">Live system view</span>
+
+      <span class="muted">
+        Live system view
+      </span>
     </div>
 
     <div class="user">
 
       <div>
         <b id="name"></b><br>
-        <span class="muted">Admin</span>
+
+        <span class="muted">
+          Admin
+        </span>
       </div>
 
       <img id="photo">
@@ -271,75 +389,159 @@ if(!user || user.role !== "admin"){
 
   </div>
 
-  <!-- PROFILE CARD (REAL DATA ONLY) -->
+  <!-- PROFILE -->
+
   <div class="profile">
 
     <img id="profilePic">
 
     <div class="info">
 
-      <p><span class="label">Name</span><br><b id="pName"></b></p>
+      <p>
+        <span class="label">
+          Name
+        </span><br>
 
-      <p><span class="label">User ID</span><br><span id="pId"></span></p>
+        <b id="pName"></b>
+      </p>
 
-      <p><span class="label">Email</span><br><span id="pEmail"></span></p>
+      <p>
+        <span class="label">
+          User ID
+        </span><br>
 
-      <p><span class="label">Phone</span><br><span id="pPhone"></span></p>
+        <span id="pId"></span>
+      </p>
 
-      <p><span class="label">Role</span><br><span id="pRole"></span></p>
+      <p>
+        <span class="label">
+          Email
+        </span><br>
+
+        <span id="pEmail"></span>
+      </p>
+
+      <p>
+        <span class="label">
+          Phone
+        </span><br>
+
+        <span id="pPhone"></span>
+      </p>
+
+      <p>
+        <span class="label">
+          Role
+        </span><br>
+
+        <span id="pRole"></span>
+      </p>
 
     </div>
 
   </div>
 
   <!-- QUICK ACTIONS -->
+
+  <div class="section-title">
+    Quick Actions
+  </div>
+
   <div class="grid">
 
-    <div class="card" onclick="go('admin-create-admin.html')">
-      Create Admin
+    <div class="card"
+    onclick="go('admin-create-admin.html')">
+      🛡️ Create Admin
     </div>
 
-    <div class="card" onclick="go('admin-grade-approval.html')">
-      Approve Grades
+    <div class="card"
+    onclick="go('admin-grade-approval.html')">
+      📊 Approve Grades
     </div>
 
-    <div class="card" onclick="go('users-announcement.html')">
-      Broadcast
+    <div class="card"
+    onclick="go('admin-announcements.html')">
+      📢 Manage Announcements
     </div>
 
-    <div class="card" onclick="go('attendance-settings.html')">
-      Settings
+    <div class="card"
+    onclick="go('attendance-settings.html')">
+      ⚙️ Attendance Settings
+    </div>
+
+    <div class="card"
+    onclick="go('admin-financials.html')">
+      💰 Financial Center
+    </div>
+
+    <div class="card"
+    onclick="go('honor-engine.html')">
+      🧠 Honor Engine
+    </div>
+
+    <div class="card"
+    onclick="go('admin-qr-manager.html')">
+      🔳 QR Manager
+    </div>
+
+    <div class="card"
+    onclick="go('calender.html')">
+      📅 School Calendar
     </div>
 
   </div>
 
-  <button class="logout" onclick="logout()">Logout</button>
+  <button class="logout"
+  onclick="logout()">
+    Logout
+  </button>
 
 </div>
 
 <script>
 
-document.getElementById("name").innerText = user.name || "Admin";
+document.getElementById("name").innerText =
+user.name || "Admin";
 
-// PROFILE DATA (ONLY REAL STORED VALUES)
-document.getElementById("pName").innerText = user.name || "-";
-document.getElementById("pId").innerText = user.userId || "-";
-document.getElementById("pEmail").innerText = user.email || "-";
-document.getElementById("pPhone").innerText = user.phone || "-";
-document.getElementById("pRole").innerText = (user.role || "-").toUpperCase();
+// PROFILE DATA
 
-const img = user.photoURL || "https://via.placeholder.com/100";
+document.getElementById("pName").innerText =
+user.name || "-";
+
+document.getElementById("pId").innerText =
+user.userId || "-";
+
+document.getElementById("pEmail").innerText =
+user.email || "-";
+
+document.getElementById("pPhone").innerText =
+user.phone || "-";
+
+document.getElementById("pRole").innerText =
+(user.role || "-").toUpperCase();
+
+const img =
+user.photoURL ||
+"https://via.placeholder.com/100";
 
 document.getElementById("photo").src = img;
+
 document.getElementById("profilePic").src = img;
+
+// NAVIGATION
 
 function go(page){
   location.href = page;
 }
 
+// LOGOUT
+
 function logout(){
+
   localStorage.removeItem("user");
+
   location.href = "login.html";
+
 }
 
 </script>
