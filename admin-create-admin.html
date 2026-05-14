@@ -1,126 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Security Staff - TEF</title>
+  <title>Create Admin - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
-      --text: #fff;
+    body{
+      font-family:sans-serif;
+      background:#f4f4f4;
+      padding:20px;
     }
 
-    body {
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
-      margin: 0;
-      padding: 20px;
+    .box{
+      max-width:450px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
     }
 
-    h2 {
-      text-align: center;
-      color: var(--pink);
+    h2{
+      margin-bottom:15px;
     }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 8px;
-      border: none;
-      background: rgba(255,255,255,0.08);
-      color: white;
-      outline: none;
+    input{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border:1px solid #ccc;
+      border-radius:8px;
+      outline:none;
     }
 
-    input:focus {
-      box-shadow: 0 0 0 2px var(--pink);
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:15px;
+      border:none;
+      border-radius:8px;
+      background:#2c3e50;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
     }
 
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--maroon), var(--pink));
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
+    button:hover{
+      background:#1f2d3a;
     }
 
-    button:active {
-      transform: scale(0.98);
+    .msg{
+      margin-top:15px;
+      padding:12px;
+      border-radius:8px;
+      font-size:14px;
     }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .success{
+      background:#d4edda;
+      color:#155724;
     }
 
-    .notify {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      background: rgba(0,0,0,0.75);
-      border-left: 4px solid var(--pink);
-      padding: 10px 14px;
-      border-radius: 8px;
-      transform: translateX(120%);
-      transition: 0.3s;
+    .error{
+      background:#f8d7da;
+      color:#721c24;
     }
 
-    .notify.show {
-      transform: translateX(0);
+    .small{
+      font-size:12px;
+      color:#666;
+      margin-top:8px;
     }
 
-    .card {
-      background: var(--card);
-      padding: 12px;
-      border-radius: 12px;
-      margin-top: 15px;
-      border-left: 4px solid var(--pink);
-    }
-
-    .small {
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .preview {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-top: 8px;
+    .pin-box{
+      margin-top:15px;
+      padding:10px;
+      background:#fff3cd;
+      border-radius:8px;
+      font-weight:bold;
     }
   </style>
 </head>
 
 <body>
 
-<h2>🛡️ Create Security Staff</h2>
+<div class="box">
 
-<div id="notify" class="notify"></div>
+  <h2>Create New Admin</h2>
 
-<input id="name" placeholder="Full Name">
-<input id="shift" placeholder="Shift (Day / Night)">
-<input id="phone" placeholder="Phone">
-<input id="gender" placeholder="Gender">
-<input id="address" placeholder="Address">
-<input id="dob" placeholder="Date of Birth">
-<input id="emergency" placeholder="Emergency Contact">
+  <input id="name" placeholder="Admin Name">
+  <input id="pin" placeholder="Temporary PIN (4–8 digits)" type="password">
 
-<input id="pin" placeholder="PIN (optional)">
-<input type="file" id="photo">
+  <button onclick="createAdmin()">Create Admin</button>
 
-<button onclick="create()" id="btn">Create Security</button>
+  <div id="result"></div>
 
-<div id="list"></div>
+</div>
 
 <script type="module">
 
@@ -128,108 +103,91 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
 });
 
 const db = getFirestore(app);
 
-function notify(msg){
-  const n = document.getElementById("notify");
-  n.innerText = msg;
-  n.classList.add("show");
-  setTimeout(()=>n.classList.remove("show"), 2500);
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user || user.role !== "admin") {
+  location.href = "login.html";
 }
 
-function genID(num){
-  return "SEC" + Date.now().toString().slice(-4) + num;
+// HASH FUNCTION
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(hashBuffer)]
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-function genPIN(){
-  return Math.floor(1000 + Math.random()*9000).toString();
+// ID GENERATOR
+function generateAdminId(count) {
+  return `ADM${String(count + 1).padStart(3, "0")}`;
 }
 
-// CLOUDINARY UPLOAD
-async function uploadImage(file){
-  if(!file) return "";
+window.createAdmin = async function () {
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "Tyneceploh");
+  const name = document.getElementById("name").value.trim();
+  const pin = document.getElementById("pin").value.trim();
+  const result = document.getElementById("result");
 
-  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
-    method:"POST",
-    body: formData
-  });
+  result.innerHTML = "";
 
-  const data = await res.json();
-  return data.secure_url || "";
-}
-
-window.create = async function(){
-
-  const btn = document.getElementById("btn");
-
-  const name = document.getElementById("name").value;
-  if(!name){
-    notify("Name is required");
+  if (!name || !pin) {
+    result.innerHTML = `<div class="msg error">Fill all fields</div>`;
     return;
   }
 
-  btn.disabled = true;
-  btn.innerText = "Creating...";
+  if (pin.length < 4) {
+    result.innerHTML = `<div class="msg error">PIN too short</div>`;
+    return;
+  }
 
   try {
-    const snap = await getDocs(collection(db,"users"));
 
-    let count = 0;
-    snap.forEach(d=>{
-      if(d.data().role === "security") count++;
-    });
+    result.innerHTML = `<div class="msg">Creating admin...</div>`;
 
-    const file = document.getElementById("photo").files[0];
-    const photoURL = await uploadImage(file);
+    const snapshot = await getDocs(collection(db, "users"));
+    const adminCount = snapshot.docs.filter(d => d.data().role === "admin").length;
 
-    const id = genID(count+1);
-    const pin = document.getElementById("pin").value || genPIN();
+    const id = generateAdminId(adminCount);
+    const pinHash = await sha256(pin);
 
-    const data = {
-      userId: id,
+    const admin = {
+      id,
       name,
-      shift: document.getElementById("shift").value,
-      phone: document.getElementById("phone").value,
-      gender: document.getElementById("gender").value,
-      address: document.getElementById("address").value,
-      dob: document.getElementById("dob").value,
-      emergency: document.getElementById("emergency").value,
-      pin,
-      role: "security",
-      status: "active",
+      role: "admin",
+      pinHash,
+      createdBy: user.userId,
       createdAt: Date.now()
     };
 
-    if(photoURL) data.photoURL = photoURL;
+    await addDoc(collection(db, "users"), admin);
 
-    await addDoc(collection(db,"users"), data);
+    result.innerHTML = `
+      <div class="msg success">
+        Admin created successfully
+      </div>
 
-    notify("Security created: " + id);
+      <div class="pin-box">
+        Admin ID: ${id} <br>
+        Temporary PIN: ${pin}
+      </div>
+    `;
 
-    document.querySelectorAll("input").forEach(i => i.value = "");
+    document.getElementById("name").value = "";
+    document.getElementById("pin").value = "";
 
-    if(photoURL){
-      const img = document.createElement("img");
-      img.src = photoURL;
-      img.className = "preview";
-      document.getElementById("list").prepend(img);
-    }
-
-  } catch(err){
-    notify("Error creating security staff");
+  } catch (err) {
+    console.error(err);
+    result.innerHTML = `<div class="msg error">Failed to create admin</div>`;
   }
-
-  btn.disabled = false;
-  btn.innerText = "Create Security";
 };
 
 </script>
