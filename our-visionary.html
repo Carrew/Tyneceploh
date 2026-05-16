@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Our Visionary - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
+      color:white;
+    }
+
+    .hero{
+      position:relative;
+      padding:60px 20px;
+      text-align:center;
+    }
+
+    .glass{
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.1);
+      backdrop-filter:blur(12px);
+      border-radius:20px;
+      padding:20px;
+      max-width:900px;
+      margin:auto;
+    }
+
+    .visionary-img{
+      width:180px;
+      height:180px;
+      border-radius:50%;
+      object-fit:cover;
+      border:3px solid #ffc0cb;
+      margin-top:15px;
+    }
+
+    h1{
+      color:#ffc0cb;
+      margin-bottom:5px;
+    }
+
+    .quote{
+      font-style:italic;
+      margin-top:15px;
+      color:#ddd;
+    }
+
+    .section{
+      max-width:900px;
+      margin:30px auto;
+      padding:20px;
+    }
+
+    .gallery{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+      gap:10px;
+    }
+
+    .gallery img{
+      width:100%;
+      height:120px;
+      object-fit:cover;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.1);
+    }
+
+    .loading{
+      text-align:center;
+      padding:40px;
+      color:#aaa;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="hero">
+  <div class="glass">
+    <h1>Our Visionary</h1>
+
+    <img id="visionaryImg" class="visionary-img"
+      src="https://via.placeholder.com/200"
+    >
+
+    <div class="quote">
+      “So today… My loved ones, I call you to join me to make this long awaited dream a reality. Hope For The Future / By God’s Grace.”
+    </div>
+  </div>
+</div>
+
+<div class="section glass">
+  <h2>Legacy & Vision</h2>
+  <p>
+    Tyneceploh Educational Foundation was born from a vision of love, education, and transformation...
+    (You can paste full story here later exactly as you sent it)
+  </p>
+</div>
+
+<div class="section glass">
+  <h2>Photo Gallery</h2>
+  <div id="gallery" class="gallery">
+    <div class="loading">Loading gallery...</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"YOUR_KEY",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+// LOAD MAIN IMAGE
+async function loadVisionary(){
+  const ref = doc(db,"visionary","main");
+  const snap = await getDoc(ref);
+
+  if(snap.exists()){
+    document.getElementById("visionaryImg").src = snap.data().image;
+  }
+}
+
+// LOAD GALLERY
+async function loadGallery(){
+  const snap = await getDocs(collection(db,"visionaryGallery"));
+
+  let html = "";
+
+  snap.forEach(d=>{
+    const g = d.data();
+    html += `<img src="${g.image}">`;
+  });
+
+  document.getElementById("gallery").innerHTML =
+    html || "No images yet";
+}
+
+loadVisionary();
+loadGallery();
+</script>
+
+</body>
+</html>
