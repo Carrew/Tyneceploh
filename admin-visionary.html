@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Visionary Admin - TEF</title>
+
+  <style>
+    body{
+      font-family:system-ui;
+      background:#0b0b0f;
+      color:white;
+      padding:20px;
+    }
+
+    .card{
+      max-width:600px;
+      margin:auto;
+      background:rgba(255,255,255,0.06);
+      padding:20px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,0.1);
+    }
+
+    input, button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:10px;
+      border:none;
+    }
+
+    button{
+      background:linear-gradient(135deg,#800000,#ffc0cb);
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .msg{
+      margin-top:15px;
+      padding:10px;
+      border-radius:10px;
+      display:none;
+    }
+
+    .success{background:#1f6f3a;}
+    .error{background:#7a1f1f;}
+    .loading{background:#1f3c6f;}
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2>Visionary Image Manager</h2>
+
+  <input type="file" id="image">
+
+  <button onclick="uploadMain()">Update Main Image</button>
+
+  <hr>
+
+  <input type="file" id="galleryImage">
+
+  <button onclick="uploadGallery()">Add Gallery Image</button>
+
+  <div id="msg" class="msg"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"YOUR_KEY",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const msg = document.getElementById("msg");
+
+function show(type,text){
+  msg.style.display="block";
+  msg.className="msg "+type;
+  msg.innerText=text;
+}
+
+async function uploadCloud(file){
+  const form = new FormData();
+  form.append("file",file);
+  form.append("upload_preset","Tyneceploh");
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
+    {method:"POST", body:form}
+  );
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
+// MAIN IMAGE
+window.uploadMain = async function(){
+  const file = document.getElementById("image").files[0];
+  if(!file) return show("error","Select image first");
+
+  try{
+    show("loading","Uploading...");
+
+    const url = await uploadCloud(file);
+
+    await setDoc(doc(db,"visionary","main"),{
+      image:url,
+      updatedAt:Date.now()
+    });
+
+    show("success","Main image updated");
+
+  }catch(e){
+    show("error","Upload failed");
+  }
+};
+
+// GALLERY
+window.uploadGallery = async function(){
+  const file = document.getElementById("galleryImage").files[0];
+  if(!file) return show("error","Select image first");
+
+  try{
+    show("loading","Uploading...");
+
+    const url = await uploadCloud(file);
+
+    await addDoc(collection(db,"visionaryGallery"),{
+      image:url,
+      createdAt:Date.now()
+    });
+
+    show("success","Gallery image added");
+
+  }catch(e){
+    show("error","Upload failed");
+  }
+};
+
+</script>
+
+</body>
+</html>
