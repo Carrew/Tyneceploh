@@ -1,239 +1,391 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Management - TEF</title>
-
+  <title>Create Admin - TEF</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
-      --text: #fff;
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --border:rgba(255,255,255,0.1);
+      --text:#ffffff;
+      --muted:#bbbbbb;
+      --green:#27ae60;
+      --red:#e74c3c;
+      --blue:#3498db;
     }
 
     *{
       box-sizing:border-box;
     }
 
-    body {
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h2 {
-      text-align: center;
-      color: var(--pink);
-      margin-bottom: 20px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .stat {
-      background: var(--card);
-      padding: 15px;
-      border-radius: 12px;
-      text-align: center;
-      backdrop-filter: blur(10px);
-    }
-
-    .stat b{
-      display:block;
-      margin-top:5px;
-      color: var(--pink);
-      font-size:20px;
-    }
-
-    .box{
-      background: var(--card);
+    body{
+      margin:0;
       padding:20px;
-      border-radius:16px;
+      font-family:system-ui,sans-serif;
+      background:
+      radial-gradient(circle at top,#240012 0%,#0b0b0f 70%);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    .container{
+      max-width:1100px;
+      margin:auto;
+    }
+
+    h2{
+      text-align:center;
+      color:var(--pink);
       margin-bottom:20px;
-      backdrop-filter: blur(10px);
     }
 
-    input,
-    select,
-    textarea{
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border:none;
-      border-radius:10px;
-      background: rgba(255,255,255,0.08);
-      color:white;
-      outline:none;
+    .top-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:12px;
+      margin-bottom:20px;
     }
 
-    input::placeholder,
-    textarea::placeholder{
-      color:#ccc;
+    .stat{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:18px;
+      backdrop-filter:blur(10px);
     }
 
-    button{
-      padding:12px;
-      border:none;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:bold;
-      margin-top:10px;
+    .stat small{
+      color:var(--muted);
+      display:block;
+      margin-bottom:8px;
     }
 
-    .main-btn{
-      width:100%;
-      background: linear-gradient(135deg,var(--maroon),var(--pink));
-      color:white;
+    .stat h3{
+      margin:0;
+      font-size:28px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns:360px 1fr;
+      gap:20px;
+    }
+
+    @media(max-width:900px){
+      .layout{
+        grid-template-columns:1fr;
+      }
     }
 
     .card{
-      background: var(--card);
-      padding:15px;
-      margin-bottom:15px;
-      border-radius:15px;
-      border-left:4px solid var(--pink);
-      backdrop-filter: blur(10px);
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:20px;
+      backdrop-filter:blur(10px);
     }
 
-    .small{
-      font-size:13px;
-      opacity:0.85;
-      margin-top:8px;
+    .section-title{
+      margin-top:0;
+      margin-bottom:15px;
+      color:var(--pink);
+    }
+
+    input,
+    select{
+      width:100%;
+      padding:13px;
+      border:none;
+      outline:none;
+      border-radius:12px;
+      margin-top:10px;
+      background:rgba(255,255,255,0.08);
+      color:white;
+      font-size:15px;
+    }
+
+    input::placeholder{
+      color:#d1d1d1;
+    }
+
+    input[type="file"]{
+      padding:10px;
+    }
+
+    button{
+      width:100%;
+      border:none;
+      padding:14px;
+      border-radius:12px;
+      margin-top:12px;
+      cursor:pointer;
+      font-weight:bold;
+      transition:0.2s ease;
+    }
+
+    button:hover{
+      transform:translateY(-1px);
+      opacity:0.95;
+    }
+
+    .primary-btn{
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
+      color:white;
+    }
+
+    .danger-btn{
+      background:var(--red);
+      color:white;
+    }
+
+    .secondary-btn{
+      background:rgba(255,255,255,0.1);
+      color:white;
+    }
+
+    .preview{
+      width:100px;
+      height:100px;
+      border-radius:50%;
+      object-fit:cover;
+      border:3px solid var(--pink);
+      margin:15px auto 5px;
+      display:block;
+      background:#222;
+    }
+
+    .notify{
+      padding:14px;
+      border-radius:12px;
+      margin-top:15px;
+      display:none;
+      font-size:14px;
+      animation:fadeIn .25s ease;
+    }
+
+    .success{
+      background:rgba(39,174,96,0.15);
+      border:1px solid rgba(39,174,96,0.4);
+      color:#7dffb0;
+    }
+
+    .error{
+      background:rgba(231,76,60,0.15);
+      border:1px solid rgba(231,76,60,0.4);
+      color:#ffb0a8;
+    }
+
+    .loading{
+      background:rgba(52,152,219,0.15);
+      border:1px solid rgba(52,152,219,0.4);
+      color:#9bd6ff;
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        transform:translateY(8px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    .search{
+      margin-bottom:15px;
+    }
+
+    .admin-list{
+      display:grid;
+      gap:15px;
+    }
+
+    .admin-card{
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:18px;
+      padding:16px;
+    }
+
+    .admin-top{
+      display:flex;
+      gap:15px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .admin-top img{
+      width:70px;
+      height:70px;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid var(--pink);
+      background:#222;
+    }
+
+    .admin-name{
+      font-size:18px;
+      font-weight:bold;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:5px 12px;
+      border-radius:30px;
+      font-size:12px;
+      margin-top:6px;
+      background:rgba(255,192,203,0.15);
+      color:var(--pink);
+      border:1px solid rgba(255,192,203,0.25);
+    }
+
+    .meta{
+      margin-top:10px;
+      color:#d5d5d5;
+      font-size:14px;
       line-height:1.7;
     }
 
     .actions{
       display:flex;
       gap:10px;
-      margin-top:10px;
+      margin-top:15px;
       flex-wrap:wrap;
     }
 
-    .edit-btn{
-      background:#3498db;
-      color:white;
+    .actions button{
       flex:1;
+      margin-top:0;
     }
 
-    .delete-btn{
-      background:#e74c3c;
-      color:white;
-      flex:1;
+    .empty{
+      text-align:center;
+      padding:30px;
+      color:#bbb;
     }
 
-    img{
-      width:80px;
-      height:80px;
-      border-radius:50%;
-      object-fit:cover;
-      margin-top:10px;
-      border:3px solid var(--pink);
+    .pin-box{
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.06);
+      border:1px dashed rgba(255,255,255,0.15);
+      font-size:14px;
+      color:#ffe8ee;
     }
 
-    .badge{
-      display:inline-block;
-      padding:5px 10px;
-      border-radius:20px;
-      background:#27ae60;
-      color:white;
+    .small{
+      color:#aaa;
       font-size:12px;
-      margin-top:10px;
-    }
-
-    #search{
-      margin-bottom:15px;
-    }
-
-    @media(max-width:600px){
-
-      body{
-        padding:12px;
-      }
-
-      .actions{
-        flex-direction:column;
-      }
-
+      margin-top:5px;
+      line-height:1.5;
     }
   </style>
 </head>
 
 <body>
 
-<h2>👑 Admin Management System</h2>
+<div class="container">
 
-<div class="stats">
+  <h2>👑 Admin Management System</h2>
 
-  <div class="stat">
-    Total Admins
-    <b id="total">0</b>
+  <div class="top-grid">
+
+    <div class="stat">
+      <small>Total Admins</small>
+      <h3 id="totalAdmins">0</h3>
+    </div>
+
+    <div class="stat">
+      <small>Active Admins</small>
+      <h3 id="activeAdmins">0</h3>
+    </div>
+
+    <div class="stat">
+      <small>System Access</small>
+      <h3>Full</h3>
+    </div>
+
   </div>
 
-  <div class="stat">
-    Active
-    <b id="active">0</b>
-  </div>
+  <div class="layout">
 
-  <div class="stat">
-    Inactive
-    <b id="inactive">0</b>
+    <!-- LEFT -->
+    <div class="card">
+
+      <h3 class="section-title">Create / Edit Admin</h3>
+
+      <img
+        src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+        id="preview"
+        class="preview"
+      >
+
+      <input type="file" id="photo" accept="image/*">
+
+      <input id="name" placeholder="Admin Name">
+
+      <input id="contact" placeholder="Phone Number">
+
+      <input id="email" placeholder="Email Address">
+
+      <input id="address" placeholder="Address">
+
+      <select id="status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+
+      <input type="hidden" id="editId">
+
+      <button class="primary-btn" onclick="saveAdmin()" id="saveBtn">
+        Create Admin
+      </button>
+
+      <button class="secondary-btn" onclick="resetForm()">
+        Clear Form
+      </button>
+
+      <div class="small">
+        Admin ID and PIN are auto generated securely.
+      </div>
+
+      <div id="notify" class="notify"></div>
+
+      <div id="pinBox"></div>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card">
+
+      <h3 class="section-title">All Admins</h3>
+
+      <input
+        id="search"
+        class="search"
+        placeholder="Search admin by name or ID..."
+        oninput="renderAdmins()"
+      >
+
+      <div id="list" class="admin-list"></div>
+
+    </div>
+
   </div>
 
 </div>
-
-<div class="box">
-
-  <input id="search" placeholder="Search admin..." oninput="renderAdmins()">
-
-  <hr style="border-color:rgba(255,255,255,0.1);">
-
-  <input id="name" placeholder="Admin Name">
-
-  <input id="dob" type="date">
-
-  <select id="gender">
-    <option value="">Select Gender</option>
-    <option>Male</option>
-    <option>Female</option>
-  </select>
-
-  <input id="contact" placeholder="Phone Number">
-
-  <input id="email" placeholder="Email Address">
-
-  <input id="nationality" placeholder="Nationality">
-
-  <textarea id="address" placeholder="Address"></textarea>
-
-  <select id="status">
-    <option value="active">Active</option>
-    <option value="inactive">Inactive</option>
-  </select>
-
-  <input type="file" id="photo">
-
-  <input type="hidden" id="editId">
-
-  <button class="main-btn" onclick="saveAdmin()">
-    Save Admin
-  </button>
-
-</div>
-
-<div id="list"></div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
@@ -241,59 +393,125 @@ import {
   addDoc,
   getDocs,
   deleteDoc,
-  doc,
-  updateDoc
+  updateDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const currentUser = JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
-if (!currentUser || currentUser.role !== "admin") {
+if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
-// ---------------------------
-// GENERATE ADMIN ID
-// ---------------------------
-function generateAdminId(count) {
-  return `ADM${Date.now().toString().slice(-4)}${count}`;
-}
-
-// ---------------------------
-// GENERATE PIN
-// ---------------------------
-function generatePin() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
+const DEFAULT_PHOTO =
+"https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
 let adminsCache = [];
 
-// ---------------------------
-// LOAD ADMINS
-// ---------------------------
-async function loadAdmins() {
+// -------------------------
+// NOTIFICATIONS
+// -------------------------
+function showMessage(type, text){
 
-  const snap = await getDocs(collection(db, "users"));
+  const box = document.getElementById("notify");
+
+  box.className = `notify ${type}`;
+  box.style.display = "block";
+  box.innerHTML = text;
+
+  clearTimeout(box.timer);
+
+  box.timer = setTimeout(()=>{
+    box.style.display = "none";
+  },5000);
+}
+
+// -------------------------
+// PREVIEW IMAGE
+// -------------------------
+document.getElementById("photo")
+.addEventListener("change", e=>{
+
+  const file = e.target.files[0];
+
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(ev){
+    document.getElementById("preview").src = ev.target.result;
+  };
+
+  reader.readAsDataURL(file);
+
+});
+
+// -------------------------
+// GENERATORS
+// -------------------------
+function generateAdminId(count){
+  return `ADM${String(count + 1).padStart(3,"0")}`;
+}
+
+function generatePin(){
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+// -------------------------
+// CLOUDINARY
+// -------------------------
+async function uploadImage(file){
+
+  if(!file) return "";
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", "Tyneceploh");
+
+  const response = await fetch(
+    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
+    {
+      method:"POST",
+      body:formData
+    }
+  );
+
+  const data = await response.json();
+
+  return data.secure_url || "";
+}
+
+// -------------------------
+// LOAD ADMINS
+// -------------------------
+async function loadAdmins(){
+
+  document.getElementById("list").innerHTML =
+  `<div class="empty">Loading admins...</div>`;
+
+  const snap = await getDocs(collection(db,"users"));
 
   adminsCache = [];
 
-  snap.forEach(d => {
+  snap.forEach(d=>{
 
     const data = d.data();
 
-    if (data.role === "admin") {
+    if(data.role === "admin"){
 
       adminsCache.push({
         ...data,
-        docId: d.id
+        docId:d.id
       });
 
     }
@@ -304,57 +522,27 @@ async function loadAdmins() {
   renderAdmins();
 }
 
-// ---------------------------
-// UPDATE STATS
-// ---------------------------
-function updateStats() {
+function updateStats(){
 
-  document.getElementById("total").innerText =
-    adminsCache.length;
+  document.getElementById("totalAdmins").innerText =
+  adminsCache.length;
 
-  document.getElementById("active").innerText =
-    adminsCache.filter(a => a.status === "active").length;
+  document.getElementById("activeAdmins").innerText =
+  adminsCache.filter(a=>a.status === "active").length;
 
-  document.getElementById("inactive").innerText =
-    adminsCache.filter(a => a.status === "inactive").length;
 }
 
-// ---------------------------
-// CLOUDINARY IMAGE UPLOAD
-// ---------------------------
-async function uploadImage(file) {
-
-  if (!file) return "";
-
-  const formData = new FormData();
-
-  formData.append("file", file);
-  formData.append("upload_preset", "Tyneceploh");
-
-  const res = await fetch(
-    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
-    {
-      method: "POST",
-      body: formData
-    }
-  );
-
-  const data = await res.json();
-
-  return data.secure_url || "";
-}
-
-// ---------------------------
-// RENDER ADMINS
-// ---------------------------
-window.renderAdmins = function () {
+// -------------------------
+// RENDER
+// -------------------------
+window.renderAdmins = function(){
 
   const search =
-    document.getElementById("search")
-    .value
-    .toLowerCase();
+  document.getElementById("search")
+  .value
+  .toLowerCase();
 
-  const filtered = adminsCache.filter(a =>
+  const filtered = adminsCache.filter(a=>
 
     (a.name || "")
     .toLowerCase()
@@ -368,51 +556,70 @@ window.renderAdmins = function () {
 
   );
 
-  document.getElementById("list").innerHTML = filtered.map(a => `
+  const list = document.getElementById("list");
 
-    <div class="card">
+  if(filtered.length === 0){
 
-      <b>👑 ${a.name}</b>
+    list.innerHTML =
+    `<div class="empty">No admins found.</div>`;
 
-      <div class="badge">
-        ${a.status || "active"}
+    return;
+  }
+
+  list.innerHTML = filtered.map(a=>`
+
+    <div class="admin-card">
+
+      <div class="admin-top">
+
+        <img src="${a.photoURL || DEFAULT_PHOTO}">
+
+        <div>
+
+          <div class="admin-name">
+            ${a.name || "Unnamed"}
+          </div>
+
+          <div class="badge">
+            🆔 ${a.userId}
+          </div>
+
+        </div>
+
       </div>
 
-      <div class="small">
+      <div class="meta">
 
-        🆔 ID: ${a.userId}<br>
+        Status:
+        <b>${a.status || "active"}</b>
+        <br>
 
-        🔑 PIN: ${a.pin || "-"}<br>
+        Contact:
+        ${a.contact || "-"}
 
-        📞 Contact: ${a.contact || "-"}<br>
+        <br>
 
-        📧 Email: ${a.email || "-"}<br>
+        Email:
+        ${a.email || "-"}
 
-        🌍 Nationality: ${a.nationality || "-"}<br>
+        <br>
 
-        ⚧ Gender: ${a.gender || "-"}<br>
-
-        🎂 DOB: ${a.dob || "-"}<br>
-
-        🏠 Address: ${a.address || "-"}
+        Address:
+        ${a.address || "-"}
 
       </div>
-
-      ${a.photoURL ? `
-        <img src="${a.photoURL}">
-      ` : ""}
 
       <div class="actions">
 
         <button
-          class="edit-btn"
+          class="secondary-btn"
           onclick="editAdmin('${a.docId}')"
         >
           Edit
         </button>
 
         <button
-          class="delete-btn"
+          class="danger-btn"
           onclick="deleteAdmin('${a.docId}')"
         >
           Delete
@@ -423,195 +630,251 @@ window.renderAdmins = function () {
     </div>
 
   `).join("");
+
 };
 
-// ---------------------------
+// -------------------------
 // SAVE ADMIN
-// ---------------------------
-window.saveAdmin = async function () {
+// -------------------------
+window.saveAdmin = async function(){
+
+  const btn = document.getElementById("saveBtn");
+
+  const name =
+  document.getElementById("name").value.trim();
+
+  const contact =
+  document.getElementById("contact").value.trim();
+
+  const email =
+  document.getElementById("email").value.trim();
+
+  const address =
+  document.getElementById("address").value.trim();
+
+  const status =
+  document.getElementById("status").value;
 
   const editId =
-    document.getElementById("editId").value;
+  document.getElementById("editId").value;
 
-  const file =
-    document.getElementById("photo").files[0];
+  if(!name){
 
-  const photoURL = await uploadImage(file);
+    showMessage(
+      "error",
+      "Please enter admin name."
+    );
 
-  const data = {
-
-    name:
-      document.getElementById("name").value,
-
-    dob:
-      document.getElementById("dob").value,
-
-    gender:
-      document.getElementById("gender").value,
-
-    contact:
-      document.getElementById("contact").value,
-
-    email:
-      document.getElementById("email").value,
-
-    nationality:
-      document.getElementById("nationality").value,
-
-    address:
-      document.getElementById("address").value,
-
-    status:
-      document.getElementById("status").value,
-
-    role: "admin",
-
-    createdAt: Date.now()
-  };
-
-  if (photoURL) {
-    data.photoURL = photoURL;
+    return;
   }
 
-  try {
+  btn.disabled = true;
+  btn.innerText = "Processing...";
 
-    // ---------------------------
-    // CREATE NEW ADMIN
-    // ---------------------------
-    if (!editId) {
+  showMessage(
+    "loading",
+    "Saving admin account..."
+  );
 
-      const snap =
-        await getDocs(collection(db, "users"));
+  try{
+
+    const file =
+    document.getElementById("photo").files[0];
+
+    let photoURL = "";
+
+    if(file){
+
+      photoURL = await uploadImage(file);
+
+    }
+
+    const data = {
+
+      name,
+      contact,
+      email,
+      address,
+      status,
+
+      role:"admin",
+
+      updatedAt:Date.now()
+
+    };
+
+    if(photoURL){
+      data.photoURL = photoURL;
+    }
+
+    // CREATE
+    if(!editId){
 
       const userId =
-        generateAdminId(snap.docs.length);
+      generateAdminId(adminsCache.length);
 
       const pin = generatePin();
 
       data.userId = userId;
       data.pin = pin;
+      data.createdAt = Date.now();
 
-      await addDoc(collection(db, "users"), data);
-
-      alert(
-        `Admin Created Successfully\n\nID: ${userId}\nPIN: ${pin}`
-      );
-
-    }
-
-    // ---------------------------
-    // UPDATE ADMIN
-    // ---------------------------
-    else {
-
-      await updateDoc(
-        doc(db, "users", editId),
+      await addDoc(
+        collection(db,"users"),
         data
       );
 
-      document.getElementById("editId").value = "";
+      document.getElementById("pinBox").innerHTML = `
+        <div class="pin-box">
+          ✅ Admin created successfully.<br><br>
 
-      alert("Admin updated successfully");
+          <b>ID:</b> ${userId}<br>
+          <b>PIN:</b> ${pin}
+        </div>
+      `;
+
+      showMessage(
+        "success",
+        "New admin account created successfully."
+      );
 
     }
 
-    clearForm();
+    // UPDATE
+    else{
+
+      await updateDoc(
+        doc(db,"users",editId),
+        data
+      );
+
+      showMessage(
+        "success",
+        "Admin updated successfully."
+      );
+
+    }
+
+    resetForm();
     loadAdmins();
 
-  } catch (err) {
+  }catch(err){
 
     console.error(err);
 
-    alert("Failed to save admin");
+    showMessage(
+      "error",
+      "Something went wrong while saving admin."
+    );
+
   }
+
+  btn.disabled = false;
+  btn.innerText = "Create Admin";
+
 };
 
-// ---------------------------
-// EDIT ADMIN
-// ---------------------------
-window.editAdmin = function (id) {
+// -------------------------
+// EDIT
+// -------------------------
+window.editAdmin = function(id){
 
-  const a =
-    adminsCache.find(x => x.docId === id);
+  const admin =
+  adminsCache.find(a=>a.docId === id);
 
-  if (!a) return;
+  if(!admin) return;
 
   document.getElementById("editId").value =
-    id;
+  admin.docId;
 
   document.getElementById("name").value =
-    a.name || "";
-
-  document.getElementById("dob").value =
-    a.dob || "";
-
-  document.getElementById("gender").value =
-    a.gender || "";
+  admin.name || "";
 
   document.getElementById("contact").value =
-    a.contact || "";
+  admin.contact || "";
 
   document.getElementById("email").value =
-    a.email || "";
-
-  document.getElementById("nationality").value =
-    a.nationality || "";
+  admin.email || "";
 
   document.getElementById("address").value =
-    a.address || "";
+  admin.address || "";
 
   document.getElementById("status").value =
-    a.status || "active";
+  admin.status || "active";
+
+  document.getElementById("preview").src =
+  admin.photoURL || DEFAULT_PHOTO;
+
+  document.getElementById("saveBtn").innerText =
+  "Update Admin";
 
   window.scrollTo({
     top:0,
     behavior:"smooth"
   });
+
 };
 
-// ---------------------------
-// DELETE ADMIN
-// ---------------------------
-window.deleteAdmin = async function (id) {
+// -------------------------
+// DELETE
+// -------------------------
+window.deleteAdmin = async function(id){
 
-  const ok =
-    confirm("Delete this admin?");
+  const sure = confirm(
+    "Delete this admin account?"
+  );
 
-  if (!ok) return;
+  if(!sure) return;
 
-  try {
+  try{
 
-    await deleteDoc(doc(db, "users", id));
+    await deleteDoc(doc(db,"users",id));
+
+    showMessage(
+      "success",
+      "Admin deleted successfully."
+    );
 
     loadAdmins();
 
-  } catch (err) {
+  }catch(err){
 
     console.error(err);
 
-    alert("Failed to delete admin");
+    showMessage(
+      "error",
+      "Failed to delete admin."
+    );
+
   }
+
 };
 
-// ---------------------------
-// CLEAR FORM
-// ---------------------------
-function clearForm() {
+// -------------------------
+// RESET FORM
+// -------------------------
+window.resetForm = function(){
+
+  document.getElementById("editId").value = "";
 
   document.getElementById("name").value = "";
-  document.getElementById("dob").value = "";
-  document.getElementById("gender").value = "";
   document.getElementById("contact").value = "";
   document.getElementById("email").value = "";
-  document.getElementById("nationality").value = "";
   document.getElementById("address").value = "";
-  document.getElementById("photo").value = "";
-  document.getElementById("status").value = "active";
-}
 
-// ---------------------------
-// START
-// ---------------------------
+  document.getElementById("status").value =
+  "active";
+
+  document.getElementById("photo").value = "";
+
+  document.getElementById("preview").src =
+  DEFAULT_PHOTO;
+
+  document.getElementById("saveBtn").innerText =
+  "Create Admin";
+
+};
+
 loadAdmins();
 
 </script>
