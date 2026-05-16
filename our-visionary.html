@@ -6,137 +6,126 @@
   <style>
     body{
       margin:0;
-      font-family:sans-serif;
-      background:radial-gradient(circle at top,#1a0010,#0b0b0f);
+      font-family:system-ui;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
       color:white;
     }
 
-    .wrap{
-      max-width:1000px;
-      margin:auto;
-      padding:20px;
-    }
-
     .hero{
-      text-align:center;
       padding:40px 20px;
+      text-align:center;
     }
 
     .quote{
       font-size:22px;
       font-style:italic;
       color:#ffc0cb;
-      margin-top:10px;
+      max-width:800px;
+      margin:auto;
+    }
+
+    .section{
+      max-width:900px;
+      margin:auto;
+      padding:20px;
     }
 
     .card{
       background:rgba(255,255,255,0.06);
       padding:20px;
-      border-radius:15px;
-      margin-top:20px;
+      border-radius:12px;
+      margin:15px 0;
       backdrop-filter:blur(10px);
     }
 
     img{
       width:100%;
-      border-radius:15px;
+      border-radius:12px;
       margin-top:10px;
     }
 
-    .gallery{
+    .grid{
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
       gap:10px;
-      margin-top:10px;
-    }
-
-    .gallery img{
-      height:150px;
-      object-fit:cover;
-    }
-
-    h2,h3{
-      color:#ffc0cb;
     }
   </style>
 </head>
 
 <body>
 
-<div class="wrap">
+<div class="hero">
+  <h1>Our Visionary</h1>
 
-  <div class="hero">
-    <h1>Our Visionary</h1>
-    <div class="quote">
-      “So today… My love ones I call you to join me make this long awaited dream a reality. Hope For The Future/By God’s Grace.”
-      <br> - Margret Ploh Chattah
-    </div>
-  </div>
+  <p class="quote">
+    “So today… My love ones I call you to join me make this long awaited dream a reality. Hope For The Future/By God’s Grace.” - Margret Ploh Chattah
+  </p>
+</div>
+
+<div class="section">
+
+  <div class="card" id="main"></div>
 
   <div class="card">
-
     <h2>Origins and Vision</h2>
-
     <p>
-      Tyneceploh Educational Foundation (TEF) was born from a lifelong dream envisioned by the late Mrs. Margret Ploh Chattah...
-      The journey of TEF commenced with a groundbreaking program on January 25, 2015...
-      TEF stands today as a testament of resilience, love, and education.
+Tyneceploh Educational Foundation (TEF) was born from a lifelong dream envisioned by the late Mrs. Margret Ploh Chattah, a visionary with a deep passion for child development and education. Her dream began to take shape in the absence of her physical presence, but her spirit and determination laid the foundation for what would become a beacon of learning and opportunity.
     </p>
-
-    <div id="mainImage"></div>
-
   </div>
 
   <div class="card">
+    <h2>The Journey Begins</h2>
+    <p>
+The journey of TEF commenced with a groundbreaking program on January 25, 2015. Mrs. Chattah's vision was not just about constructing a building but about creating a safe, orderly, caring, and supportive environment where children could thrive academically, socially, and spiritually. Construction of the school building commenced in April 2015, marking the tangible manifestation of Mrs. Chattah's dream.
+    </p>
+  </div>
 
-    <h3>Gallery</h3>
-    <div class="gallery" id="gallery"></div>
+  <div class="card">
+    <h2>Challenges and Resilience</h2>
+    <p>
+However, amidst the progress, challenges arose as Mrs. Chattah faced health issues that necessitated her treatment abroad. Despite her absence, her widower, Mr. Napoleon T. Chattah, along with dedicated supporters and well-wishers, persevered to keep the dream alive. TEF's resilience and commitment to Mrs. Chattah's vision became evident when the school officially opened its doors on September 3, 2018.
+    </p>
+  </div>
 
+  <div class="card">
+    <h2>Fulfilling the Dream</h2>
+    <p>
+Today, Tyneceploh Educational Foundation stands as a testament to Mrs. Chattah's unwavering dedication and belief in the power of education to transform lives. The school not only provides quality Christian education but also instills values of respect, responsibility, peace, and achievement in every student.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Gallery</h2>
+    <div class="grid" id="gallery"></div>
   </div>
 
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  apiKey:"YOUR_KEY",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 });
 
 const db = getFirestore(app);
+const ref = doc(db,"visionary","content");
 
-// MAIN IMAGE
-async function loadMain(){
-  const snap = await getDocs(collection(db,"visionaryMain"));
+async function load(){
+  const snap = await getDoc(ref);
+  const data = snap.data();
 
-  const latest = snap.docs[snap.docs.length - 1];
-  if(!latest) return;
-
-  document.getElementById("mainImage").innerHTML =
-    `<img src="${latest.data().url}">`;
-}
-
-// GALLERY
-async function loadGallery(){
-  const snap = await getDocs(collection(db,"visionaryGallery"));
+  document.getElementById("main").innerHTML =
+    data?.mainImage ? `<img src="${data.mainImage}">` : "No main image";
 
   document.getElementById("gallery").innerHTML =
-    snap.docs.map(d=>`
-      <img src="${d.data().url}">
-    `).join("");
+    (data?.gallery || []).map(i=>`<img src="${i}">`).join("");
 }
 
-loadMain();
-loadGallery();
-
+load();
 </script>
 
 </body>
