@@ -4,123 +4,138 @@
   <title>Our Visionary - TEF</title>
 
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui;
-      background: #0b0b0f;
-      color: white;
+    body{
+      margin:0;
+      font-family:sans-serif;
+      background:radial-gradient(circle at top,#1a0010,#0b0b0f);
+      color:white;
     }
 
-    .hero {
-      height: 60vh;
-      background-size: cover;
-      background-position: center;
-      display: flex;
-      align-items: end;
-      padding: 20px;
-      position: relative;
+    .wrap{
+      max-width:1000px;
+      margin:auto;
+      padding:20px;
     }
 
-    .overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    .hero{
+      text-align:center;
+      padding:40px 20px;
     }
 
-    .quote {
-      font-size: 22px;
-      font-style: italic;
-      z-index: 2;
-      max-width: 700px;
+    .quote{
+      font-size:22px;
+      font-style:italic;
+      color:#ffc0cb;
+      margin-top:10px;
     }
 
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
+    .card{
+      background:rgba(255,255,255,0.06);
+      padding:20px;
+      border-radius:15px;
+      margin-top:20px;
+      backdrop-filter:blur(10px);
     }
 
-    .block {
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      margin: 15px 0;
-      border-left: 4px solid #ffc0cb;
-      border-radius: 10px;
-      line-height: 1.6;
+    img{
+      width:100%;
+      border-radius:15px;
+      margin-top:10px;
     }
 
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 20px;
+    .gallery{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-top:10px;
     }
 
-    .gallery img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 10px;
+    .gallery img{
+      height:150px;
+      object-fit:cover;
+    }
+
+    h2,h3{
+      color:#ffc0cb;
     }
   </style>
 </head>
 
 <body>
 
-<div id="hero" class="hero">
-  <div class="overlay"></div>
-  <div id="quote" class="quote"></div>
-</div>
+<div class="wrap">
 
-<div class="container">
+  <div class="hero">
+    <h1>Our Visionary</h1>
+    <div class="quote">
+      “So today… My love ones I call you to join me make this long awaited dream a reality. Hope For The Future/By God’s Grace.”
+      <br> - Margret Ploh Chattah
+    </div>
+  </div>
 
-  <h2>Origins & Vision</h2>
+  <div class="card">
 
-  <div id="story"></div>
+    <h2>Origins and Vision</h2>
 
-  <h3>Gallery</h3>
-  <div class="gallery" id="gallery"></div>
+    <p>
+      Tyneceploh Educational Foundation (TEF) was born from a lifelong dream envisioned by the late Mrs. Margret Ploh Chattah...
+      The journey of TEF commenced with a groundbreaking program on January 25, 2015...
+      TEF stands today as a testament of resilience, love, and education.
+    </p>
+
+    <div id="mainImage"></div>
+
+  </div>
+
+  <div class="card">
+
+    <h3>Gallery</h3>
+    <div class="gallery" id="gallery"></div>
+
+  </div>
 
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 });
 
 const db = getFirestore(app);
 
-async function load(){
+// MAIN IMAGE
+async function loadMain(){
+  const snap = await getDocs(collection(db,"visionaryMain"));
 
-  const snap = await getDoc(doc(db,"visionary","main"));
+  const latest = snap.docs[snap.docs.length - 1];
+  if(!latest) return;
 
-  if(!snap.exists()) return;
-
-  const data = snap.data();
-
-  document.getElementById("hero").style.backgroundImage =
-    `url(${data.mainImage})`;
-
-  document.getElementById("quote").innerText = data.quote;
-
-  document.getElementById("story").innerHTML =
-    (data.storyBlocks || []).map(b =>
-      `<div class="block">${b.content}</div>`
-    ).join("");
-
-  document.getElementById("gallery").innerHTML =
-    (data.gallery || []).map(img =>
-      `<img src="${img}">`
-    ).join("");
+  document.getElementById("mainImage").innerHTML =
+    `<img src="${latest.data().url}">`;
 }
 
-load();
+// GALLERY
+async function loadGallery(){
+  const snap = await getDocs(collection(db,"visionaryGallery"));
+
+  document.getElementById("gallery").innerHTML =
+    snap.docs.map(d=>`
+      <img src="${d.data().url}">
+    `).join("");
+}
+
+loadMain();
+loadGallery();
 
 </script>
 
