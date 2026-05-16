@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>School Gallery - TEF</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:#0b0b0f;
+      color:white;
+    }
+
+    h2{
+      text-align:center;
+      padding:20px;
+      color:#ffc0cb;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:15px;
+      padding:20px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.06);
+      border-radius:12px;
+      padding:10px;
+      cursor:pointer;
+      backdrop-filter:blur(10px);
+    }
+
+    img{
+      width:100%;
+      border-radius:10px;
+    }
+
+    .viewer{
+      display:none;
+      padding:20px;
+    }
+
+    .back{
+      background:#800000;
+      padding:10px;
+      border:none;
+      color:white;
+      border-radius:8px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>📸 School Gallery</h2>
+
+<div id="folders" class="grid"></div>
+
+<div id="viewer" class="viewer">
+  <button class="back" onclick="back()">← Back</button>
+  <h3 id="title"></h3>
+  <div id="images" class="grid"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"YOUR_KEY",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+let folders = [];
+let images = [];
+
+async function load(){
+
+  const fSnap = await getDocs(collection(db,"galleryFolders"));
+  const iSnap = await getDocs(collection(db,"galleryImages"));
+
+  folders = [];
+  images = [];
+
+  fSnap.forEach(d=>{
+    folders.push({id:d.id,...d.data()});
+  });
+
+  iSnap.forEach(d=>{
+    images.push(d.data());
+  });
+
+  document.getElementById("folders").innerHTML =
+    folders.map(f=>`
+      <div class="card" onclick="openFolder('${f.id}','${f.title}')">
+        <b>${f.title}</b>
+      </div>
+    `).join("");
+}
+
+window.openFolder = function(id,title){
+
+  document.getElementById("viewer").style.display="block";
+  document.getElementById("folders").style.display="none";
+
+  document.getElementById("title").innerText = title;
+
+  const imgs = images.filter(i=>i.folderId===id);
+
+  document.getElementById("images").innerHTML =
+    imgs.map(i=>`<img src="${i.imageUrl}">`).join("");
+}
+
+window.back = function(){
+  document.getElementById("viewer").style.display="none";
+  document.getElementById("folders").style.display="grid";
+}
+
+load();
+</script>
+
+</body>
+</html>
