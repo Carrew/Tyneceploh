@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gallery Admin - TEF</title>
+
+  <style>
+    body{
+      font-family:system-ui;
+      background:#0b0b0f;
+      color:white;
+      padding:20px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.06);
+      padding:15px;
+      border-radius:12px;
+      margin-bottom:15px;
+    }
+
+    input, button, select{
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+      border-radius:8px;
+      border:none;
+    }
+
+    button{
+      background:linear-gradient(135deg,#800000,#ffc0cb);
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+    }
+
+    img{
+      width:100%;
+      border-radius:10px;
+    }
+
+    .toast{
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      background:#27ae60;
+      padding:10px 15px;
+      border-radius:8px;
+      display:none;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>📸 Gallery Admin System</h2>
+
+<div class="card">
+  <h3>Create Folder (Album)</h3>
+  <input id="folderName" placeholder="Folder name">
+  <button onclick="createFolder()">Create Folder</button>
+</div>
+
+<div class="card">
+  <h3>Upload Images</h3>
+
+  <select id="folderSelect"></select>
+  <input type="file" id="images" multiple>
+  <button onclick="uploadImages()">Upload</button>
+</div>
+
+<div class="card">
+  <h3>Folders</h3>
+  <div id="folders"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"YOUR_KEY",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+let folders = [];
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.style.display = "block";
+  setTimeout(()=>t.style.display="none",3000);
+}
+
+// CLOUDINARY UPLOAD
+async function upload(file){
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset","Tyneceploh");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",{
+    method:"POST",
+    body:form
+  });
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
+async function loadFolders(){
+  const snap = await getDocs(collection(db,"galleryFolders"));
+
+  folders = [];
+  snap.forEach(d=>{
+    folders.push({id:d.id, ...d.data()});
+  });
+
+  document.getElementById("folderSelect").innerHTML =
+    folders.map(f=>`<option value="${f.id}">${f.title}</option>`).join("");
+
+  document.getElementById("folders").innerHTML =
+    folders.map(f=>`
+      <div class="card">
+        <b>${f.title}</b>
+      </div>
+    `).join("");
+}
+
+window.createFolder = async function(){
+  const name = document.getElementById("folderName").value;
+
+  if(!name) return toast("Enter folder name");
+
+  await addDoc(collection(db,"galleryFolders"),{
+    title:name,
+    createdAt:Date.now()
+  });
+
+  toast("Folder created");
+  loadFolders();
+}
+
+window.uploadImages = async function(){
+  const folderId = document.getElementById("folderSelect").value;
+  const files = document.getElementById("images").files;
+
+  if(!folderId || !files.length) return toast("Select folder + images");
+
+  for(let f of files){
+    const url = await upload(f);
+
+    await addDoc(collection(db,"galleryImages"),{
+      folderId,
+      imageUrl:url,
+      createdAt:Date.now()
+    });
+  }
+
+  toast("Images uploaded");
+}
+
+loadFolders();
+</script>
+
+</body>
+</html>
