@@ -1,191 +1,180 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Visionary Image Admin - TEF</title>
+  <title>Visionary Admin - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    body{
-      font-family:sans-serif;
-      background:#0b0b0f;
-      color:white;
-      padding:20px;
+    body {
+      font-family: system-ui;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
+      color: white;
+      padding: 20px;
     }
 
-    .container{
-      max-width:900px;
-      margin:auto;
-    }
-
-    .card{
-      background:rgba(255,255,255,0.06);
-      padding:15px;
-      border-radius:12px;
-      margin-bottom:15px;
+    .card {
+      background: rgba(255,255,255,0.06);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
       backdrop-filter: blur(10px);
     }
 
-    input, button{
-      width:100%;
-      padding:10px;
-      margin-top:10px;
-      border-radius:8px;
-      border:none;
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
     }
 
-    button{
-      background:linear-gradient(135deg,#800000,#ffc0cb);
-      color:white;
-      font-weight:bold;
-      cursor:pointer;
+    button {
+      background: linear-gradient(135deg, #800000, #ffc0cb);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-      margin-top:15px;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
     }
 
-    img{
-      width:100%;
-      height:120px;
-      object-fit:cover;
-      border-radius:10px;
+    img {
+      width: 100%;
+      border-radius: 10px;
     }
 
-    .msg{
-      margin-top:10px;
-      font-size:14px;
-      opacity:0.9;
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #27ae60;
+      padding: 10px 15px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .danger {
+      background: #e74c3c;
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
+<h2>🎯 Visionary Admin Panel</h2>
 
-  <h2>🌸 Visionary Image Control</h2>
-
-  <div class="card">
-
-    <h3>Main Visionary Image</h3>
-    <input type="file" id="mainFile">
-    <button onclick="uploadMain()">Update Main Image</button>
-    <div class="msg" id="mainMsg"></div>
-
-  </div>
-
-  <div class="card">
-
-    <h3>Gallery Upload</h3>
-    <input type="file" id="galleryFile">
-    <button onclick="uploadGallery()">Add Gallery Image</button>
-    <div class="msg" id="galleryMsg"></div>
-
-  </div>
-
-  <div class="card">
-    <h3>Gallery Preview</h3>
-    <div class="grid" id="gallery"></div>
-  </div>
-
+<div class="card">
+  <h3>Main Image</h3>
+  <input type="file" id="mainImg">
+  <button onclick="uploadMain()">Upload Main Image</button>
 </div>
 
-<script type="module">
+<div class="card">
+  <h3>Gallery Upload</h3>
+  <input type="file" id="galleryImgs" multiple>
+  <button onclick="uploadGallery()">Upload Gallery</button>
+</div>
 
+<div class="card">
+  <h3>Gallery</h3>
+  <div id="gallery" class="grid"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  apiKey:"YOUR_KEY",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 });
 
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
-if(!user || user.role !== "admin") location.href="login.html";
+const docRef = doc(db, "visionary", "content");
 
-// CLOUDINARY
+function toast(msg, err=false){
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.className = err ? "toast danger" : "toast";
+  t.style.display = "block";
+  setTimeout(()=> t.style.display="none", 3000);
+}
+
 async function upload(file){
-  const fd = new FormData();
-  fd.append("file",file);
-  fd.append("upload_preset","Tyneceploh");
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", "Tyneceploh");
 
   const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",{
     method:"POST",
-    body:fd
+    body:form
   });
 
   const data = await res.json();
   return data.secure_url;
 }
 
-// MAIN IMAGE
 window.uploadMain = async function(){
-  const file = document.getElementById("mainFile").files[0];
-  const msg = document.getElementById("mainMsg");
+  const file = document.getElementById("mainImg").files[0];
+  if(!file) return toast("Select image", true);
 
-  msg.innerText = "Uploading...";
+  const url = await upload(file);
 
-  try{
-    const url = await upload(file);
+  await setDoc(docRef, { mainImage: url }, { merge:true });
 
-    await addDoc(collection(db,"visionaryMain"),{
-      url,
-      createdAt:Date.now()
-    });
-
-    msg.innerText = "Main image updated ✔";
-  }catch(e){
-    msg.innerText = "Upload failed";
-  }
-};
-
-// GALLERY
-window.uploadGallery = async function(){
-  const file = document.getElementById("galleryFile").files[0];
-  const msg = document.getElementById("galleryMsg");
-
-  msg.innerText = "Uploading...";
-
-  try{
-    const url = await upload(file);
-
-    await addDoc(collection(db,"visionaryGallery"),{
-      url,
-      createdAt:Date.now()
-    });
-
-    msg.innerText = "Added to gallery ✔";
-    loadGallery();
-  }catch(e){
-    msg.innerText = "Upload failed";
-  }
-};
-
-// LOAD GALLERY
-async function loadGallery(){
-  const snap = await getDocs(collection(db,"visionaryGallery"));
-
-  document.getElementById("gallery").innerHTML =
-    snap.docs.map(d=>`
-      <div>
-        <img src="${d.data().url}">
-      </div>
-    `).join("");
+  toast("Main image updated");
 }
 
-loadGallery();
+window.uploadGallery = async function(){
+  const files = document.getElementById("galleryImgs").files;
+  if(!files.length) return toast("No images selected", true);
 
+  const snap = await getDoc(docRef);
+  let gallery = snap.exists() ? snap.data().gallery || [] : [];
+
+  for(let f of files){
+    const url = await upload(f);
+    gallery.push(url);
+  }
+
+  await setDoc(docRef, { gallery }, { merge:true });
+
+  toast("Gallery updated");
+  load();
+}
+
+async function load(){
+  const snap = await getDoc(docRef);
+  const data = snap.data();
+
+  const g = document.getElementById("gallery");
+  g.innerHTML = (data?.gallery || []).map((img,i)=>`
+    <div>
+      <img src="${img}">
+      <button onclick="del(${i})">Delete</button>
+    </div>
+  `).join("");
+}
+
+window.del = async function(i){
+  const snap = await getDoc(docRef);
+  let gallery = snap.data().gallery || [];
+  gallery.splice(i,1);
+
+  await setDoc(docRef,{gallery},{merge:true});
+  toast("Deleted");
+  load();
+}
+
+load();
 </script>
 
 </body>
