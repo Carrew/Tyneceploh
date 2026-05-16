@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TEF Student Directory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
+      color:white;
+      padding:20px;
+    }
+
+    h2{
+      text-align:center;
+      color:#ffc0cb;
+    }
+
+    select, button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:10px;
+      border:none;
+      background:rgba(255,255,255,0.08);
+      color:white;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:15px;
+      margin-top:20px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:15px;
+      padding:12px;
+      cursor:pointer;
+      transition:0.2s;
+    }
+
+    .card:hover{ transform:scale(1.02); }
+
+    img{
+      width:60px;
+      height:60px;
+      border-radius:50%;
+      object-fit:cover;
+    }
+
+    .name{ font-weight:bold; margin-top:5px; }
+
+    .small{ font-size:12px; opacity:0.8; }
+
+    .expand{
+      display:none;
+      margin-top:10px;
+      font-size:13px;
+      line-height:1.5;
+      opacity:0.9;
+    }
+
+    .card.open .expand{
+      display:block;
+    }
+
+    .loadMore{
+      margin-top:15px;
+      background:#800000;
+    }
+
+    .loading{
+      text-align:center;
+      opacity:0.6;
+      margin-top:15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Student Directory</h2>
+
+<select id="classSelect">
+  <option value="">Select Class</option>
+</select>
+
+<button onclick="loadStudents()">Load Students</button>
+
+<div id="list" class="grid"></div>
+
+<button class="loadMore" onclick="loadMore()">Load More</button>
+
+<div id="status" class="loading"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+let allStudents = [];
+let filtered = [];
+let page = 0;
+const limit = 10;
+
+// ------------------ LOAD CLASSES ------------------
+async function loadClasses(){
+
+  const snap = await getDocs(collection(db,"users"));
+  const set = new Set();
+
+  snap.forEach(d=>{
+    const u = d.data();
+    if(u.role === "student" && u.class){
+      set.add(u.class);
+    }
+  });
+
+  const select = document.getElementById("classSelect");
+
+  select.innerHTML += [...set]
+    .sort()
+    .map(c=>`<option value="${c}">${c}</option>`)
+    .join("");
+}
+
+// ------------------ LOAD STUDENTS ------------------
+window.loadStudents = async function(){
+
+  const cls = document.getElementById("classSelect").value;
+  const status = document.getElementById("status");
+
+  if(!cls){
+    status.innerText = "Please select a class";
+    return;
+  }
+
+  status.innerText = "Loading students...";
+
+  const snap = await getDocs(collection(db,"users"));
+
+  allStudents = [];
+
+  snap.forEach(d=>{
+    const u = d.data();
+    if(u.role === "student" && u.class === cls){
+      allStudents.push(u);
+    }
+  });
+
+  page = 0;
+  filtered = [];
+
+  loadMore(true);
+
+  status.innerText = "";
+};
+
+// ------------------ LAZY LOAD ------------------
+window.loadMore = function(reset = false){
+
+  if(reset){
+    document.getElementById("list").innerHTML = "";
+  }
+
+  const start = page * limit;
+  const end = start + limit;
+
+  const chunk = allStudents.slice(start, end);
+
+  filtered = filtered.concat(chunk);
+
+  render();
+
+  page++;
+
+  if(end >= allStudents.length){
+    document.getElementById("status").innerText = "No more students";
+  } else {
+    document.getElementById("status").innerText = "";
+  }
+};
+
+// ------------------ RENDER ------------------
+function render(){
+
+  const list = document.getElementById("list");
+
+  list.innerHTML = filtered.map(s=>`
+    <div class="card" onclick="toggle(this)">
+      ${s.photoURL ? `<img src="${s.photoURL}">` : ""}
+      <div class="name">${s.name}</div>
+      <div class="small">ID: ${s.userId}</div>
+
+      <div class="expand">
+        <div><b>DOB:</b> ${s.dob || "-"}</div>
+        <div><b>Gender:</b> ${s.gender || "-"}</div>
+        <div><b>Nationality:</b> ${s.nationality || "-"}</div>
+        <div><b>Address:</b> ${s.address || "-"}</div>
+        <div><b>Parent:</b> ${s.parentName || "-"}</div>
+        <div><b>Contact:</b> ${s.contact || "-"}</div>
+        <div><b>Status:</b> ${s.status || "active"}</div>
+      </div>
+    </div>
+  `).join("");
+}
+
+// ------------------ TOGGLE ------------------
+window.toggle = function(el){
+  el.classList.toggle("open");
+};
+
+loadClasses();
+
+</script>
+
+</body>
+</html>
