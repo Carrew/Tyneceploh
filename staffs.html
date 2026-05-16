@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TEF Staff Directory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui;
+      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
+      color:white;
+      padding:20px;
+    }
+
+    h2{
+      text-align:center;
+      color:#ffc0cb;
+      margin-bottom:20px;
+    }
+
+    .group-title{
+      margin-top:30px;
+      font-size:18px;
+      color:#ffc0cb;
+      border-left:4px solid #800000;
+      padding-left:10px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:15px;
+      margin-top:10px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:15px;
+      padding:12px;
+      backdrop-filter: blur(10px);
+      cursor:pointer;
+      transition:0.2s;
+    }
+
+    .card:hover{
+      transform:scale(1.02);
+    }
+
+    img{
+      width:60px;
+      height:60px;
+      border-radius:50%;
+      object-fit:cover;
+      margin-bottom:8px;
+    }
+
+    .name{
+      font-weight:bold;
+    }
+
+    .small{
+      font-size:12px;
+      opacity:0.8;
+    }
+
+    .expand{
+      display:none;
+      margin-top:10px;
+      font-size:13px;
+      opacity:0.9;
+    }
+
+    .card.open .expand{
+      display:block;
+    }
+
+    .loading{
+      text-align:center;
+      opacity:0.7;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Our Staff</h2>
+<div id="container" class="loading">Loading staff...</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+let staff = [];
+
+function roleLabel(role){
+  const map = {
+    teacher:"Teachers",
+    admin:"Administration",
+    principal:"Administration",
+    security:"Security",
+    janitor:"Support Staff",
+    coordinator:"Administration"
+  };
+  return map[role] || "Staff";
+}
+
+function canShow(role){
+  return role !== "student";
+}
+
+function safeInfo(s){
+  return `
+    ${s.classes ? `<div>Classes: ${s.classes.join(", ")}</div>` : ""}
+    ${s.contact ? `<div>Contact: ${s.contact}</div>` : ""}
+    ${s.nationality ? `<div>Nationality: ${s.nationality}</div>` : ""}
+    ${s.address ? `<div>Address: ${s.address}</div>` : ""}
+    ${s.gender ? `<div>Gender: ${s.gender}</div>` : ""}
+    <div>Status: ${s.status || "active"}</div>
+  `;
+}
+
+async function load(){
+
+  const snap = await getDocs(collection(db,"users"));
+
+  staff = [];
+
+  snap.forEach(d=>{
+    const u = d.data();
+
+    if(u.role && canShow(u.role)){
+      staff.push(u);
+    }
+  });
+
+  render();
+}
+
+function render(){
+
+  const container = document.getElementById("container");
+  container.classList.remove("loading");
+
+  const grouped = {};
+
+  staff.forEach(s=>{
+    const key = roleLabel(s.role);
+    if(!grouped[key]) grouped[key] = [];
+    grouped[key].push(s);
+  });
+
+  let html = "";
+
+  Object.keys(grouped).forEach(group=>{
+
+    html += `<div class="group-title">${group}</div>`;
+    html += `<div class="grid">`;
+
+    grouped[group].forEach((s,i)=>{
+
+      html += `
+        <div class="card" onclick="toggle(this)">
+          ${s.photoURL ? `<img src="${s.photoURL}">` : ""}
+          <div class="name">${s.name}</div>
+          <div class="small">${group}</div>
+
+          <div class="expand">
+            ${safeInfo(s)}
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html || "No staff found";
+}
+
+window.toggle = function(el){
+  el.classList.toggle("open");
+};
+
+load();
+
+</script>
+
+</body>
+</html>
