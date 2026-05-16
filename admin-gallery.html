@@ -4,90 +4,94 @@
   <title>Gallery Admin - TEF</title>
 
   <style>
-    body{
-      font-family:system-ui;
-      background:#0b0b0f;
-      color:white;
-      padding:20px;
+    body {
+      font-family: system-ui;
+      background: #0b0b0f;
+      color: white;
+      padding: 20px;
     }
 
-    .card{
-      background:rgba(255,255,255,0.06);
-      padding:15px;
-      border-radius:12px;
-      margin-bottom:15px;
+    .card {
+      background: rgba(255,255,255,0.06);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      backdrop-filter: blur(10px);
     }
 
-    input, button, select{
-      width:100%;
-      padding:10px;
-      margin-top:10px;
-      border-radius:8px;
-      border:none;
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
     }
 
-    button{
-      background:linear-gradient(135deg,#800000,#ffc0cb);
-      color:white;
-      font-weight:bold;
-      cursor:pointer;
+    button {
+      background: linear-gradient(135deg, #800000, #ffc0cb);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-      gap:10px;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
     }
 
-    img{
-      width:100%;
-      border-radius:10px;
+    img {
+      width: 100%;
+      border-radius: 10px;
     }
 
-    .toast{
-      position:fixed;
-      bottom:20px;
-      right:20px;
-      background:#27ae60;
-      padding:10px 15px;
-      border-radius:8px;
-      display:none;
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #27ae60;
+      padding: 10px 15px;
+      border-radius: 8px;
+      display: none;
     }
   </style>
 </head>
 
 <body>
 
-<h2>📸 Gallery Admin System</h2>
+<h2>📸 Gallery Admin Panel</h2>
 
 <div class="card">
-  <h3>Create Folder (Album)</h3>
-  <input id="folderName" placeholder="Folder name">
-  <button onclick="createFolder()">Create Folder</button>
+  <h3>Create Group</h3>
+  <input id="groupName" placeholder="Group name (e.g. Sports Day)">
+  <button onclick="createGroup()">Create Group</button>
 </div>
 
 <div class="card">
   <h3>Upload Images</h3>
 
-  <select id="folderSelect"></select>
+  <select id="groupSelect"></select>
   <input type="file" id="images" multiple>
   <button onclick="uploadImages()">Upload</button>
 </div>
 
 <div class="card">
-  <h3>Folders</h3>
-  <div id="folders"></div>
+  <h3>Group Images</h3>
+  <div id="gallery" class="grid"></div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   collection,
   addDoc,
-  getDocs
+  getDocs,
+  deleteDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
@@ -98,83 +102,96 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-let folders = [];
-
 function toast(msg){
   const t = document.getElementById("toast");
   t.innerText = msg;
   t.style.display = "block";
-  setTimeout(()=>t.style.display="none",3000);
+  setTimeout(()=> t.style.display="none", 3000);
 }
 
-// CLOUDINARY UPLOAD
+// upload to cloudinary
 async function upload(file){
   const form = new FormData();
   form.append("file", file);
-  form.append("upload_preset","Tyneceploh");
+  form.append("upload_preset", "Tyneceploh");
 
-  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",{
-    method:"POST",
-    body:form
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
+    method: "POST",
+    body: form
   });
 
   const data = await res.json();
   return data.secure_url;
 }
 
-async function loadFolders(){
-  const snap = await getDocs(collection(db,"galleryFolders"));
+// LOAD GROUPS
+async function loadGroups(){
+  const snap = await getDocs(collection(db,"galleryGroups"));
+  const select = document.getElementById("groupSelect");
 
-  folders = [];
-  snap.forEach(d=>{
-    folders.push({id:d.id, ...d.data()});
-  });
+  select.innerHTML = snap.docs.map(d =>
+    `<option value="${d.id}">${d.data().name}</option>`
+  ).join("");
 
-  document.getElementById("folderSelect").innerHTML =
-    folders.map(f=>`<option value="${f.id}">${f.title}</option>`).join("");
-
-  document.getElementById("folders").innerHTML =
-    folders.map(f=>`
-      <div class="card">
-        <b>${f.title}</b>
-      </div>
-    `).join("");
+  loadImages();
 }
 
-window.createFolder = async function(){
-  const name = document.getElementById("folderName").value;
+// CREATE GROUP
+window.createGroup = async function(){
+  const name = document.getElementById("groupName").value;
+  if(!name) return toast("Enter group name");
 
-  if(!name) return toast("Enter folder name");
-
-  await addDoc(collection(db,"galleryFolders"),{
-    title:name,
-    createdAt:Date.now()
+  await addDoc(collection(db,"galleryGroups"),{
+    name,
+    createdAt: Date.now()
   });
 
-  toast("Folder created");
-  loadFolders();
-}
+  toast("Group created");
+  loadGroups();
+};
 
+// UPLOAD IMAGES
 window.uploadImages = async function(){
-  const folderId = document.getElementById("folderSelect").value;
   const files = document.getElementById("images").files;
+  const groupId = document.getElementById("groupSelect").value;
 
-  if(!folderId || !files.length) return toast("Select folder + images");
+  if(!files.length) return toast("No images selected");
 
   for(let f of files){
     const url = await upload(f);
 
     await addDoc(collection(db,"galleryImages"),{
-      folderId,
-      imageUrl:url,
-      createdAt:Date.now()
+      groupId,
+      imageUrl: url,
+      createdAt: Date.now()
     });
   }
 
   toast("Images uploaded");
+  loadImages();
+};
+
+// LOAD IMAGES
+async function loadImages(){
+  const groupId = document.getElementById("groupSelect").value;
+  const snap = await getDocs(collection(db,"galleryImages"));
+
+  const filtered = snap.docs
+    .map(d => ({id:d.id, ...d.data()}))
+    .filter(i => i.groupId === groupId);
+
+  document.getElementById("gallery").innerHTML =
+    filtered.map(i => `
+      <div>
+        <img src="${i.imageUrl}">
+      </div>
+    `).join("");
 }
 
-loadFolders();
+window.loadImages = loadImages;
+
+loadGroups();
+
 </script>
 
 </body>
