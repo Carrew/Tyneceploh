@@ -5,136 +5,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root{
-      --maroon:#800000;
-      --pink:#ffc0cb;
-      --bg:#0b0b0f;
-      --glass:rgba(255,255,255,0.06);
-      --border:rgba(255,255,255,0.1);
-      --text:#fff;
-    }
-
     body{
       margin:0;
       font-family:system-ui;
-      background:radial-gradient(circle at top,#1a0010,#0b0b0f);
+      background:radial-gradient(circle at top,#2a0015,#0b0b0f);
       color:white;
     }
 
     .hero{
-      min-height:60vh;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
       text-align:center;
-      padding:30px;
+      padding:40px 20px;
     }
 
     .hero img{
-      width:180px;
-      height:180px;
+      width:160px;
+      height:160px;
       border-radius:50%;
       object-fit:cover;
-      border:4px solid var(--pink);
-      margin-bottom:15px;
+      border:3px solid #ffc0cb;
+      box-shadow:0 0 25px rgba(255,192,203,0.4);
     }
 
     h1{
-      color:var(--pink);
-      margin:0;
+      color:#ffc0cb;
+      margin-top:15px;
+    }
+
+    .container{
+      max-width:900px;
+      margin:auto;
+      padding:20px;
+    }
+
+    .card{
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.1);
+      padding:20px;
+      border-radius:16px;
+      margin-bottom:15px;
+      backdrop-filter:blur(10px);
+      line-height:1.8;
+      white-space:pre-line;
     }
 
     .quote{
-      max-width:800px;
-      margin:20px auto;
-      padding:20px;
-      background:var(--glass);
-      border:1px solid var(--border);
-      border-radius:16px;
-      backdrop-filter:blur(10px);
       font-style:italic;
-      line-height:1.7;
-    }
-
-    .section{
-      max-width:900px;
-      margin:40px auto;
-      padding:20px;
-      background:var(--glass);
-      border:1px solid var(--border);
-      border-radius:16px;
-      backdrop-filter:blur(10px);
-    }
-
-    h2{
-      color:var(--pink);
+      color:#ffe3ea;
+      border-left:3px solid #ffc0cb;
+      padding-left:10px;
+      margin-top:10px;
     }
 
     .gallery{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
       gap:10px;
+      margin-top:20px;
     }
 
     .gallery img{
       width:100%;
-      height:160px;
+      height:140px;
       object-fit:cover;
       border-radius:12px;
-      border:1px solid var(--border);
+      border:1px solid rgba(255,255,255,0.15);
     }
 
-    .loading{
-      opacity:0.7;
-    }
   </style>
 </head>
 
 <body>
 
 <div class="hero">
-  <img id="visionaryImg" class="loading" src="">
+  <img id="mainImg" src="" />
   <h1>Our Visionary</h1>
-</div>
 
-<div class="quote">
-  “So today… My love ones I call you to join me make this long awaited dream a reality. Hope For The Future / By God’s Grace.”  
-  <br><br>
-  — Margret Ploh Chattah
-</div>
+  <div class="container">
 
-<div class="section">
-  <h2>Origins and Vision</h2>
-  <p>
-    Tyneceploh Educational Foundation (TEF) was born from a lifelong dream envisioned by the late Mrs. Margret Ploh Chattah, a visionary with a deep passion for child development and education...
-  </p>
-</div>
+    <div class="card">
+Excerpt from her ground breaking speech
+“So today… My love ones I call you to join me make this long awaited dream a reality. Hope For The Future/By God’s Grace.”    - Margret Ploh Chattah
 
-<div class="section">
-  <h2>The Journey Begins</h2>
-  <p>
-    The journey of TEF commenced with a groundbreaking program on January 25, 2015...
-  </p>
-</div>
+The first year of Tyneceploh Educational foundation was Academic 2018-2019 which commenced September 2018. I had left for Medical Tourism to the United States in August 2018. The exact Departure was on my Birthday August 8, 2018 and I returned in January 2019. My Late Brother, Dennis Emil Chattah, who passed last year July 14, 2024 was left in charge. He along with the Principal, Mrs Pauline Y. H Kollie started the school and the enrolment was 25 students.      Some of the Students still in the school are: Icarulyn S. Broh – 7th grade, Icarus Broh- 8th grade, Honest T. Morris- 8th grade
+    </div>
 
-<div class="section">
-  <h2>Challenges and Resilience</h2>
-  <p>
-    However, amidst the progress, challenges arose as Mrs. Chattah faced health issues...
-  </p>
-</div>
+    <div class="card">
+Origins and Vision:
+Tyneceploh Educational Foundation (TEF) was born from a lifelong dream envisioned by the late Mrs. Margret Ploh Chattah, a visionary with a deep passion for child development and education. Her dream began to take shape in the absence of her physical presence, but her spirit and determination laid the foundation for what would become a beacon of learning and opportunity.
 
-<div class="section">
-  <h2>Fulfilling the Dream</h2>
-  <p>
-    Today, TEF stands as a testament to her unwavering dedication...
-  </p>
-</div>
+The Journey Begins:
+The journey of TEF commenced with a groundbreaking program on January 25, 2015. Mrs. Chattah's vision was not just about constructing a building but about creating a safe, orderly, caring, and supportive environment where children could thrive academically, socially, and spiritually. Construction of the school building commenced in April 2015, marking the tangible manifestation of Mrs. Chattah's dream.
 
-<div class="section">
-  <h2>Gallery</h2>
-  <div class="gallery" id="gallery"></div>
+Challenges and Resilience:
+However, amidst the progress, challenges arose as Mrs. Chattah faced health issues that necessitated her treatment abroad. Despite her absence, her widower, Mr. Napoleon T. Chattah, along with dedicated supporters and well-wishers, persevered to keep the dream alive. TEF's resilience and commitment to Mrs. Chattah's vision became evident when the school officially opened its doors on September 3, 2018.
+
+Fulfilling the Dream:
+Today, Tyneceploh Educational Foundation stands as a testament to Mrs. Chattah's unwavering dedication and belief in the power of education to transform lives. The school not only provides quality Christian education but also instills values of respect, responsibility, peace, and achievement in every student.
+
+Contributing to Liberia's Future:
+TEF's impact goes beyond its walls, contributing to Liberia's development by providing equal access to educational opportunities, in line with the constitutional mandate. The school's holistic approach to education, collaborative partnerships, and commitment to diversity ensure that every child receives a world-class educational experience tailored to their unique needs and aspirations.
+
+Looking Ahead:
+As TEF continues to evolve and grow, it remains rooted in its founding principles of love, wisdom, and a deep sense of responsibility towards shaping the future leaders of Liberia. The journey of Tyneceploh Educational Foundation is a testament to the enduring legacy of Mrs. Margret Ploh Chattah and the collective efforts of all who believe in the power of education to inspire, transform, and uplift communities.
+
+As we gather to celebrate the legacy of the late Mrs. Margret Ploh Chattah, the visionary whose passion and dedication gave birth to Tyneceploh Educational Foundation, I am deeply grateful for her lasting impact on our lives and community. Her vision continues to inspire us every day, and her memory will forever be cherished.
+I also want to take this moment to express my heartfelt appreciation to my present wife, Mrs T. Venus P. Chattah, who stands by my side and contributes her valuable efforts to our shared mission at TEF. Your dedication and support are invaluable, and I am grateful for the strength and unity we bring to our work together.
+Let us honor the past with reverence and embrace the present with gratitude, knowing that both legacies contribute to the success and growth of our beloved institution."
+    </div>
+
+    <div class="quote">
+      “Hope For The Future / By God’s Grace.”
+    </div>
+
+    <h2 style="margin-top:30px;color:#ffc0cb;">Gallery</h2>
+    <div class="gallery" id="gallery"></div>
+
+  </div>
 </div>
 
 <script type="module">
@@ -149,33 +135,22 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-// LOAD MAIN IMAGE
-async function loadVisionary(){
-  const ref = doc(db,"visionary","main");
-  const snap = await getDoc(ref);
+async function load(){
 
-  if(snap.exists()){
-    document.getElementById("visionaryImg").src = snap.data().image;
+  const main = await getDoc(doc(db,"visionary","main"));
+  if(main.exists()){
+    document.getElementById("mainImg").src = main.data().image;
   }
-}
 
-async function loadGallery(){
-  const snap = await getDocs(collection(db,"visionaryGallery"));
-
-  let html = "";
-
-  snap.forEach(d=>{
-    const g = d.data();
-    html += `<img src="${g.image}">`;
-  });
+  const gal = await getDocs(collection(db,"visionaryGallery"));
 
   document.getElementById("gallery").innerHTML =
-    html || "<p>No images yet.</p>";
+  gal.docs.map(d=>`
+    <img src="${d.data().image}">
+  `).join("");
 }
 
-loadVisionary();
-loadGallery();
-
+load();
 </script>
 
 </body>
