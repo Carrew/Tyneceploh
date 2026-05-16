@@ -1,164 +1,190 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Visionary Admin - TEF</title>
-
+  <title>Visionary Image Admin - TEF</title>
   <style>
-    body {
-      font-family: system-ui;
-      background: #0b0b0f;
-      color: white;
-      padding: 20px;
+    body{
+      font-family:sans-serif;
+      background:#0b0b0f;
+      color:white;
+      padding:20px;
     }
 
-    .box {
-      max-width: 900px;
-      margin: auto;
-      background: rgba(255,255,255,0.05);
-      padding: 20px;
-      border-radius: 12px;
+    .container{
+      max-width:900px;
+      margin:auto;
     }
 
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-      background: rgba(255,255,255,0.08);
-      color: white;
+    .card{
+      background:rgba(255,255,255,0.06);
+      padding:15px;
+      border-radius:12px;
+      margin-bottom:15px;
+      backdrop-filter: blur(10px);
     }
 
-    button {
-      margin-top: 10px;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #800000, #ffc0cb);
-      color: white;
-      cursor: pointer;
+    input, button{
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+      border-radius:8px;
+      border:none;
     }
 
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 10px;
+    button{
+      background:linear-gradient(135deg,#800000,#ffc0cb);
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
     }
 
-    .gallery img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 10px;
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-top:15px;
     }
 
-    .toast {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 8px;
-      display: none;
+    img{
+      width:100%;
+      height:120px;
+      object-fit:cover;
+      border-radius:10px;
     }
 
-    .success { background: #1e7e34; }
-    .error { background: #a71d2a; }
-    .loading { background: #444; }
+    .msg{
+      margin-top:10px;
+      font-size:14px;
+      opacity:0.9;
+    }
   </style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="container">
 
-  <h2>Our Visionary Admin Panel</h2>
+  <h2>🌸 Visionary Image Control</h2>
 
-  <div id="toast" class="toast"></div>
+  <div class="card">
 
-  <input id="quote" placeholder="Main Quote">
+    <h3>Main Visionary Image</h3>
+    <input type="file" id="mainFile">
+    <button onclick="uploadMain()">Update Main Image</button>
+    <div class="msg" id="mainMsg"></div>
 
-  <textarea id="story" rows="6" placeholder="Add story block (one section)"></textarea>
+  </div>
 
-  <input type="file" id="mainImage">
+  <div class="card">
 
-  <input type="file" id="gallery" multiple>
+    <h3>Gallery Upload</h3>
+    <input type="file" id="galleryFile">
+    <button onclick="uploadGallery()">Add Gallery Image</button>
+    <div class="msg" id="galleryMsg"></div>
 
-  <button onclick="saveVision()">Save Visionary Page</button>
+  </div>
 
-  <h3>Preview Gallery</h3>
-  <div class="gallery" id="preview"></div>
+  <div class="card">
+    <h3>Gallery Preview</h3>
+    <div class="grid" id="gallery"></div>
+  </div>
 
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh"
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 });
 
 const db = getFirestore(app);
 
-const toast = document.getElementById("toast");
+const user = JSON.parse(localStorage.getItem("user"));
+if(!user || user.role !== "admin") location.href="login.html";
 
-function show(msg, type="loading"){
-  toast.style.display = "block";
-  toast.className = "toast " + type;
-  toast.innerText = msg;
-}
-
+// CLOUDINARY
 async function upload(file){
-  const form = new FormData();
-  form.append("file", file);
-  form.append("upload_preset", "Tyneceploh");
+  const fd = new FormData();
+  fd.append("file",file);
+  fd.append("upload_preset","Tyneceploh");
 
-  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
-    method: "POST",
-    body: form
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",{
+    method:"POST",
+    body:fd
   });
 
   const data = await res.json();
   return data.secure_url;
 }
 
-window.saveVision = async function(){
+// MAIN IMAGE
+window.uploadMain = async function(){
+  const file = document.getElementById("mainFile").files[0];
+  const msg = document.getElementById("mainMsg");
 
-  try {
-    show("Saving...", "loading");
+  msg.innerText = "Uploading...";
 
-    const quote = document.getElementById("quote").value;
-    const story = document.getElementById("story").value;
+  try{
+    const url = await upload(file);
 
-    const mainFile = document.getElementById("mainImage").files[0];
-    const galleryFiles = document.getElementById("gallery").files;
-
-    let mainImageUrl = "";
-    if(mainFile) mainImageUrl = await upload(mainFile);
-
-    let gallery = [];
-    for(let f of galleryFiles){
-      gallery.push(await upload(f));
-    }
-
-    await setDoc(doc(db,"visionary","main"), {
-      quote,
-      storyBlocks: [{type:"text", content: story}],
-      mainImage: mainImageUrl,
-      gallery,
-      updatedAt: Date.now(),
-      updatedBy: "admin"
+    await addDoc(collection(db,"visionaryMain"),{
+      url,
+      createdAt:Date.now()
     });
 
-    show("Visionary page updated successfully", "success");
-
-  } catch(err){
-    console.error(err);
-    show("Error updating visionary page", "error");
+    msg.innerText = "Main image updated ✔";
+  }catch(e){
+    msg.innerText = "Upload failed";
   }
 };
+
+// GALLERY
+window.uploadGallery = async function(){
+  const file = document.getElementById("galleryFile").files[0];
+  const msg = document.getElementById("galleryMsg");
+
+  msg.innerText = "Uploading...";
+
+  try{
+    const url = await upload(file);
+
+    await addDoc(collection(db,"visionaryGallery"),{
+      url,
+      createdAt:Date.now()
+    });
+
+    msg.innerText = "Added to gallery ✔";
+    loadGallery();
+  }catch(e){
+    msg.innerText = "Upload failed";
+  }
+};
+
+// LOAD GALLERY
+async function loadGallery(){
+  const snap = await getDocs(collection(db,"visionaryGallery"));
+
+  document.getElementById("gallery").innerHTML =
+    snap.docs.map(d=>`
+      <div>
+        <img src="${d.data().url}">
+      </div>
+    `).join("");
+}
+
+loadGallery();
 
 </script>
 
