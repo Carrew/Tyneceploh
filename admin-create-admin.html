@@ -2,81 +2,79 @@
 <html>
 <head>
   <title>Create Admin - TEF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
     }
 
-    .box{
-      max-width:450px;
-      margin:auto;
-      background:white;
+    body{
+      font-family:system-ui;
+      background:radial-gradient(circle at top,#1a0010,var(--bg));
+      color:white;
       padding:20px;
-      border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+      margin:0;
     }
 
     h2{
-      margin-bottom:15px;
+      text-align:center;
+      color:var(--pink);
+    }
+
+    .box{
+      max-width:500px;
+      margin:auto;
+      background:var(--card);
+      padding:20px;
+      border-radius:14px;
+      backdrop-filter:blur(10px);
     }
 
     input{
       width:100%;
       padding:12px;
-      margin-top:10px;
-      border:1px solid #ccc;
-      border-radius:8px;
-      outline:none;
+      margin:8px 0;
+      border:none;
+      border-radius:10px;
+      background:rgba(255,255,255,0.08);
+      color:white;
+      box-sizing:border-box;
+    }
+
+    input::placeholder{
+      color:#ddd;
     }
 
     button{
       width:100%;
       padding:12px;
-      margin-top:15px;
       border:none;
-      border-radius:8px;
-      background:#2c3e50;
+      border-radius:10px;
+      margin-top:10px;
+      cursor:pointer;
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
       color:white;
       font-weight:bold;
-      cursor:pointer;
     }
 
-    button:hover{
-      background:#1f2d3a;
-    }
-
-    .msg{
+    .result{
       margin-top:15px;
       padding:12px;
-      border-radius:8px;
-      font-size:14px;
+      border-radius:10px;
+      background:rgba(255,255,255,0.08);
+      line-height:1.7;
     }
 
-    .success{
-      background:#d4edda;
-      color:#155724;
+    .id{
+      color:#ffc0cb;
+      font-weight:bold;
     }
 
-    .error{
-      background:#f8d7da;
-      color:#721c24;
-    }
-
-    .small{
-      font-size:12px;
-      color:#666;
-      margin-top:8px;
-    }
-
-    .pin-box{
-      margin-top:15px;
-      padding:10px;
-      background:#fff3cd;
-      border-radius:8px;
+    .pin{
+      color:#00ffae;
       font-weight:bold;
     }
   </style>
@@ -84,14 +82,17 @@
 
 <body>
 
+<h2>👑 Create Admin</h2>
+
 <div class="box">
 
-  <h2>Create New Admin</h2>
-
   <input id="name" placeholder="Admin Name">
-  <input id="pin" placeholder="Temporary PIN (4–8 digits)" type="password">
 
-  <button onclick="createAdmin()">Create Admin</button>
+  <input id="pin" placeholder="Temporary PIN">
+
+  <button onclick="createAdmin()">
+    Create Admin
+  </button>
 
   <div id="result"></div>
 
@@ -99,95 +100,119 @@
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 });
 
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
-if (!user || user.role !== "admin") {
+if(!user || user.role !== "admin"){
   location.href = "login.html";
 }
 
-// HASH FUNCTION
-async function sha256(text) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return [...new Uint8Array(hashBuffer)]
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+// GENERATE ADMIN ID
+function generateAdminId(count){
+  return `ADM${Date.now().toString().slice(-4)}${count}`;
 }
 
-// ID GENERATOR
-function generateAdminId(count) {
-  return `ADM${String(count + 1).padStart(3, "0")}`;
+// RANDOM PIN
+function generatePin(){
+  return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-window.createAdmin = async function () {
+window.createAdmin = async function(){
 
   const name = document.getElementById("name").value.trim();
-  const pin = document.getElementById("pin").value.trim();
+
+  let pin = document.getElementById("pin").value.trim();
+
   const result = document.getElementById("result");
 
-  result.innerHTML = "";
-
-  if (!name || !pin) {
-    result.innerHTML = `<div class="msg error">Fill all fields</div>`;
+  if(!name){
+    alert("Enter admin name");
     return;
   }
 
-  if (pin.length < 4) {
-    result.innerHTML = `<div class="msg error">PIN too short</div>`;
-    return;
-  }
+  try{
 
-  try {
+    result.innerHTML = "Creating admin...";
 
-    result.innerHTML = `<div class="msg">Creating admin...</div>`;
+    const snap = await getDocs(collection(db,"users"));
 
-    const snapshot = await getDocs(collection(db, "users"));
-    const adminCount = snapshot.docs.filter(d => d.data().role === "admin").length;
+    const adminCount =
+      snap.docs.filter(d=>d.data().role === "admin").length;
 
-    const id = generateAdminId(adminCount);
-    const pinHash = await sha256(pin);
+    const userId = generateAdminId(adminCount);
+
+    // auto generate pin if empty
+    if(!pin){
+      pin = generatePin();
+    }
 
     const admin = {
-      id,
+
+      userId,
+      pin,
+
       name,
-      role: "admin",
-      pinHash,
-      createdBy: user.userId,
-      createdAt: Date.now()
+
+      role:"admin",
+
+      createdBy:user.userId,
+
+      createdAt:Date.now()
+
     };
 
-    await addDoc(collection(db, "users"), admin);
+    await addDoc(collection(db,"users"),admin);
 
     result.innerHTML = `
-      <div class="msg success">
-        Admin created successfully
-      </div>
+      <div class="result">
 
-      <div class="pin-box">
-        Admin ID: ${id} <br>
-        Temporary PIN: ${pin}
+        ✅ Admin created successfully
+
+        <br><br>
+
+        ID:
+        <span class="id">${userId}</span>
+
+        <br>
+
+        PIN:
+        <span class="pin">${pin}</span>
+
       </div>
     `;
 
     document.getElementById("name").value = "";
     document.getElementById("pin").value = "";
 
-  } catch (err) {
+  }catch(err){
+
     console.error(err);
-    result.innerHTML = `<div class="msg error">Failed to create admin</div>`;
+
+    result.innerHTML = `
+      <div class="result">
+        ❌ Failed to create admin
+      </div>
+    `;
   }
+
 };
 
 </script>
