@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Visionary Admin - TEF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body{
@@ -13,11 +12,15 @@
     }
 
     .box{
-      max-width:700px;
+      max-width:800px;
       margin:auto;
-      background:rgba(255,255,255,0.05);
+    }
+
+    .card{
+      background:rgba(255,255,255,0.06);
       padding:20px;
       border-radius:16px;
+      margin-bottom:15px;
       border:1px solid rgba(255,255,255,0.1);
     }
 
@@ -32,26 +35,20 @@
     button{
       background:linear-gradient(135deg,#800000,#ffc0cb);
       color:white;
-      font-weight:bold;
       cursor:pointer;
     }
 
-    .status{
-      margin-top:15px;
+    .msg{
+      margin-top:10px;
       padding:10px;
-      border-radius:10px;
       display:none;
+      border-radius:10px;
     }
 
-    .success{background:#1f6f3f}
-    .loading{background:#1f4f6f}
-    .error{background:#6f1f1f}
+    .success{background:#1e3d2b}
+    .error{background:#3d1e1e}
+    .loading{background:#1e2a3d}
 
-    img{
-      width:100%;
-      margin-top:15px;
-      border-radius:12px;
-    }
   </style>
 </head>
 
@@ -59,15 +56,17 @@
 
 <div class="box">
 
-<h2>Update Visionary Page</h2>
+  <h2>Update Visionary Image</h2>
 
-<input type="file" id="image">
+  <div class="card">
 
-<button onclick="upload()">Upload Visionary Image</button>
+    <input type="file" id="img">
 
-<div id="status" class="status"></div>
+    <button onclick="upload()">Upload / Update</button>
 
-<img id="preview">
+    <div id="msg" class="msg"></div>
+
+  </div>
 
 </div>
 
@@ -83,24 +82,23 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const statusBox = document.getElementById("status");
-
-function show(msg,type){
-  statusBox.style.display="block";
-  statusBox.className="status "+type;
-  statusBox.innerText=msg;
+function msg(type,text){
+  const m=document.getElementById("msg");
+  m.style.display="block";
+  m.className="msg "+type;
+  m.innerText=text;
 }
 
 async function uploadCloud(file){
 
-  const form = new FormData();
-  form.append("file",file);
-  form.append("upload_preset","Tyneceploh");
+  const fd = new FormData();
+  fd.append("file",file);
+  fd.append("upload_preset","Tyneceploh");
 
-  const res = await fetch(
-    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
-    {method:"POST",body:form}
-  );
+  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",{
+    method:"POST",
+    body:fd
+  });
 
   const data = await res.json();
   return data.secure_url;
@@ -108,16 +106,16 @@ async function uploadCloud(file){
 
 window.upload = async function(){
 
-  const file = document.getElementById("image").files[0];
+  const file = document.getElementById("img").files[0];
 
   if(!file){
-    show("Select image first","error");
+    msg("error","Select an image first");
     return;
   }
 
-  try{
+  msg("loading","Uploading...");
 
-    show("Uploading...","loading");
+  try{
 
     const url = await uploadCloud(file);
 
@@ -126,12 +124,11 @@ window.upload = async function(){
       updatedAt:Date.now()
     });
 
-    document.getElementById("preview").src=url;
-
-    show("Visionary image updated successfully","success");
+    msg("success","Visionary image updated successfully");
 
   }catch(e){
-    show("Upload failed","error");
+    console.log(e);
+    msg("error","Upload failed");
   }
 };
 
