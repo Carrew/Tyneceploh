@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Visionary Admin - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body{
@@ -11,16 +12,16 @@
       padding:20px;
     }
 
-    .card{
-      max-width:600px;
+    .box{
+      max-width:700px;
       margin:auto;
-      background:rgba(255,255,255,0.06);
+      background:rgba(255,255,255,0.05);
       padding:20px;
-      border-radius:20px;
+      border-radius:16px;
       border:1px solid rgba(255,255,255,0.1);
     }
 
-    input, button{
+    input,button{
       width:100%;
       padding:12px;
       margin-top:10px;
@@ -35,81 +36,88 @@
       cursor:pointer;
     }
 
-    .msg{
+    .status{
       margin-top:15px;
       padding:10px;
       border-radius:10px;
       display:none;
     }
 
-    .success{background:#1f6f3a;}
-    .error{background:#7a1f1f;}
-    .loading{background:#1f3c6f;}
+    .success{background:#1f6f3f}
+    .loading{background:#1f4f6f}
+    .error{background:#6f1f1f}
+
+    img{
+      width:100%;
+      margin-top:15px;
+      border-radius:12px;
+    }
   </style>
 </head>
 
 <body>
 
-<div class="card">
+<div class="box">
 
-  <h2>Visionary Image Manager</h2>
+<h2>Update Visionary Page</h2>
 
-  <input type="file" id="image">
+<input type="file" id="image">
 
-  <button onclick="uploadMain()">Update Main Image</button>
+<button onclick="upload()">Upload Visionary Image</button>
 
-  <hr>
+<div id="status" class="status"></div>
 
-  <input type="file" id="galleryImage">
-
-  <button onclick="uploadGallery()">Add Gallery Image</button>
-
-  <div id="msg" class="msg"></div>
+<img id="preview">
 
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"YOUR_KEY",
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 });
 
 const db = getFirestore(app);
 
-const msg = document.getElementById("msg");
+const statusBox = document.getElementById("status");
 
-function show(type,text){
-  msg.style.display="block";
-  msg.className="msg "+type;
-  msg.innerText=text;
+function show(msg,type){
+  statusBox.style.display="block";
+  statusBox.className="status "+type;
+  statusBox.innerText=msg;
 }
 
 async function uploadCloud(file){
+
   const form = new FormData();
   form.append("file",file);
   form.append("upload_preset","Tyneceploh");
 
   const res = await fetch(
     "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
-    {method:"POST", body:form}
+    {method:"POST",body:form}
   );
 
   const data = await res.json();
   return data.secure_url;
 }
 
-// MAIN IMAGE
-window.uploadMain = async function(){
+window.upload = async function(){
+
   const file = document.getElementById("image").files[0];
-  if(!file) return show("error","Select image first");
+
+  if(!file){
+    show("Select image first","error");
+    return;
+  }
 
   try{
-    show("loading","Uploading...");
+
+    show("Uploading...","loading");
 
     const url = await uploadCloud(file);
 
@@ -118,32 +126,12 @@ window.uploadMain = async function(){
       updatedAt:Date.now()
     });
 
-    show("success","Main image updated");
+    document.getElementById("preview").src=url;
+
+    show("Visionary image updated successfully","success");
 
   }catch(e){
-    show("error","Upload failed");
-  }
-};
-
-// GALLERY
-window.uploadGallery = async function(){
-  const file = document.getElementById("galleryImage").files[0];
-  if(!file) return show("error","Select image first");
-
-  try{
-    show("loading","Uploading...");
-
-    const url = await uploadCloud(file);
-
-    await addDoc(collection(db,"visionaryGallery"),{
-      image:url,
-      createdAt:Date.now()
-    });
-
-    show("success","Gallery image added");
-
-  }catch(e){
-    show("error","Upload failed");
+    show("Upload failed","error");
   }
 };
 
