@@ -4,68 +4,66 @@
   <title>School Gallery - TEF</title>
 
   <style>
-    body{
-      margin:0;
-      font-family:system-ui;
-      background:#0b0b0f;
-      color:white;
+    body {
+      font-family: system-ui;
+      background: #0b0b0f;
+      color: white;
+      padding: 20px;
     }
 
-    h2{
-      text-align:center;
-      padding:20px;
-      color:#ffc0cb;
+    .group {
+      margin-bottom: 30px;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-      gap:15px;
-      padding:20px;
+    h2 {
+      color: #ffc0cb;
     }
 
-    .card{
-      background:rgba(255,255,255,0.06);
-      border-radius:12px;
-      padding:10px;
-      cursor:pointer;
-      backdrop-filter:blur(10px);
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
     }
 
-    img{
-      width:100%;
-      border-radius:10px;
+    img {
+      width: 100%;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
     }
 
-    .viewer{
-      display:none;
-      padding:20px;
+    img:hover {
+      transform: scale(1.03);
     }
 
-    .back{
-      background:#800000;
-      padding:10px;
-      border:none;
-      color:white;
-      border-radius:8px;
-      cursor:pointer;
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal img {
+      width: 80%;
     }
   </style>
 </head>
 
 <body>
 
-<h2>📸 School Gallery</h2>
+<h1>📸 School Gallery</h1>
 
-<div id="folders" class="grid"></div>
+<div id="list"></div>
 
-<div id="viewer" class="viewer">
-  <button class="back" onclick="back()">← Back</button>
-  <h3 id="title"></h3>
-  <div id="images" class="grid"></div>
+<div class="modal" id="modal" onclick="this.style.display='none'">
+  <img id="modalImg">
 </div>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
@@ -81,52 +79,41 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-let folders = [];
-let images = [];
-
 async function load(){
-
-  const fSnap = await getDocs(collection(db,"galleryFolders"));
+  const gSnap = await getDocs(collection(db,"galleryGroups"));
   const iSnap = await getDocs(collection(db,"galleryImages"));
 
-  folders = [];
-  images = [];
+  const groups = gSnap.docs.map(d => ({id:d.id, ...d.data()}));
+  const images = iSnap.docs.map(d => d.data());
 
-  fSnap.forEach(d=>{
-    folders.push({id:d.id,...d.data()});
-  });
+  let html = "";
 
-  iSnap.forEach(d=>{
-    images.push(d.data());
-  });
+  groups.forEach(g => {
 
-  document.getElementById("folders").innerHTML =
-    folders.map(f=>`
-      <div class="card" onclick="openFolder('${f.id}','${f.title}')">
-        <b>${f.title}</b>
+    const imgs = images.filter(i => i.groupId === g.id);
+
+    html += `
+      <div class="group">
+        <h2>${g.name}</h2>
+        <div class="grid">
+          ${imgs.map(i => `
+            <img src="${i.imageUrl}" onclick="openImg('${i.imageUrl}')">
+          `).join("")}
+        </div>
       </div>
-    `).join("");
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html;
 }
 
-window.openFolder = function(id,title){
-
-  document.getElementById("viewer").style.display="block";
-  document.getElementById("folders").style.display="none";
-
-  document.getElementById("title").innerText = title;
-
-  const imgs = images.filter(i=>i.folderId===id);
-
-  document.getElementById("images").innerHTML =
-    imgs.map(i=>`<img src="${i.imageUrl}">`).join("");
-}
-
-window.back = function(){
-  document.getElementById("viewer").style.display="none";
-  document.getElementById("folders").style.display="grid";
-}
+window.openImg = function(url){
+  document.getElementById("modalImg").src = url;
+  document.getElementById("modal").style.display = "flex";
+};
 
 load();
+
 </script>
 
 </body>
