@@ -1,126 +1,240 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Honor Rules Admin - TEF</title>
+  <title>TEF Academic Report Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+
     :root{
       --maroon:#800000;
       --pink:#ffc0cb;
-      --bg:#0b0b0f;
-      --card:rgba(255,255,255,0.06);
-      --text:#fff;
-      --green:#27ae60;
-      --red:#c0392b;
+      --blue:#0056b3;
+      --red:#dc3545;
+      --green:#28a745;
+      --bg:#f4f6f9;
+      --card:#ffffff;
+      --text:#2c3e50;
+      --muted:#7f8c8d;
+      --border:#e5e7eb;
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
     }
 
     body{
-      margin:0;
-      font-family:system-ui;
-      background:radial-gradient(circle at top,#1a0010,var(--bg));
-      color:white;
+      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+      background:var(--bg);
       padding:20px;
+      color:var(--text);
     }
 
-    h2{
-      text-align:center;
-      color:var(--pink);
-      margin-bottom:20px;
-      letter-spacing:1px;
-    }
-
-    .box{
-      max-width:750px;
+    .container{
+      max-width:1300px;
       margin:auto;
-      background:var(--card);
-      backdrop-filter:blur(10px);
-      padding:20px;
-      border-radius:16px;
-      box-shadow:0 20px 60px rgba(0,0,0,0.5);
-      border:1px solid rgba(255,255,255,0.08);
     }
 
-    .rule-box{
-      margin-top:10px;
-      background:rgba(255,255,255,0.04);
-      padding:15px;
-      border-radius:14px;
-      border-left:4px solid var(--pink);
+    .header{
+      margin-bottom:20px;
     }
 
-    h3{
-      margin-top:0;
-      color:var(--pink);
+    .header h1{
+      font-size:28px;
+      color:var(--maroon);
+      margin-bottom:5px;
     }
 
-    .row{
+    .header p{
+      color:var(--muted);
+    }
+
+    .grid{
       display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-bottom:10px;
+      grid-template-columns:350px 1fr;
+      gap:20px;
     }
 
-    input{
-      padding:12px;
-      border-radius:10px;
-      border:none;
-      outline:none;
-      background:rgba(255,255,255,0.08);
-      color:white;
-      transition:0.3s;
+    .card{
+      background:var(--card);
+      border-radius:18px;
+      padding:20px;
+      box-shadow:0 2px 12px rgba(0,0,0,0.06);
+      border:1px solid var(--border);
     }
 
-    input:focus{
-      box-shadow:0 0 0 2px var(--pink);
-      background:rgba(255,255,255,0.12);
+    .card h3{
+      margin-bottom:15px;
+      color:var(--maroon);
+    }
+
+    select,
+    button{
+      width:100%;
+      padding:14px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      margin-bottom:14px;
+      font-size:14px;
     }
 
     button{
-      width:100%;
-      padding:12px;
-      margin-top:12px;
-      border:none;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:bold;
+      background:var(--maroon);
       color:white;
-      background:linear-gradient(135deg,var(--maroon),var(--pink));
-      transition:0.3s;
+      border:none;
+      font-weight:bold;
+      cursor:pointer;
+      transition:0.2s;
     }
 
     button:hover{
-      transform:translateY(-2px);
+      opacity:0.92;
     }
 
-    button:active{
-      transform:scale(0.98);
+    .info-box{
+      background:#f8f9fa;
+      border-radius:12px;
+      padding:14px;
+      margin-top:12px;
+      border:1px solid #eee;
     }
 
-    .msg{
-      margin-top:15px;
-      padding:12px;
-      border-radius:10px;
+    .info-box p{
+      margin-bottom:8px;
       font-size:14px;
-      text-align:center;
+    }
+
+    .status{
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:bold;
+      display:inline-block;
     }
 
     .ok{
-      background:rgba(39,174,96,0.2);
-      border:1px solid var(--green);
-      color:#b8f5c9;
+      background:#d4edda;
+      color:#155724;
     }
 
     .bad{
-      background:rgba(192,57,43,0.2);
-      border:1px solid var(--red);
-      color:#ffb3b3;
+      background:#f8d7da;
+      color:#721c24;
     }
 
-    .hint{
+    .log{
+      margin-top:15px;
+      background:#f8f9fa;
+      border-radius:12px;
+      padding:12px;
+      max-height:250px;
+      overflow:auto;
+      font-size:13px;
+      border:1px solid #eee;
+    }
+
+    .preview-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:15px;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .mini-stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:15px;
+      margin-bottom:20px;
+    }
+
+    .stat{
+      background:#f8f9fa;
+      padding:15px;
+      border-radius:14px;
+      border:1px solid #eee;
+    }
+
+    .stat h4{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:8px;
+    }
+
+    .stat strong{
+      font-size:22px;
+      color:var(--maroon);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:900px;
+    }
+
+    th,
+    td{
+      padding:12px;
+      border:1px solid #eee;
+      text-align:center;
+      font-size:14px;
+    }
+
+    th{
+      background:var(--maroon);
+      color:white;
+      position:sticky;
+      top:0;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      border-radius:14px;
+    }
+
+    .blue{
+      color:var(--blue);
+      font-weight:bold;
+    }
+
+    .red{
+      color:var(--red);
+      font-weight:bold;
+    }
+
+    .honor{
+      background:#d4edda;
+      color:#155724;
+      padding:6px 10px;
+      border-radius:999px;
       font-size:12px;
-      opacity:0.7;
-      margin-top:6px;
+      font-weight:bold;
+    }
+
+    .no-honor{
+      color:#999;
+      font-size:12px;
+    }
+
+    .subject-cell{
+      text-align:left;
+      font-weight:bold;
+    }
+
+    .loading{
+      opacity:0.6;
+      pointer-events:none;
+    }
+
+    @media(max-width:1000px){
+
+      .grid{
+        grid-template-columns:1fr;
+      }
+
     }
 
   </style>
@@ -128,54 +242,146 @@
 
 <body>
 
-<h2>Honor Rules Control Panel</h2>
+<div class="container">
 
-<div class="box">
+  <div class="header">
+    <h1>TEF Academic Report Generator</h1>
+    <p>
+      Generate structured academic datasets for periods, semesters and yearly reports.
+    </p>
+  </div>
 
-  <div class="rule-box">
+  <div class="grid">
 
-    <h3>Score Bands Configuration</h3>
+    <!-- LEFT -->
+    <div class="card">
 
-    <div class="hint">
-      Define academic performance ranges for classification
+      <h3>Generate Report</h3>
+
+      <select id="reportType">
+        <option value="">Select Report Type</option>
+        <option value="period">Period Report</option>
+        <option value="semester">Semester Report</option>
+        <option value="yearly">Yearly Report</option>
+      </select>
+
+      <select id="classSelect">
+        <option value="">Select Class</option>
+      </select>
+
+      <select id="periodSelect" style="display:none;">
+        <option value="">Select Period</option>
+        <option>1st Period</option>
+        <option>2nd Period</option>
+        <option>3rd Period</option>
+        <option>Semester Exam</option>
+        <option>4th Period</option>
+        <option>5th Period</option>
+        <option>6th Period</option>
+        <option>Final Exam</option>
+      </select>
+
+      <select id="semesterSelect" style="display:none;">
+        <option value="">Select Semester</option>
+        <option value="Semester 1">Semester 1</option>
+        <option value="Semester 2">Semester 2</option>
+      </select>
+
+      <button id="generateBtn">
+        Generate Academic Dataset
+      </button>
+
+      <div class="info-box" id="detailsBox">
+
+        <p><strong>Report Type:</strong> --</p>
+        <p><strong>Class:</strong> --</p>
+        <p><strong>Status:</strong> Waiting</p>
+
+      </div>
+
+      <div class="log" id="log">
+        Waiting...
+      </div>
+
     </div>
 
-    <div class="row">
-      <input id="propMin" placeholder="Proprietor Min (e.g 90)">
-      <input id="propMax" placeholder="Proprietor Max (e.g 100)">
-    </div>
+    <!-- RIGHT -->
+    <div class="card">
 
-    <div class="row">
-      <input id="prinMin" placeholder="Principal Min (e.g 85)">
-      <input id="prinMax" placeholder="Principal Max (e.g 89.9)">
-    </div>
+      <div class="preview-header">
 
-    <div class="row">
-      <input id="honMin" placeholder="Honor Min (e.g 80)">
-      <input id="honMax" placeholder="Honor Max (e.g 84.9)">
+        <div>
+          <h3>Generation Preview</h3>
+          <p style="color:#777;font-size:13px;">
+            Snapshot preview before saving into database
+          </p>
+        </div>
+
+      </div>
+
+      <div class="mini-stats">
+
+        <div class="stat">
+          <h4>Total Students</h4>
+          <strong id="studentCount">0</strong>
+        </div>
+
+        <div class="stat">
+          <h4>Class Average</h4>
+          <strong id="classAverage">0</strong>
+        </div>
+
+        <div class="stat">
+          <h4>Honor Students</h4>
+          <strong id="honorCount">0</strong>
+        </div>
+
+      </div>
+
+      <div class="table-wrap">
+
+        <table id="previewTable">
+
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Student</th>
+              <th>Subjects Breakdown</th>
+              <th>Main Avg</th>
+              <th>Honor</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td colspan="5">
+                No preview generated
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
     </div>
 
   </div>
-
-  <button onclick="saveRules()">Save Rules</button>
-
-  <button onclick="loadRules()" style="opacity:0.9; margin-top:8px;">
-    Load Current Rules
-  </button>
-
-  <div id="msg"></div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
-  doc,
-  setDoc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  collection,
+  getDocs,
+  addDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -185,56 +391,508 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const msg = document.getElementById("msg");
+const PERIODS = [
+  "1st Period",
+  "2nd Period",
+  "3rd Period",
+  "Semester Exam",
+  "4th Period",
+  "5th Period",
+  "6th Period",
+  "Final Exam"
+];
 
-// SAVE RULES
-window.saveRules = async function(){
+const SEMESTERS = {
+  "Semester 1":[
+    "1st Period",
+    "2nd Period",
+    "3rd Period",
+    "Semester Exam"
+  ],
 
-  const rules = {
-    bands:[
-      { name:"Proprietor", min:Number(propMin.value), max:Number(propMax.value) },
-      { name:"Principal", min:Number(prinMin.value), max:Number(prinMax.value) },
-      { name:"Honor", min:Number(honMin.value), max:Number(honMax.value) }
-    ],
-    updatedAt:Date.now()
+  "Semester 2":[
+    "4th Period",
+    "5th Period",
+    "6th Period",
+    "Final Exam"
+  ]
+};
+
+const reportType = document.getElementById("reportType");
+const classSelect = document.getElementById("classSelect");
+const periodSelect = document.getElementById("periodSelect");
+const semesterSelect = document.getElementById("semesterSelect");
+const generateBtn = document.getElementById("generateBtn");
+
+let results = [];
+let users = [];
+
+function log(msg){
+  document.getElementById("log").innerHTML += `<div>${msg}</div>`;
+}
+
+function scoreClass(score){
+  return Number(score) >= 70 ? "blue" : "red";
+}
+
+function getHonor(avg, allScores){
+
+  const failed = allScores.some(s => Number(s) < 70);
+
+  if(failed) return "";
+
+  if(avg >= 90) return "Proprietor List";
+  if(avg >= 85) return "Principal List";
+  if(avg >= 80) return "Honor Roll";
+
+  return "";
+}
+
+reportType.onchange = () => {
+
+  periodSelect.style.display = "none";
+  semesterSelect.style.display = "none";
+
+  if(reportType.value === "period"){
+    periodSelect.style.display = "block";
+  }
+
+  if(reportType.value === "semester"){
+    semesterSelect.style.display = "block";
+  }
+
+  if(reportType.value === "yearly"){
+    semesterSelect.style.display = "none";
+  }
+
+};
+
+async function loadData(){
+
+  const usersSnap = await getDocs(collection(db,"users"));
+
+  users = [];
+
+  const classes = new Set();
+
+  usersSnap.forEach(doc=>{
+
+    const data = doc.data();
+
+    users.push(data);
+
+    if(data.class){
+      classes.add(data.class);
+    }
+
+  });
+
+  classSelect.innerHTML = `
+    <option value="">Select Class</option>
+    ${Array.from(classes).sort().map(c=>`
+      <option value="${c}">
+        ${c}
+      </option>
+    `).join("")}
+  `;
+
+  const resultsSnap = await getDocs(collection(db,"results"));
+
+  results = [];
+
+  resultsSnap.forEach(doc=>{
+    results.push(doc.data());
+  });
+
+}
+
+function buildPreview(students){
+
+  const tbody = document.querySelector("#previewTable tbody");
+
+  if(students.length === 0){
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5">
+          No data available
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  tbody.innerHTML = students.map(s=>{
+
+    const subjectsHTML = Object.entries(s.subjects)
+    .map(([subject,data])=>{
+
+      return `
+        <div style="margin-bottom:12px;text-align:left;">
+
+          <div class="subject-cell">
+            ${subject}
+          </div>
+
+          ${data.breakdown.map(item=>`
+            <div class="${scoreClass(item.score)}">
+              ${item.period}: ${item.score}
+            </div>
+          `).join("")}
+
+          <div style="margin-top:5px;font-weight:bold;">
+            Avg: ${data.average}
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+
+    return `
+      <tr>
+
+        <td>#${s.rank}</td>
+
+        <td>
+          <strong>${s.studentName}</strong>
+          <br>
+          <small>${s.studentId}</small>
+        </td>
+
+        <td style="text-align:left;">
+          ${subjectsHTML}
+        </td>
+
+        <td>
+          <strong>${s.mainAverage}</strong>
+        </td>
+
+        <td>
+          ${
+            s.honor
+            ? `<span class="honor">${s.honor}</span>`
+            : `<span class="no-honor">No Honor</span>`
+          }
+        </td>
+
+      </tr>
+    `;
+
+  }).join("");
+
+  document.getElementById("studentCount").innerText =
+    students.length;
+
+  const classAvg =
+    (
+      students.reduce((a,b)=>a + b.mainAverage,0)
+      / students.length
+    ).toFixed(1);
+
+  document.getElementById("classAverage").innerText =
+    classAvg;
+
+  document.getElementById("honorCount").innerText =
+    students.filter(s=>s.honor).length;
+
+}
+
+function buildPeriodReport(className, period){
+
+  const filtered = results.filter(r=>
+    r.class === className &&
+    r.period === period
+  );
+
+  return processStudents(filtered,{
+    reportType:"period",
+    period,
+    semester:
+      SEMESTERS["Semester 1"].includes(period)
+      ? "Semester 1"
+      : "Semester 2"
+  });
+
+}
+
+function buildSemesterReport(className, semester){
+
+  const neededPeriods = SEMESTERS[semester];
+
+  const filtered = results.filter(r=>
+    r.class === className &&
+    neededPeriods.includes(r.period)
+  );
+
+  const available = [...new Set(filtered.map(r=>r.period))];
+
+  const missing = neededPeriods.filter(p=>
+    !available.includes(p)
+  );
+
+  if(missing.length){
+
+    alert(
+      `Semester invalid.\nMissing:\n${missing.join(", ")}`
+    );
+
+    return null;
+  }
+
+  return processStudents(filtered,{
+    reportType:"semester",
+    semester,
+    periods:neededPeriods
+  });
+
+}
+
+function buildYearlyReport(className){
+
+  const filtered = results.filter(r=>
+    r.class === className
+  );
+
+  const needed = [...PERIODS];
+
+  const available = [...new Set(filtered.map(r=>r.period))];
+
+  const missing = needed.filter(p=>
+    !available.includes(p)
+  );
+
+  if(missing.length){
+
+    alert(
+      `Yearly invalid.\nMissing:\n${missing.join(", ")}`
+    );
+
+    return null;
+  }
+
+  return processStudents(filtered,{
+    reportType:"yearly"
+  });
+
+}
+
+function processStudents(data, meta){
+
+  const map = {};
+
+  data.forEach(r=>{
+
+    if(!map[r.studentId]){
+
+      map[r.studentId] = {
+
+        studentId:r.studentId,
+        studentName:r.studentName,
+        class:r.class,
+        subjects:{}
+
+      };
+
+    }
+
+    if(!map[r.studentId].subjects[r.subject]){
+
+      map[r.studentId].subjects[r.subject] = {
+        breakdown:[]
+      };
+
+    }
+
+    map[r.studentId]
+    .subjects[r.subject]
+    .breakdown
+    .push({
+      period:r.period,
+      score:Number(r.score)
+    });
+
+  });
+
+  const students = Object.values(map);
+
+  students.forEach(student=>{
+
+    const subjectAverages = [];
+    const allScores = [];
+
+    Object.entries(student.subjects)
+    .forEach(([subject,data])=>{
+
+      const sum =
+        data.breakdown.reduce((a,b)=>a+b.score,0);
+
+      const avg =
+        sum / data.breakdown.length;
+
+      data.average =
+        Number(avg.toFixed(1));
+
+      subjectAverages.push(avg);
+
+      data.breakdown.forEach(i=>{
+        allScores.push(i.score);
+      });
+
+    });
+
+    const mainAvg =
+      subjectAverages.reduce((a,b)=>a+b,0)
+      / subjectAverages.length;
+
+    student.mainAverage =
+      Number(mainAvg.toFixed(1));
+
+    student.honor =
+      getHonor(mainAvg,allScores);
+
+  });
+
+  students.sort((a,b)=>
+    b.mainAverage - a.mainAverage
+  );
+
+  students.forEach((s,i)=>{
+    s.rank = i + 1;
+  });
+
+  return {
+    meta,
+    students
   };
 
-  if(isNaN(rules.bands[0].min) || isNaN(rules.bands[0].max)){
-    return show("Fix invalid numbers first", "bad");
-  }
-
-  await setDoc(doc(db,"honorRules","main"),rules);
-
-  show("Rules saved successfully", "ok");
-};
-
-// LOAD RULES
-window.loadRules = async function(){
-
-  const snap = await getDoc(doc(db,"honorRules","main"));
-
-  if(!snap.exists()){
-    return show("No rules found yet", "bad");
-  }
-
-  const r = snap.data();
-
-  propMin.value = r.bands[0].min;
-  propMax.value = r.bands[0].max;
-
-  prinMin.value = r.bands[1].min;
-  prinMax.value = r.bands[1].max;
-
-  honMin.value = r.bands[2].min;
-  honMax.value = r.bands[2].max;
-
-  show("Rules loaded", "ok");
-};
-
-function show(text,type){
-  msg.className = "msg " + type;
-  msg.textContent = text;
 }
+
+generateBtn.onclick = async () => {
+
+  const type = reportType.value;
+  const className = classSelect.value;
+
+  if(!type || !className){
+
+    alert("Complete selections");
+
+    return;
+  }
+
+  generateBtn.classList.add("loading");
+
+  let report = null;
+
+  if(type === "period"){
+
+    const period = periodSelect.value;
+
+    if(!period){
+      alert("Select period");
+      generateBtn.classList.remove("loading");
+      return;
+    }
+
+    report = buildPeriodReport(className,period);
+
+  }
+
+  if(type === "semester"){
+
+    const semester = semesterSelect.value;
+
+    if(!semester){
+      alert("Select semester");
+      generateBtn.classList.remove("loading");
+      return;
+    }
+
+    report = buildSemesterReport(
+      className,
+      semester
+    );
+
+  }
+
+  if(type === "yearly"){
+
+    report = buildYearlyReport(className);
+
+  }
+
+  if(!report){
+    generateBtn.classList.remove("loading");
+    return;
+  }
+
+  buildPreview(report.students);
+
+  const classAverage =
+    (
+      report.students.reduce((a,b)=>
+        a + b.mainAverage
+      ,0)
+      / report.students.length
+    ).toFixed(1);
+
+  await addDoc(collection(db,"academic_reports"),{
+
+    reportType:type,
+
+    class:className,
+
+    period:
+      report.meta.period || null,
+
+    semester:
+      report.meta.semester || null,
+
+    periods:
+      report.meta.periods || [],
+
+    students:report.students,
+
+    totalStudents:report.students.length,
+
+    classAverage:Number(classAverage),
+
+    generatedAt:Date.now()
+
+  });
+
+  document.getElementById("detailsBox").innerHTML = `
+
+    <p>
+      <strong>Report Type:</strong>
+      ${type}
+    </p>
+
+    <p>
+      <strong>Class:</strong>
+      ${className}
+    </p>
+
+    <p>
+      <strong>Status:</strong>
+      <span class="status ok">
+        Generated Successfully
+      </span>
+    </p>
+
+  `;
+
+  log(`
+    ✔ ${type.toUpperCase()}
+    generated for ${className}
+  `);
+
+  generateBtn.classList.remove("loading");
+
+};
+
+loadData();
 
 </script>
 
