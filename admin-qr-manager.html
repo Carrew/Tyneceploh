@@ -91,6 +91,34 @@
     @media(max-width:768px){
       .grid{ grid-template-columns:1fr; }
     }
+
+    /* ---------------- PRINT MODE ---------------- */
+    @media print {
+
+      body * {
+        visibility: hidden;
+      }
+
+      #qr, #qr * {
+        visibility: visible;
+      }
+
+      #qr {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        color: black;
+        padding: 25px;
+        border-radius: 0;
+      }
+
+      .info {
+        color: black;
+      }
+
+    }
   </style>
 </head>
 
@@ -109,6 +137,7 @@
 
     <button class="green" onclick="generateQR()">Generate New QR</button>
     <button class="blue" onclick="reprintQR()">Reprint QR</button>
+    <button class="blue" onclick="printQR()">Print / Save QR</button>
 
     <div id="qr"></div>
     <div class="info" id="info">No QR generated yet</div>
@@ -167,101 +196,70 @@ if(!user || user.role !== "admin"){
 
 /* ---------------- LOAD STAFF ---------------- */
 async function loadStaff(){
-
   const select = document.getElementById("staff");
   select.innerHTML = `<option value="">Select Staff</option>`;
 
-  try{
+  const snap = await getDocs(collection(db,"users"));
 
-    const snap = await getDocs(collection(db,"users"));
+  snap.forEach(d => {
+    const u = d.data();
 
-    snap.forEach(d => {
-      const u = d.data();
-
-      if(u.role && u.role.toLowerCase() !== "student"){
-        const opt = document.createElement("option");
-        opt.value = u.userId;
-        opt.textContent = `${u.name} (${u.role})`;
-        select.appendChild(opt);
-      }
-    });
-
-  }catch(err){
-    console.error(err);
-    alert("Failed loading staff");
-  }
+    if(u.role && u.role.toLowerCase() !== "student"){
+      const opt = document.createElement("option");
+      opt.value = u.userId;
+      opt.textContent = `${u.name} (${u.role})`;
+      select.appendChild(opt);
+    }
+  });
 }
-
 loadStaff();
 
-/* ---------------- LOAD SETTINGS ---------------- */
+/* ---------------- SETTINGS LOAD ---------------- */
 document.getElementById("staff").addEventListener("change", async function(){
-
   const id = this.value;
   if(!id) return;
 
-  try{
+  const snap = await getDoc(doc(db,"attendanceSettings",id));
 
-    const snap = await getDoc(doc(db,"attendanceSettings",id));
-
-    if(snap.exists()){
-      const s = snap.data();
-      clockIn.value = s.expectedClockIn || "";
-      clockOut.value = s.expectedClockOut || "";
-      grace.value = s.graceMinutes || 10;
-    } else {
-      clockIn.value = "";
-      clockOut.value = "";
-      grace.value = 10;
-    }
-
-  }catch(err){
-    console.error(err);
-    alert("Failed loading settings");
+  if(snap.exists()){
+    const s = snap.data();
+    clockIn.value = s.expectedClockIn || "";
+    clockOut.value = s.expectedClockOut || "";
+    grace.value = s.graceMinutes || 10;
+  } else {
+    clockIn.value = "";
+    clockOut.value = "";
+    grace.value = 10;
   }
-
 });
 
 /* ---------------- QR GENERATION ---------------- */
 window.generateQR = async function(){
 
-  try{
+  const hours = Number(document.getElementById("hours").value);
+  const now = Date.now();
 
-    const hours = Number(document.getElementById("hours").value);
-    const now = Date.now();
+  const data = {
+    token: "TEF-" + now,
+    createdAt: now,
+    expiresAt: now + (hours * 3600000)
+  };
 
-    const data = {
-      token: "TEF-" + now,
-      createdAt: now,
-      expiresAt: now + (hours * 3600000)
-    };
+  await setDoc(doc(db,"attendanceSystem","mainQR"), data);
 
-    await setDoc(doc(db,"attendanceSystem","mainQR"), data);
+  renderQR(data);
 
-    renderQR(data);
-
-    alert("QR generated successfully");
-
-  }catch(err){
-    console.error(err);
-    alert("QR generation failed");
-  }
+  alert("QR generated successfully");
 };
 
+/* ---------------- REPRINT ---------------- */
 window.reprintQR = async function(){
 
-  try{
+  const snap = await getDoc(doc(db,"attendanceSystem","mainQR"));
 
-    const snap = await getDoc(doc(db,"attendanceSystem","mainQR"));
+  if(!snap.exists()) return alert("No QR available");
 
-    if(!snap.exists()) return alert("No QR available");
-
-    renderQR(snap.data());
-
-  }catch(err){
-    console.error(err);
-    alert("Failed loading QR");
-  }
+  renderQR(snap.data());
 };
 
 /* ---------------- QR RENDER ---------------- */
@@ -269,10 +267,7 @@ function renderQR(data){
 
   QRCode.toCanvas(JSON.stringify(data), { width:220 }, (err, canvas)=>{
 
-    if(err){
-      console.error(err);
-      return;
-    }
+    if(err) return;
 
     const qr = document.getElementById("qr");
     qr.innerHTML = "";
@@ -289,21 +284,14 @@ window.saveSettings = async function(){
   const id = document.getElementById("staff").value;
   if(!id) return alert("Select staff");
 
-  try{
+  await setDoc(doc(db,"attendanceSettings",id),{
+    userId:id,
+    expectedClockIn:clockIn.value,
+    expectedClockOut:clockOut.value,
+    graceMinutes:Number(grace.value)
+  });
 
-    await setDoc(doc(db,"attendanceSettings",id),{
-      userId:id,
-      expectedClockIn:clockIn.value,
-      expectedClockOut:clockOut.value,
-      graceMinutes:Number(grace.value)
-    });
-
-    alert("Settings saved");
-
-  }catch(err){
-    console.error(err);
-    alert("Failed saving settings");
-  }
+  alert("Settings saved");
 };
 
 /* ---------------- RESET DEVICE ---------------- */
@@ -312,29 +300,27 @@ window.resetDevice = async function(){
   const id = document.getElementById("staff").value;
   if(!id) return alert("Select user");
 
-  try{
+  const snap = await getDocs(collection(db,"users"));
 
-    const snap = await getDocs(collection(db,"users"));
+  let docId = null;
 
-    let docId = null;
+  snap.forEach(d=>{
+    const u = d.data();
+    if(u.userId === id) docId = d.id;
+  });
 
-    snap.forEach(d=>{
-      const u = d.data();
-      if(u.userId === id) docId = d.id;
-    });
+  if(!docId) return alert("User not found");
 
-    if(!docId) return alert("User not found");
+  await updateDoc(doc(db,"users",docId),{
+    primaryDevice:null
+  });
 
-    await updateDoc(doc(db,"users",docId),{
-      primaryDevice:null
-    });
+  alert("Device reset successful");
+};
 
-    alert("Device reset successful");
-
-  }catch(err){
-    console.error(err);
-    alert("Reset failed");
-  }
+/* ---------------- PRINT FUNCTION ---------------- */
+window.printQR = function(){
+  window.print();
 };
 
 reprintQR();
