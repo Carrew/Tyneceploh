@@ -15,18 +15,24 @@
       --text:#fff;
     }
 
+    *{
+      box-sizing:border-box;
+    }
+
     body{
       margin:0;
       font-family:system-ui;
       background:radial-gradient(circle at top,#1a0010,var(--bg));
       color:white;
       padding:20px;
+      min-height:100vh;
     }
 
     h2{
       text-align:center;
       color:var(--pink);
       margin-bottom:20px;
+      font-size:28px;
     }
 
     .grid{
@@ -38,86 +44,176 @@
     .card{
       background:var(--card);
       padding:20px;
-      border-radius:14px;
+      border-radius:18px;
       border:1px solid rgba(255,255,255,0.08);
       backdrop-filter:blur(10px);
+      box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .card h3{
+      margin-top:0;
+      color:var(--pink);
     }
 
     input,select{
       width:100%;
-      padding:10px;
+      padding:12px;
       margin-top:10px;
-      border-radius:8px;
+      border-radius:10px;
       border:none;
       background:rgba(255,255,255,0.08);
       color:white;
       outline:none;
+      font-size:15px;
     }
 
     button{
       width:100%;
-      padding:12px;
-      margin-top:10px;
+      padding:13px;
+      margin-top:12px;
       border:none;
-      border-radius:10px;
+      border-radius:12px;
       cursor:pointer;
       font-weight:bold;
       transition:0.2s;
+      font-size:15px;
     }
 
     button:hover{
       transform:translateY(-2px);
     }
 
-    .green{ background:linear-gradient(135deg,#27ae60,var(--pink)); color:white; }
-    .blue{ background:linear-gradient(135deg,#2980b9,var(--pink)); color:white; }
-    .red{ background:linear-gradient(135deg,#c0392b,var(--maroon)); color:white; }
+    .green{
+      background:linear-gradient(135deg,#27ae60,var(--pink));
+      color:white;
+    }
+
+    .blue{
+      background:linear-gradient(135deg,#2980b9,var(--pink));
+      color:white;
+    }
+
+    .red{
+      background:linear-gradient(135deg,#c0392b,var(--maroon));
+      color:white;
+    }
+
+    #qrPrintArea{
+      margin-top:20px;
+      background:white;
+      border-radius:20px;
+      padding:30px 20px;
+      text-align:center;
+      color:black;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      min-height:420px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    }
 
     #qr{
-      margin-top:15px;
-      text-align:center;
-      background:rgba(255,255,255,0.05);
-      padding:15px;
-      border-radius:12px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      margin:20px 0;
+    }
+
+    #qr canvas{
+      border-radius:16px;
+      background:white;
+      padding:12px;
+    }
+
+    .tef-title{
+      font-size:28px;
+      font-weight:900;
+      color:var(--maroon);
+      margin-bottom:5px;
+    }
+
+    .tef-sub{
+      font-size:15px;
+      opacity:0.7;
+      margin-bottom:20px;
     }
 
     .info{
-      text-align:center;
       margin-top:10px;
+      font-size:14px;
+      color:#444;
+      text-align:center;
+    }
+
+    .print-note{
+      margin-top:15px;
       font-size:13px;
-      opacity:0.8;
+      color:#666;
     }
 
     @media(max-width:768px){
-      .grid{ grid-template-columns:1fr; }
+      .grid{
+        grid-template-columns:1fr;
+      }
     }
 
-    /* ---------------- PRINT MODE ---------------- */
+    /* PRINT STYLES */
     @media print {
 
-      body * {
-        visibility: hidden;
+      body{
+        background:white !important;
+        padding:0;
+        margin:0;
       }
 
-      #qr, #qr * {
-        visibility: visible;
+      body *{
+        visibility:hidden;
       }
 
-      #qr {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        color: black;
-        padding: 25px;
-        border-radius: 0;
+      #qrPrintArea,
+      #qrPrintArea *{
+        visibility:visible;
       }
 
-      .info {
-        color: black;
+      #qrPrintArea{
+        position:fixed;
+        left:0;
+        top:0;
+        width:100vw;
+        height:100vh;
+        background:white !important;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        flex-direction:column;
+        border:none;
+        border-radius:0;
+        box-shadow:none;
+        margin:0;
+        padding:0;
       }
 
+      #qr canvas{
+        width:420px !important;
+        height:420px !important;
+      }
+
+      .tef-title{
+        font-size:38px;
+      }
+
+      .tef-sub{
+        font-size:18px;
+      }
+
+      .info{
+        font-size:16px;
+      }
+
+      .print-note{
+        font-size:14px;
+      }
     }
   </style>
 </head>
@@ -130,21 +226,52 @@
 
   <!-- QR SYSTEM -->
   <div class="card">
+
     <h3>QR System</h3>
 
     <label>Valid Hours</label>
     <input type="number" id="hours" value="6">
 
-    <button class="green" onclick="generateQR()">Generate New QR</button>
-    <button class="blue" onclick="reprintQR()">Reprint QR</button>
-    <button class="blue" onclick="printQR()">Print / Save QR</button>
+    <button class="green" onclick="generateQR()">
+      Generate New QR
+    </button>
 
-    <div id="qr"></div>
-    <div class="info" id="info">No QR generated yet</div>
+    <button class="blue" onclick="reprintQR()">
+      Reprint QR
+    </button>
+
+    <button class="blue" onclick="printQR()">
+      Print / Save PDF
+    </button>
+
+    <!-- PRINT AREA -->
+    <div id="qrPrintArea">
+
+      <div class="tef-title">
+        TYNECEPLOH EDUCATIONAL FOUNDATION
+      </div>
+
+      <div class="tef-sub">
+        Official Attendance QR Code
+      </div>
+
+      <div id="qr"></div>
+
+      <div class="info" id="info">
+        No QR generated yet
+      </div>
+
+      <div class="print-note">
+        Scan this QR for attendance verification
+      </div>
+
+    </div>
+
   </div>
 
   <!-- STAFF SETTINGS -->
   <div class="card">
+
     <h3>Staff Settings</h3>
 
     <select id="staff">
@@ -160,8 +287,14 @@
     <label>Grace (mins)</label>
     <input type="number" id="grace" value="10">
 
-    <button class="green" onclick="saveSettings()">Save Settings</button>
-    <button class="red" onclick="resetDevice()">Reset Device</button>
+    <button class="green" onclick="saveSettings()">
+      Save Settings
+    </button>
+
+    <button class="red" onclick="resetDevice()">
+      Reset Device
+    </button>
+
   </div>
 
 </div>
@@ -169,6 +302,7 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   doc,
@@ -195,132 +329,267 @@ if(!user || user.role !== "admin"){
 }
 
 /* ---------------- LOAD STAFF ---------------- */
+
 async function loadStaff(){
+
   const select = document.getElementById("staff");
-  select.innerHTML = `<option value="">Select Staff</option>`;
 
-  const snap = await getDocs(collection(db,"users"));
+  select.innerHTML =
+    `<option value="">Select Staff</option>`;
 
-  snap.forEach(d => {
-    const u = d.data();
+  try{
 
-    if(u.role && u.role.toLowerCase() !== "student"){
-      const opt = document.createElement("option");
-      opt.value = u.userId;
-      opt.textContent = `${u.name} (${u.role})`;
-      select.appendChild(opt);
-    }
-  });
+    const snap = await getDocs(collection(db,"users"));
+
+    snap.forEach(d => {
+
+      const u = d.data();
+
+      if(u.role && u.role.toLowerCase() !== "student"){
+
+        const opt = document.createElement("option");
+
+        opt.value = u.userId;
+        opt.textContent =
+          `${u.name} (${u.role})`;
+
+        select.appendChild(opt);
+      }
+
+    });
+
+  }catch(err){
+
+    console.error(err);
+    alert("Failed loading staff");
+
+  }
+
 }
+
 loadStaff();
 
-/* ---------------- SETTINGS LOAD ---------------- */
-document.getElementById("staff").addEventListener("change", async function(){
+/* ---------------- LOAD SETTINGS ---------------- */
+
+document.getElementById("staff")
+.addEventListener("change", async function(){
+
   const id = this.value;
+
   if(!id) return;
 
-  const snap = await getDoc(doc(db,"attendanceSettings",id));
+  try{
 
-  if(snap.exists()){
-    const s = snap.data();
-    clockIn.value = s.expectedClockIn || "";
-    clockOut.value = s.expectedClockOut || "";
-    grace.value = s.graceMinutes || 10;
-  } else {
-    clockIn.value = "";
-    clockOut.value = "";
-    grace.value = 10;
+    const snap =
+      await getDoc(doc(db,"attendanceSettings",id));
+
+    if(snap.exists()){
+
+      const s = snap.data();
+
+      clockIn.value =
+        s.expectedClockIn || "";
+
+      clockOut.value =
+        s.expectedClockOut || "";
+
+      grace.value =
+        s.graceMinutes || 10;
+
+    }else{
+
+      clockIn.value = "";
+      clockOut.value = "";
+      grace.value = 10;
+
+    }
+
+  }catch(err){
+
+    console.error(err);
+    alert("Failed loading settings");
+
   }
+
 });
 
 /* ---------------- QR GENERATION ---------------- */
+
 window.generateQR = async function(){
 
-  const hours = Number(document.getElementById("hours").value);
-  const now = Date.now();
+  try{
 
-  const data = {
-    token: "TEF-" + now,
-    createdAt: now,
-    expiresAt: now + (hours * 3600000)
-  };
+    const hours =
+      Number(document.getElementById("hours").value);
 
-  await setDoc(doc(db,"attendanceSystem","mainQR"), data);
+    const now = Date.now();
 
-  renderQR(data);
+    const data = {
+      token: "TEF-" + now,
+      createdAt: now,
+      expiresAt: now + (hours * 3600000)
+    };
 
-  alert("QR generated successfully");
+    await setDoc(
+      doc(db,"attendanceSystem","mainQR"),
+      data
+    );
+
+    renderQR(data);
+
+    alert("QR generated successfully");
+
+  }catch(err){
+
+    console.error(err);
+    alert("QR generation failed");
+
+  }
+
 };
 
-/* ---------------- REPRINT ---------------- */
+/* ---------------- REPRINT QR ---------------- */
+
 window.reprintQR = async function(){
 
-  const snap = await getDoc(doc(db,"attendanceSystem","mainQR"));
+  try{
 
-  if(!snap.exists()) return alert("No QR available");
+    const snap =
+      await getDoc(doc(db,"attendanceSystem","mainQR"));
 
-  renderQR(snap.data());
+    if(!snap.exists())
+      return;
+
+    renderQR(snap.data());
+
+  }catch(err){
+
+    console.error(err);
+    alert("Failed loading QR");
+
+  }
+
 };
 
 /* ---------------- QR RENDER ---------------- */
+
 function renderQR(data){
 
-  QRCode.toCanvas(JSON.stringify(data), { width:220 }, (err, canvas)=>{
+  QRCode.toCanvas(
+    JSON.stringify(data),
+    {
+      width:320
+    },
 
-    if(err) return;
+    (err, canvas)=>{
 
-    const qr = document.getElementById("qr");
-    qr.innerHTML = "";
-    qr.appendChild(canvas);
-  });
+      if(err){
+        console.error(err);
+        return;
+      }
+
+      const qr =
+        document.getElementById("qr");
+
+      qr.innerHTML = "";
+
+      qr.appendChild(canvas);
+
+    }
+  );
 
   document.getElementById("info").innerText =
-    "Expires: " + new Date(data.expiresAt).toLocaleString();
+    "Expires: " +
+    new Date(data.expiresAt).toLocaleString();
+
 }
 
+/* ---------------- PRINT QR ---------------- */
+
+window.printQR = function(){
+
+  window.print();
+
+};
+
 /* ---------------- SAVE SETTINGS ---------------- */
+
 window.saveSettings = async function(){
 
-  const id = document.getElementById("staff").value;
-  if(!id) return alert("Select staff");
+  const id =
+    document.getElementById("staff").value;
 
-  await setDoc(doc(db,"attendanceSettings",id),{
-    userId:id,
-    expectedClockIn:clockIn.value,
-    expectedClockOut:clockOut.value,
-    graceMinutes:Number(grace.value)
-  });
+  if(!id)
+    return alert("Select staff");
 
-  alert("Settings saved");
+  try{
+
+    await setDoc(
+      doc(db,"attendanceSettings",id),
+      {
+        userId:id,
+        expectedClockIn:clockIn.value,
+        expectedClockOut:clockOut.value,
+        graceMinutes:Number(grace.value)
+      }
+    );
+
+    alert("Settings saved");
+
+  }catch(err){
+
+    console.error(err);
+    alert("Failed saving settings");
+
+  }
+
 };
 
 /* ---------------- RESET DEVICE ---------------- */
+
 window.resetDevice = async function(){
 
-  const id = document.getElementById("staff").value;
-  if(!id) return alert("Select user");
+  const id =
+    document.getElementById("staff").value;
 
-  const snap = await getDocs(collection(db,"users"));
+  if(!id)
+    return alert("Select user");
 
-  let docId = null;
+  try{
 
-  snap.forEach(d=>{
-    const u = d.data();
-    if(u.userId === id) docId = d.id;
-  });
+    const snap =
+      await getDocs(collection(db,"users"));
 
-  if(!docId) return alert("User not found");
+    let docId = null;
 
-  await updateDoc(doc(db,"users",docId),{
-    primaryDevice:null
-  });
+    snap.forEach(d=>{
 
-  alert("Device reset successful");
-};
+      const u = d.data();
 
-/* ---------------- PRINT FUNCTION ---------------- */
-window.printQR = function(){
-  window.print();
+      if(u.userId === id)
+        docId = d.id;
+
+    });
+
+    if(!docId)
+      return alert("User not found");
+
+    await updateDoc(
+      doc(db,"users",docId),
+      {
+        primaryDevice:null
+      }
+    );
+
+    alert("Device reset successful");
+
+  }catch(err){
+
+    console.error(err);
+    alert("Reset failed");
+
+  }
+
 };
 
 reprintQR();
