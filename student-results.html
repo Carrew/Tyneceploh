@@ -1,258 +1,704 @@
-<!DOCTYPE html>  
-<html>  
-<head>  
-  <title>My Results - TEF</title>  
-
-  <style>  
-    body {  
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  
-      padding: 20px;  
-      background: #f4f7f6;  
-    }  
-
-    h2 { color: #2c3e50; }  
-
-    #table-container {  
-      background: white;  
-      padding: 20px;  
-      border-radius: 8px;  
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);  
-      overflow-x: auto;  
-    }  
-
-    table {  
-      width: 100%;  
-      border-collapse: collapse;  
-      min-width: 800px;  
-    }  
-
-    th, td {  
-      border: 1px solid #ddd;  
-      padding: 12px;  
-      text-align: center;  
-    }  
-
-    th {  
-      background-color: #007bff;  
-      color: white;  
-    }  
-
-    tr:nth-child(even) {  
-      background-color: #f9f9f9;  
-    }  
-
-    .avg-cell {  
-      font-weight: bold;  
-      background-color: #e9ecef;  
-    }  
-
-    .badge {  
-      margin-top: 15px;  
-      display: inline-block;  
-      padding: 6px 12px;  
-      border-radius: 20px;  
-      background: #28a745;  
-      color: white;  
-      font-size: 13px;  
-    }  
-
-    button {  
-      margin-top: 20px;  
-      padding: 10px 20px;  
-      background: #dc3545;  
-      color: white;  
-      border: none;  
-      border-radius: 5px;  
-      cursor: pointer;  
-    }  
-
-    button:hover {  
-      background: #c82333;  
-    }  
-
-    /* SCORE COLORS */  
-    .score-low {  
-      color: #e74c3c;  
-      font-weight: bold;  
-    }  
-
-    .score-high {  
-      color: #2980b9;  
-      font-weight: bold;  
-    }  
-  </style>  
-</head>  
-
-<body>  
-
-<h2>Academic Performance Report</h2>  
-
-<div id="table-container">  
-  <div id="badge"></div>  
-  <div id="table">Loading your results...</div>  
-</div>  
-
-<button onclick="logout()">Logout</button>  
-
-<script type="module">  
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";  
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";  
-
-const firebaseConfig = {  
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",  
-  authDomain: "tyneceploh.firebaseapp.com",  
-  projectId: "tyneceploh",  
-};  
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Results - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --blue:#0056b3;
+      --red:#dc3545;
+      --green:#28a745;
+      --bg:#f4f6f9;
+      --card:#ffffff;
+      --text:#2c3e50;
+      --border:#e5e7eb;
+      --muted:#7f8c8d;
+    }
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+      background:var(--bg);
+      padding:20px;
+      color:var(--text);
+    }
+
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
+
+    .top-card{
+      background:linear-gradient(135deg,var(--maroon),#5a0000);
+      color:white;
+      padding:25px;
+      border-radius:20px;
+      margin-bottom:20px;
+      box-shadow:0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .top-card h1{
+      font-size:28px;
+      margin-bottom:6px;
+    }
+
+    .top-card p{
+      opacity:0.9;
+      font-size:14px;
+    }
+
+    .controls{
+      background:var(--card);
+      border-radius:18px;
+      padding:20px;
+      margin-bottom:20px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.06);
+      border:1px solid var(--border);
+    }
+
+    .controls-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr auto;
+      gap:15px;
+      align-items:end;
+    }
+
+    select,
+    button{
+      width:100%;
+      padding:14px;
+      border-radius:12px;
+      border:1px solid #ddd;
+      font-size:14px;
+      background:white;
+    }
+
+    button{
+      background:var(--maroon);
+      color:white;
+      border:none;
+      font-weight:bold;
+      cursor:pointer;
+      min-width:160px;
+    }
+
+    button:hover{
+      opacity:0.92;
+    }
+
+    label{
+      display:block;
+      margin-bottom:8px;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:bold;
+    }
+
+    .summary-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:15px;
+      margin-bottom:20px;
+    }
+
+    .summary-card{
+      background:var(--card);
+      border-radius:18px;
+      padding:18px;
+      border:1px solid var(--border);
+      box-shadow:0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .summary-card h3{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    .summary-card strong{
+      font-size:28px;
+      color:var(--maroon);
+    }
+
+    .honor-badge{
+      display:inline-block;
+      background:#d4edda;
+      color:#155724;
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:bold;
+      margin-top:8px;
+    }
+
+    .report-card{
+      background:var(--card);
+      border-radius:20px;
+      padding:20px;
+      border:1px solid var(--border);
+      box-shadow:0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .report-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .report-header h2{
+      color:var(--maroon);
+    }
+
+    .table-wrap{
+      overflow:auto;
+      border-radius:14px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:900px;
+    }
+
+    th,
+    td{
+      padding:12px;
+      border:1px solid #eee;
+      text-align:center;
+      font-size:14px;
+    }
+
+    th{
+      background:var(--maroon);
+      color:white;
+    }
+
+    .subject-cell{
+      text-align:left;
+      font-weight:bold;
+      background:#fafafa;
+    }
 
-const app = initializeApp(firebaseConfig);  
-const db = getFirestore(app);  
+    .score-blue{
+      color:var(--blue);
+      font-weight:bold;
+    }
 
-const user = JSON.parse(localStorage.getItem("user"));  
+    .score-red{
+      color:var(--red);
+      font-weight:bold;
+    }
 
-if (!user || user.role !== "student") {  
-  localStorage.removeItem("user");  
-  window.location.href = "login.html";  
-}  
+    .avg-row{
+      background:#f8f9fa;
+      font-weight:bold;
+    }
 
-const periods = [  
-  "1st Period","2nd Period","3rd Period","Semester Exam",  
-  "4th Period","5th Period","6th Period","Final Exam"  
-];  
+    .empty{
+      text-align:center;
+      padding:40px;
+      color:#777;
+    }
 
-let allResults = [];  
+    @media(max-width:800px){
 
-async function loadResults() {  
-  try {  
+      .controls-grid{
+        grid-template-columns:1fr;
+      }
 
-    const snap = await getDocs(collection(db, "results"));  
+    }
 
-    const myResults = [];  
+  </style>
+</head>
 
-    const uid = user.userId?.toString().trim().toLowerCase();  
+<body>
 
-    snap.forEach(d => {  
-      const r = d.data();  
-      if (r.studentId?.toString().trim().toLowerCase() === uid) {  
-        myResults.push(r);  
-      }  
-    });  
+<div class="container">
 
-    allResults = myResults;  
+  <div class="top-card">
 
-    renderTable(myResults);  
-    renderBadge(myResults);  
+    <h1>Academic Performance</h1>
 
-  } catch (err) {  
-    console.error(err);  
-    document.getElementById("table").innerHTML = "Error loading data.";  
-  }  
-}  
+    <p>
+      Your generated academic reports and performance summaries
+    </p>
 
-function formatScore(score){  
-  if(score === "-" || score === undefined || score === null) return "-";  
+  </div>
 
-  const num = Number(score);  
+  <div class="controls">
 
-  if(num < 70){  
-    return `<span class="score-low">${num}</span>`;  
-  }  
+    <div class="controls-grid">
 
-  return `<span class="score-high">${num}</span>`;  
-}  
+      <div>
 
-function renderTable(results) {  
+        <label>Available Reports</label>
 
-  if (!results.length) {  
-    document.getElementById("table").innerHTML =  
-      "<p>No results yet. Keep going.</p>";  
-    return;  
-  }  
+        <select id="reportSelect">
+          <option value="">
+            Loading reports...
+          </option>
+        </select>
 
-  const subjects = {};  
+      </div>
 
-  results.forEach(r => {  
-    if (!subjects[r.subject]) subjects[r.subject] = {};  
-    subjects[r.subject][r.period] = r.score;  
-  });  
+      <div>
 
-  let html = `  
-    <table>  
-      <thead>  
-        <tr>  
-          <th>Subject</th>  
-          ${periods.map(p => `<th>${p}</th>`).join("")}  
-          <th>Average</th>  
-        </tr>  
-      </thead>  
-      <tbody>  
-  `;  
+        <label>Report Information</label>
 
-  Object.keys(subjects).sort().forEach(subject => {  
+        <select id="reportInfo" disabled>
+          <option>
+            Select report first
+          </option>
+        </select>
 
-    let total = 0;  
-    let count = 0;  
+      </div>
 
-    html += `<tr><td><b>${subject}</b></td>`;  
+      <button id="loadBtn">
+        Load Report
+      </button>
 
-    periods.forEach(p => {  
+    </div>
 
-      const raw = subjects[subject][p] ?? "-";  
+  </div>
 
-      html += `<td>${formatScore(raw)}</td>`;  
+  <div class="summary-grid">
 
-      if (raw !== "-") {  
-        total += Number(raw);  
-        count++;  
-      }  
+    <div class="summary-card">
 
-    });  
+      <h3>Main Average</h3>
 
-    const avg = count ? (total / count).toFixed(1) : "-";  
+      <strong id="mainAverage">
+        --
+      </strong>
 
-    html += `<td class="avg-cell">${formatScore(avg)}</td></tr>`;  
-  });  
+    </div>
 
-  html += "</tbody></table>";  
+    <div class="summary-card">
 
-  document.getElementById("table").innerHTML = html;  
-}  
+      <h3>Class Rank</h3>
 
-function renderBadge(results) {  
+      <strong id="studentRank">
+        --
+      </strong>
 
-  const badge = document.getElementById("badge");  
+    </div>
 
-  if (!results.length) return;  
+    <div class="summary-card">
 
-  let total = 0;  
-  let count = 0;  
+      <h3>Honor Status</h3>
 
-  results.forEach(r => {  
-    total += Number(r.score);  
-    count++;  
-  });  
+      <div id="honorBox">
+        --
+      </div>
 
-  const avg = count ? (total / count).toFixed(1) : 0;  
+    </div>
 
-  let title = "";  
+  </div>
 
-  if (avg >= 90) title = "Proprietor List";  
-  else if (avg >= 85) title = "Principal List";  
-  else if (avg >= 80) title = "Honor Roll";  
+  <div class="report-card">
 
-  if (title) {  
-    badge.innerHTML = `<div class="badge">🏅 ${title}</div>`;  
-  }  
-}  
+    <div class="report-header">
 
-window.logout = function () {  
-  localStorage.removeItem("user");  
-  location.href = "login.html";  
-};  
+      <div>
 
-loadResults();  
+        <h2 id="reportTitle">
+          Student Report
+        </h2>
 
-</script>  
+        <p id="reportSubTitle" style="color:#777;font-size:13px;">
+          Academic breakdown
+        </p>
 
-</body>  
+      </div>
+
+      <button onclick="window.print()">
+        Print Report
+      </button>
+
+    </div>
+
+    <div class="table-wrap">
+
+      <table id="resultTable">
+
+        <thead id="tableHead"></thead>
+
+        <tbody id="tableBody">
+
+          <tr>
+            <td colspan="20" class="empty">
+              Select a report to begin
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const user =
+JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+  location.href = "login.html";
+}
+
+const PERIOD_ORDER = [
+  "1st Period",
+  "2nd Period",
+  "3rd Period",
+  "Semester Exam",
+  "4th Period",
+  "5th Period",
+  "6th Period",
+  "Final Exam"
+];
+
+let reports = [];
+
+async function loadReports(){
+
+  const snap =
+  await getDocs(collection(db,"academic_reports"));
+
+  reports = [];
+
+  snap.forEach(doc=>{
+
+    const data = doc.data();
+
+    const found =
+    data.students?.find(s=>
+      s.studentId === user.userId
+    );
+
+    if(found){
+
+      reports.push({
+        id:doc.id,
+        ...data
+      });
+
+    }
+
+  });
+
+  const select =
+  document.getElementById("reportSelect");
+
+  if(reports.length === 0){
+
+    select.innerHTML = `
+      <option value="">
+        No reports available
+      </option>
+    `;
+
+    return;
+  }
+
+  select.innerHTML =
+  `
+    <option value="">
+      Select Report
+    </option>
+  `;
+
+  reports.forEach((report,index)=>{
+
+    let title = "";
+
+    if(report.reportType === "period"){
+
+      title =
+      `${report.class} • ${report.period}`;
+
+    }
+
+    if(report.reportType === "semester"){
+
+      title =
+      `${report.class} • ${report.semester}`;
+
+    }
+
+    if(report.reportType === "yearly"){
+
+      title =
+      `${report.class} • Yearly Report`;
+
+    }
+
+    select.innerHTML += `
+      <option value="${index}">
+        ${title}
+      </option>
+    `;
+
+  });
+
+}
+
+function scoreClass(score){
+  return Number(score) >= 70
+  ? "score-blue"
+  : "score-red";
+}
+
+function renderReport(report){
+
+  const student =
+  report.students.find(s=>
+    s.studentId === user.userId
+  );
+
+  if(!student) return;
+
+  document.getElementById("mainAverage")
+  .innerText =
+  student.mainAverage;
+
+  document.getElementById("studentRank")
+  .innerText =
+  `#${student.rank}`;
+
+  document.getElementById("honorBox")
+  .innerHTML =
+  student.honor
+  ? `<span class="honor-badge">${student.honor}</span>`
+  : "No Honor";
+
+  let title = "";
+
+  if(report.reportType === "period"){
+
+    title =
+    `${report.class} • ${report.period}`;
+
+  }
+
+  if(report.reportType === "semester"){
+
+    title =
+    `${report.class} • ${report.semester}`;
+
+  }
+
+  if(report.reportType === "yearly"){
+
+    title =
+    `${report.class} • Yearly Report`;
+
+  }
+
+  document.getElementById("reportTitle")
+  .innerText = title;
+
+  const subjects =
+  Object.entries(student.subjects);
+
+  let usedPeriods = [];
+
+  subjects.forEach(([_,data])=>{
+
+    data.breakdown.forEach(item=>{
+
+      if(!usedPeriods.includes(item.period)){
+        usedPeriods.push(item.period);
+      }
+
+    });
+
+  });
+
+  usedPeriods.sort(
+    (a,b)=>
+    PERIOD_ORDER.indexOf(a)
+    -
+    PERIOD_ORDER.indexOf(b)
+  );
+
+  let headHTML =
+  `
+    <tr>
+      <th>Subject</th>
+  `;
+
+  usedPeriods.forEach(period=>{
+
+    headHTML += `
+      <th>${period}</th>
+    `;
+
+  });
+
+  headHTML += `
+      <th>Subject Avg</th>
+    </tr>
+  `;
+
+  document.getElementById("tableHead")
+  .innerHTML = headHTML;
+
+  let bodyHTML = "";
+
+  const periodicTracker = {};
+
+  usedPeriods.forEach(p=>{
+
+    periodicTracker[p] = {
+      sum:0,
+      count:0
+    };
+
+  });
+
+  subjects.forEach(([subject,data])=>{
+
+    bodyHTML += `
+      <tr>
+        <td class="subject-cell">
+          ${subject}
+        </td>
+    `;
+
+    let subjectSum = 0;
+    let subjectCount = 0;
+
+    usedPeriods.forEach(period=>{
+
+      const found =
+      data.breakdown.find(
+        x => x.period === period
+      );
+
+      if(found){
+
+        subjectSum += found.score;
+        subjectCount++;
+
+        periodicTracker[period].sum += found.score;
+        periodicTracker[period].count++;
+
+        bodyHTML += `
+          <td class="${scoreClass(found.score)}">
+            ${found.score}
+          </td>
+        `;
+
+      }else{
+
+        bodyHTML += `<td>-</td>`;
+
+      }
+
+    });
+
+    const avg =
+    subjectCount
+    ? (subjectSum / subjectCount).toFixed(1)
+    : "-";
+
+    bodyHTML += `
+      <td class="avg-row">
+        ${avg}
+      </td>
+    `;
+
+    bodyHTML += `</tr>`;
+
+  });
+
+  bodyHTML += `
+    <tr class="avg-row">
+      <td>
+        PERIODIC AVG
+      </td>
+  `;
+
+  usedPeriods.forEach(period=>{
+
+    const item =
+    periodicTracker[period];
+
+    const avg =
+    item.count
+    ? (item.sum / item.count).toFixed(1)
+    : "-";
+
+    bodyHTML += `
+      <td>
+        ${avg}
+      </td>
+    `;
+
+  });
+
+  bodyHTML += `
+      <td>
+        ${student.mainAverage}
+      </td>
+    </tr>
+  `;
+
+  document.getElementById("tableBody")
+  .innerHTML = bodyHTML;
+
+}
+
+document.getElementById("loadBtn")
+.onclick = () => {
+
+  const index =
+  document.getElementById("reportSelect")
+  .value;
+
+  if(index === "") return;
+
+  renderReport(reports[index]);
+
+};
+
+loadReports();
+
+</script>
+
+</body>
 </html>
