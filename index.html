@@ -1,76 +1,258 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home</title>
+  <title>Tyneceploh Educational Foundation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      font-family: Arial, sans-serif;
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --dark:#0b0b10;
+      --glass:rgba(255,255,255,0.06);
     }
 
-    .container {
-      text-align: center;
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:var(--dark);
+      color:white;
     }
 
-    h1 {
-      color: white;
-      margin-bottom: 30px;
-      font-size: 2.5rem;
+    /* ---------------- HERO ---------------- */
+    .hero{
+      position:relative;
+      height:100vh;
+      overflow:hidden;
     }
 
-    .login-btn {
-      display: inline-block;
-      padding: 18px 50px;
-      font-size: 1.5rem;
-      color: white;
-      background: #2563eb;
-      border: none;
-      border-radius: 12px;
-      text-decoration: none;
-      transition: 0.3s ease;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    .hero video{
+      position:absolute;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      filter:brightness(0.45);
     }
 
-    .login-btn:hover {
-      background: #1d4ed8;
-      transform: scale(1.05);
+    .overlay{
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      bottom:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      padding:20px;
     }
 
-    .login-btn:active {
-      transform: scale(0.98);
+    .logo{
+      width:70px;
+      height:70px;
+      border-radius:50%;
+      background:rgba(255,255,255,0.1);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      margin-bottom:10px;
+    }
+
+    h1{
+      margin:5px 0;
+      color:var(--pink);
+      font-size:22px;
+    }
+
+    .location{
+      font-size:12px;
+      opacity:0.8;
+      max-width:300px;
+    }
+
+    /* ---------------- MENU ---------------- */
+    .menu-btn{
+      position:fixed;
+      top:15px;
+      right:15px;
+      z-index:999;
+      background:var(--glass);
+      border:none;
+      color:white;
+      padding:10px;
+      border-radius:8px;
+      font-size:18px;
+    }
+
+    .menu{
+      position:fixed;
+      top:0;
+      right:-100%;
+      width:70%;
+      height:100vh;
+      background:#12000a;
+      padding:20px;
+      transition:0.3s;
+      z-index:998;
+    }
+
+    .menu a{
+      display:block;
+      color:white;
+      text-decoration:none;
+      padding:10px 0;
+      border-bottom:1px solid rgba(255,255,255,0.1);
+    }
+
+    /* ---------------- SECTIONS ---------------- */
+
+    section{
+      padding:40px 20px;
+      max-width:900px;
+      margin:auto;
+    }
+
+    .slogan{
+      text-align:center;
+      font-size:18px;
+      color:var(--pink);
+      margin:20px 0;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:10px;
+    }
+
+    .card{
+      background:var(--glass);
+      padding:15px;
+      border-radius:12px;
+      border-left:3px solid var(--pink);
+    }
+
+    .history{
+      line-height:1.7;
+      opacity:0.9;
+    }
+
+    footer{
+      text-align:center;
+      font-size:12px;
+      opacity:0.7;
+      padding:30px;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>Welcome</h1>
-    <a class="login-btn" href="login.html">Login</a>
+
+<!-- MENU -->
+<button class="menu-btn" onclick="toggleMenu()">☰</button>
+
+<div class="menu" id="menu">
+  <a href="#">Home</a>
+  <a href="students.html">Students</a>
+  <a href="teachers.html">Staff</a>
+  <a href="gallery.html">Gallery</a>
+  <a href="announcements.html">Announcements</a>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+
+  <video id="heroVideo" autoplay muted loop playsinline></video>
+
+  <div class="overlay">
+    <div class="logo">LOGO</div>
+
+    <h1>Tyneceploh Educational Foundation</h1>
+
+    <div class="location">
+      Liberia • Montserrado County • A place of learning, discipline, and hope for the future
+    </div>
   </div>
 
-  <script type="module">
-    import { enableNotifications } from "./enable-notifications.js";
+</div>
 
-    const user = JSON.parse(localStorage.getItem("user"));
+<!-- SLOGAN -->
+<section>
+  <div class="slogan">
+    Hope for the Future / By God's Grace
+  </div>
+</section>
 
-    if (user) {
-      await enableNotifications(user);
+<!-- CORE VALUES -->
+<section>
+  <h2 style="color:var(--pink)">Core Values</h2>
 
-      console.log("Notifications enabled");
-    } else {
-      console.log("No logged in user found");
-    }
-    new Notification("Yo 🚀", {
-  body: "Notifications are working!"
+  <div class="cards">
+    <div class="card"><b>Passion</b><br>Commitment in learning and work.</div>
+    <div class="card"><b>Excellence</b><br>Pursuit of quality in everything.</div>
+    <div class="card"><b>Respect</b><br>Honoring every individual.</div>
+    <div class="card"><b>Truth</b><br>Living and learning with integrity.</div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section>
+  <h2 style="color:var(--pink)">Our History</h2>
+
+  <div class="history">
+    Tyneceploh Educational Foundation is a lifelong dream realized in the absence of the dreamer, the late Margret Ploh Chattah. Her passion for child development began a groundbreaking program on January 25, 2015. Construction started in April 2015.
+
+    <br><br>
+
+    She later fell ill and was taken for treatment abroad. The dream continued through her family and supporters and fully opened on September 3, 2018. Today, TEF stands as a living testimony of her vision and sacrifice.
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  Phone: 0778847625 | 0777515669 | 0886515669<br>
+  Email: tyneceploheducational2018@gmail.com<br><br>
+  © 2026 Tyneceploh Educational Foundation
+</footer>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 });
-  </script>
+
+const db = getFirestore(app);
+
+/* HERO VIDEO FROM CLOUDINARY */
+async function loadVideo(){
+  const snap = await getDocs(collection(db,"homepageSettings"));
+
+  snap.forEach(d=>{
+    const s = d.data();
+    if(s.featuredVideoURL){
+      document.getElementById("heroVideo").src = s.featuredVideoURL;
+    }
+  });
+}
+
+/* MENU */
+window.toggleMenu = function(){
+  const m = document.getElementById("menu");
+  m.style.right = (m.style.right === "0px") ? "-100%" : "0px";
+};
+
+loadVideo();
+
+</script>
+
 </body>
 </html>
