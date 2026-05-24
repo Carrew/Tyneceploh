@@ -1,257 +1,808 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Tyneceploh Educational Foundation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>TEF Portal - Tyneceploh Educational Foundation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    :root{
-      --maroon:#800000;
-      --pink:#ffc0cb;
-      --dark:#0b0b10;
-      --glass:rgba(255,255,255,0.06);
-    }
+<style>
+:root {
+  --primary: #800000;
+  --accent: #ffc0cb;
+  --bg-dark: #0b0b0f;
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
 
-    *{box-sizing:border-box}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui, -apple-system, sans-serif;
+}
 
-    body{
-      margin:0;
-      font-family:system-ui;
-      background:var(--dark);
-      color:white;
-    }
+body{
+  background: var(--bg-dark);
+  color:white;
+  overflow-x:hidden;
+  scroll-behavior:smooth;
+}
 
-    /* ---------------- HERO ---------------- */
-    .hero{
-      position:relative;
-      height:100vh;
-      overflow:hidden;
-    }
+/* NAVBAR & NAVIGATION */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 120; /* Increased z-index to stay above the drawer */
+  background: rgba(11, 11, 15, 0.5);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
 
-    .hero video{
-      position:absolute;
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      filter:brightness(0.45);
-    }
+.navLogo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
 
-    .overlay{
-      position:absolute;
-      top:0;
-      left:0;
-      right:0;
-      bottom:0;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-      text-align:center;
-      padding:20px;
-    }
+.navLogo img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+}
 
-    .logo{
-      width:70px;
-      height:70px;
-      border-radius:50%;
-      background:rgba(255,255,255,0.1);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:12px;
-      margin-bottom:10px;
-    }
+.navMenu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-    h1{
-      margin:5px 0;
-      color:var(--pink);
-      font-size:22px;
-    }
+.btn {
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  transition: .3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.btn:hover { transform: translateY(-3px); }
+.btn.admin { background: var(--primary); color: white; }
+.btn.staff { background: var(--accent); color: var(--primary); }
+.btn.student { background: white; color: var(--primary); }
 
-    .location{
-      font-size:12px;
-      opacity:0.8;
-      max-width:300px;
-    }
+/* Hamburger Menu Toggle Button */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 130; /* Higher than drawer to remain visible and clickable */
+  height: 40px;
+  width: 40px;
+}
 
-    /* ---------------- MENU ---------------- */
-    .menu-btn{
-      position:fixed;
-      top:15px;
-      right:15px;
-      z-index:999;
-      background:var(--glass);
-      border:none;
-      color:white;
-      padding:10px;
-      border-radius:8px;
-      font-size:18px;
-    }
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 3px;
+  background: white;
+  border-radius: 4px;
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease-in-out;
+}
 
-    .menu{
-      position:fixed;
-      top:0;
-      right:-100%;
-      width:70%;
-      height:100vh;
-      background:#12000a;
-      padding:20px;
-      transition:0.3s;
-      z-index:998;
-    }
+/* Transforms Hamburger into a clean 'X' Close icon */
+.hamburger.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: translateY(-9px) rotate(-44deg); }
 
-    .menu a{
-      display:block;
-      color:white;
-      text-decoration:none;
-      padding:10px 0;
-      border-bottom:1px solid rgba(255,255,255,0.1);
-    }
+/* TRANSLUCENT GLASS OVERLAY DRAWER */
+.navDrawer {
+  position: fixed;
+  inset: 0;
+  /* Kinda transparent background styling */
+  background: rgba(11, 11, 15, 0.65); 
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-20px);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
 
-    /* ---------------- SECTIONS ---------------- */
+.navDrawer.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
 
-    section{
-      padding:40px 20px;
-      max-width:900px;
-      margin:auto;
-    }
+.navDrawer .btn {
+  font-size: 16px;
+  padding: 14px 30px;
+  width: 220px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
 
-    .slogan{
-      text-align:center;
-      font-size:18px;
-      color:var(--pink);
-      margin:20px 0;
-    }
+/* HERO */
+.hero{
+  position:relative;
+  height: 85vh;
+  width:100%;
+  overflow:hidden;
+}
 
-    .cards{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-      gap:10px;
-    }
+.poster, .video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
 
-    .card{
-      background:var(--glass);
-      padding:15px;
-      border-radius:12px;
-      border-left:3px solid var(--pink);
-    }
+.video{
+  opacity:0;
+  transition:1.2s ease;
+  z-index:2;
+  animation:zoomSlow 20s infinite alternate ease-in-out;
+}
 
-    .history{
-      line-height:1.7;
-      opacity:0.9;
-    }
+@keyframes zoomSlow{
+  from{ transform:scale(1.03); }
+  to{ transform:scale(1.10); }
+}
 
-    footer{
-      text-align:center;
-      font-size:12px;
-      opacity:0.7;
-      padding:30px;
-    }
-  </style>
+.poster{ z-index:1; filter:brightness(.35); }
+
+.overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, rgba(128,0,0,0.55), rgba(0,0,0,0.75));
+  z-index:3;
+}
+
+.heroContent{
+  position:relative;
+  z-index:4;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:20px;
+  margin-top: 30px;
+  animation:floatIn 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes floatIn{
+  from{ opacity:0; transform:translateY(30px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+.heroContent .logo{
+  width:115px;
+  height:115px;
+  border-radius:50%;
+  object-fit:cover;
+  border:4px solid var(--accent);
+  box-shadow:0 0 25px rgba(255,192,203,.35);
+  margin-bottom:15px;
+}
+
+.title{
+  font-size:36px;
+  font-weight:800;
+  text-shadow:0 0 20px rgba(255,192,203,0.2);
+  max-width: 800px;
+}
+
+.sub{
+  opacity:.8;
+  margin-top:8px;
+  font-size:15px;
+  letter-spacing: 0.5px;
+}
+
+/* STICKY ANNOUNCEMENT BAR */
+.announceBar{
+  position:sticky;
+  top:75px;
+  z-index:90;
+  margin:-30px auto 25px;
+  max-width:900px;
+  width: calc(100% - 40px);
+  background:rgba(255,255,255,0.07);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--glass-border);
+  border-radius:14px;
+  padding:12px 15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  animation:slideDown .6s ease;
+}
+
+@keyframes slideDown{
+  from{ opacity:0; transform:translateY(-15px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+.badge{
+  background:#27ae60;
+  color:white;
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:20px;
+  font-weight:700;
+}
+
+.announceText{
+  flex:1;
+  margin:0 12px;
+  font-size:13px;
+  opacity:.9;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.announceBar button{
+  background: var(--accent);
+  color: var(--primary);
+  border:none;
+  padding:6px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:12px;
+}
+
+/* SECTION BLOCKS CONTAINER */
+.mainContent {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
+.section{
+  padding: 20px 0;
+  display:flex;
+  justify-content:center;
+  opacity:0;
+  transform:translateY(30px);
+  transition: 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.section.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.glass{
+  width:100%;
+  padding:30px;
+  border-radius:20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  border:1px solid var(--glass-border);
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+}
+
+.h2{
+  font-size:24px;
+  margin-bottom:15px;
+  color: var(--accent);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.p{
+  line-height:1.7;
+  opacity:.9;
+  font-size: 15px;
+}
+
+/* HONOREE CARD */
+.honoreeBox{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  margin-top:10px;
+  transition: 0.4s ease;
+}
+
+.honoreeBox img{
+  width:78px;
+  height:78px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid var(--accent);
+}
+
+.hName{ font-weight:800; font-size:18px; }
+.hMeta{ font-size:13px; opacity:.8; margin-top: 2px; }
+
+.tag{
+  display:inline-block;
+  margin-top:6px;
+  padding:4px 12px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight: 700;
+  background:#27ae60;
+  animation:pop 0.6s ease;
+}
+
+@keyframes pop{
+  0%{transform:scale(0.85);opacity:0;}
+  100%{transform:scale(1);opacity:1;}
+}
+
+.smallLink{
+  font-size:13px;
+  color: var(--accent);
+  opacity:.8;
+  margin-top:18px;
+  cursor:pointer;
+  display: inline-block;
+  transition: 0.2s;
+}
+.smallLink:hover { opacity: 1; text-decoration: underline; }
+
+/* LIVE PULSE MICRO-GRID */
+.classStrip{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  gap:12px;
+  margin-top: 5px;
+}
+
+.classCard{
+  background: rgba(255,255,255,0.04);
+  padding:14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.06);
+  transition:.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.classCard:hover{
+  transform:translateY(-4px);
+  background:rgba(255,255,255,0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* INTERACTIVE FOOTER BLOCK */
+.footer {
+  background: #060608;
+  border-top: 1px solid var(--glass-border);
+  padding: 45px 20px 25px;
+  margin-top: 30px;
+}
+
+.footerContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 35px;
+}
+
+.footerBrand b {
+  font-size: 17px;
+  color: white;
+}
+.footerBrand p {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.footerLinks h4 {
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.footerLinks ul { list-style: none; }
+.footerLinks ul li { margin-bottom: 8px; }
+
+.footerLinks ul li a {
+  font-size: 13px;
+  color: white;
+  opacity: 0.6;
+  text-decoration: none;
+  transition: 0.2s;
+}
+.footerLinks ul li a:hover { opacity: 1; color: var(--accent); }
+
+.footerBottom {
+  max-width: 1000px;
+  margin: 35px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* DEVICE MEDIA RESPONSIVENESS */
+@media (max-width: 768px) {
+  .navMenu { display: none; }
+  .hamburger { display: flex; }
+  .title { font-size: 28px; }
+  .sub { font-size: 14px; }
+  .footerContainer { grid-template-columns: 1fr; gap: 25px; }
+  .footerBottom { flex-direction: column; gap: 10px; text-align: center; }
+  .hero { height: 75vh; }
+}
+</style>
 </head>
 
 <body>
 
-<!-- MENU -->
-<button class="menu-btn" onclick="toggleMenu()">☰</button>
+<nav class="navbar">
+  <div class="navLogo">
+    <img src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/IMG-20250829-WA0074%20(1).jpg" alt="TEF Logo">
+    <span>TEF Portal</span>
+  </div>
+  
+  <div class="navMenu">
+    <button class="btn admin" onclick="goLogin()">Administrators</button>
+    <button class="btn staff" onclick="goLogin()">Staffs</button>
+    <button class="btn student" onclick="goLogin()">Students</button>
+  </div>
 
-<div class="menu" id="menu">
-  <a href="#">Home</a>
-  <a href="students.html">Students</a>
-  <a href="teachers.html">Staff</a>
-  <a href="gallery.html">Gallery</a>
-  <a href="announcements.html">Announcements</a>
+  <button class="hamburger" id="hamburgerBtn" aria-label="Toggle Navigation Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</nav>
+
+<div class="navDrawer" id="navDrawerMenu">
+  <button class="btn admin" onclick="goLogin()">Administrators</button>
+  <button class="btn staff" onclick="goLogin()">Staffs</button>
+  <button class="btn student" onclick="goLogin()">Students</button>
 </div>
 
-<!-- HERO -->
 <div class="hero">
+  <img class="poster" src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/IMG-20250829-WA0074%20(1).jpg">
+  <video id="video" class="video" autoplay muted loop playsinline></video>
+  <div class="overlay"></div>
 
-  <video id="heroVideo" autoplay muted loop playsinline></video>
+  <div class="heroContent">
+    <img class="logo" src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/IMG-20250829-WA0074%20(1).jpg">
+    <div class="title">Tyneceploh Educational Foundation</div>
+    <div class="sub">Monrovia, Montserrado • Liberia</div>
+  </div>
+</div>
 
-  <div class="overlay">
-    <div class="logo">LOGO</div>
+<div id="announceBar" class="announceBar" style="display:none">
+  <span class="badge">NEW</span>
+  <div class="announceText" id="announceText"></div>
+  <button onclick="openAnnouncements()">View All</button>
+</div>
 
-    <h1>Tyneceploh Educational Foundation</h1>
+<main class="mainContent">
 
-    <div class="location">
-      Liberia • Montserrado County • A place of learning, discipline, and hope for the future
+  <div class="section">
+    <div class="glass">
+      <div class="h2">🏆 Today’s Honoree</div>
+      <div class="honoreeBox" id="honoreeBox">Loading spotlight record...</div>
+      <div class="smallLink" onclick="location.href='honor-board.html'">
+        View full Honor Board →
+      </div>
     </div>
   </div>
 
-</div>
-
-<!-- SLOGAN -->
-<section>
-  <div class="slogan">
-    Hope for the Future / By God's Grace
+  <div class="section">
+    <div class="glass">
+      <div class="h2">📊 Live Class Pulse</div>
+      <div class="classStrip" id="classStrip">Loading analytic matrix data...</div>
+    </div>
   </div>
-</section>
 
-<!-- CORE VALUES -->
-<section>
-  <h2 style="color:var(--pink)">Core Values</h2>
-
-  <div class="cards">
-    <div class="card"><b>Passion</b><br>Commitment in learning and work.</div>
-    <div class="card"><b>Excellence</b><br>Pursuit of quality in everything.</div>
-    <div class="card"><b>Respect</b><br>Honoring every individual.</div>
-    <div class="card"><b>Truth</b><br>Living and learning with integrity.</div>
+  <div class="section">
+    <div class="glass">
+      <div class="h2">Our Mission</div>
+      <p class="p">Provide an engaging, innovative, and holistic experience that empowers students to become responsible, productive citizens.</p>
+    </div>
   </div>
-</section>
 
-<!-- HISTORY -->
-<section>
-  <h2 style="color:var(--pink)">Our History</h2>
-
-  <div class="history">
-    Tyneceploh Educational Foundation is a lifelong dream realized in the absence of the dreamer, the late Margret Ploh Chattah. Her passion for child development began a groundbreaking program on January 25, 2015. Construction started in April 2015.
-
-    <br><br>
-
-    She later fell ill and was taken for treatment abroad. The dream continued through her family and supporters and fully opened on September 3, 2018. Today, TEF stands as a living testimony of her vision and sacrifice.
+  <div class="section">
+    <div class="glass">
+      <div class="h2">Our Vision</div>
+      <p class="p">Be the school of choice, improving community and society by opening doors and providing opportunities for every child, everyday.</p>
+    </div>
   </div>
-</section>
 
-<!-- FOOTER -->
-<footer>
-  Phone: 0778847625 | 0777515669 | 0886515669<br>
-  Email: tyneceploheducational2018@gmail.com<br><br>
-  © 2026 Tyneceploh Educational Foundation
+  <div class="section">
+    <div class="glass">
+      <div class="h2">Core Values</div>
+      <p class="p">Passion • Excellence • Respect • Truth</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="glass">
+      <div class="h2">Our History</div>
+      <p class="p">Tyneceploh Educational Foundation began as a dream carried forward through resilience, faith, and community dedication over years of educational excellence.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="glass">
+      <div class="h2">Contact Us</div>
+      <p class="p">
+        📞 0778847625 | 0777515669 | 0886515669 <br style="margin-bottom: 5px;">
+        📧 tyneceploheducational2018@gmail.com
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div class="footerContainer">
+    <div class="footerBrand">
+      <b>Tyneceploh Educational Foundation</b>
+      <p>Building an engaging, innovative, and holistic educational framework to guide and grow responsible citizens across communities everyday.</p>
+    </div>
+    <div class="footerLinks">
+      <h4>Portals</h4>
+      <ul>
+        <li><a href="#" onclick="goLogin()">Admin Dashboard</a></li>
+        <li><a href="#" onclick="goLogin()">Staff Panel</a></li>
+        <li><a href="#" onclick="goLogin()">Student Hub</a></li>
+      </ul>
+    </div>
+    <div class="footerLinks">
+      <h4>Academic Units</h4>
+      <ul>
+        <li><a href="honor-board.html">Honor Board</a></li>
+        <li><a href="users-announcement.html">Announcements</a></li>
+        <li><a href="#classStrip">Class Analytics</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footerBottom">
+    <div>&copy; 2026 Tyneceploh Educational Foundation. All Rights Reserved.</div>
+    <div>Monrovia, Liberia</div>
+  </div>
 </footer>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  apiKey:"YOUR_KEY",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 });
 
 const db = getFirestore(app);
 
-/* HERO VIDEO FROM CLOUDINARY */
-async function loadVideo(){
-  const snap = await getDocs(collection(db,"homepageSettings"));
+window.goLogin = () => location.href="login.html";
+window.openAnnouncements = () => location.href="users-announcement.html";
 
-  snap.forEach(d=>{
-    const s = d.data();
-    if(s.featuredVideoURL){
-      document.getElementById("heroVideo").src = s.featuredVideoURL;
-    }
-  });
+/* HAMBURGER INTERACTION & ACCESSIBILITY MANAGEMENT */
+const burger = document.getElementById("hamburgerBtn");
+const drawer = document.getElementById("navDrawerMenu");
+
+function toggleMenu() {
+  burger.classList.toggle("active");
+  drawer.classList.toggle("open");
 }
 
-/* MENU */
-window.toggleMenu = function(){
-  const m = document.getElementById("menu");
-  m.style.right = (m.style.right === "0px") ? "-100%" : "0px";
-};
+burger.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleMenu();
+});
 
+// Close drawer if user clicks outside of the active configuration button options
+drawer.addEventListener("click", (e) => {
+  if (e.target === drawer) {
+    toggleMenu();
+  }
+});
+
+drawer.querySelectorAll(".btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    burger.classList.remove("active");
+    drawer.classList.remove("open");
+  });
+});
+
+/* STREAM INTERFACE CONTROLLER */
+async function loadVideo(){
+  try {
+    const snap = await getDoc(doc(db,"homepage","main"));
+    if(snap.exists()){
+      const v=document.getElementById("video");
+      v.src=snap.data().videoURL;
+      v.oncanplay=()=>v.style.opacity=1;
+    }
+  } catch(e) { console.error("Video pipeline offline:", e); }
+}
+
+/* REALTIME SYSTEM ANNOUNCEMENTS ENGINE */
+async function loadAnnouncement(){
+  try {
+    const snap = await getDocs(collection(db,"announcements"));
+    let latest=null;
+
+    snap.forEach(d=>{
+      const a=d.data();
+      if(a.type==="public") latest=a;
+    });
+
+    if(latest){
+      document.getElementById("announceBar").style.display="flex";
+      document.getElementById("announceText").innerText = latest.title+" - "+latest.message;
+    }
+  } catch(e) { console.error("Notification channel error:", e); }
+}
+
+/* SECURE PROTOCOL TIMESTAMPS FOR RELEASES */
+function parseTimestamp(field) {
+  if (!field) return 0;
+  if (typeof field.toMillis === "function") return field.toMillis();
+  return Date.parse(field);
+}
+
+/* PERFORMANCE TARGET HONOREE PIPELINE */
+async function loadHonoree(){
+  try {
+    const snap = await getDocs(collection(db,"academic_reports"));
+    let latest=null;
+
+    snap.forEach(d=>{
+      const data=d.data();
+      if(data.generatedAt) {
+        const currentStamp = parseTimestamp(data.generatedAt);
+        const latestStamp = latest ? parseTimestamp(latest.generatedAt) : 0;
+        if(!latest || currentStamp > latestStamp){
+          latest=data;
+        }
+      }
+    });
+
+    if(!latest?.students) {
+      document.getElementById("honoreeBox").innerText = "No academic records currently synced.";
+      return;
+    }
+
+    let pool = latest.students.filter(s=>s.honor);
+    if(pool.length === 0) {
+      document.getElementById("honoreeBox").innerText = "No honorees found in active statement.";
+      return;
+    }
+
+    pool.sort((a,b)=> Number(b.mainAverage||0) - Number(a.mainAverage||0) );
+    const sliceCount = pool.slice(0, Math.min(3, pool.length));
+    const pick = sliceCount[Math.floor(Math.random()*sliceCount.length)];
+
+    const box=document.getElementById("honoreeBox");
+    box.style.opacity=0;
+
+    setTimeout(()=>{
+      box.innerHTML=`
+        <img src="${pick.studentPhoto||'https://via.placeholder.com/80'}" onerror="this.src='https://via.placeholder.com/80'">
+        <div>
+          <div class="hName">${pick.studentName}</div>
+          <div class="hMeta">Rank #${pick.rank || "N/A"}${pick.mainAverage ? ` • Avg ${pick.mainAverage}%` : ''}${pick.class ? ` • Class ${pick.class}` : ''}</div>
+          <div class="tag">${pick.honor}</div>
+        </div>
+      `;
+      box.style.opacity=1;
+    },250);
+  } catch(err) {
+    console.error(err);
+    document.getElementById("honoreeBox").innerText = "Honoree portal component unavailable.";
+  }
+}
+
+/* COMPUTE LIVE BALANCED DATA GROUPS */
+async function loadClassPulse(){
+  try {
+    const snap = await getDocs(collection(db,"academic_reports"));
+    let absoluteLatestReport = null;
+
+    snap.forEach(d => {
+      const data = d.data();
+      if(data.generatedAt) {
+        const currentStamp = parseTimestamp(data.generatedAt);
+        const latestStamp = absoluteLatestReport ? parseTimestamp(absoluteLatestReport.generatedAt) : 0;
+        if(!absoluteLatestReport || currentStamp > latestStamp) {
+          absoluteLatestReport = data;
+        }
+      }
+    });
+
+    const container = document.getElementById("classStrip");
+    if(!absoluteLatestReport || !absoluteLatestReport.students) {
+      container.innerHTML = "<div>Class metrics matrix empty.</div>";
+      return;
+    }
+
+    const classGroups = {};
+    absoluteLatestReport.students.forEach(student => {
+      const className = student.class || "Unassigned";
+      if(!classGroups[className]) {
+        classGroups[className] = { totalSum: 0, count: 0 };
+      }
+      if(student.mainAverage) {
+        classGroups[className].totalSum += Number(student.mainAverage);
+        classGroups[className].count += 1;
+      }
+    });
+
+    const classNames = Object.keys(classGroups).sort();
+    if(classNames.length === 0) {
+      container.innerHTML = "<div>No aggregate analytics processed.</div>";
+      return;
+    }
+
+    container.innerHTML = classNames.map(name => {
+      const group = classGroups[name];
+      const dynamicAverage = group.count > 0 ? (group.totalSum / group.count).toFixed(2) : "0.00";
+      return `
+        <div class="classCard">
+          <div><b>Class ${name}</b></div>
+          <div style="font-size:13px;opacity:.8;margin-top:4px;">Avg ${dynamicAverage}%</div>
+        </div>
+      `;
+    }).join("");
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById("classStrip").innerHTML = "<div>Pulse interface execution error.</div>";
+  }
+}
+
+/* GLOBAL SCROLL INTERSECTION ENGINE */
+const sections = document.querySelectorAll(".section");
+const obs = new IntersectionObserver(e=>{
+  e.forEach(x=>{
+    if(x.isIntersecting) x.target.classList.add("show");
+  });
+},{threshold:0.06, rootMargin: "0px 0px -40px 0px"});
+
+sections.forEach(s=>obs.observe(s));
+
+/* INITIATION ENGINE CALLS */
 loadVideo();
-
+loadAnnouncement();
+loadHonoree();
+loadClassPulse();
 </script>
 
 </body>
