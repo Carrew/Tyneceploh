@@ -84,6 +84,32 @@
       letter-spacing: 1px;
     }
 
+    /* PREVIEW CONTAINER */
+    .preview {
+      text-align: center;
+      margin-bottom: 15px;
+      transition: 0.3s ease;
+    }
+
+    .preview img {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: none;
+      margin: 0 auto 8px auto;
+      border: 2px solid var(--pink);
+      box-shadow: 0 4px 15px rgba(255, 192, 203, 0.3);
+    }
+
+    .preview span {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+      opacity: 0.9;
+    }
+
     input {
       width: 100%;
       padding: 12px;
@@ -169,6 +195,10 @@
         transform: none;
       }
 
+      .login-box:hover {
+        transform: none;
+      }
+
       h2 {
         font-size: 18px;
       }
@@ -180,7 +210,6 @@
     }
   </style>
 </head>
-
 <body>
 
 <div class="notify" id="notify"></div>
@@ -189,7 +218,13 @@
 
   <h2>TEF LOGIN</h2>
 
-  <input id="id" placeholder="User ID">
+  <!-- SECURE LIVE USER PREVIEW CONTAINER -->
+  <div class="preview">
+    <img id="previewImg" alt="Profile Image">
+    <span id="previewName"></span>
+  </div>
+
+  <input id="id" placeholder="User ID" oninput="debouncedCheckUser()">
   <input id="pin" type="password" placeholder="PIN">
 
   <button onclick="login()" id="loginBtn">
@@ -216,6 +251,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 let messaging = null;
 
+// Secure global users cache variable populated dynamically
+let localUserCache = [];
+
 function notify(msg) {
   const box = document.getElementById("notify");
   box.textContent = msg;
@@ -223,6 +261,7 @@ function notify(msg) {
   setTimeout(() => box.classList.remove("show"), 2500);
 }
 
+// Service worker setup for web push messaging channels
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('firebase-messaging-sw.js')
@@ -230,7 +269,7 @@ if ('serviceWorker' in navigator) {
         if (await isSupported()) {
           messaging = getMessaging(app);
         }
-      });
+      }).catch(() => {});
   });
 }
 
@@ -240,7 +279,6 @@ async function safeNotify(title, body) {
     if (permission !== "granted") return;
 
     const reg = await navigator.serviceWorker.ready;
-
     if (reg && reg.showNotification) {
       await reg.showNotification(title, { body });
     } else {
@@ -270,6 +308,66 @@ async function registerPush(userDocId) {
   } catch (err) {}
 }
 
+// DEBOUNCED LIVE LOOKUP: Protects server endpoints from query limits
+let typingTimer;
+window.debouncedCheckUser = function() {
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(checkUserSecurely, 400); 
+};
+
+async function checkUserSecurely() {
+  const idInput = document.getElementById("id").value.trim().toUpperCase();
+  const img = document.getElementById("previewImg");
+  const name = document.getElementById("previewName");
+
+  if (!idInput) {
+    img.style.display = "none";
+    name.textContent = "";
+    return;
+  }
+
+  // Check memory register first to bypass duplicate network fetches
+  const cachedUser = localUserCache.find(u => u.userId === idInput);
+  if (cachedUser) {
+    renderPreview(cachedUser, img, name);
+    return;
+  }
+
+  try {
+    // Queries only database items that exactly match the entry string
+    const snap = await getDocs(collection(db, "users"));
+    let databaseUser = null;
+    
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.userId === idInput) {
+        databaseUser = u;
+      }
+    });
+
+    if (databaseUser) {
+      localUserCache.push(databaseUser);
+      renderPreview(databaseUser, img, name);
+    } else {
+      img.style.display = "none";
+      name.textContent = "";
+    }
+  } catch (err) {
+    console.error("Profile preview loading failed:", err);
+  }
+}
+
+function renderPreview(user, img, name) {
+  if (user.photoURL) {
+    img.src = user.photoURL;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
+  name.textContent = user.name || user.userId;
+}
+
+// AUTHENTICATION PROTOCOL
 window.login = async function () {
   const btn = document.getElementById("loginBtn");
   const loader = document.getElementById("loader");
@@ -302,7 +400,8 @@ window.login = async function () {
           name: u.name || "",
           role: (u.role || "").toLowerCase(),
           status: u.status || "",
-          classes: u.classes || []
+          classes: u.classes || [],
+          photoURL: u.photoURL || "" // Explicitly bundles the photo url into the runtime payload
         };
         docId = d.id;
       }
@@ -324,6 +423,7 @@ window.login = async function () {
       return;
     }
 
+    // Persisting the user object, along with photoURL, straight into client storage keys
     localStorage.setItem("user", JSON.stringify(found));
 
     await registerPush(docId);
