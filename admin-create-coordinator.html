@@ -25,7 +25,7 @@
       color: var(--pink);
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 10px;
       margin: 6px 0;
@@ -86,7 +86,14 @@
 
 <input id="name" placeholder="Full Name">
 <input id="department" placeholder="Department">
-<input id="gender" placeholder="Gender">
+
+<select id="gender">
+  <option value="">Select Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+  <option value="Other">Other</option>
+</select>
+
 <input id="contact" placeholder="Contact">
 <input id="nationality" placeholder="Nationality">
 <input id="address" placeholder="Address">
@@ -97,12 +104,22 @@
 
 <button onclick="create()" id="btn">Create Coordinator</button>
 
+<h2>📋 Coordinators</h2>
+<input id="search" placeholder="Search by name or ID..." oninput="loadCoordinators()">
 <div id="list"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -112,6 +129,7 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
+// UI notify
 function notify(msg){
   const n = document.getElementById("notify");
   n.innerText = msg;
@@ -119,15 +137,17 @@ function notify(msg){
   setTimeout(()=>n.classList.remove("show"), 2500);
 }
 
-function genID(num){
-  return "COO" + Date.now().toString().slice(-4) + num;
+// ID generator (C001 style)
+function genID(count){
+  return "C" + String(count + 1).padStart(3, "0");
 }
 
+// PIN generator
 function genPIN(){
-  return Math.floor(1000 + Math.random()*9000).toString();
+  return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// CLOUDINARY UPLOAD
+// image upload
 async function uploadImage(file){
   if(!file) return "";
 
@@ -144,6 +164,7 @@ async function uploadImage(file){
   return data.secure_url || "";
 }
 
+// CREATE
 window.create = async function(){
 
   const btn = document.getElementById("btn");
@@ -154,15 +175,16 @@ window.create = async function(){
     const snap = await getDocs(collection(db,"users"));
 
     let count = 0;
-    snap.forEach(d=>{
+    snap.forEach(d => {
       if(d.data().role === "coordinator") count++;
     });
 
     const file = document.getElementById("photo").files[0];
     const photoURL = await uploadImage(file);
 
-    const id = genID(count+1);
-    const pin = document.getElementById("pin").value || genPIN();
+    const id = genID(count);
+    const pinInput = document.getElementById("pin").value.trim();
+    const pin = pinInput || genPIN();
 
     const data = {
       userId: id,
@@ -185,15 +207,92 @@ window.create = async function(){
 
     notify("Coordinator created: " + id);
 
-    document.querySelectorAll("input").forEach(i => i.value = "");
+    document.querySelectorAll("input, select").forEach(i => i.value = "");
+
+    loadCoordinators();
 
   } catch(err){
+    console.error(err);
     notify("Error creating coordinator");
   }
 
   btn.disabled = false;
   btn.innerText = "Create Coordinator";
 };
+
+// LOAD + SEARCH
+window.loadCoordinators = async function(){
+
+  const list = document.getElementById("list");
+  const search = document.getElementById("search").value.toLowerCase();
+
+  list.innerHTML = "Loading...";
+
+  const snap = await getDocs(collection(db,"users"));
+
+  let html = "";
+
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    if(d.role !== "coordinator") return;
+
+    if(
+      search &&
+      !d.name.toLowerCase().includes(search) &&
+      !d.userId.toLowerCase().includes(search)
+    ) return;
+
+    html += `
+      <div class="card">
+        <b>${d.userId} - ${d.name}</b><br>
+        <div class="small">
+          Dept: ${d.department}<br>
+          Gender: ${d.gender}<br>
+          Contact: ${d.contact}
+        </div>
+
+        <button onclick="edit('${docSnap.id}')">Edit</button>
+        <button onclick="removeUser('${docSnap.id}')">Delete</button>
+      </div>
+    `;
+  });
+
+  list.innerHTML = html || "No coordinators found";
+};
+
+// DELETE
+window.removeUser = async function(id){
+  if(!confirm("Delete this coordinator?")) return;
+
+  await deleteDoc(doc(db,"users",id));
+  notify("Deleted");
+
+  loadCoordinators();
+};
+
+// UPDATE
+window.edit = async function(id){
+
+  const newName = prompt("New name:");
+  const newDept = prompt("New department:");
+
+  if(!newName && !newDept) return;
+
+  const ref = doc(db,"users",id);
+
+  const updateData = {};
+  if(newName) updateData.name = newName;
+  if(newDept) updateData.department = newDept;
+
+  await updateDoc(ref, updateData);
+
+  notify("Updated");
+
+  loadCoordinators();
+};
+
+// INIT
+loadCoordinators();
 
 </script>
 
