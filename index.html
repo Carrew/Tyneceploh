@@ -366,18 +366,19 @@ body{
   cursor:pointer;
   display: inline-block;
   transition: 0.2s;
+  margin-right: 15px;
 }
 .smallLink:hover { opacity: 1; text-decoration: underline; }
 
-/* LIVE PULSE MICRO-GRID & RANDOM STUDENTS GRID */
-.classStrip, .studentGrid{
+/* LIVE PULSE MICRO-GRID & RANDOM SHOWCASE GRID */
+.classStrip, .directoryGrid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
   gap:12px;
   margin-top: 5px;
 }
 
-.classCard, .studentDisplayCard{
+.classCard, .displayCard{
   background: rgba(255,255,255,0.04);
   padding:14px;
   border-radius:12px;
@@ -385,13 +386,13 @@ body{
   transition:.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.classCard:hover, .studentDisplayCard:hover{
+.classCard:hover, .displayCard:hover{
   transform:translateY(-4px);
   background:rgba(255,255,255,0.08);
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-.studentDisplayCard {
+.displayCard {
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -399,7 +400,7 @@ body{
   gap: 8px;
 }
 
-.studentDisplayCard img {
+.displayCard img {
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -407,15 +408,23 @@ body{
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.studentDisplayCard .sName {
+.displayCard .dName {
   font-weight: 700;
   font-size: 14px;
 }
 
-.studentDisplayCard .sClass {
-  font-size: 12px;
+.displayCard .dRole {
+  font-size: 11px;
+  background: rgba(255, 192, 203, 0.15);
   color: var(--accent);
-  opacity: 0.9;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.displayCard .dSub {
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 /* INTERACTIVE FOOTER BLOCK */
@@ -548,13 +557,15 @@ body{
     </div>
   </div>
 
-  <!-- NEW SECTION: RANDOM STUDENT DISCOVERY -->
   <div class="section">
     <div class="glass">
-      <div class="h2">✨ Meet Our Students</div>
-      <div class="studentGrid" id="randomStudentGrid">Loading student spotlight panel...</div>
-      <div class="smallLink" onclick="location.href='directory.html'">
-        Browse complete Directory →
+      <div class="h2">✨ Meet Our Community</div>
+      <div class="directoryGrid" id="randomDirectoryGrid">Loading directory spotlight panel...</div>
+      <div class="smallLink" onclick="location.href='students.html'">
+        Student Directory →
+      </div>
+      <div class="smallLink" onclick="location.href='staffs.html'">
+        Staff Directory →
       </div>
     </div>
   </div>
@@ -652,7 +663,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
-  apiKey:"YOUR_KEY",
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
   projectId:"tyneceploh"
 });
@@ -778,45 +789,77 @@ async function loadHonoree(){
   }
 }
 
-/* FAIR AND RANDOM STUDENT DISPLAY FEATURE */
-async function loadRandomStudents() {
+/* UTILITY: MAP STAFF ROLES FOR FORMATTING */
+function getRoleLabel(role){
+  const map = {
+    teacher:"Teacher",
+    admin:"Administration",
+    principal:"Principal",
+    security:"Security Team",
+    janitor:"Support Staff",
+    coordinator:"Coordinator"
+  };
+  return map[role] || "Staff Member";
+}
+
+/* HIGH FAIRNESS DUAL POOL SHUFFLE PIPELINE */
+async function loadRandomDirectory() {
   try {
-    const container = document.getElementById("randomStudentGrid");
+    const container = document.getElementById("randomDirectoryGrid");
     const snap = await getDocs(collection(db, "users"));
+    
     let studentsPool = [];
+    let staffPool = [];
 
     snap.forEach(d => {
       const u = d.data();
       if (u.role === "student") {
         studentsPool.push(u);
+      } else if (u.role) {
+        staffPool.push(u);
       }
     });
 
-    if (studentsPool.length === 0) {
-      container.innerHTML = "<div>No students registered in directory.</div>";
-      return;
-    }
-
-    // Unbiased Fisher-Yates Shuffle Algorithm for total fairness
+    // Unbiased Fisher-Yates Shuffling for both groups independently
     for (let i = studentsPool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [studentsPool[i], studentsPool[j]] = [studentsPool[j], studentsPool[i]];
     }
+    for (let i = staffPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [staffPool[i], staffPool[j]] = [staffPool[j], staffPool[i]];
+    }
 
-    // Select up to 4 random students to present on screen
-    const selection = studentsPool.slice(0, 4);
+    // Extract 2 completely random students and 2 completely random staff
+    const selectedStudents = studentsPool.slice(0, 2);
+    const selectedStaff = staffPool.slice(0, 2);
+    
+    // Merge selection pools
+    const combinedShowcase = [...selectedStudents, ...selectedStaff];
 
-    container.innerHTML = selection.map(s => `
-      <div class="studentDisplayCard">
-        <img src="${s.photoURL || 'https://via.placeholder.com/80'}" onerror="this.src='https://via.placeholder.com/80'">
-        <div class="sName">${s.name}</div>
-        <div class="sClass">${s.class || "General"}</div>
-      </div>
-    `).join("");
+    if (combinedShowcase.length === 0) {
+      container.innerHTML = "<div>No profiles found inside database directory.</div>";
+      return;
+    }
+
+    container.innerHTML = combinedShowcase.map(u => {
+      const isStudent = u.role === "student";
+      const badgeText = isStudent ? "Student" : getRoleLabel(u.role);
+      const metadataSub = isStudent ? (u.class || "General") : (u.gender || "Staff");
+
+      return `
+        <div class="displayCard">
+          <img src="${u.photoURL || 'https://via.placeholder.com/80'}" onerror="this.src='https://via.placeholder.com/80'">
+          <div class="dName">${u.name}</div>
+          <div class="dRole">${badgeText}</div>
+          <div class="dSub">${metadataSub}</div>
+        </div>
+      `;
+    }).join("");
 
   } catch(err) {
-    console.error("Directory randomizer component error:", err);
-    document.getElementById("randomStudentGrid").innerHTML = "<div>Unable to build showcase matrix.</div>";
+    console.error("Directory component assembly error:", err);
+    document.getElementById("randomDirectoryGrid").innerHTML = "<div>Showcase channel configuration errored.</div>";
   }
 }
 
@@ -892,7 +935,7 @@ sections.forEach(s=>obs.observe(s));
 loadVideo();
 loadAnnouncement();
 loadHonoree();
-loadRandomStudents();
+loadRandomDirectory();
 loadClassPulse();
 </script>
 
