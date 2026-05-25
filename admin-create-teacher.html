@@ -1,279 +1,782 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Teacher Management - TEF</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Management - TEF</title>
 
-  <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
-      --text: #fff;
-    }
+<style>
 
-    body {
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
-      margin: 0;
-      padding: 20px;
-    }
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.08);
+  --text:#ffffff;
+  --green:#27ae60;
+  --red:#e74c3c;
+}
 
-    h2 {
-      text-align: center;
-      color: var(--pink);
-    }
+*{
+  box-sizing:border-box;
+}
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin: 10px 0;
-    }
+body{
+  margin:0;
+  font-family:system-ui,sans-serif;
+  background:
+    radial-gradient(circle at top,#2a0015 0%,#0b0b0f 70%);
+  color:var(--text);
+  min-height:100vh;
+  padding:15px;
+}
 
-    .stat {
-      background: var(--card);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
-    }
+.container{
+  max-width:1100px;
+  margin:auto;
+}
 
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 8px;
-      border: none;
-      background: rgba(255,255,255,0.08);
-      color: white;
-    }
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
 
-    button {
-      padding: 10px;
-      margin: 5px 0;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--maroon), var(--pink));
-      color: white;
-      cursor: pointer;
-    }
+h2{
+  margin:0;
+  color:var(--pink);
+  font-size:28px;
+}
 
-    .card {
-      background: var(--card);
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 12px;
-      border-left: 4px solid var(--pink);
-    }
+.glass{
+  background:var(--card);
+  border:1px solid var(--border);
+  backdrop-filter:blur(14px);
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.35);
+}
 
-    .small {
-      font-size: 12px;
-      opacity: 0.8;
-    }
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:12px;
+  margin-bottom:20px;
+}
 
-    img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-top: 5px;
-    }
-  </style>
+.stat{
+  padding:18px;
+  text-align:center;
+}
+
+.stat h3{
+  margin:0;
+  font-size:14px;
+  opacity:0.8;
+}
+
+.stat p{
+  margin:8px 0 0;
+  font-size:26px;
+  font-weight:bold;
+  color:var(--pink);
+}
+
+.form-box{
+  padding:20px;
+  margin-bottom:20px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:12px;
+}
+
+input,
+select{
+  width:100%;
+  padding:14px;
+  border:none;
+  outline:none;
+  border-radius:12px;
+  background:rgba(255,255,255,0.08);
+  color:white;
+  font-size:15px;
+}
+
+input::placeholder{
+  color:#ccc;
+}
+
+select option{
+  color:black;
+}
+
+.file-box{
+  margin-top:10px;
+}
+
+.btn{
+  border:none;
+  padding:14px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.3s;
+}
+
+.primary{
+  background:linear-gradient(135deg,var(--maroon),var(--pink));
+  color:white;
+}
+
+.primary:hover{
+  transform:translateY(-2px);
+}
+
+.secondary{
+  background:rgba(255,255,255,0.08);
+  color:white;
+}
+
+.search{
+  margin-bottom:20px;
+}
+
+.message{
+  margin-top:15px;
+  padding:14px;
+  border-radius:12px;
+  display:none;
+  font-weight:600;
+}
+
+.success{
+  background:rgba(39,174,96,0.15);
+  color:#7dffb0;
+  border:1px solid rgba(39,174,96,0.4);
+}
+
+.error{
+  background:rgba(231,76,60,0.15);
+  color:#ff9e9e;
+  border:1px solid rgba(231,76,60,0.4);
+}
+
+.loader{
+  display:none;
+  margin-top:15px;
+  text-align:center;
+}
+
+.loader span{
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  display:inline-block;
+  margin:0 4px;
+  background:var(--pink);
+  animation:bounce 0.6s infinite alternate;
+}
+
+.loader span:nth-child(2){
+  animation-delay:0.2s;
+}
+
+.loader span:nth-child(3){
+  animation-delay:0.4s;
+}
+
+@keyframes bounce{
+  to{
+    transform:translateY(-8px);
+    opacity:0.5;
+  }
+}
+
+.card{
+  padding:16px;
+  margin-bottom:14px;
+  border-left:4px solid var(--pink);
+}
+
+.card-top{
+  display:flex;
+  gap:15px;
+  flex-wrap:wrap;
+}
+
+.avatar{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  object-fit:cover;
+  border:3px solid rgba(255,255,255,0.1);
+}
+
+.info{
+  flex:1;
+  min-width:220px;
+}
+
+.info h3{
+  margin:0 0 6px;
+  color:var(--pink);
+}
+
+.small{
+  opacity:0.85;
+  line-height:1.7;
+  font-size:14px;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:15px;
+  flex-wrap:wrap;
+}
+
+.actions button{
+  flex:1;
+  min-width:120px;
+}
+
+.empty{
+  text-align:center;
+  padding:40px 20px;
+  opacity:0.7;
+}
+
+@media(max-width:700px){
+
+  body{
+    padding:12px;
+  }
+
+  h2{
+    font-size:22px;
+  }
+
+  .form-box{
+    padding:15px;
+  }
+
+  .card-top{
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+
+  .actions{
+    flex-direction:column;
+  }
+
+}
+
+</style>
 </head>
 
 <body>
 
-<h2>👨‍🏫 Teacher Management System</h2>
+<div class="container">
 
-<div class="stats">
-  <div class="stat">Total <div id="total">0</div></div>
-  <div class="stat">Active <div id="active">0</div></div>
-  <div class="stat">Inactive <div id="inactive">0</div></div>
+  <div class="top">
+    <h2>👨‍🏫 Teacher Management</h2>
+  </div>
+
+  <div class="stats">
+
+    <div class="stat glass">
+      <h3>Total Teachers</h3>
+      <p id="total">0</p>
+    </div>
+
+    <div class="stat glass">
+      <h3>Active</h3>
+      <p id="active">0</p>
+    </div>
+
+    <div class="stat glass">
+      <h3>Inactive</h3>
+      <p id="inactive">0</p>
+    </div>
+
+  </div>
+
+  <div class="form-box glass">
+
+    <div class="grid">
+
+      <input id="name" placeholder="Teacher Name">
+
+      <input id="classes" placeholder="Classes (e.g. JSS1, JSS2)">
+
+      <input id="contact" placeholder="Contact">
+
+      <input id="nationality" placeholder="Nationality">
+
+      <input id="address" placeholder="Address">
+
+      <input id="dob" type="date">
+
+      <select id="gender">
+        <option value="">Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+      </select>
+
+      <select id="status">
+        <option value="">Select Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+
+    </div>
+
+    <div class="file-box">
+      <input type="file" id="photo" accept="image/*">
+    </div>
+
+    <input type="hidden" id="editId">
+
+    <button class="btn primary" onclick="saveTeacher()">
+      Save Teacher
+    </button>
+
+    <div class="loader" id="loader">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div id="msg" class="message"></div>
+
+  </div>
+
+  <div class="search">
+    <input
+      id="search"
+      placeholder="Search teacher by name or ID..."
+      oninput="renderTeachers()"
+    >
+  </div>
+
+  <div id="list"></div>
+
 </div>
-
-<input id="search" placeholder="Search teacher..." oninput="renderTeachers()">
-
-<hr>
-
-<!-- FORM -->
-<input id="name" placeholder="Teacher Name">
-<input id="classes" placeholder="Classes (e.g. JSS1, JSS2)">
-<input id="dob" placeholder="Date of Birth">
-<input id="gender" placeholder="Gender">
-<input id="contact" placeholder="Contact">
-<input id="nationality" placeholder="Nationality">
-<input id="address" placeholder="Address">
-
-<select id="status">
-  <option value="active">Active</option>
-  <option value="inactive">Inactive</option>
-</select>
-
-<input type="file" id="photo">
-
-<input type="hidden" id="editId">
-
-<button onclick="saveTeacher()">Save Teacher</button>
-
-<hr>
-
-<div id="list"></div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain: "tyneceploh.firebaseapp.com",
-  projectId: "tyneceploh",
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// safer ID
-function generateTeacherId(count) {
-  return `TCH${Date.now().toString().slice(-4)}${count}`;
-}
-
-function generatePin() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
 let teachersCache = [];
 
-async function loadTeachers() {
-  const snap = await getDocs(collection(db, "users"));
+function showMessage(text,type="success"){
+
+  const msg = document.getElementById("msg");
+
+  msg.className = `message ${type}`;
+  msg.style.display = "block";
+  msg.innerText = text;
+
+  setTimeout(()=>{
+    msg.style.display = "none";
+  },4000);
+}
+
+function showLoader(show=true){
+  document.getElementById("loader").style.display =
+    show ? "block" : "none";
+}
+
+function generatePin(){
+  return Math.floor(1000 + Math.random()*9000).toString();
+}
+
+function generateTeacherId(number){
+  return `TCH${String(number).padStart(3,"0")}`;
+}
+
+async function uploadImage(file){
+
+  if(!file) return "";
+
+  const formData = new FormData();
+
+  formData.append("file",file);
+  formData.append("upload_preset","Tyneceploh");
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
+    {
+      method:"POST",
+      body:formData
+    }
+  );
+
+  const data = await res.json();
+
+  return data.secure_url || "";
+}
+
+async function loadTeachers(){
+
+  const snap = await getDocs(collection(db,"users"));
+
   teachersCache = [];
 
-  snap.forEach(d => {
+  snap.forEach(d=>{
+
     const data = d.data();
-    if (data.role === "teacher") {
-      teachersCache.push({ ...data, docId: d.id });
+
+    if(data.role === "teacher"){
+
+      teachersCache.push({
+        ...data,
+        docId:d.id
+      });
+
     }
+
   });
 
   updateStats();
   renderTeachers();
 }
 
-function updateStats() {
-  document.getElementById("total").innerText = teachersCache.length;
-  document.getElementById("active").innerText =
-    teachersCache.filter(t => t.status === "active").length;
-  document.getElementById("inactive").innerText =
-    teachersCache.filter(t => t.status === "inactive").length;
+function updateStats(){
+
+  total.innerText = teachersCache.length;
+
+  active.innerText =
+    teachersCache.filter(t=>t.status === "active").length;
+
+  inactive.innerText =
+    teachersCache.filter(t=>t.status === "inactive").length;
 }
 
-// CLOUDINARY
-async function uploadImage(file) {
-  if (!file) return "";
+window.renderTeachers = function(){
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "Tyneceploh");
+  const search =
+    document.getElementById("search")
+    .value.toLowerCase();
 
-  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
-    method: "POST",
-    body: formData
-  });
+  const filtered = teachersCache.filter(t=>
 
-  const data = await res.json();
-  return data.secure_url || "";
-}
+    (t.name || "")
+    .toLowerCase()
+    .includes(search)
 
-window.renderTeachers = function () {
-  const search = document.getElementById("search").value.toLowerCase();
+    ||
 
-  const filtered = teachersCache.filter(t =>
-    (t.name || "").toLowerCase().includes(search) ||
-    (t.userId || "").toLowerCase().includes(search)
+    (t.userId || "")
+    .toLowerCase()
+    .includes(search)
+
   );
 
-  document.getElementById("list").innerHTML = filtered.map(t => `
-    <div class="card">
-      <b>🆔 ${t.userId}</b> | ${t.name}
+  if(filtered.length === 0){
 
-      <div class="small">
-        Classes: ${(t.classes || []).join(", ")} <br>
-        Status: ${t.status} <br>
-        DOB: ${t.dob || "-"} <br>
-        Contact: ${t.contact || "-"} <br>
-        Nationality: ${t.nationality || "-"} <br>
-        Address: ${t.address || "-"}
-        Pin: ${t.pin}<br>
+    list.innerHTML = `
+      <div class="glass empty">
+        No teachers found
+      </div>
+    `;
+
+    return;
+  }
+
+  list.innerHTML = filtered.map(t=>`
+
+    <div class="card glass">
+
+      <div class="card-top">
+
+        ${
+          t.photoURL
+          ?
+          `<img src="${t.photoURL}" class="avatar">`
+          :
+          `<div class="avatar glass"></div>`
+        }
+
+        <div class="info">
+
+          <h3>${t.name}</h3>
+
+          <div class="small">
+
+            <b>ID:</b> ${t.userId}<br>
+
+            <b>Classes:</b>
+            ${(t.classes || []).join(", ")}<br>
+
+            <b>Status:</b>
+            ${t.status}<br>
+
+            <b>Gender:</b>
+            ${t.gender || "-"}<br>
+
+            <b>Contact:</b>
+            ${t.contact || "-"}<br>
+
+            <b>Nationality:</b>
+            ${t.nationality || "-"}<br>
+
+            <b>Address:</b>
+            ${t.address || "-"}<br>
+
+            <b>PIN:</b>
+            ${t.pin}
+
+          </div>
+
+        </div>
+
       </div>
 
-      ${t.photoURL ? `<img src="${t.photoURL}">` : ""}
+      <div class="actions">
 
-      <button onclick="editTeacher('${t.docId}')">Edit</button>
-      <button onclick="deleteTeacher('${t.docId}')">Delete</button>
+        <button
+          class="btn secondary"
+          onclick="editTeacher('${t.docId}')"
+        >
+          Edit
+        </button>
+
+        <button
+          class="btn primary"
+          onclick="deleteTeacher('${t.docId}')"
+        >
+          Delete
+        </button>
+
+      </div>
+
     </div>
+
   `).join("");
 };
 
-window.saveTeacher = async function () {
-  const editId = document.getElementById("editId").value;
+window.saveTeacher = async function(){
 
-  const file = document.getElementById("photo").files[0];
-  const photoURL = await uploadImage(file);
+  const editId =
+    document.getElementById("editId").value;
 
-  const data = {
-    name: document.getElementById("name").value,
-    classes: document.getElementById("classes").value.split(",").map(c => c.trim()),
-    dob: document.getElementById("dob").value,
-    gender: document.getElementById("gender").value,
-    contact: document.getElementById("contact").value,
-    nationality: document.getElementById("nationality").value,
-    address: document.getElementById("address").value,
-    status: document.getElementById("status").value,
-    role: "teacher",
-    createdAt: Date.now()
-  };
+  const name =
+    document.getElementById("name").value.trim();
 
-  if (photoURL) data.photoURL = photoURL;
+  const classes =
+    document.getElementById("classes").value.trim();
 
-  if (!editId) {
-    const snap = await getDocs(collection(db, "users"));
-    const userId = generateTeacherId(snap.docs.length);
-    const pin = generatePin();
+  const dob =
+    document.getElementById("dob").value;
 
-    data.userId = userId;
-    data.pin = pin;
+  const gender =
+    document.getElementById("gender").value;
 
-    await addDoc(collection(db, "users"), data);
+  const contact =
+    document.getElementById("contact").value.trim();
 
-    alert(`Teacher Created\nID: ${userId}\nPIN: ${pin}`);
-  } else {
-    await updateDoc(doc(db, "users", editId), data);
-    document.getElementById("editId").value = "";
+  const nationality =
+    document.getElementById("nationality").value.trim();
+
+  const address =
+    document.getElementById("address").value.trim();
+
+  const status =
+    document.getElementById("status").value;
+
+  const file =
+    document.getElementById("photo").files[0];
+
+  if(
+    !name ||
+    !classes ||
+    !dob ||
+    !gender ||
+    !contact ||
+    !nationality ||
+    !address ||
+    !status
+  ){
+    showMessage(
+      "Please fill all fields correctly",
+      "error"
+    );
+    return;
   }
 
-  loadTeachers();
-};
+  showLoader(true);
 
-window.editTeacher = function (id) {
-  const t = teachersCache.find(x => x.docId === id);
-  if (!t) return;
+  try{
 
-  document.getElementById("editId").value = id;
-  document.getElementById("name").value = t.name || "";
-  document.getElementById("classes").value = (t.classes || []).join(", ");
-  document.getElementById("dob").value = t.dob || "";
-  document.getElementById("gender").value = t.gender || "";
-  document.getElementById("contact").value = t.contact || "";
-  document.getElementById("nationality").value = t.nationality || "";
-  document.getElementById("address").value = t.address || "";
-  document.getElementById("status").value = t.status || "active";
-};
+    const photoURL = await uploadImage(file);
 
-window.deleteTeacher = async function (id) {
-  if (confirm("Delete teacher?")) {
-    await deleteDoc(doc(db, "users", id));
+    const data = {
+
+      name,
+
+      classes:
+        classes
+        .split(",")
+        .map(c=>c.trim()),
+
+      dob,
+      gender,
+      contact,
+      nationality,
+      address,
+      status,
+
+      role:"teacher",
+
+      createdAt:Date.now()
+
+    };
+
+    if(photoURL){
+      data.photoURL = photoURL;
+    }
+
+    if(!editId){
+
+      const snap =
+        await getDocs(collection(db,"users"));
+
+      const teacherCount =
+        snap.docs.filter(d=>
+          d.data().role === "teacher"
+        ).length + 1;
+
+      const userId =
+        generateTeacherId(teacherCount);
+
+      const pin =
+        generatePin();
+
+      data.userId = userId;
+      data.pin = pin;
+
+      await addDoc(collection(db,"users"),data);
+
+      showMessage(
+        `Teacher Created Successfully | ID: ${userId} | PIN: ${pin}`
+      );
+
+    }else{
+
+      await updateDoc(
+        doc(db,"users",editId),
+        data
+      );
+
+      showMessage("Teacher updated successfully");
+
+      document.getElementById("editId").value = "";
+
+    }
+
+    clearForm();
+
     loadTeachers();
+
+  }catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "Something went wrong while saving teacher",
+      "error"
+    );
+
+  }
+
+  showLoader(false);
+};
+
+function clearForm(){
+
+  name.value = "";
+  classes.value = "";
+  dob.value = "";
+  gender.value = "";
+  contact.value = "";
+  nationality.value = "";
+  address.value = "";
+  status.value = "";
+  photo.value = "";
+}
+
+window.editTeacher = function(id){
+
+  const t =
+    teachersCache.find(x=>x.docId === id);
+
+  if(!t) return;
+
+  editId.value = id;
+
+  name.value = t.name || "";
+  classes.value = (t.classes || []).join(", ");
+  dob.value = t.dob || "";
+  gender.value = t.gender || "";
+  contact.value = t.contact || "";
+  nationality.value = t.nationality || "";
+  address.value = t.address || "";
+  status.value = t.status || "";
+};
+
+window.deleteTeacher = async function(id){
+
+  const proceed =
+    confirm("Delete this teacher?");
+
+  if(!proceed) return;
+
+  try{
+
+    await deleteDoc(doc(db,"users",id));
+
+    showMessage("Teacher deleted");
+
+    loadTeachers();
+
+  }catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "Failed to delete teacher",
+      "error"
+    );
+
   }
 };
 
