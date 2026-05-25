@@ -370,15 +370,15 @@ body{
 }
 .smallLink:hover { opacity: 1; text-decoration: underline; }
 
-/* LIVE PULSE MICRO-GRID & RANDOM SHOWCASE GRID */
-.classStrip, .directoryGrid{
+/* LIVE MICRO-GRIDS (PULSE, DIRECTORY, GALLERY) */
+.classStrip, .directoryGrid, .galleryStripGrid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
   gap:12px;
   margin-top: 5px;
 }
 
-.classCard, .displayCard{
+.classCard, .displayCard, .homeGalleryImgContainer{
   background: rgba(255,255,255,0.04);
   padding:14px;
   border-radius:12px;
@@ -386,7 +386,7 @@ body{
   transition:.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.classCard:hover, .displayCard:hover{
+.classCard:hover, .displayCard:hover, .homeGalleryImgContainer:hover{
   transform:translateY(-4px);
   background:rgba(255,255,255,0.08);
   border-color: rgba(255, 255, 255, 0.15);
@@ -425,6 +425,21 @@ body{
 .displayCard .dSub {
   font-size: 12px;
   opacity: 0.7;
+}
+
+/* HOME MINI GALLERY CONFIGURATION */
+.homeGalleryImgContainer {
+  padding: 6px;
+  height: 140px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.homeGalleryImgContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 /* INTERACTIVE FOOTER BLOCK */
@@ -561,10 +576,10 @@ body{
     <div class="glass">
       <div class="h2">✨ Meet Our Community</div>
       <div class="directoryGrid" id="randomDirectoryGrid">Loading directory spotlight panel...</div>
-      <div class="smallLink" onclick="location.href='students.html'">
+      <div class="smallLink" onclick="location.href='student-directory.html'">
         Student Directory →
       </div>
-      <div class="smallLink" onclick="location.href='staffs.html'">
+      <div class="smallLink" onclick="location.href='staff-directory.html'">
         Staff Directory →
       </div>
     </div>
@@ -607,6 +622,16 @@ body{
         <span style="color:#ffc0cb; font-size:28px; font-weight:800; text-decoration:underline; display:block; margin-bottom:6px;">Truth</span>
         Learning, living and teaching in obedience to God's truth, discerning, engaging and influencing culture with the hope of Christ's redemption.
       </p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="glass">
+      <div class="h2">🖼️ Campus Moments</div>
+      <div class="galleryStripGrid" id="randomGalleryStrip">Loading snapshots...</div>
+      <div class="smallLink" onclick="location.href='gallery.html'">
+        Open Full Gallery →
+      </div>
     </div>
   </div>
 
@@ -820,7 +845,6 @@ async function loadRandomDirectory() {
       }
     });
 
-    // Unbiased Fisher-Yates Shuffling for both groups independently
     for (let i = studentsPool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [studentsPool[i], studentsPool[j]] = [studentsPool[j], studentsPool[i]];
@@ -830,11 +854,8 @@ async function loadRandomDirectory() {
       [staffPool[i], staffPool[j]] = [staffPool[j], staffPool[i]];
     }
 
-    // Extract 2 completely random students and 2 completely random staff
     const selectedStudents = studentsPool.slice(0, 2);
     const selectedStaff = staffPool.slice(0, 2);
-    
-    // Merge selection pools
     const combinedShowcase = [...selectedStudents, ...selectedStaff];
 
     if (combinedShowcase.length === 0) {
@@ -860,6 +881,39 @@ async function loadRandomDirectory() {
   } catch(err) {
     console.error("Directory component assembly error:", err);
     document.getElementById("randomDirectoryGrid").innerHTML = "<div>Showcase channel configuration errored.</div>";
+  }
+}
+
+/* FAIR UNBIASED HOME GALLERY RANDOMIZER */
+async function loadRandomGalleryStrip() {
+  try {
+    const container = document.getElementById("randomGalleryStrip");
+    const iSnap = await getDocs(collection(db, "galleryImages"));
+    let imagesPool = iSnap.docs.map(d => d.data());
+
+    if (imagesPool.length === 0) {
+      container.innerHTML = "<div>No media captured in the database yet.</div>";
+      return;
+    }
+
+    // Fisher-Yates Shuffling algorithm for fair presentation
+    for (let i = imagesPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [imagesPool[i], imagesPool[j]] = [imagesPool[j], imagesPool[i]];
+    }
+
+    // Capture 4 completely random visuals to showcase on landing
+    const selection = imagesPool.slice(0, 4);
+
+    container.innerHTML = selection.map(img => `
+      <div class="homeGalleryImgContainer" onclick="location.href='gallery.html'">
+        <img src="${img.imageUrl}" alt="Campus Snapshot">
+      </div>
+    `).join("");
+
+  } catch(err) {
+    console.error("Home Gallery Pipeline Failure:", err);
+    document.getElementById("randomGalleryStrip").innerHTML = "<div>Gallery module unavailable.</div>";
   }
 }
 
@@ -936,6 +990,7 @@ loadVideo();
 loadAnnouncement();
 loadHonoree();
 loadRandomDirectory();
+loadRandomGalleryStrip();
 loadClassPulse();
 </script>
 
