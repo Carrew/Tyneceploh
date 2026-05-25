@@ -2,8 +2,10 @@
 <html>
 <head>
   <title>TEF Attendance Scan</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
@@ -126,6 +128,7 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   doc,
@@ -143,32 +146,53 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
 
 const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user){
-  alert("Login required");
+
   location.href = "login.html";
+
 }
 
 if(user.role === "student"){
-  alert("Students cannot scan attendance");
+
   location.href = "login.html";
+
 }
 
-const deviceId = btoa(navigator.userAgent + screen.width + screen.height);
+const fpPromise = FingerprintJS.load();
+
+async function getDeviceId(){
+
+  const fp = await fpPromise;
+
+  const result = await fp.get();
+
+  return result.visitorId;
+
+}
 
 function show(msg,type){
 
   const el = document.getElementById("status");
 
   el.innerText = msg;
+
   el.className = "status " + type;
 
   if(type === "ok"){
+
     el.classList.add("pulse");
-    setTimeout(()=>el.classList.remove("pulse"),1200);
+
+    setTimeout(()=>{
+
+      el.classList.remove("pulse");
+
+    },1200);
+
   }
 
 }
@@ -179,10 +203,12 @@ function getMinutesDifference(now,timeString){
 
   const [h,m] = timeString.split(":").map(Number);
 
-  const target = (h*60)+m;
-  const current = (now.getHours()*60)+now.getMinutes();
+  const target = (h * 60) + m;
+
+  const current = (now.getHours() * 60) + now.getMinutes();
 
   return current - target;
+
 }
 
 async function processScan(qrText){
@@ -192,124 +218,241 @@ async function processScan(qrText){
     show("Verifying QR code...","info");
 
     let qr;
+
     try{
+
       qr = JSON.parse(qrText);
+
     }catch{
+
       throw new Error("Invalid QR format");
+
     }
 
-    const qrSnap = await getDoc(doc(db,"attendanceSystem","mainQR"));
+    const qrSnap = await getDoc(
+      doc(db,"attendanceSystem","mainQR")
+    );
 
     if(!qrSnap.exists()){
+
       throw new Error("QR system not active");
+
     }
 
     const activeQR = qrSnap.data();
 
     if(activeQR.token !== qr.token){
+
       throw new Error("QR not recognized");
+
     }
 
     if(Date.now() > activeQR.expiresAt){
+
       throw new Error("QR expired");
+
     }
 
     show("Loading profile...","info");
 
-    const usersSnap = await getDocs(collection(db,"users"));
+    const usersSnap = await getDocs(
+      collection(db,"users")
+    );
 
     let userDocId = null;
+
     let userData = null;
 
     usersSnap.forEach(d=>{
+
       const u = d.data();
+
       if(u.userId === user.userId){
+
         userDocId = d.id;
+
         userData = u;
+
       }
+
     });
 
     if(!userData){
+
       throw new Error("User not found");
+
     }
 
-    if(userData.primaryDevice && userData.primaryDevice !== deviceId){
-      throw new Error("Device mismatch");
-    }
+    const deviceId = await getDeviceId();
+
+    // FIRST DEVICE REGISTRATION
 
     if(!userData.primaryDevice){
-      await updateDoc(doc(db,"users",userDocId),{
-        primaryDevice:deviceId
-      });
+
+      await updateDoc(
+        doc(db,"users",userDocId),
+        {
+          primaryDevice:deviceId,
+          deviceRegisteredAt:Date.now(),
+          lastDeviceSeen:Date.now()
+        }
+      );
+
+    }else{
+
+      // DEVICE LOCK
+
+      if(userData.primaryDevice !== deviceId){
+
+        throw new Error(
+          "This account is locked to another device"
+        );
+
+      }
+
+      // UPDATE LAST ACTIVE
+
+      await updateDoc(
+        doc(db,"users",userDocId),
+        {
+          lastDeviceSeen:Date.now()
+        }
+      );
+
     }
 
-    const settingsSnap = await getDoc(doc(db,"attendanceSettings",user.userId));
+    const settingsSnap = await getDoc(
+      doc(db,"attendanceSettings",user.userId)
+    );
 
     if(!settingsSnap.exists()){
-      throw new Error("No attendance settings found");
+
+      throw new Error(
+        "No attendance settings found"
+      );
+
     }
 
     const settings = settingsSnap.data();
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date()
+      .toISOString()
+      .split("T")[0];
 
-    const ref = doc(db,"attendanceDaily",user.userId+"_"+today);
+    const ref = doc(
+      db,
+      "attendanceDaily",
+      user.userId + "_" + today
+    );
 
     const snap = await getDoc(ref);
 
     const now = new Date();
 
     // CLOCK IN
+
     if(!snap.exists()){
 
-      const diff = getMinutesDifference(now,settings.expectedClockIn);
+      const diff = getMinutesDifference(
+        now,
+        settings.expectedClockIn
+      );
 
       let status = "ON_TIME";
-      if(diff > settings.graceMinutes) status = "LATE";
-      if(diff < 0) status = "EARLY";
+
+      if(diff > settings.graceMinutes){
+
+        status = "LATE";
+
+      }
+
+      if(diff < 0){
+
+        status = "EARLY";
+
+      }
 
       await setDoc(ref,{
+
         userId:user.userId,
+
         name:user.name,
+
         role:user.role,
+
         date:today,
+
         deviceId,
+
         clockIn:{
           time:Date.now(),
           status,
           minutes:Math.abs(diff)
         },
+
         clockOut:null,
+
         createdAt:Date.now()
+
       });
 
-      show(`Clock In confirmed (${status})`,"ok");
+      show(
+        `Clock In confirmed (${status})`,
+        "ok"
+      );
+
       return;
+
     }
 
     if(snap.data().clockOut){
-      throw new Error("Attendance already completed");
+
+      throw new Error(
+        "Attendance already completed"
+      );
+
     }
 
     // CLOCK OUT
-    const diff = getMinutesDifference(now,settings.expectedClockOut);
+
+    const diff = getMinutesDifference(
+      now,
+      settings.expectedClockOut
+    );
 
     let status = "ON_TIME";
-    if(diff < 0) status = "EARLY_EXIT";
-    if(diff > 0) status = "OVERTIME";
+
+    if(diff < 0){
+
+      status = "EARLY_EXIT";
+
+    }
+
+    if(diff > 0){
+
+      status = "OVERTIME";
+
+    }
 
     await updateDoc(ref,{
+
       clockOut:{
         time:Date.now(),
         status,
         minutes:Math.abs(diff)
       }
+
     });
 
-    show(`Clock Out confirmed (${status})`,"ok");
+    show(
+      `Clock Out confirmed (${status})`,
+      "ok"
+    );
 
   }catch(err){
+
     show(err.message,"bad");
+
   }
 
 }
@@ -317,20 +460,34 @@ async function processScan(qrText){
 const scanner = new Html5Qrcode("reader");
 
 scanner.start(
+
   { facingMode:"environment" },
-  { fps:10, qrbox:250 },
+
+  {
+    fps:10,
+    qrbox:250
+  },
+
   async(qrText)=>{
 
     scanner.pause();
 
     await processScan(qrText);
 
-    setTimeout(()=>scanner.resume(),2500);
+    setTimeout(()=>{
+
+      scanner.resume();
+
+    },2500);
 
   }
+
 ).catch(()=>{
 
-  show("Camera blocked or unavailable","bad");
+  show(
+    "Camera blocked or unavailable",
+    "bad"
+  );
 
 });
 
