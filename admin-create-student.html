@@ -1,168 +1,503 @@
-<!DOCTYPE html>    
-<html>    
+<!DOCTYPE html>
+<html>
 <head>
   <title>Student Management - TEF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --maroon: #800000;
-      --pink: #ffc0cb;
-      --bg: #0b0b0f;
-      --card: rgba(255,255,255,0.06);
-      --text: #ffffff;
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --text:#ffffff;
+      --success:#22c55e;
+      --danger:#ef4444;
     }
 
-    body {
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color: white;
-      margin: 0;
-      padding: 20px;
+    *{
+      box-sizing:border-box;
     }
 
-    h2 {
-      color: var(--pink);
-      text-align: center;
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:
+      radial-gradient(circle at top,#2b0018 0%,#13000b 30%,#090909 100%);
+      color:white;
+      padding:15px;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin: 15px 0;
+    .container{
+      max-width:1200px;
+      margin:auto;
     }
 
-    .stat {
-      background: var(--card);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
+    h2{
+      text-align:center;
+      color:var(--pink);
+      margin-bottom:20px;
+      font-size:28px;
     }
 
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 8px;
-      border: none;
-      background: rgba(255,255,255,0.08);
-      color: white;
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:15px;
     }
 
-    button {
-      padding: 10px;
-      margin: 5px 0;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--maroon), var(--pink));
-      color: white;
-      cursor: pointer;
+    .search-box{
+      flex:1;
+      min-width:220px;
     }
 
-    .card {
-      background: var(--card);
-      padding: 12px;
-      border-radius: 12px;
-      margin: 10px 0;
-      border-left: 4px solid var(--pink);
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+      gap:12px;
+      margin-bottom:20px;
     }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .stat{
+      background:var(--card);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:18px;
+      padding:16px;
+      text-align:center;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
     }
 
-    .small {
-      font-size: 12px;
-      opacity: 0.8;
+    .stat h3{
+      margin:0;
+      font-size:13px;
+      color:#ddd;
+      font-weight:500;
     }
 
-    img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-top: 5px;
+    .stat p{
+      margin:8px 0 0;
+      font-size:26px;
+      font-weight:bold;
+      color:var(--pink);
     }
+
+    .form-card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(14px);
+      border-radius:22px;
+      padding:18px;
+      margin-bottom:20px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    .section-title{
+      font-size:18px;
+      margin-bottom:15px;
+      color:var(--pink);
+      font-weight:bold;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;
+    }
+
+    input,
+    select{
+      width:100%;
+      padding:13px;
+      border:none;
+      border-radius:14px;
+      background:rgba(255,255,255,0.08);
+      color:white;
+      outline:none;
+      font-size:14px;
+    }
+
+    input::placeholder{
+      color:#ccc;
+    }
+
+    select option{
+      color:black;
+    }
+
+    input[type="file"]{
+      padding:10px;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      padding:13px 18px;
+      font-weight:bold;
+      transition:0.25s;
+    }
+
+    .primary-btn{
+      width:100%;
+      margin-top:15px;
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
+      color:white;
+      font-size:15px;
+    }
+
+    .primary-btn:hover{
+      transform:translateY(-2px);
+      opacity:0.95;
+    }
+
+    .student-list{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+      gap:15px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(14px);
+      border-radius:22px;
+      overflow:hidden;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    .card-top{
+      padding:18px;
+      display:flex;
+      gap:15px;
+      align-items:flex-start;
+    }
+
+    .avatar{
+      width:75px;
+      height:75px;
+      border-radius:50%;
+      object-fit:cover;
+      border:3px solid var(--pink);
+      background:#222;
+    }
+
+    .avatar-placeholder{
+      width:75px;
+      height:75px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:26px;
+      font-weight:bold;
+    }
+
+    .student-info{
+      flex:1;
+    }
+
+    .student-name{
+      font-size:18px;
+      font-weight:bold;
+      margin-bottom:4px;
+    }
+
+    .student-id{
+      color:#ffc0cb;
+      font-size:13px;
+      margin-bottom:8px;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:50px;
+      font-size:12px;
+      font-weight:bold;
+      background:rgba(255,255,255,0.12);
+    }
+
+    .details{
+      padding:0 18px 18px;
+      font-size:14px;
+      color:#ddd;
+      line-height:1.7;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      padding:0 18px 18px;
+    }
+
+    .edit-btn{
+      flex:1;
+      background:#2563eb;
+      color:white;
+    }
+
+    .delete-btn{
+      flex:1;
+      background:#dc2626;
+      color:white;
+    }
+
+    .message{
+      display:none;
+      margin-bottom:15px;
+      padding:14px;
+      border-radius:14px;
+      font-weight:600;
+    }
+
+    .success{
+      background:rgba(34,197,94,0.15);
+      border:1px solid rgba(34,197,94,0.4);
+      color:#86efac;
+    }
+
+    .error{
+      background:rgba(239,68,68,0.15);
+      border:1px solid rgba(239,68,68,0.4);
+      color:#fca5a5;
+    }
+
+    .loader{
+      display:none;
+      text-align:center;
+      margin-top:12px;
+      color:var(--pink);
+      font-weight:bold;
+    }
+
+    .empty{
+      text-align:center;
+      padding:40px 20px;
+      background:var(--card);
+      border-radius:20px;
+      color:#ccc;
+    }
+
+    @media(max-width:700px){
+
+      body{
+        padding:12px;
+      }
+
+      h2{
+        font-size:23px;
+      }
+
+      .card-top{
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+      }
+
+      .actions{
+        flex-direction:column;
+      }
+    }
+
   </style>
-</head>    
+</head>
 
-<body>    
+<body>
 
-<h2>🎓 Student Management System</h2>
+<div class="container">
 
-<div class="stats">
-  <div class="stat">Total: <span id="total">0</span></div>
-  <div class="stat">New: <span id="newCount">0</span></div>
-  <div class="stat">Old: <span id="oldCount">0</span></div>
+  <h2>🎓 Student Management System</h2>
+
+  <div id="message" class="message"></div>
+
+  <div class="stats">
+    <div class="stat">
+      <h3>Total Students</h3>
+      <p id="total">0</p>
+    </div>
+
+    <div class="stat">
+      <h3>New Students</h3>
+      <p id="newCount">0</p>
+    </div>
+
+    <div class="stat">
+      <h3>Old Students</h3>
+      <p id="oldCount">0</p>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <input
+      class="search-box"
+      id="search"
+      placeholder="Search by name or ID..."
+      oninput="renderStudents()"
+    >
+  </div>
+
+  <div class="form-card">
+
+    <div class="section-title">
+      Student Information
+    </div>
+
+    <div class="grid">
+
+      <input id="name" placeholder="Student Name">
+
+      <input id="class" placeholder="Class">
+
+      <input id="dob" type="date">
+
+      <select id="gender">
+        <option value="">Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+      </select>
+
+      <input id="nationality" placeholder="Nationality">
+
+      <input id="parent" placeholder="Parent / Guardian Name">
+
+      <input id="contact" placeholder="Parent Contact">
+
+      <select id="status">
+        <option value="">Select Status</option>
+        <option value="New">New</option>
+        <option value="Old">Old</option>
+      </select>
+
+      <input type="file" id="photo" accept="image/*">
+
+    </div>
+
+    <input type="hidden" id="editId">
+
+    <button class="primary-btn" onclick="saveStudent()">
+      Save Student
+    </button>
+
+    <div id="loader" class="loader">
+      Processing...
+    </div>
+
+  </div>
+
+  <div id="list" class="student-list"></div>
+
 </div>
 
-<input id="search" placeholder="Search student name or ID..." oninput="renderStudents()">
-
-<hr>
-
-<!-- CORE FORM (NO STRUCTURE CHANGED LOGICALLY, ONLY EXTENDED) -->
-<input id="name" placeholder="Student Name">
-<input id="class" placeholder="Class">
-<input id="dob" placeholder="Date of Birth">
-<select id="gender">
-  <option value="">Gender</option>
-  <option>Male</option>
-  <option>Female</option>
-</select>
-<input id="nationality" placeholder="Nationality">
-<input id="parent" placeholder="Parent/Guardian Name">
-<input id="contact" placeholder="Parent Contact">
-
-<select id="status">
-  <option value="New">New</option>
-  <option value="Old">Old</option>
-</select>
-
-<!-- CLOUDINARY PHOTO -->
-<input type="file" id="photo">
-
-<input type="hidden" id="editId">
-
-<button onclick="saveStudent()">Save Student</button>
-
-<hr>
-
-<div id="list"></div>
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";    
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";    
 
-const firebaseConfig = {    
-  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",    
-  authDomain: "tyneceploh.firebaseapp.com",    
-  projectId: "tyneceploh",    
-};    
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-const app = initializeApp(firebaseConfig);    
-const db = getFirestore(app);    
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// SAFE ID GENERATION (reduces duplication risk)
-function generateId(count) {
-  return `TEF${Date.now().toString().slice(-5)}${count}`;
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+};
 
-function generatePin() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 let studentsCache = [];
 
-async function loadStudents() {
-  const snap = await getDocs(collection(db, "users"));
+// -----------------------------------
+// UI HELPERS
+// -----------------------------------
+
+function showMessage(text, type="success"){
+
+  const box = document.getElementById("message");
+
+  box.className = `message ${type}`;
+  box.style.display = "block";
+  box.innerText = text;
+
+  setTimeout(()=>{
+    box.style.display = "none";
+  },4000);
+}
+
+function showLoader(show=true){
+  document.getElementById("loader").style.display =
+    show ? "block" : "none";
+}
+
+// -----------------------------------
+// ID + PIN
+// -----------------------------------
+
+function generatePin(){
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+function generateStudentId(count){
+  return `TEF${String(count + 1).padStart(3,"0")}`;
+}
+
+// -----------------------------------
+// CLOUDINARY
+// -----------------------------------
+
+async function uploadImage(file){
+
+  if(!file) return "";
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", "Tyneceploh");
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
+    {
+      method:"POST",
+      body:formData
+    }
+  );
+
+  const data = await res.json();
+
+  return data.secure_url || "";
+}
+
+// -----------------------------------
+// LOAD STUDENTS
+// -----------------------------------
+
+async function loadStudents(){
+
+  const snap = await getDocs(collection(db,"users"));
+
   studentsCache = [];
 
-  snap.forEach(d => {
+  snap.forEach(d=>{
+
     const data = d.data();
-    if (data.role === "student") {
-      studentsCache.push({ ...data, docId: d.id });
+
+    if(data.role === "student"){
+
+      studentsCache.push({
+        ...data,
+        docId:d.id
+      });
     }
   });
 
@@ -170,130 +505,354 @@ async function loadStudents() {
   renderStudents();
 }
 
-function updateStats() {
-  document.getElementById("total").innerText = studentsCache.length;
+// -----------------------------------
+// STATS
+// -----------------------------------
+
+function updateStats(){
+
+  document.getElementById("total").innerText =
+    studentsCache.length;
+
   document.getElementById("newCount").innerText =
-    studentsCache.filter(s => s.status === "New").length;
+    studentsCache.filter(s=>s.status === "New").length;
+
   document.getElementById("oldCount").innerText =
-    studentsCache.filter(s => s.status === "Old").length;
+    studentsCache.filter(s=>s.status === "Old").length;
 }
 
-window.renderStudents = function () {
-  const search = document.getElementById("search").value.toLowerCase();
+// -----------------------------------
+// RENDER
+// -----------------------------------
 
-  const filtered = studentsCache.filter(s =>
+window.renderStudents = function(){
+
+  const search =
+    document.getElementById("search").value.toLowerCase();
+
+  const filtered = studentsCache.filter(s=>
+
     (s.name || "").toLowerCase().includes(search) ||
+
     (s.userId || "").toLowerCase().includes(search)
   );
 
-  document.getElementById("list").innerHTML = filtered.map(s => `
-    <div class="card">
-      <b>🆔 ${s.userId}</b> | <b>${s.name}</b>
-      <div class="small">${s.class} | ${s.status}</div>
+  if(filtered.length === 0){
 
-      ${s.photoURL ? `<img src="${s.photoURL}">` : ""}
-
-      <div class="small">
-        DOB: ${s.dob || "-"} <br>
-        Gender: ${s.gender || "-"} <br>
-        Nationality: ${s.nationality || "-"} <br>
-        Parent: ${s.parent || "-"} <br>
-        Contact: ${s.contact || "-"}
-        Pin: ${s.pin}<br>
+    document.getElementById("list").innerHTML = `
+      <div class="empty">
+        No students found
       </div>
+    `;
 
-      <button onclick="editStudent('${s.docId}')">Edit</button>
-      <button onclick="deleteStudent('${s.docId}')">Delete</button>
-    </div>
-  `).join("");
-};
-
-// CLOUDINARY UPLOAD
-async function uploadImage(file) {
-  if (!file) return "";
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "Tyneceploh");
-
-  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
-    method: "POST",
-    body: formData
-  });
-
-  const data = await res.json();
-  return data.secure_url || "";
-}
-
-window.saveStudent = async function () {
-  const editId = document.getElementById("editId").value;
-
-  const photoFile = document.getElementById("photo").files[0];
-  const photoURL = await uploadImage(photoFile);
-
-  const studentData = {
-    name: document.getElementById("name").value,
-    class: document.getElementById("class").value,
-    dob: document.getElementById("dob").value,
-    gender: document.getElementById("gender").value,
-    nationality: document.getElementById("nationality").value,
-    parent: document.getElementById("parent").value,
-    contact: document.getElementById("contact").value,
-    status: document.getElementById("status").value,
-    role: "student",
-    createdAt: Date.now()
-  };
-
-  if (!studentData.name || !studentData.class) {
-    alert("Fill required fields");
     return;
   }
 
-  if (photoURL) studentData.photoURL = photoURL;
+  document.getElementById("list").innerHTML =
+    filtered.map(s=>`
 
-  if (!editId) {
-    const snap = await getDocs(collection(db, "users"));
-    const userId = generateId(snap.docs.length);
-    const pin = generatePin();
+      <div class="card">
 
-    studentData.userId = userId;
-    studentData.pin = pin;
+        <div class="card-top">
 
-    await addDoc(collection(db, "users"), studentData);
+          ${
+            s.photoURL ?
 
-    alert(`Student Created\nID: ${userId}\nPIN: ${pin}`);
-  } else {
-    await updateDoc(doc(db, "users", editId), studentData);
-    document.getElementById("editId").value = "";
+            `<img src="${s.photoURL}" class="avatar">`
+
+            :
+
+            `<div class="avatar-placeholder">
+              ${s.name ? s.name.charAt(0).toUpperCase() : "S"}
+            </div>`
+          }
+
+          <div class="student-info">
+
+            <div class="student-name">
+              ${s.name}
+            </div>
+
+            <div class="student-id">
+              ${s.userId}
+            </div>
+
+            <div class="badge">
+              ${s.class} • ${s.status}
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="details">
+
+          <b>Gender:</b> ${s.gender || "-"} <br>
+
+          <b>Date of Birth:</b> ${s.dob || "-"} <br>
+
+          <b>Nationality:</b> ${s.nationality || "-"} <br>
+
+          <b>Parent:</b> ${s.parent || "-"} <br>
+
+          <b>Contact:</b> ${s.contact || "-"} <br>
+
+          <b>PIN:</b> ${s.pin || "-"} <br>
+
+        </div>
+
+        <div class="actions">
+
+          <button
+            class="edit-btn"
+            onclick="editStudent('${s.docId}')"
+          >
+            Edit
+          </button>
+
+          <button
+            class="delete-btn"
+            onclick="deleteStudent('${s.docId}')"
+          >
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
+};
+
+// -----------------------------------
+// SAVE
+// -----------------------------------
+
+window.saveStudent = async function(){
+
+  const editId =
+    document.getElementById("editId").value;
+
+  const studentData = {
+
+    name:
+      document.getElementById("name").value.trim(),
+
+    class:
+      document.getElementById("class").value.trim(),
+
+    dob:
+      document.getElementById("dob").value,
+
+    gender:
+      document.getElementById("gender").value,
+
+    nationality:
+      document.getElementById("nationality").value.trim(),
+
+    parent:
+      document.getElementById("parent").value.trim(),
+
+    contact:
+      document.getElementById("contact").value.trim(),
+
+    status:
+      document.getElementById("status").value,
+
+    role:"student",
+
+    createdAt:Date.now()
+  };
+
+  // VALIDATION
+
+  if(
+    !studentData.name ||
+    !studentData.class ||
+    !studentData.dob ||
+    !studentData.gender ||
+    !studentData.nationality ||
+    !studentData.parent ||
+    !studentData.contact ||
+    !studentData.status
+  ){
+
+    showMessage(
+      "Please fill all fields before saving.",
+      "error"
+    );
+
+    return;
   }
 
-  loadStudents();
+  try{
+
+    showLoader(true);
+
+    const photoFile =
+      document.getElementById("photo").files[0];
+
+    const photoURL =
+      await uploadImage(photoFile);
+
+    if(photoURL){
+      studentData.photoURL = photoURL;
+    }
+
+    if(!editId){
+
+      const snap =
+        await getDocs(collection(db,"users"));
+
+      const count =
+        snap.docs.filter(d=>d.data().role === "student").length;
+
+      const userId =
+        generateStudentId(count);
+
+      const pin =
+        generatePin();
+
+      studentData.userId = userId;
+      studentData.pin = pin;
+
+      await addDoc(
+        collection(db,"users"),
+        studentData
+      );
+
+      showMessage(
+        `Student created successfully • ID: ${userId} • PIN: ${pin}`
+      );
+
+    }else{
+
+      await updateDoc(
+        doc(db,"users",editId),
+        studentData
+      );
+
+      document.getElementById("editId").value = "";
+
+      showMessage("Student updated successfully");
+    }
+
+    clearForm();
+
+    await loadStudents();
+
+  }catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "Failed to save student.",
+      "error"
+    );
+
+  }finally{
+    showLoader(false);
+  }
 };
 
-window.editStudent = (id) => {
-  const student = studentsCache.find(s => s.docId === id);
-  if (!student) return;
+// -----------------------------------
+// EDIT
+// -----------------------------------
 
-  document.getElementById("editId").value = id;
-  document.getElementById("name").value = student.name || "";
-  document.getElementById("class").value = student.class || "";
-  document.getElementById("dob").value = student.dob || "";
-  document.getElementById("gender").value = student.gender || "";
-  document.getElementById("nationality").value = student.nationality || "";
-  document.getElementById("parent").value = student.parent || "";
-  document.getElementById("contact").value = student.contact || "";
-  document.getElementById("status").value = student.status || "New";
+window.editStudent = function(id){
+
+  const s =
+    studentsCache.find(x=>x.docId === id);
+
+  if(!s) return;
+
+  document.getElementById("editId").value =
+    id;
+
+  document.getElementById("name").value =
+    s.name || "";
+
+  document.getElementById("class").value =
+    s.class || "";
+
+  document.getElementById("dob").value =
+    s.dob || "";
+
+  document.getElementById("gender").value =
+    s.gender || "";
+
+  document.getElementById("nationality").value =
+    s.nationality || "";
+
+  document.getElementById("parent").value =
+    s.parent || "";
+
+  document.getElementById("contact").value =
+    s.contact || "";
+
+  document.getElementById("status").value =
+    s.status || "New";
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
 };
 
-window.deleteStudent = async (id) => {
-  if (confirm("Delete student?")) {
-    await deleteDoc(doc(db, "users", id));
+// -----------------------------------
+// DELETE
+// -----------------------------------
+
+window.deleteStudent = async function(id){
+
+  const confirmDelete =
+    confirm("Delete this student?");
+
+  if(!confirmDelete) return;
+
+  try{
+
+    await deleteDoc(
+      doc(db,"users",id)
+    );
+
+    showMessage("Student deleted");
+
     loadStudents();
+
+  }catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "Failed to delete student.",
+      "error"
+    );
   }
 };
+
+// -----------------------------------
+// CLEAR
+// -----------------------------------
+
+function clearForm(){
+
+  document.getElementById("name").value = "";
+  document.getElementById("class").value = "";
+  document.getElementById("dob").value = "";
+  document.getElementById("gender").value = "";
+  document.getElementById("nationality").value = "";
+  document.getElementById("parent").value = "";
+  document.getElementById("contact").value = "";
+  document.getElementById("status").value = "";
+  document.getElementById("photo").value = "";
+}
+
+// -----------------------------------
 
 loadStudents();
+
 </script>
 
 </body>
-                           </html>
+</html>
