@@ -38,7 +38,7 @@ body{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 120; /* Increased z-index to stay above the drawer */
+  z-index: 120;
   background: rgba(11, 11, 15, 0.5);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -90,7 +90,7 @@ body{
   border: none;
   cursor: pointer;
   padding: 8px;
-  z-index: 130; /* Higher than drawer to remain visible and clickable */
+  z-index: 130;
   height: 40px;
   width: 40px;
 }
@@ -104,7 +104,6 @@ body{
   transition: transform 0.3s ease-in-out, opacity 0.2s ease-in-out;
 }
 
-/* Transforms Hamburger into a clean 'X' Close icon */
 .hamburger.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
 .hamburger.active span:nth-child(2) { opacity: 0; }
 .hamburger.active span:nth-child(3) { transform: translateY(-9px) rotate(-44deg); }
@@ -113,7 +112,6 @@ body{
 .navDrawer {
   position: fixed;
   inset: 0;
-  /* Kinda transparent background styling */
   background: rgba(11, 11, 15, 0.65); 
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -371,15 +369,15 @@ body{
 }
 .smallLink:hover { opacity: 1; text-decoration: underline; }
 
-/* LIVE PULSE MICRO-GRID */
-.classStrip{
+/* LIVE PULSE MICRO-GRID & RANDOM STUDENTS GRID */
+.classStrip, .studentGrid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
   gap:12px;
   margin-top: 5px;
 }
 
-.classCard{
+.classCard, .studentDisplayCard{
   background: rgba(255,255,255,0.04);
   padding:14px;
   border-radius:12px;
@@ -387,10 +385,37 @@ body{
   transition:.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.classCard:hover{
+.classCard:hover, .studentDisplayCard:hover{
   transform:translateY(-4px);
   background:rgba(255,255,255,0.08);
   border-color: rgba(255, 255, 255, 0.15);
+}
+
+.studentDisplayCard {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.studentDisplayCard img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.studentDisplayCard .sName {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.studentDisplayCard .sClass {
+  font-size: 12px;
+  color: var(--accent);
+  opacity: 0.9;
 }
 
 /* INTERACTIVE FOOTER BLOCK */
@@ -523,6 +548,17 @@ body{
     </div>
   </div>
 
+  <!-- NEW SECTION: RANDOM STUDENT DISCOVERY -->
+  <div class="section">
+    <div class="glass">
+      <div class="h2">✨ Meet Our Students</div>
+      <div class="studentGrid" id="randomStudentGrid">Loading student spotlight panel...</div>
+      <div class="smallLink" onclick="location.href='directory.html'">
+        Browse complete Directory →
+      </div>
+    </div>
+  </div>
+
   <div class="section">
     <div class="glass">
       <div class="h2">📊 Live Class Pulse</div>
@@ -548,66 +584,18 @@ body{
     <div class="glass">
       <div class="h2">Core Values</div>
       <p class="p">
-
-  <span style="
-    color:#ffc0cb;
-    font-size:28px;
-    font-weight:800;
-    text-decoration:underline;
-    display:block;
-    margin-bottom:6px;
-  ">
-    Passion
-  </span>
-
-  We cultivate an environment where work and learning are infused with desire and commitment. We recruit, develop and retain highly qualified employees who consistently exhibit a positive example, exemplary attitude, genuine caring and great enthusiasm.
-
-  <br><br>
-
-  <span style="
-    color:#ffc0cb;
-    font-size:28px;
-    font-weight:800;
-    text-decoration:underline;
-    display:block;
-    margin-bottom:6px;
-  ">
-    Excellence
-  </span>
-
-  Encouraging creativity and a pursuit of quality in every aspect of life.
-
-  <br><br>
-
-  <span style="
-    color:#ffc0cb;
-    font-size:28px;
-    font-weight:800;
-    text-decoration:underline;
-    display:block;
-    margin-bottom:6px;
-  ">
-    Respect
-  </span>
-
-  Regarding each person as an image bearer of Christ, in love, integrity, and openness.
-
-  <br><br>
-
-  <span style="
-    color:#ffc0cb;
-    font-size:28px;
-    font-weight:800;
-    text-decoration:underline;
-    display:block;
-    margin-bottom:6px;
-  ">
-    Truth
-  </span>
-
-  Learning, living and teaching in obedience to God's truth, discerning, engaging and influencing culture with the hope of Christ's redemption.
-
-</p>
+        <span style="color:#ffc0cb; font-size:28px; font-weight:800; text-decoration:underline; display:block; margin-bottom:6px;">Passion</span>
+        We cultivate an environment where work and learning are infused with desire and commitment. We recruit, develop and retain highly qualified employees who consistently exhibit a positive example, exemplary attitude, genuine caring and great enthusiasm.
+        <br><br>
+        <span style="color:#ffc0cb; font-size:28px; font-weight:800; text-decoration:underline; display:block; margin-bottom:6px;">Excellence</span>
+        Encouraging creativity and a pursuit of quality in every aspect of life.
+        <br><br>
+        <span style="color:#ffc0cb; font-size:28px; font-weight:800; text-decoration:underline; display:block; margin-bottom:6px;">Respect</span>
+        Regarding each person as an image bearer of Christ, in love, integrity, and openness.
+        <br><br>
+        <span style="color:#ffc0cb; font-size:28px; font-weight:800; text-decoration:underline; display:block; margin-bottom:6px;">Truth</span>
+        Learning, living and teaching in obedience to God's truth, discerning, engaging and influencing culture with the hope of Christ's redemption.
+      </p>
     </div>
   </div>
 
@@ -688,7 +676,6 @@ burger.addEventListener("click", (e) => {
   toggleMenu();
 });
 
-// Close drawer if user clicks outside of the active configuration button options
 drawer.addEventListener("click", (e) => {
   if (e.target === drawer) {
     toggleMenu();
@@ -791,6 +778,48 @@ async function loadHonoree(){
   }
 }
 
+/* FAIR AND RANDOM STUDENT DISPLAY FEATURE */
+async function loadRandomStudents() {
+  try {
+    const container = document.getElementById("randomStudentGrid");
+    const snap = await getDocs(collection(db, "users"));
+    let studentsPool = [];
+
+    snap.forEach(d => {
+      const u = d.data();
+      if (u.role === "student") {
+        studentsPool.push(u);
+      }
+    });
+
+    if (studentsPool.length === 0) {
+      container.innerHTML = "<div>No students registered in directory.</div>";
+      return;
+    }
+
+    // Unbiased Fisher-Yates Shuffle Algorithm for total fairness
+    for (let i = studentsPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [studentsPool[i], studentsPool[j]] = [studentsPool[j], studentsPool[i]];
+    }
+
+    // Select up to 4 random students to present on screen
+    const selection = studentsPool.slice(0, 4);
+
+    container.innerHTML = selection.map(s => `
+      <div class="studentDisplayCard">
+        <img src="${s.photoURL || 'https://via.placeholder.com/80'}" onerror="this.src='https://via.placeholder.com/80'">
+        <div class="sName">${s.name}</div>
+        <div class="sClass">${s.class || "General"}</div>
+      </div>
+    `).join("");
+
+  } catch(err) {
+    console.error("Directory randomizer component error:", err);
+    document.getElementById("randomStudentGrid").innerHTML = "<div>Unable to build showcase matrix.</div>";
+  }
+}
+
 /* COMPUTE LIVE BALANCED DATA GROUPS */
 async function loadClassPulse(){
   try {
@@ -863,6 +892,7 @@ sections.forEach(s=>obs.observe(s));
 loadVideo();
 loadAnnouncement();
 loadHonoree();
+loadRandomStudents();
 loadClassPulse();
 </script>
 
