@@ -242,19 +242,20 @@ window.loadCoordinators = async function(){
       !d.userId.toLowerCase().includes(search)
     ) return;
 
-    html += `
-      <div class="card">
-        <b>${d.userId} - ${d.name}</b><br>
-        <div class="small">
-          Dept: ${d.department}<br>
-          Gender: ${d.gender}<br>
-          Contact: ${d.contact}
-        </div>
+html += `
+  <div class="card">
+    <b>${d.userId} - ${d.name}</b><br>
+    <div class="small">
+      Dept: ${d.department}<br>
+      Gender: ${d.gender}<br>
+      Contact: ${d.contact}<br>
+      Pin: ${d.pin}
+    </div>
 
-        <button onclick="edit('${docSnap.id}')">Edit</button>
-        <button onclick="removeUser('${docSnap.id}')">Delete</button>
-      </div>
-    `;
+    <button onclick="edit('${docSnap.id}')">Edit</button>
+    <button onclick="removeUser('${docSnap.id}')">Delete</button>
+  </div>
+`;
   });
 
   list.innerHTML = html || "No coordinators found";
