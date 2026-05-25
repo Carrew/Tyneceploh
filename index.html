@@ -66,6 +66,21 @@ body{
   gap: 12px;
 }
 
+/* Extra Links Style (Non-portal Layout) */
+.navLink {
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 8px;
+  opacity: 0.8;
+  transition: 0.2s;
+}
+.navLink:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
 .btn {
   padding: 10px 20px;
   border-radius: 50px;
@@ -139,6 +154,11 @@ body{
   width: 220px;
   text-align: center;
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.navDrawer .navLink {
+  font-size: 16px;
+  margin: 5px 0;
 }
 
 /* HERO */
@@ -370,15 +390,15 @@ body{
 }
 .smallLink:hover { opacity: 1; text-decoration: underline; }
 
-/* LIVE MICRO-GRIDS (PULSE, DIRECTORY, GALLERY) */
-.classStrip, .directoryGrid, .galleryStripGrid{
+/* DYNAMIC GRID STYLING FOR PULSE, DIRECTORIES & MEDIA RANDOMIZER */
+.classStrip, .directoryGrid, .galleryDisplayGrid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
   gap:12px;
   margin-top: 5px;
 }
 
-.classCard, .displayCard, .homeGalleryImgContainer{
+.classCard, .displayCard, .galleryDisplayCard{
   background: rgba(255,255,255,0.04);
   padding:14px;
   border-radius:12px;
@@ -386,7 +406,7 @@ body{
   transition:.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.classCard:hover, .displayCard:hover, .homeGalleryImgContainer:hover{
+.classCard:hover, .displayCard:hover, .galleryDisplayCard:hover{
   transform:translateY(-4px);
   background:rgba(255,255,255,0.08);
   border-color: rgba(255, 255, 255, 0.15);
@@ -408,11 +428,7 @@ body{
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.displayCard .dName {
-  font-weight: 700;
-  font-size: 14px;
-}
-
+.displayCard .dName { font-weight: 700; font-size: 14px; }
 .displayCard .dRole {
   font-size: 11px;
   background: rgba(255, 192, 203, 0.15);
@@ -421,25 +437,46 @@ body{
   border-radius: 20px;
   font-weight: 600;
 }
+.displayCard .dSub { font-size: 12px; opacity: 0.7; }
 
-.displayCard .dSub {
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-/* HOME MINI GALLERY CONFIGURATION */
-.homeGalleryImgContainer {
-  padding: 6px;
-  height: 140px;
+/* RANDOM GALLERY IMAGES SPECIFIC LAYOUT */
+.galleryDisplayCard {
+  padding: 0;
   overflow: hidden;
+  height: 140px;
   cursor: pointer;
 }
 
-.homeGalleryImgContainer img {
+.galleryDisplayCard img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  transition: transform 0.4s ease;
+}
+
+.galleryDisplayCard:hover img {
+  transform: scale(1.06);
+}
+
+/* INTERACTIVE LIGHTBOX MODAL FOR QUICK VIEW */
+.homeModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.homeModal img {
+  max-width: 90%;
+  max-height: 85vh;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* INTERACTIVE FOOTER BLOCK */
@@ -523,10 +560,11 @@ body{
   </div>
   
   <div class="navMenu">
+    <a href="our-visionary.html" class="navLink">Our Visionary</a>
+    <a href="school-ode.html" class="navLink">School Ode</a>
     <button class="btn admin" onclick="goLogin()">Administrators</button>
     <button class="btn staff" onclick="goLogin()">Staffs</button>
     <button class="btn student" onclick="goLogin()">Students</button>
-    <button href='our-visionary.html'> Vision Bearer</button>
   </div>
 
   <button class="hamburger" id="hamburgerBtn" aria-label="Toggle Navigation Menu">
@@ -537,6 +575,8 @@ body{
 </nav>
 
 <div class="navDrawer" id="navDrawerMenu">
+  <a href="our-visionary.html" class="navLink">Our Visionary</a>
+  <a href="school-ode.html" class="navLink">School Ode</a>
   <button class="btn admin" onclick="goLogin()">Administrators</button>
   <button class="btn staff" onclick="goLogin()">Staffs</button>
   <button class="btn student" onclick="goLogin()">Students</button>
@@ -560,7 +600,6 @@ body{
   <div class="announceText" id="announceText"></div>
   <button onclick="openAnnouncements()">View All</button>
 </div>
-  <h1>Hope for the Future / By God's Grace</h1>
 
 <main class="mainContent">
 
@@ -591,6 +630,16 @@ body{
     <div class="glass">
       <div class="h2">📊 Live Class Pulse</div>
       <div class="classStrip" id="classStrip">Loading analytic matrix data...</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="glass">
+      <div class="h2">🖼️ Campus Life Gallery</div>
+      <div class="galleryDisplayGrid" id="randomGalleryGrid">Loading dynamic photo matrix...</div>
+      <div class="smallLink" onclick="location.href='gallery.html'">
+        Open Full Interactive Gallery →
+      </div>
     </div>
   </div>
 
@@ -629,16 +678,6 @@ body{
 
   <div class="section">
     <div class="glass">
-      <div class="h2">🖼️ Campus Moments</div>
-      <div class="galleryStripGrid" id="randomGalleryStrip">Loading snapshots...</div>
-      <div class="smallLink" onclick="location.href='gallery.html'">
-        Open Full Gallery →
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="glass">
       <div class="h2">Our History</div>
       <p class="p">Tyneceploh Educational Foundation is a lifelong dream that has been realized in the absence of the dreamer, the late Margret Ploh Chattah. The special passion for child development which Mrs. Margret Ploh Chattah believed was a gift from God started to be actualized with a groundbreaking program on January 25, 2015. The construction of the building began in April 2015 unfortunately she got sick and was taken to India in June for treatment but never returned. This dream championed by her widower Mr. Napoleon T. Chattah along with other well-wishers germinated on September 3, 2018. Today, TEF is proud in fulfilling this dream while contributing to our country Liberia as indicated in Article 6 of our Constitution: providing equal access to educational opportunities and facilities for all citizens to the extent of available resources.</p>
     </div>
@@ -655,6 +694,10 @@ body{
   </div>
 
 </main>
+
+<div class="homeModal" id="homeLightbox" onclick="this.style.display='none'">
+  <img id="lightboxImg" src="">
+</div>
 
 <footer class="footer">
   <div class="footerContainer">
@@ -700,6 +743,12 @@ const db = getFirestore(app);
 window.goLogin = () => location.href="login.html";
 window.openAnnouncements = () => location.href="users-announcement.html";
 
+/* LIGHTBOX INTERACTION DISPATCHER */
+window.previewImage = (url) => {
+  document.getElementById("lightboxImg").src = url;
+  document.getElementById("homeLightbox").style.display = "flex";
+};
+
 /* HAMBURGER INTERACTION & ACCESSIBILITY MANAGEMENT */
 const burger = document.getElementById("hamburgerBtn");
 const drawer = document.getElementById("navDrawerMenu");
@@ -720,8 +769,8 @@ drawer.addEventListener("click", (e) => {
   }
 });
 
-drawer.querySelectorAll(".btn").forEach(btn => {
-  btn.addEventListener("click", () => {
+drawer.querySelectorAll(".btn, .navLink").forEach(element => {
+  element.addEventListener("click", () => {
     burger.classList.remove("active");
     drawer.classList.remove("open");
   });
@@ -882,40 +931,46 @@ async function loadRandomDirectory() {
 
   } catch(err) {
     console.error("Directory component assembly error:", err);
-    document.getElementById("randomDirectoryGrid").innerHTML = "<div>Showcase channel configuration errored.</div>";
   }
 }
 
-/* FAIR UNBIASED HOME GALLERY RANDOMIZER */
-async function loadRandomGalleryStrip() {
+/* FAIR UNBIASED HOME INSTANT GALLERY SHUFFLER */
+async function loadRandomGallery() {
   try {
-    const container = document.getElementById("randomGalleryStrip");
-    const iSnap = await getDocs(collection(db, "galleryImages"));
-    let imagesPool = iSnap.docs.map(d => d.data());
+    const container = document.getElementById("randomGalleryGrid");
+    const snap = await getDocs(collection(db, "galleryImages"));
+    let imagesPool = [];
+
+    snap.forEach(d => {
+      const imgData = d.data();
+      if (imgData.imageUrl) {
+        imagesPool.push(imgData);
+      }
+    });
 
     if (imagesPool.length === 0) {
-      container.innerHTML = "<div>No media captured in the database yet.</div>";
+      container.innerHTML = "<div>No images currently loaded on the cloud.</div>";
       return;
     }
 
-    // Fisher-Yates Shuffling algorithm for fair presentation
+    // Fisher-Yates array random shuffler
     for (let i = imagesPool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [imagesPool[i], imagesPool[j]] = [imagesPool[j], imagesPool[i]];
     }
 
-    // Capture 4 completely random visuals to showcase on landing
+    // Slice 4 random images to serve on homepage preview matrix
     const selection = imagesPool.slice(0, 4);
 
-    container.innerHTML = selection.map(img => `
-      <div class="homeGalleryImgContainer" onclick="location.href='gallery.html'">
-        <img src="${img.imageUrl}" alt="Campus Snapshot">
+    container.innerHTML = selection.map(i => `
+      <div class="galleryDisplayCard" onclick="previewImage('${i.imageUrl}')">
+        <img src="${i.imageUrl}" alt="TEF Campus Life">
       </div>
     `).join("");
 
   } catch(err) {
-    console.error("Home Gallery Pipeline Failure:", err);
-    document.getElementById("randomGalleryStrip").innerHTML = "<div>Gallery module unavailable.</div>";
+    console.error("Home spotlight gallery processing failure:", err);
+    document.getElementById("randomGalleryGrid").innerHTML = "<div>Gallery spotlight module offline.</div>";
   }
 }
 
@@ -992,7 +1047,7 @@ loadVideo();
 loadAnnouncement();
 loadHonoree();
 loadRandomDirectory();
-loadRandomGalleryStrip();
+loadRandomGallery();
 loadClassPulse();
 </script>
 
