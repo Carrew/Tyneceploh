@@ -9,7 +9,6 @@
       --pink: #ffc0cb;
       --bg: #0b0b0f;
       --card: rgba(255,255,255,0.06);
-      --text: #fff;
     }
 
     body {
@@ -25,7 +24,7 @@
       color: var(--pink);
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 10px;
       margin: 6px 0;
@@ -47,6 +46,19 @@
       cursor: pointer;
     }
 
+    .card {
+      background: var(--card);
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 15px;
+      border-left: 4px solid var(--pink);
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
     .notify {
       position: fixed;
       top: 15px;
@@ -62,19 +74,6 @@
     .notify.show {
       transform: translateX(0);
     }
-
-    .card {
-      background: var(--card);
-      padding: 12px;
-      border-radius: 12px;
-      margin-top: 15px;
-      border-left: 4px solid var(--pink);
-    }
-
-    .small {
-      font-size: 12px;
-      opacity: 0.8;
-    }
   </style>
 </head>
 
@@ -87,7 +86,14 @@
 <input id="name" placeholder="Full Name">
 <input id="shift" placeholder="Shift (Day / Night)">
 <input id="phone" placeholder="Phone">
-<input id="gender" placeholder="Gender">
+
+<select id="gender">
+  <option value="">Select Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+  <option value="Other">Other</option>
+</select>
+
 <input id="address" placeholder="Address">
 <input id="dob" placeholder="Date of Birth">
 <input id="emergency" placeholder="Emergency Contact">
@@ -97,12 +103,22 @@
 
 <button onclick="create()" id="btn">Create Security</button>
 
+<h2>📋 Security Staff</h2>
+<input id="search" placeholder="Search by name or ID..." oninput="loadSecurity()">
 <div id="list"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -112,6 +128,7 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
+// notify
 function notify(msg){
   const n = document.getElementById("notify");
   n.innerText = msg;
@@ -119,15 +136,17 @@ function notify(msg){
   setTimeout(()=>n.classList.remove("show"), 2500);
 }
 
-function genID(num){
-  return "SEC" + Date.now().toString().slice(-4) + num;
+// SEC ID → SEC001 style
+function genID(count){
+  return "SEC" + String(count + 1).padStart(3, "0");
 }
 
+// PIN
 function genPIN(){
-  return Math.floor(1000 + Math.random()*9000).toString();
+  return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-// CLOUDINARY UPLOAD
+// upload image
 async function uploadImage(file){
   if(!file) return "";
 
@@ -144,6 +163,7 @@ async function uploadImage(file){
   return data.secure_url || "";
 }
 
+// CREATE
 window.create = async function(){
 
   const btn = document.getElementById("btn");
@@ -161,8 +181,10 @@ window.create = async function(){
     const file = document.getElementById("photo").files[0];
     const photoURL = await uploadImage(file);
 
-    const id = genID(count+1);
-    const pin = document.getElementById("pin").value || genPIN();
+    const pinInput = document.getElementById("pin").value.trim();
+    const pin = pinInput || genPIN();
+
+    const id = genID(count);
 
     const data = {
       userId: id,
@@ -185,15 +207,92 @@ window.create = async function(){
 
     notify("Security created: " + id);
 
-    document.querySelectorAll("input").forEach(i => i.value = "");
+    document.querySelectorAll("input, select").forEach(i => i.value = "");
+
+    loadSecurity();
 
   } catch(err){
+    console.error(err);
     notify("Error creating security staff");
   }
 
   btn.disabled = false;
   btn.innerText = "Create Security";
 };
+
+// LOAD + SEARCH
+window.loadSecurity = async function(){
+
+  const list = document.getElementById("list");
+  const search = document.getElementById("search").value.toLowerCase();
+
+  list.innerHTML = "Loading...";
+
+  const snap = await getDocs(collection(db,"users"));
+
+  let html = "";
+
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    if(d.role !== "security") return;
+
+    if(
+      search &&
+      !d.name.toLowerCase().includes(search) &&
+      !d.userId.toLowerCase().includes(search)
+    ) return;
+
+    html += `
+      <div class="card">
+        <b>${d.userId} - ${d.name}</b><br>
+        <div class="small">
+          Shift: ${d.shift}<br>
+          Phone: ${d.phone}<br>
+          Gender: ${d.gender}
+        </div>
+
+        <button onclick="edit('${docSnap.id}')">Edit</button>
+        <button onclick="removeUser('${docSnap.id}')">Delete</button>
+      </div>
+    `;
+  });
+
+  list.innerHTML = html || "No security staff found";
+};
+
+// DELETE
+window.removeUser = async function(id){
+  if(!confirm("Delete this staff?")) return;
+
+  await deleteDoc(doc(db,"users",id));
+  notify("Deleted");
+
+  loadSecurity();
+};
+
+// UPDATE
+window.edit = async function(id){
+
+  const newName = prompt("New name:");
+  const newShift = prompt("New shift:");
+
+  if(!newName && !newShift) return;
+
+  const ref = doc(db,"users",id);
+
+  const updateData = {};
+  if(newName) updateData.name = newName;
+  if(newShift) updateData.shift = newShift;
+
+  await updateDoc(ref, updateData);
+
+  notify("Updated");
+
+  loadSecurity();
+};
+
+// INIT
+loadSecurity();
 
 </script>
 
