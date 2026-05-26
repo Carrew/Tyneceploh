@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Student Management - TEF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     :root{
@@ -10,48 +11,54 @@
       --pink:#ffc0cb;
       --bg:#0b0b0f;
       --card:rgba(255,255,255,0.06);
+      --border:rgba(255,255,255,0.1);
       --text:#ffffff;
-      --success:#22c55e;
-      --danger:#ef4444;
+      --muted:#bbbbbb;
+      --success:#28c76f;
+      --danger:#ff5a5f;
+      --warning:#ffb020;
     }
 
     *{
+      margin:0;
+      padding:0;
       box-sizing:border-box;
     }
 
     body{
-      margin:0;
       font-family:system-ui;
       background:
-      radial-gradient(circle at top,#2b0018 0%,#13000b 30%,#090909 100%);
-      color:white;
+        radial-gradient(circle at top,#2a0019 0%,#14000d 30%,#0b0b0f 100%);
+      color:var(--text);
+      min-height:100vh;
       padding:15px;
     }
 
     .container{
+      width:100%;
       max-width:1200px;
       margin:auto;
-    }
-
-    h2{
-      text-align:center;
-      color:var(--pink);
-      margin-bottom:20px;
-      font-size:28px;
     }
 
     .topbar{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      gap:10px;
+      gap:15px;
+      margin-bottom:20px;
       flex-wrap:wrap;
-      margin-bottom:15px;
     }
 
-    .search-box{
-      flex:1;
-      min-width:220px;
+    .title-wrap h1{
+      font-size:clamp(1.8rem,4vw,2.8rem);
+      color:var(--pink);
+      line-height:1.1;
+    }
+
+    .title-wrap p{
+      color:var(--muted);
+      margin-top:5px;
+      font-size:14px;
     }
 
     .stats{
@@ -63,73 +70,91 @@
 
     .stat{
       background:var(--card);
-      backdrop-filter:blur(14px);
-      border:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(10px);
+      border:1px solid var(--border);
       border-radius:18px;
-      padding:16px;
+      padding:18px;
       text-align:center;
-      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+      box-shadow:0 10px 30px rgba(0,0,0,0.25);
     }
 
-    .stat h3{
-      margin:0;
-      font-size:13px;
-      color:#ddd;
-      font-weight:500;
+    .stat h2{
+      font-size:1.8rem;
+      color:var(--pink);
     }
 
     .stat p{
-      margin:8px 0 0;
-      font-size:26px;
-      font-weight:bold;
-      color:var(--pink);
+      color:var(--muted);
+      margin-top:5px;
+      font-size:14px;
     }
 
-    .form-card{
+    .panel{
       background:var(--card);
-      border:1px solid rgba(255,255,255,0.08);
       backdrop-filter:blur(14px);
-      border-radius:22px;
-      padding:18px;
-      margin-bottom:20px;
-      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:20px;
+      margin-bottom:25px;
+      box-shadow:0 10px 40px rgba(0,0,0,0.3);
     }
 
-    .section-title{
-      font-size:18px;
-      margin-bottom:15px;
+    .panel h3{
+      margin-bottom:18px;
       color:var(--pink);
-      font-weight:bold;
+      font-size:1.3rem;
     }
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:12px;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:14px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+    }
+
+    .field label{
+      font-size:14px;
+      color:#f3d7df;
     }
 
     input,
     select{
       width:100%;
-      padding:13px;
+      padding:13px 14px;
       border:none;
+      outline:none;
       border-radius:14px;
       background:rgba(255,255,255,0.08);
       color:white;
-      outline:none;
-      font-size:14px;
+      border:1px solid rgba(255,255,255,0.08);
+      transition:0.25s;
+      font-size:15px;
+    }
+
+    input:focus,
+    select:focus{
+      border-color:var(--pink);
+      box-shadow:0 0 0 3px rgba(255,192,203,0.12);
     }
 
     input::placeholder{
-      color:#ccc;
+      color:#b8b8b8;
     }
 
     select option{
       color:black;
     }
 
-    input[type="file"]{
-      padding:10px;
+    .action-row{
+      display:flex;
+      gap:12px;
+      margin-top:18px;
+      flex-wrap:wrap;
     }
 
     button{
@@ -137,150 +162,204 @@
       cursor:pointer;
       border-radius:14px;
       padding:13px 18px;
-      font-weight:bold;
+      font-weight:700;
       transition:0.25s;
-    }
-
-    .primary-btn{
-      width:100%;
-      margin-top:15px;
-      background:linear-gradient(135deg,var(--maroon),var(--pink));
-      color:white;
       font-size:15px;
     }
 
-    .primary-btn:hover{
+    .primary-btn{
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
+      color:white;
+      flex:1;
+      min-width:180px;
+    }
+
+    .secondary-btn{
+      background:rgba(255,255,255,0.08);
+      color:white;
+      border:1px solid rgba(255,255,255,0.08);
+    }
+
+    button:hover{
       transform:translateY(-2px);
       opacity:0.95;
     }
 
-    .student-list{
+    .message{
+      display:none;
+      margin-top:15px;
+      padding:14px;
+      border-radius:14px;
+      font-weight:600;
+      animation:fadeIn 0.3s ease;
+    }
+
+    .success{
+      background:rgba(40,199,111,0.15);
+      color:#7dffb0;
+      border:1px solid rgba(40,199,111,0.3);
+    }
+
+    .error{
+      background:rgba(255,90,95,0.12);
+      color:#ff8f94;
+      border:1px solid rgba(255,90,95,0.3);
+    }
+
+    .warning{
+      background:rgba(255,176,32,0.12);
+      color:#ffd37a;
+      border:1px solid rgba(255,176,32,0.3);
+    }
+
+    .search-box{
+      margin-bottom:20px;
+    }
+
+    .student-grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-      gap:15px;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:18px;
     }
 
     .card{
-      background:var(--card);
+      background:rgba(255,255,255,0.05);
       border:1px solid rgba(255,255,255,0.08);
-      backdrop-filter:blur(14px);
       border-radius:22px;
       overflow:hidden;
-      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+      position:relative;
+      transition:0.3s;
+    }
+
+    .card:hover{
+      transform:translateY(-4px);
+      border-color:rgba(255,192,203,0.25);
     }
 
     .card-top{
       padding:18px;
       display:flex;
+      align-items:center;
       gap:15px;
-      align-items:flex-start;
     }
 
     .avatar{
-      width:75px;
-      height:75px;
+      width:72px;
+      height:72px;
       border-radius:50%;
       object-fit:cover;
-      border:3px solid var(--pink);
-      background:#222;
+      border:3px solid rgba(255,255,255,0.15);
+      background:#1a1a1a;
     }
 
     .avatar-placeholder{
-      width:75px;
-      height:75px;
+      width:72px;
+      height:72px;
       border-radius:50%;
       background:linear-gradient(135deg,var(--maroon),var(--pink));
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size:26px;
-      font-weight:bold;
-    }
-
-    .student-info{
-      flex:1;
+      font-size:24px;
+      font-weight:700;
     }
 
     .student-name{
-      font-size:18px;
-      font-weight:bold;
-      margin-bottom:4px;
+      font-size:1.1rem;
+      font-weight:700;
     }
 
     .student-id{
-      color:#ffc0cb;
+      color:var(--pink);
       font-size:13px;
-      margin-bottom:8px;
+      margin-top:3px;
     }
 
     .badge{
       display:inline-block;
-      padding:6px 12px;
-      border-radius:50px;
+      margin-top:7px;
+      padding:5px 12px;
+      border-radius:999px;
       font-size:12px;
-      font-weight:bold;
-      background:rgba(255,255,255,0.12);
+      font-weight:700;
     }
 
-    .details{
+    .badge.new{
+      background:rgba(40,199,111,0.15);
+      color:#83ffb8;
+    }
+
+    .badge.old{
+      background:rgba(255,176,32,0.15);
+      color:#ffd27d;
+    }
+
+    .card-body{
       padding:0 18px 18px;
+      color:#dddddd;
       font-size:14px;
-      color:#ddd;
       line-height:1.7;
     }
 
-    .actions{
+    .info-line{
+      margin-bottom:5px;
+    }
+
+    .card-actions{
       display:flex;
       gap:10px;
-      padding:0 18px 18px;
+      padding:18px;
+      border-top:1px solid rgba(255,255,255,0.06);
     }
 
     .edit-btn{
       flex:1;
-      background:#2563eb;
+      background:linear-gradient(135deg,#a00050,#ff8ac2);
       color:white;
     }
 
     .delete-btn{
       flex:1;
-      background:#dc2626;
-      color:white;
-    }
-
-    .message{
-      display:none;
-      margin-bottom:15px;
-      padding:14px;
-      border-radius:14px;
-      font-weight:600;
-    }
-
-    .success{
-      background:rgba(34,197,94,0.15);
-      border:1px solid rgba(34,197,94,0.4);
-      color:#86efac;
-    }
-
-    .error{
-      background:rgba(239,68,68,0.15);
-      border:1px solid rgba(239,68,68,0.4);
-      color:#fca5a5;
+      background:rgba(255,90,95,0.12);
+      color:#ff9ca0;
+      border:1px solid rgba(255,90,95,0.2);
     }
 
     .loader{
-      display:none;
-      text-align:center;
-      margin-top:12px;
-      color:var(--pink);
-      font-weight:bold;
+      width:20px;
+      height:20px;
+      border:2px solid rgba(255,255,255,0.2);
+      border-top-color:white;
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+      display:inline-block;
+      vertical-align:middle;
+      margin-right:8px;
     }
 
     .empty{
       text-align:center;
       padding:40px 20px;
-      background:var(--card);
-      border-radius:20px;
-      color:#ccc;
+      color:var(--muted);
+      background:rgba(255,255,255,0.03);
+      border-radius:18px;
+    }
+
+    @keyframes spin{
+      to{
+        transform:rotate(360deg);
+      }
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        transform:translateY(5px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
     }
 
     @media(max-width:700px){
@@ -289,21 +368,28 @@
         padding:12px;
       }
 
-      h2{
-        font-size:23px;
+      .panel{
+        padding:16px;
+        border-radius:20px;
       }
 
       .card-top{
         flex-direction:column;
-        align-items:center;
         text-align:center;
       }
 
-      .actions{
+      .card-actions{
         flex-direction:column;
       }
-    }
 
+      .action-row{
+        flex-direction:column;
+      }
+
+      .primary-btn{
+        width:100%;
+      }
+    }
   </style>
 </head>
 
@@ -311,85 +397,119 @@
 
 <div class="container">
 
-  <h2>🎓 Student Management System</h2>
-
-  <div id="message" class="message"></div>
+  <div class="topbar">
+    <div class="title-wrap">
+      <h1>🎓 Student Management</h1>
+      <p>Tyneceploh Educational Foundation</p>
+    </div>
+  </div>
 
   <div class="stats">
     <div class="stat">
-      <h3>Total Students</h3>
-      <p id="total">0</p>
+      <h2 id="total">0</h2>
+      <p>Total Students</p>
     </div>
 
     <div class="stat">
-      <h3>New Students</h3>
-      <p id="newCount">0</p>
+      <h2 id="newCount">0</h2>
+      <p>New Students</p>
     </div>
 
     <div class="stat">
-      <h3>Old Students</h3>
-      <p id="oldCount">0</p>
+      <h2 id="oldCount">0</h2>
+      <p>Old Students</p>
     </div>
   </div>
 
-  <div class="topbar">
-    <input
-      class="search-box"
-      id="search"
-      placeholder="Search by name or ID..."
-      oninput="renderStudents()"
-    >
-  </div>
+  <div class="panel">
 
-  <div class="form-card">
-
-    <div class="section-title">
-      Student Information
-    </div>
+    <h3 id="formTitle">Create Student</h3>
 
     <div class="grid">
 
-      <input id="name" placeholder="Student Name">
+      <div class="field">
+        <label>Student Name *</label>
+        <input id="name" placeholder="Enter full name">
+      </div>
 
-      <input id="class" placeholder="Class">
+      <div class="field">
+        <label>Class *</label>
+        <input id="class" placeholder="Example: 7th Grade">
+      </div>
 
-      <input id="dob" type="date">
+      <div class="field">
+        <label>Date of Birth</label>
+        <input type="date" id="dob">
+      </div>
 
-      <select id="gender">
-        <option value="">Select Gender</option>
-        <option>Male</option>
-        <option>Female</option>
-      </select>
+      <div class="field">
+        <label>Gender</label>
+        <select id="gender">
+          <option value="">Select Gender</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </div>
 
-      <input id="nationality" placeholder="Nationality">
+      <div class="field">
+        <label>Nationality</label>
+        <input id="nationality" placeholder="Nationality">
+      </div>
 
-      <input id="parent" placeholder="Parent / Guardian Name">
+      <div class="field">
+        <label>Parent / Guardian</label>
+        <input id="parent" placeholder="Parent name">
+      </div>
 
-      <input id="contact" placeholder="Parent Contact">
+      <div class="field">
+        <label>Parent Contact</label>
+        <input id="contact" placeholder="Contact number">
+      </div>
 
-      <select id="status">
-        <option value="">Select Status</option>
-        <option value="New">New</option>
-        <option value="Old">Old</option>
-      </select>
+      <div class="field">
+        <label>Status *</label>
+        <select id="status">
+          <option value="New">New</option>
+          <option value="Old">Old</option>
+        </select>
+      </div>
 
-      <input type="file" id="photo" accept="image/*">
+      <div class="field">
+        <label>Student Photo</label>
+        <input type="file" id="photo" accept="image/*">
+      </div>
 
     </div>
 
     <input type="hidden" id="editId">
 
-    <button class="primary-btn" onclick="saveStudent()">
-      Save Student
-    </button>
+    <div class="action-row">
+      <button class="primary-btn" id="saveBtn" onclick="saveStudent()">
+        Save Student
+      </button>
 
-    <div id="loader" class="loader">
-      Processing...
+      <button class="secondary-btn" onclick="resetForm()">
+        Clear Form
+      </button>
     </div>
+
+    <div id="msg" class="message"></div>
 
   </div>
 
-  <div id="list" class="student-list"></div>
+  <div class="panel">
+
+    <div class="search-box">
+      <input
+        id="search"
+        placeholder="Search by name or student ID..."
+        oninput="renderStudents()"
+      >
+    </div>
+
+    <div id="list" class="student-grid"></div>
+
+  </div>
 
 </div>
 
@@ -418,43 +538,48 @@ const db = getFirestore(app);
 
 let studentsCache = [];
 
-// -----------------------------------
-// UI HELPERS
-// -----------------------------------
-
-function showMessage(text, type="success"){
-
-  const box = document.getElementById("message");
-
-  box.className = `message ${type}`;
-  box.style.display = "block";
-  box.innerText = text;
-
-  setTimeout(()=>{
-    box.style.display = "none";
-  },4000);
-}
-
-function showLoader(show=true){
-  document.getElementById("loader").style.display =
-    show ? "block" : "none";
-}
-
-// -----------------------------------
-// ID + PIN
-// -----------------------------------
-
 function generatePin(){
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-function generateStudentId(count){
-  return `TEF${String(count + 1).padStart(3,"0")}`;
+function showMessage(type, text){
+
+  const msg = document.getElementById("msg");
+
+  msg.className = `message ${type}`;
+  msg.style.display = "block";
+  msg.innerHTML = text;
+
+  setTimeout(() => {
+    msg.style.display = "none";
+  }, 4500);
 }
 
-// -----------------------------------
-// CLOUDINARY
-// -----------------------------------
+function setLoading(loading){
+
+  const btn = document.getElementById("saveBtn");
+
+  if(loading){
+    btn.disabled = true;
+    btn.innerHTML = `<span class="loader"></span>Saving...`;
+  }else{
+    btn.disabled = false;
+    btn.innerHTML = "Save Student";
+  }
+}
+
+async function generateStudentId(){
+
+  const snap = await getDocs(collection(db, "users"));
+
+  const students = snap.docs.filter(
+    d => d.data().role === "student"
+  );
+
+  const next = students.length + 1;
+
+  return `TEF${String(next).padStart(3, "0")}`;
+}
 
 async function uploadImage(file){
 
@@ -478,36 +603,47 @@ async function uploadImage(file){
   return data.secure_url || "";
 }
 
-// -----------------------------------
-// LOAD STUDENTS
-// -----------------------------------
-
 async function loadStudents(){
 
-  const snap = await getDocs(collection(db,"users"));
+  document.getElementById("list").innerHTML = `
+    <div class="empty">
+      <span class="loader"></span>
+      Loading students...
+    </div>
+  `;
 
-  studentsCache = [];
+  try{
 
-  snap.forEach(d=>{
+    const snap = await getDocs(collection(db, "users"));
 
-    const data = d.data();
+    studentsCache = [];
 
-    if(data.role === "student"){
+    snap.forEach(d => {
 
-      studentsCache.push({
-        ...data,
-        docId:d.id
-      });
-    }
-  });
+      const data = d.data();
 
-  updateStats();
-  renderStudents();
+      if(data.role === "student"){
+        studentsCache.push({
+          ...data,
+          docId:d.id
+        });
+      }
+    });
+
+    updateStats();
+    renderStudents();
+
+  }catch(err){
+
+    console.error(err);
+
+    document.getElementById("list").innerHTML = `
+      <div class="empty">
+        Failed to load students.
+      </div>
+    `;
+  }
 }
-
-// -----------------------------------
-// STATS
-// -----------------------------------
 
 function updateStats(){
 
@@ -515,118 +651,157 @@ function updateStats(){
     studentsCache.length;
 
   document.getElementById("newCount").innerText =
-    studentsCache.filter(s=>s.status === "New").length;
+    studentsCache.filter(s => s.status === "New").length;
 
   document.getElementById("oldCount").innerText =
-    studentsCache.filter(s=>s.status === "Old").length;
+    studentsCache.filter(s => s.status === "Old").length;
 }
-
-// -----------------------------------
-// RENDER
-// -----------------------------------
 
 window.renderStudents = function(){
 
   const search =
-    document.getElementById("search").value.toLowerCase();
+    document.getElementById("search")
+    .value
+    .toLowerCase();
 
-  const filtered = studentsCache.filter(s=>
+  const filtered = studentsCache.filter(s =>
 
-    (s.name || "").toLowerCase().includes(search) ||
+    (s.name || "")
+    .toLowerCase()
+    .includes(search)
 
-    (s.userId || "").toLowerCase().includes(search)
+    ||
+
+    (s.userId || "")
+    .toLowerCase()
+    .includes(search)
   );
 
   if(filtered.length === 0){
 
     document.getElementById("list").innerHTML = `
       <div class="empty">
-        No students found
+        No students found.
       </div>
     `;
 
     return;
   }
 
-  document.getElementById("list").innerHTML =
-    filtered.map(s=>`
+  document.getElementById("list").innerHTML = filtered.map(s => `
 
-      <div class="card">
+    <div class="card">
 
-        <div class="card-top">
+      <div class="card-top">
 
-          ${
-            s.photoURL ?
+        ${
+          s.photoURL
+          ?
+          `<img src="${s.photoURL}" class="avatar">`
+          :
+          `<div class="avatar-placeholder">
+            ${s.name?.charAt(0) || "S"}
+          </div>`
+        }
 
-            `<img src="${s.photoURL}" class="avatar">`
+        <div>
+          <div class="student-name">${s.name}</div>
 
-            :
-
-            `<div class="avatar-placeholder">
-              ${s.name ? s.name.charAt(0).toUpperCase() : "S"}
-            </div>`
-          }
-
-          <div class="student-info">
-
-            <div class="student-name">
-              ${s.name}
-            </div>
-
-            <div class="student-id">
-              ${s.userId}
-            </div>
-
-            <div class="badge">
-              ${s.class} • ${s.status}
-            </div>
-
+          <div class="student-id">
+            ${s.userId}
           </div>
 
-        </div>
-
-        <div class="details">
-
-          <b>Gender:</b> ${s.gender || "-"} <br>
-
-          <b>Date of Birth:</b> ${s.dob || "-"} <br>
-
-          <b>Nationality:</b> ${s.nationality || "-"} <br>
-
-          <b>Parent:</b> ${s.parent || "-"} <br>
-
-          <b>Contact:</b> ${s.contact || "-"} <br>
-
-          <b>PIN:</b> ${s.pin || "-"} <br>
-
-        </div>
-
-        <div class="actions">
-
-          <button
-            class="edit-btn"
-            onclick="editStudent('${s.docId}')"
-          >
-            Edit
-          </button>
-
-          <button
-            class="delete-btn"
-            onclick="deleteStudent('${s.docId}')"
-          >
-            Delete
-          </button>
-
+          <span class="badge ${s.status === "New" ? "new" : "old"}">
+            ${s.status}
+          </span>
         </div>
 
       </div>
 
-    `).join("");
-};
+      <div class="card-body">
 
-// -----------------------------------
-// SAVE
-// -----------------------------------
+        <div class="info-line">
+          <b>Class:</b> ${s.class || "-"}
+        </div>
+
+        ${
+          s.gender
+          ?
+          `<div class="info-line">
+            <b>Gender:</b> ${s.gender}
+          </div>`
+          :
+          ""
+        }
+
+        ${
+          s.dob
+          ?
+          `<div class="info-line">
+            <b>DOB:</b> ${s.dob}
+          </div>`
+          :
+          ""
+        }
+
+        ${
+          s.nationality
+          ?
+          `<div class="info-line">
+            <b>Nationality:</b> ${s.nationality}
+          </div>`
+          :
+          ""
+        }
+
+        ${
+          s.parent
+          ?
+          `<div class="info-line">
+            <b>Parent:</b> ${s.parent}
+          </div>`
+          :
+          ""
+        }
+
+        ${
+          s.contact
+          ?
+          `<div class="info-line">
+            <b>Contact:</b> ${s.contact}
+          </div>`
+          :
+          ""
+        }
+
+        <div class="info-line">
+          <b>PIN:</b> ${s.pin || "-"}
+        </div>
+
+      </div>
+
+      <div class="card-actions">
+
+        <button
+          class="edit-btn"
+          onclick="editStudent('${s.docId}')"
+        >
+          Edit
+        </button>
+
+        <button
+          class="delete-btn"
+          onclick="deleteStudent('${s.docId}')"
+        >
+          Delete
+        </button>
+
+      </div>
+
+    </div>
+
+  `).join("");
+};
 
 window.saveStudent = async function(){
 
@@ -636,50 +811,62 @@ window.saveStudent = async function(){
   const studentData = {
 
     name:
-      document.getElementById("name").value.trim(),
+      document.getElementById("name")
+      .value
+      .trim(),
 
     class:
-      document.getElementById("class").value.trim(),
+      document.getElementById("class")
+      .value
+      .trim(),
 
     dob:
-      document.getElementById("dob").value,
+      document.getElementById("dob")
+      .value,
 
     gender:
-      document.getElementById("gender").value,
+      document.getElementById("gender")
+      .value,
 
     nationality:
-      document.getElementById("nationality").value.trim(),
+      document.getElementById("nationality")
+      .value
+      .trim(),
 
     parent:
-      document.getElementById("parent").value.trim(),
+      document.getElementById("parent")
+      .value
+      .trim(),
 
     contact:
-      document.getElementById("contact").value.trim(),
+      document.getElementById("contact")
+      .value
+      .trim(),
 
     status:
-      document.getElementById("status").value,
+      document.getElementById("status")
+      .value,
 
     role:"student",
 
     createdAt:Date.now()
   };
 
-  // VALIDATION
-
-  if(
-    !studentData.name ||
-    !studentData.class ||
-    !studentData.dob ||
-    !studentData.gender ||
-    !studentData.nationality ||
-    !studentData.parent ||
-    !studentData.contact ||
-    !studentData.status
-  ){
+  if(!studentData.name){
 
     showMessage(
-      "Please fill all fields before saving.",
-      "error"
+      "error",
+      "⚠️ Student name is required."
+    );
+
+    return;
+  }
+
+  if(!studentData.class){
+
+    showMessage(
+      "error",
+      "⚠️ Student class is required."
     );
 
     return;
@@ -687,13 +874,14 @@ window.saveStudent = async function(){
 
   try{
 
-    showLoader(true);
+    setLoading(true);
 
-    const photoFile =
-      document.getElementById("photo").files[0];
+    const file =
+      document.getElementById("photo")
+      .files[0];
 
     const photoURL =
-      await uploadImage(photoFile);
+      await uploadImage(file);
 
     if(photoURL){
       studentData.photoURL = photoURL;
@@ -701,14 +889,8 @@ window.saveStudent = async function(){
 
     if(!editId){
 
-      const snap =
-        await getDocs(collection(db,"users"));
-
-      const count =
-        snap.docs.filter(d=>d.data().role === "student").length;
-
       const userId =
-        generateStudentId(count);
+        await generateStudentId();
 
       const pin =
         generatePin();
@@ -722,7 +904,10 @@ window.saveStudent = async function(){
       );
 
       showMessage(
-        `Student created successfully • ID: ${userId} • PIN: ${pin}`
+        "success",
+        `✅ Student created successfully.<br><br>
+        <b>ID:</b> ${userId}<br>
+        <b>PIN:</b> ${pin}`
       );
 
     }else{
@@ -732,39 +917,39 @@ window.saveStudent = async function(){
         studentData
       );
 
-      document.getElementById("editId").value = "";
-
-      showMessage("Student updated successfully");
+      showMessage(
+        "success",
+        "✅ Student updated successfully."
+      );
     }
 
-    clearForm();
-
-    await loadStudents();
+    resetForm();
+    loadStudents();
 
   }catch(err){
 
     console.error(err);
 
     showMessage(
-      "Failed to save student.",
-      "error"
+      "error",
+      "❌ Failed to save student. Check your internet connection."
     );
 
   }finally{
-    showLoader(false);
+
+    setLoading(false);
   }
 };
-
-// -----------------------------------
-// EDIT
-// -----------------------------------
 
 window.editStudent = function(id){
 
   const s =
-    studentsCache.find(x=>x.docId === id);
+    studentsCache.find(x => x.docId === id);
 
   if(!s) return;
+
+  document.getElementById("formTitle").innerText =
+    "Edit Student";
 
   document.getElementById("editId").value =
     id;
@@ -799,16 +984,12 @@ window.editStudent = function(id){
   });
 };
 
-// -----------------------------------
-// DELETE
-// -----------------------------------
-
 window.deleteStudent = async function(id){
 
-  const confirmDelete =
+  const confirmed =
     confirm("Delete this student?");
 
-  if(!confirmDelete) return;
+  if(!confirmed) return;
 
   try{
 
@@ -816,7 +997,10 @@ window.deleteStudent = async function(id){
       doc(db,"users",id)
     );
 
-    showMessage("Student deleted");
+    showMessage(
+      "success",
+      "🗑️ Student deleted successfully."
+    );
 
     loadStudents();
 
@@ -825,17 +1009,18 @@ window.deleteStudent = async function(id){
     console.error(err);
 
     showMessage(
-      "Failed to delete student.",
-      "error"
+      "error",
+      "❌ Failed to delete student."
     );
   }
 };
 
-// -----------------------------------
-// CLEAR
-// -----------------------------------
+window.resetForm = function(){
 
-function clearForm(){
+  document.getElementById("formTitle").innerText =
+    "Create Student";
+
+  document.getElementById("editId").value = "";
 
   document.getElementById("name").value = "";
   document.getElementById("class").value = "";
@@ -844,15 +1029,14 @@ function clearForm(){
   document.getElementById("nationality").value = "";
   document.getElementById("parent").value = "";
   document.getElementById("contact").value = "";
-  document.getElementById("status").value = "";
+  document.getElementById("status").value = "New";
   document.getElementById("photo").value = "";
-}
-
-// -----------------------------------
+};
 
 loadStudents();
 
 </script>
 
 </body>
+  
 </html>
