@@ -1,252 +1,941 @@
-<!DOCTYPE html>      <html>        <head>        
-  <title>Teacher Management - TEF</title>        <style>        
-    :root {        
-      --maroon: #800000;        
-      --pink: #ffc0cb;        
-      --bg: #0b0b0f;        
-      --card: rgba(255,255,255,0.06);        
-      --text: #fff;        
-    }        body {        
-  font-family: system-ui;        
-  background: radial-gradient(circle at top, #1a0010, var(--bg));        
-  color: white;        
-  margin: 0;        
-  padding: 20px;        
-}        
-    
-h2 {        
-  text-align: center;        
-  color: var(--pink);        
-}        
-    
-.stats {        
-  display: grid;        
-  grid-template-columns: repeat(3, 1fr);        
-  gap: 10px;        
-  margin: 10px 0;        
-}        
-    
-.stat {        
-  background: var(--card);        
-  padding: 10px;        
-  border-radius: 10px;        
-  text-align: center;        
-}        
-    
-input, select {        
-  width: 100%;        
-  padding: 10px;        
-  margin: 6px 0;        
-  border-radius: 8px;        
-  border: none;        
-  background: rgba(255,255,255,0.08);        
-  color: white;        
-}        
-    
-button {        
-  padding: 10px;        
-  margin: 5px 0;        
-  border: none;        
-  border-radius: 8px;        
-  background: linear-gradient(135deg, var(--maroon), var(--pink));        
-  color: white;        
-  cursor: pointer;        
-}        
-    
-.card {        
-  background: var(--card);        
-  padding: 12px;        
-  margin: 10px 0;        
-  border-radius: 12px;        
-  border-left: 4px solid var(--pink);        
-}        
-    
-.small {        
-  font-size: 12px;        
-  opacity: 0.8;        
-}        
-    
-img {        
-  width: 60px;        
-  height: 60px;        
-  border-radius: 50%;        
-  object-fit: cover;        
-  margin-top: 5px;        
-}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Management - TEF</title>
 
-</style>      </head>      <body>      <h2>👨‍🏫 Teacher Management System</h2>      <div class="stats">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <div class="stat">Total <div id="total">0</div></div>        
-  <div class="stat">Active <div id="active">0</div></div>        
-  <div class="stat">Inactive <div id="inactive">0</div></div>        
-</div>      <input id="search" placeholder="Search teacher..." oninput="renderTeachers()">      <hr>      <!-- FORM -->      <input id="name" placeholder="Teacher Name">        
-<input id="classes" placeholder="Classes (e.g. JSS1, JSS2)">        
-<input id="dob" placeholder="Date of Birth">        
-<input id="gender" placeholder="Gender">        
-<input id="contact" placeholder="Contact">        
-<input id="nationality" placeholder="Nationality">        
-<input id="address" placeholder="Address">      <select id="status">        
-  <option value="active">Active</option>        
-  <option value="inactive">Inactive</option>        
-</select>      <input type="file" id="photo">      <input type="hidden" id="editId">      <button onclick="saveTeacher()">Save Teacher</button>  <hr>      <div id="list"></div>      <script type="module">        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <style>
+
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,0.06);
+      --text:#ffffff;
+      --success:#22c55e;
+      --danger:#ef4444;
+      --blue:#2563eb;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:
+      radial-gradient(circle at top,#2b0018 0%,#13000b 30%,#090909 100%);
+      color:white;
+      padding:15px;
+    }
+
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
+
+    h2{
+      text-align:center;
+      color:var(--pink);
+      margin-bottom:20px;
+      font-size:28px;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+      gap:12px;
+      margin-bottom:20px;
+    }
+
+    .stat{
+      background:var(--card);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:18px;
+      padding:16px;
+      text-align:center;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    .stat h3{
+      margin:0;
+      font-size:13px;
+      color:#ddd;
+      font-weight:500;
+    }
+
+    .stat p{
+      margin:8px 0 0;
+      font-size:26px;
+      font-weight:bold;
+      color:var(--pink);
+    }
+
+    .search-box{
+      margin-bottom:15px;
+    }
+
+    .form-card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(14px);
+      border-radius:22px;
+      padding:18px;
+      margin-bottom:20px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    .section-title{
+      font-size:18px;
+      margin-bottom:15px;
+      color:var(--pink);
+      font-weight:bold;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;
+    }
+
+    input,
+    select{
+      width:100%;
+      padding:13px;
+      border:none;
+      border-radius:14px;
+      background:rgba(255,255,255,0.08);
+      color:white;
+      outline:none;
+      font-size:14px;
+    }
+
+    input::placeholder{
+      color:#ccc;
+    }
+
+    select option{
+      color:black;
+    }
+
+    input[type="file"]{
+      padding:10px;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      padding:13px 18px;
+      font-weight:bold;
+      transition:0.25s;
+    }
+
+    .primary-btn{
+      width:100%;
+      margin-top:15px;
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
+      color:white;
+      font-size:15px;
+    }
+
+    .primary-btn:hover{
+      transform:translateY(-2px);
+      opacity:0.95;
+    }
+
+    .teacher-list{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+      gap:15px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,0.08);
+      backdrop-filter:blur(14px);
+      border-radius:22px;
+      overflow:hidden;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    .card-top{
+      padding:18px;
+      display:flex;
+      gap:15px;
+      align-items:flex-start;
+    }
+
+    .avatar{
+      width:75px;
+      height:75px;
+      border-radius:50%;
+      object-fit:cover;
+      border:3px solid var(--pink);
+      background:#222;
+    }
+
+    .avatar-placeholder{
+      width:75px;
+      height:75px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--maroon),var(--pink));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:26px;
+      font-weight:bold;
+    }
+
+    .teacher-info{
+      flex:1;
+    }
+
+    .teacher-name{
+      font-size:18px;
+      font-weight:bold;
+      margin-bottom:4px;
+    }
+
+    .teacher-id{
+      color:#ffc0cb;
+      font-size:13px;
+      margin-bottom:8px;
+    }
+
+    .badge{
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:50px;
+      font-size:12px;
+      font-weight:bold;
+      background:rgba(255,255,255,0.12);
+    }
+
+    .details{
+      padding:0 18px 18px;
+      font-size:14px;
+      color:#ddd;
+      line-height:1.7;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      padding:0 18px 18px;
+    }
+
+    .edit-btn{
+      flex:1;
+      background:var(--blue);
+      color:white;
+    }
+
+    .delete-btn{
+      flex:1;
+      background:#dc2626;
+      color:white;
+    }
+
+    .message{
+      display:none;
+      margin-bottom:15px;
+      padding:15px;
+      border-radius:14px;
+      font-weight:600;
+      line-height:1.5;
+      animation:fadeIn .3s ease;
+    }
+
+    .success{
+      background:rgba(34,197,94,0.15);
+      border:1px solid rgba(34,197,94,0.4);
+      color:#86efac;
+    }
+
+    .error{
+      background:rgba(239,68,68,0.15);
+      border:1px solid rgba(239,68,68,0.4);
+      color:#fca5a5;
+    }
+
+    .loader{
+      display:none;
+      text-align:center;
+      margin-top:12px;
+      color:var(--pink);
+      font-weight:bold;
+    }
+
+    .empty{
+      text-align:center;
+      padding:40px 20px;
+      background:var(--card);
+      border-radius:20px;
+      color:#ccc;
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        transform:translateY(-10px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    @media(max-width:700px){
+
+      body{
+        padding:12px;
+      }
+
+      h2{
+        font-size:23px;
+      }
+
+      .card-top{
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+      }
+
+      .actions{
+        flex-direction:column;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>👨‍🏫 Teacher Management System</h2>
+
+  <div id="message" class="message"></div>
+
+  <div class="stats">
+
+    <div class="stat">
+      <h3>Total Teachers</h3>
+      <p id="total">0</p>
+    </div>
+
+    <div class="stat">
+      <h3>Active</h3>
+      <p id="active">0</p>
+    </div>
+
+    <div class="stat">
+      <h3>Inactive</h3>
+      <p id="inactive">0</p>
+    </div>
+
+  </div>
+
+  <input
+    class="search-box"
+    id="search"
+    placeholder="Search teacher by name or ID..."
+    oninput="renderTeachers()"
+  >
+
+  <div class="form-card">
+
+    <div class="section-title">
+      Teacher Information
+    </div>
+
+    <div class="grid">
+
+      <input id="name" placeholder="Teacher Name">
+
+      <input id="classes" placeholder="Classes (e.g. JSS1, JSS2)">
+
+      <input id="dob" type="date">
+
+      <select id="gender">
+        <option value="">Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+      </select>
+
+      <input id="contact" placeholder="Contact">
+
+      <input id="nationality" placeholder="Nationality">
+
+      <input id="address" placeholder="Address">
+
+      <select id="status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+
+      <input type="file" id="photo" accept="image/*">
+
+    </div>
+
+    <input type="hidden" id="editId">
+
+    <button class="primary-btn" onclick="saveTeacher()">
+      Save Teacher
+    </button>
+
+    <div id="loader" class="loader">
+      Processing...
+    </div>
+
+  </div>
+
+  <div id="list" class="teacher-list"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-authDomain: "tyneceploh.firebaseapp.com",
-projectId: "tyneceploh",
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// safer ID
-function generateTeacherId(count) {
-return TCH${Date.now().toString().slice(-4)}${count};
-}
-
-function generatePin() {
-return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
 let teachersCache = [];
 
-async function loadTeachers() {
-const snap = await getDocs(collection(db, "users"));
-teachersCache = [];
+// -----------------------------------
+// UI HELPERS
+// -----------------------------------
 
-snap.forEach(d => {
-const data = d.data();
-if (data.role === "teacher") {
-teachersCache.push({ ...data, docId: d.id });
-}
-});
+function showMessage(text, type="success"){
 
-updateStats();
-renderTeachers();
-}
+  const box = document.getElementById("message");
 
-function updateStats() {
-document.getElementById("total").innerText = teachersCache.length;
-document.getElementById("active").innerText =
-teachersCache.filter(t => t.status === "active").length;
-document.getElementById("inactive").innerText =
-teachersCache.filter(t => t.status === "inactive").length;
+  box.className = `message ${type}`;
+  box.style.display = "block";
+  box.innerHTML = text;
+
+  setTimeout(()=>{
+    box.style.display = "none";
+  },5000);
 }
 
+function showLoader(show=true){
+
+  document.getElementById("loader").style.display =
+    show ? "block" : "none";
+}
+
+// -----------------------------------
+// ID + PIN
+// -----------------------------------
+
+function generatePin(){
+
+  return Math.floor(
+    1000 + Math.random() * 9000
+  ).toString();
+}
+
+function generateTeacherId(count){
+
+  return `TCH${String(count + 1).padStart(3,"0")}`;
+}
+
+// -----------------------------------
 // CLOUDINARY
-async function uploadImage(file) {
-if (!file) return "";
+// -----------------------------------
 
-const formData = new FormData();
-formData.append("file", file);
-formData.append("upload_preset", "Tyneceploh");
+async function uploadImage(file){
 
-const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
-method: "POST",
-body: formData
-});
+  if(!file) return "";
 
-const data = await res.json();
-return data.secure_url || "";
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  formData.append(
+    "upload_preset",
+    "Tyneceploh"
+  );
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
+    {
+      method:"POST",
+      body:formData
+    }
+  );
+
+  const data = await res.json();
+
+  return data.secure_url || "";
 }
 
-window.renderTeachers = function () {
-const search = document.getElementById("search").value.toLowerCase();
+// -----------------------------------
+// LOAD TEACHERS
+// -----------------------------------
 
-const filtered = teachersCache.filter(t =>
-(t.name || "").toLowerCase().includes(search) ||
-(t.userId || "").toLowerCase().includes(search)
-);
+async function loadTeachers(){
 
-document.getElementById("list").innerHTML = filtered.map(t => `
-<div class="card">
-<b>🆔 ${t.userId}</b> | ${t.name}
+  const snap =
+    await getDocs(collection(db,"users"));
 
-<div class="small">        
-    Classes: ${(t.classes || []).join(", ")} <br>        
-    Status: ${t.status} <br>        
-    DOB: ${t.dob || "-"} <br>        
-    Contact: ${t.contact || "-"} <br>        
-    Nationality: ${t.nationality || "-"} <br>        
-    Address: ${t.address || "-"}        
-    Pin: ${t.pin}<br>        
-  </div>        
-    
-  ${t.photoURL ? `<img src="${t.photoURL}">` : ""}        
-    
-  <button onclick="editTeacher('${t.docId}')">Edit</button>        
-  <button onclick="deleteTeacher('${t.docId}')">Delete</button>        
-</div>
+  teachersCache = [];
 
-`).join("");
-};
+  snap.forEach(d=>{
 
-window.saveTeacher = async function () {
-const editId = document.getElementById("editId").value;
+    const data = d.data();
 
-const file = document.getElementById("photo").files[0];
-const photoURL = await uploadImage(file);
+    if(data.role === "teacher"){
 
-const data = {
-name: document.getElementById("name").value,
-classes: document.getElementById("classes").value.split(",").map(c => c.trim()),
-dob: document.getElementById("dob").value,
-gender: document.getElementById("gender").value,
-contact: document.getElementById("contact").value,
-nationality: document.getElementById("nationality").value,
-address: document.getElementById("address").value,
-status: document.getElementById("status").value,
-role: "teacher",
-createdAt: Date.now()
-};
+      teachersCache.push({
+        ...data,
+        docId:d.id
+      });
+    }
+  });
 
-if (photoURL) data.photoURL = photoURL;
+  updateStats();
 
-if (!editId) {
-const snap = await getDocs(collection(db, "users"));
-const userId = generateTeacherId(snap.docs.length);
-const pin = generatePin();
-
-data.userId = userId;        
-data.pin = pin;        
-    
-await addDoc(collection(db, "users"), data);        
-    
-alert(`Teacher Created\nID: ${userId}\nPIN: ${pin}`);
-
-} else {
-await updateDoc(doc(db, "users", editId), data);
-document.getElementById("editId").value = "";
+  renderTeachers();
 }
 
-loadTeachers();
-};
+// -----------------------------------
+// STATS
+// -----------------------------------
 
-window.editTeacher = function (id) {
-const t = teachersCache.find(x => x.docId === id);
-if (!t) return;
+function updateStats(){
 
-document.getElementById("editId").value = id;
-document.getElementById("name").value = t.name || "";
-document.getElementById("classes").value = (t.classes || []).join(", ");
-document.getElementById("dob").value = t.dob || "";
-document.getElementById("gender").value = t.gender || "";
-document.getElementById("contact").value = t.contact || "";
-document.getElementById("nationality").value = t.nationality || "";
-document.getElementById("address").value = t.address || "";
-document.getElementById("status").value = t.status || "active";
-};
+  document.getElementById("total").innerText =
+    teachersCache.length;
 
-window.deleteTeacher = async function (id) {
-if (confirm("Delete teacher?")) {
-await deleteDoc(doc(db, "users", id));
-loadTeachers();
+  document.getElementById("active").innerText =
+    teachersCache.filter(
+      t=>t.status === "active"
+    ).length;
+
+  document.getElementById("inactive").innerText =
+    teachersCache.filter(
+      t=>t.status === "inactive"
+    ).length;
 }
+
+// -----------------------------------
+// RENDER
+// -----------------------------------
+
+window.renderTeachers = function(){
+
+  const search =
+    document.getElementById("search")
+    .value
+    .toLowerCase();
+
+  const filtered =
+    teachersCache.filter(t=>
+
+      (t.name || "")
+      .toLowerCase()
+      .includes(search)
+
+      ||
+
+      (t.userId || "")
+      .toLowerCase()
+      .includes(search)
+    );
+
+  if(filtered.length === 0){
+
+    document.getElementById("list").innerHTML = `
+      <div class="empty">
+        No teachers found
+      </div>
+    `;
+
+    return;
+  }
+
+  document.getElementById("list").innerHTML =
+    filtered.map(t=>`
+
+      <div class="card">
+
+        <div class="card-top">
+
+          ${
+            t.photoURL ?
+
+            `<img src="${t.photoURL}" class="avatar">`
+
+            :
+
+            `<div class="avatar-placeholder">
+              ${t.name ? t.name.charAt(0).toUpperCase() : "T"}
+            </div>`
+          }
+
+          <div class="teacher-info">
+
+            <div class="teacher-name">
+              ${t.name || "Unnamed Teacher"}
+            </div>
+
+            <div class="teacher-id">
+              ${t.userId || "-"}
+            </div>
+
+            <div class="badge">
+              ${t.status || "active"}
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="details">
+
+          <b>Classes:</b>
+          ${
+            t.classes?.length
+            ? t.classes.join(", ")
+            : "-"
+          }
+          <br>
+
+          <b>Gender:</b>
+          ${t.gender || "-"}
+          <br>
+
+          <b>Date of Birth:</b>
+          ${t.dob || "-"}
+          <br>
+
+          <b>Contact:</b>
+          ${t.contact || "-"}
+          <br>
+
+          <b>Nationality:</b>
+          ${t.nationality || "-"}
+          <br>
+
+          <b>Address:</b>
+          ${t.address || "-"}
+          <br>
+
+          <b>PIN:</b>
+          ${t.pin || "-"}
+          <br>
+
+        </div>
+
+        <div class="actions">
+
+          <button
+            class="edit-btn"
+            onclick="editTeacher('${t.docId}')"
+          >
+            Edit
+          </button>
+
+          <button
+            class="delete-btn"
+            onclick="deleteTeacher('${t.docId}')"
+          >
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
 };
+
+// -----------------------------------
+// SAVE
+// -----------------------------------
+
+window.saveTeacher = async function(){
+
+  const editId =
+    document.getElementById("editId").value;
+
+  try{
+
+    showLoader(true);
+
+    const file =
+      document.getElementById("photo").files[0];
+
+    const photoURL =
+      await uploadImage(file);
+
+    const data = {
+
+      name:
+        document.getElementById("name")
+        .value
+        .trim(),
+
+      classes:
+        document.getElementById("classes")
+        .value
+        .split(",")
+        .map(c=>c.trim())
+        .filter(Boolean),
+
+      dob:
+        document.getElementById("dob")
+        .value,
+
+      gender:
+        document.getElementById("gender")
+        .value,
+
+      contact:
+        document.getElementById("contact")
+        .value
+        .trim(),
+
+      nationality:
+        document.getElementById("nationality")
+        .value
+        .trim(),
+
+      address:
+        document.getElementById("address")
+        .value
+        .trim(),
+
+      status:
+        document.getElementById("status")
+        .value,
+
+      role:"teacher",
+
+      createdAt:Date.now()
+    };
+
+    if(photoURL){
+      data.photoURL = photoURL;
+    }
+
+    // ONLY NAME REQUIRED
+
+    if(!data.name){
+
+      showMessage(
+        "Teacher name is required before saving.",
+        "error"
+      );
+
+      showLoader(false);
+
+      return;
+    }
+
+    if(!editId){
+
+      const snap =
+        await getDocs(collection(db,"users"));
+
+      const count =
+        snap.docs.filter(
+          d=>d.data().role === "teacher"
+        ).length;
+
+      const userId =
+        generateTeacherId(count);
+
+      const pin =
+        generatePin();
+
+      data.userId = userId;
+      data.pin = pin;
+
+      await addDoc(
+        collection(db,"users"),
+        data
+      );
+
+      showMessage(`
+        ✅ Teacher created successfully.<br><br>
+
+        <b>ID:</b> ${userId}<br>
+        <b>PIN:</b> ${pin}
+      `);
+
+    }else{
+
+      await updateDoc(
+        doc(db,"users",editId),
+        data
+      );
+
+      document.getElementById("editId").value = "";
+
+      showMessage(
+        "✅ Teacher updated successfully."
+      );
+    }
+
+    clearForm();
+
+    await loadTeachers();
+
+  }catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "❌ Something went wrong while saving teacher data.",
+      "error"
+    );
+
+  }finally{
+
+    showLoader(false);
+  }
+};
+
+// -----------------------------------
+// EDIT
+// -----------------------------------
+
+window.editTeacher = function(id){
+
+  const t =
+    teachersCache.find(
+      x=>x.docId === id
+    );
+
+  if(!t) return;
+
+  document.getElementById("editId").value =
+    id;
+
+  document.getElementById("name").value =
+    t.name || "";
+
+  document.getElementById("classes").value =
+    (t.classes || []).join(", ");
+
+  document.getElementById("dob").value =
+    t.dob || "";
+
+  document.getElementById("gender").value =
+    t.gender || "";
+
+  document.getElementById("contact").value =
+    t.contact || "";
+
+  document.getElementById("nationality").value =
+    t.nationality || "";
+
+  document.getElementById("address").value =
+    t.address || "";
+
+  document.getElementById("status").value =
+    t.status || "active";
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+  showMessage(
+    "✏️ Editing teacher information..."
+  );
+};
+
+// -----------------------------------
+// DELETE
+// -----------------------------------
+
+window.deleteTeacher = async function(id){
+
+  const confirmed =
+    confirm("Delete this teacher?");
+
+  if(!confirmed) return;
+
+  try{
+
+    await deleteDoc(
+      doc(db,"users",id)
+    );
+
+    showMessage(
+      "🗑️ Teacher deleted successfully."
+    );
+
+    loadTeachers();
+
+  }catch(err){
+
+    console.error(err);
+
+    showMessage(
+      "❌ Failed to delete teacher.",
+      "error"
+    );
+  }
+};
+
+// -----------------------------------
+// CLEAR FORM
+// -----------------------------------
+
+function clearForm(){
+
+  document.getElementById("name").value = "";
+
+  document.getElementById("classes").value = "";
+
+  document.getElementById("dob").value = "";
+
+  document.getElementById("gender").value = "";
+
+  document.getElementById("contact").value = "";
+
+  document.getElementById("nationality").value = "";
+
+  document.getElementById("address").value = "";
+
+  document.getElementById("status").value =
+    "active";
+
+  document.getElementById("photo").value = "";
+}
+
+// -----------------------------------
 
 loadTeachers();
 
-</script>     
+</script>
+
 </body>
-</html> 
+</html>
