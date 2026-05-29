@@ -1,198 +1,255 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>My Attendance - TEF</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
+<title>My Attendance - TEF</title>
 
-    :root{
-      --bg:#f4f4f4;
-      --card:#ffffff;
-      --text:#222;
-      --muted:#666;
-      --green:#27ae60;
-      --red:#c0392b;
-      --orange:#e67e22;
-      --blue:#3498db;
-      --shadow:0 10px 25px rgba(0,0,0,0.08);
-      --radius:14px;
-    }
+<style>
 
-    *{
-      box-sizing:border-box;
-    }
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,0.07);
+  --text:#ffffff;
+  --muted:#bbbbbb;
+  --green:#28c76f;
+  --red:#ff5b6e;
+  --yellow:#ffb020;
+  --blue:#00bfff;
+}
 
-    body{
-      margin:0;
-      font-family:sans-serif;
-      background:var(--bg);
-      padding:20px;
-      color:var(--text);
-    }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
 
-    .container{
-      max-width:1100px;
-      margin:auto;
-    }
+body{
+  font-family:system-ui,sans-serif;
+  background:
+    radial-gradient(circle at top,#250012 0%, #12020b 45%, #09090d 100%);
+  color:var(--text);
+  min-height:100vh;
+  padding:18px;
+}
 
-    .header{
-      background:linear-gradient(135deg,#800000,#ff4d6d);
-      color:white;
-      padding:22px;
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      margin-bottom:20px;
-      text-align:center;
-    }
+.topbar{
+  background:linear-gradient(135deg,var(--maroon),#ff4d88);
+  border-radius:24px;
+  padding:24px;
+  margin-bottom:20px;
+  box-shadow:0 15px 35px rgba(0,0,0,.3);
+}
 
-    .header h2{
-      margin:0;
-      font-size:24px;
-    }
+.topbar h1{
+  font-size:28px;
+  margin-bottom:8px;
+}
 
-    .header p{
-      margin-top:6px;
-      font-size:13px;
-      opacity:0.9;
-    }
+.topbar p{
+  opacity:.9;
+  line-height:1.6;
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-      gap:12px;
-      margin-bottom:20px;
-    }
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-bottom:20px;
+}
 
-    .card{
-      background:var(--card);
-      padding:14px;
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      text-align:center;
-      transition:0.2s;
-    }
+.stat{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  padding:18px;
+  text-align:center;
+  backdrop-filter:blur(12px);
+}
 
-    .card:hover{
-      transform:translateY(-3px);
-    }
+.stat h2{
+  font-size:26px;
+  margin-bottom:6px;
+  color:var(--pink);
+}
 
-    .label{
-      font-size:13px;
-      color:var(--muted);
-    }
+.stat span{
+  font-size:13px;
+  color:var(--muted);
+}
 
-    .big{
-      font-size:22px;
-      font-weight:bold;
-      margin-top:6px;
-    }
+.section-title{
+  margin:25px 0 15px;
+  color:var(--pink);
+  font-size:22px;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-      background:var(--card);
-      border-radius:var(--radius);
-      overflow:hidden;
-      box-shadow:var(--shadow);
-    }
+.card{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  padding:18px;
+  margin-bottom:14px;
+  backdrop-filter:blur(10px);
+}
 
-    th,td{
-      padding:10px;
-      text-align:center;
-      border-bottom:1px solid #eee;
-      font-size:13px;
-    }
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
 
-    th{
-      background:#2c3e50;
-      color:white;
-    }
+.label{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:4px;
+}
 
-    tr:hover{
-      background:#fafafa;
-    }
+.value{
+  font-weight:700;
+}
 
-    .late{ color:var(--orange); font-weight:bold; }
-    .early{ color:var(--blue); font-weight:bold; }
-    .good{ color:var(--green); font-weight:bold; }
-    .bad{ color:var(--red); font-weight:bold; }
+.badge{
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:bold;
+  margin-top:8px;
+}
 
-    .empty{
-      text-align:center;
-      padding:20px;
-      color:var(--muted);
-    }
+.ON_TIME{
+  background:rgba(40,199,111,.18);
+  color:#8ef0b4;
+}
 
-  </style>
+.LATE{
+  background:rgba(255,91,110,.18);
+  color:#ff9aa7;
+}
+
+.EARLY{
+  background:rgba(255,176,32,.18);
+  color:#ffd27c;
+}
+
+.OVERTIME{
+  background:rgba(0,191,255,.18);
+  color:#8ddfff;
+}
+
+.EARLY_EXIT{
+  background:rgba(255,91,110,.18);
+  color:#ff9aa7;
+}
+
+.loader{
+  text-align:center;
+  padding:40px 20px;
+  color:var(--muted);
+}
+
+.empty{
+  background:var(--card);
+  padding:30px;
+  border-radius:18px;
+  text-align:center;
+  color:var(--muted);
+}
+
+@media(max-width:850px){
+
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+}
+
+@media(max-width:550px){
+
+  body{
+    padding:12px;
+  }
+
+  .topbar h1{
+    font-size:22px;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+}
+
+</style>
 </head>
-
 <body>
 
-<div class="container">
+<div class="topbar">
 
-  <div class="header">
-    <h2>My Attendance Report</h2>
-    <p>Your daily rhythm, tracked clearly and honestly</p>
+  <h1>
+    📅 My Attendance
+  </h1>
+
+  <p>
+    Track your attendance activity, clock in history,
+    punctuality and work consistency inside the
+    Tyneceploh Educational Foundation attendance system.
+  </p>
+
+</div>
+
+<div class="stats">
+
+  <div class="stat">
+    <h2 id="presentCount">0</h2>
+    <span>Days Present</span>
   </div>
 
-  <div class="grid">
-
-    <div class="card">
-      <div class="label">Total Days</div>
-      <div class="big" id="total">0</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Present</div>
-      <div class="big good" id="present">0</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Late Days</div>
-      <div class="big late" id="late">0</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Early Exit</div>
-      <div class="big early" id="early">0</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Flags</div>
-      <div class="big bad" id="flags">0</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Avg Hours/Day</div>
-      <div class="big" id="avg">0</div>
-    </div>
-
+  <div class="stat">
+    <h2 id="lateCount">0</h2>
+    <span>Late Arrivals</span>
   </div>
 
-  <table>
+  <div class="stat">
+    <h2 id="overtimeCount">0</h2>
+    <span>Overtime</span>
+  </div>
 
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Clock In</th>
-        <th>Clock Out</th>
-        <th>Status</th>
-        <th>Hours</th>
-        <th>Flags</th>
-      </tr>
-    </thead>
+  <div class="stat">
+    <h2 id="attendanceRate">0%</h2>
+    <span>Attendance Rate</span>
+  </div>
 
-    <tbody id="body"></tbody>
+</div>
 
-  </table>
+<h2 class="section-title">
+  Attendance Timeline
+</h2>
+
+<div id="attendanceList">
+
+  <div class="loader">
+    Loading attendance records...
+  </div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -203,84 +260,260 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const user = JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(
+  localStorage.getItem("user")
+);
 
 if(!user){
+
   location.href = "login.html";
+
 }
 
-function hours(a,b){
-  if(!a || !b) return 0;
-  return ((b-a)/(1000*60*60));
+if(user.role === "student"){
+
+  location.href = "login.html";
+
 }
 
-async function load(){
+const attendanceList =
+  document.getElementById("attendanceList");
 
-  const snap = await getDocs(collection(db,"attendanceDaily"));
+function formatTime(timestamp){
 
-  let total=0, present=0, late=0, early=0, flags=0;
-  let sumHours=0;
+  if(!timestamp) return "-";
 
-  let rows="";
+  return new Date(timestamp)
+    .toLocaleTimeString([],{
+      hour:"2-digit",
+      minute:"2-digit"
+    });
 
-  snap.forEach(d=>{
+}
 
-    const a = d.data();
+function formatDate(date){
 
-    if(a.userId !== user.userId) return;
+  const d = new Date(date);
 
-    total++;
-
-    let status = "ABSENT";
-    let hrs = 0;
-    let flagList = [];
-
-    if(a.clockIn){
-
-      present++;
-      status = a.clockIn.status || "ON_TIME";
-
-      if(status === "LATE") late++;
-      if(status === "EARLY") early++;
-
-      if(a.clockOut){
-        hrs = hours(a.clockIn.time,a.clockOut.time);
-        sumHours += hrs;
-      }
-
-      if(a.clockIn.flag) flagList.push(a.clockIn.flag);
-      if(a.clockOut?.flag) flagList.push(a.clockOut.flag);
-
-    }
-
-    rows += `
-      <tr>
-        <td>${a.date}</td>
-        <td>${a.clockIn ? new Date(a.clockIn.time).toLocaleTimeString() : "-"}</td>
-        <td>${a.clockOut ? new Date(a.clockOut.time).toLocaleTimeString() : "-"}</td>
-        <td class="${status==='LATE'?'late':status==='EARLY'?'early':'good'}">${status}</td>
-        <td>${hrs.toFixed(2)}</td>
-        <td class="bad">${flagList.length ? flagList.join(", ") : "OK"}</td>
-      </tr>
-    `;
-
+  return d.toLocaleDateString([],{
+    weekday:"long",
+    month:"long",
+    day:"numeric",
+    year:"numeric"
   });
 
-  document.getElementById("body").innerHTML =
-    rows || `<tr><td colspan="6" class="empty">No attendance yet</td></tr>`;
+}
 
-  document.getElementById("total").innerText = total;
-  document.getElementById("present").innerText = present;
-  document.getElementById("late").innerText = late;
-  document.getElementById("early").innerText = early;
-  document.getElementById("flags").innerText = flags;
+async function loadAttendance(){
 
-  document.getElementById("avg").innerText =
-    total ? (sumHours/total).toFixed(2) : 0;
+  try{
+
+    const snap = await getDocs(
+      collection(db,"attendanceDaily")
+    );
+
+    let records = [];
+
+    snap.forEach(d=>{
+
+      const data = d.data();
+
+      if(data.userId === user.userId){
+
+        records.push(data);
+
+      }
+
+    });
+
+    records.sort((a,b)=>
+      (b.createdAt || 0) -
+      (a.createdAt || 0)
+    );
+
+    renderStats(records);
+
+    renderAttendance(records);
+
+  }catch(err){
+
+    console.error(err);
+
+    attendanceList.innerHTML = `
+
+      <div class="empty">
+        Failed to load attendance records.
+      </div>
+
+    `;
+
+  }
 
 }
 
-load();
+function renderStats(records){
+
+  const present =
+    records.length;
+
+  const late =
+    records.filter(r=>
+      r.clockIn?.status === "LATE"
+    ).length;
+
+  const overtime =
+    records.filter(r=>
+      r.clockOut?.status === "OVERTIME"
+    ).length;
+
+  const rate =
+    present > 0
+    ? Math.min(
+        100,
+        Math.round(
+          ((present - late) / present) * 100
+        )
+      )
+    : 0;
+
+  document.getElementById(
+    "presentCount"
+  ).innerText = present;
+
+  document.getElementById(
+    "lateCount"
+  ).innerText = late;
+
+  document.getElementById(
+    "overtimeCount"
+  ).innerText = overtime;
+
+  document.getElementById(
+    "attendanceRate"
+  ).innerText = rate + "%";
+
+}
+
+function renderAttendance(records){
+
+  if(records.length === 0){
+
+    attendanceList.innerHTML = `
+
+      <div class="empty">
+        No attendance records yet.
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  attendanceList.innerHTML =
+    records.map(r=>`
+
+      <div class="card">
+
+        <div class="row">
+
+          <div>
+            <div class="label">
+              Date
+            </div>
+
+            <div class="value">
+              ${formatDate(r.date)}
+            </div>
+          </div>
+
+          <div>
+            <div class="label">
+              Role
+            </div>
+
+            <div class="value">
+              ${capitalize(r.role)}
+            </div>
+          </div>
+
+        </div>
+
+        <hr style="
+          border:none;
+          border-top:1px solid rgba(255,255,255,.08);
+          margin:18px 0;
+        ">
+
+        <div class="row">
+
+          <div>
+
+            <div class="label">
+              Clock In
+            </div>
+
+            <div class="value">
+              ${formatTime(r.clockIn?.time)}
+            </div>
+
+            <div class="
+              badge
+              ${r.clockIn?.status || ""}
+            ">
+              ${r.clockIn?.status || "-"}
+            </div>
+
+          </div>
+
+          <div>
+
+            <div class="label">
+              Clock Out
+            </div>
+
+            <div class="value">
+              ${
+                r.clockOut
+                ? formatTime(r.clockOut?.time)
+                : "Still Active"
+              }
+            </div>
+
+            ${
+              r.clockOut
+              ? `
+                <div class="
+                  badge
+                  ${r.clockOut?.status || ""}
+                ">
+                  ${r.clockOut?.status || "-"}
+                </div>
+              `
+              : ""
+            }
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+}
+
+function capitalize(text){
+
+  if(!text) return "";
+
+  return text.charAt(0)
+    .toUpperCase() +
+    text.slice(1);
+
+}
+
+loadAttendance();
 
 </script>
 
