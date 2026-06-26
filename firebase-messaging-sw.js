@@ -1,30 +1,35 @@
 // firebase-messaging-sw.js
 
-// Import the Compat (v9/v10 compatible) libraries required for Service Workers
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+// 1. Import the necessary Firebase scripts compatible with background workers
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
-// Initialize Firebase inside the background worker using your config
-firebase.initializeApp({
+// 2. Your true production configuration block matching your app overview settings
+const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
-  storageBucket: "tyneceploh.appspot.com",
+  storageBucket: "tyneceploh.firebasestorage.app",
   messagingSenderId: "161024255934",
-  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"
-});
+  appId: "1:161024255934:web:2bca05f1d6af871cc57bef",
+  measurementId: "G-4Y2SRWSE2D"
+};
 
-// Grab the messaging instance
+// 3. Initialize Firebase inside the background worker thread
+firebase.initializeApp(firebaseConfig);
+
+// 4. Retrieve the messaging interface
 const messaging = firebase.messaging();
 
-// This interceptor catches incoming data when your website is closed or in a background tab
+// 5. Explicitly handle background notification actions when the web application is closed
 messaging.onBackgroundMessage((payload) => {
-  console.log('Background message received: ', payload);
+  console.log('[firebase-messaging-sw.js] Background message payload received: ', payload);
 
-  const notificationTitle = payload.notification?.title || "System Update";
+  const notificationTitle = payload.notification?.title || 'System Update';
   const notificationOptions = {
-    body: payload.notification?.body || "New activity detected in the database.",
-    icon: '/icon.png' // Make sure you have an icon image at this path in your repo
+    body: payload.notification?.body || 'New message waiting inside your application workspace.',
+    icon: payload.notification?.icon || '/favicon.ico', // Fallback to icon root path
+    badge: '/favicon.ico'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
