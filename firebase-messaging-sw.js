@@ -1,11 +1,9 @@
-// firebase-messaging-sw.js
+// Import the Firebase scripts required for the Service Worker context
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
-// 1. Import the necessary Firebase scripts compatible with background workers
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
-
-// 2. Your true production configuration block matching your app overview settings
-const firebaseConfig = {
+// Initialize the Firebase app inside the service worker using your exact keys
+firebase.initializeApp({
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
   projectId: "tyneceploh",
@@ -13,24 +11,47 @@ const firebaseConfig = {
   messagingSenderId: "161024255934",
   appId: "1:161024255934:web:2bca05f1d6af871cc57bef",
   measurementId: "G-4Y2SRWSE2D"
-};
+});
 
-// 3. Initialize Firebase inside the background worker thread
-firebase.initializeApp(firebaseConfig);
-
-// 4. Retrieve the messaging interface
+// Retrieve an instance of Firebase Cloud Messaging
 const messaging = firebase.messaging();
 
-// 5. Explicitly handle background notification actions when the web application is closed
+// Handle background notifications
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Background message payload received: ', payload);
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-  const notificationTitle = payload.notification?.title || 'System Update';
+  // Safely extract notification values or fallback gracefully
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'New Update';
   const notificationOptions = {
-    body: payload.notification?.body || 'New message waiting inside your application workspace.',
-    icon: payload.notification?.icon || '/favicon.ico', // Fallback to icon root path
-    badge: '/favicon.ico'
+    body: payload.notification?.body || payload.data?.body || 'You have received a new notification.',
+    icon: payload.notification?.icon || payload.data?.icon || '/favicon.ico', // Update this with your preferred app icon path
+    badge: '/favicon.ico',
+    data: payload.data || {}
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Action when user clicks the notification banner
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  // Pick target link from incoming metadata payload, fallback to landing page
+  const clickActionUrl = event.notification.data?.click_action || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if the site is already open in a tab, if so bring it forward
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url === clickActionUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // If the tab is closed, open a brand new one
+      if (clients.openWindow) {
+        return clients.openWindow(clickActionUrl);
+      }
+    })
+  );
 });
