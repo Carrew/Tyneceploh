@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>TEF Portal - Tyneceploh Educational Foundation</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 :root {
   --primary: #800000;
@@ -548,6 +547,95 @@ body{
   .footerBottom { flex-direction: column; gap: 10px; text-align: center; }
   .hero { height: 75vh; }
 }
+/* ==========================================================================
+   CENTRALIZED PREMIUM FLOATING NOTIFICATION PROMPT DESIGN 
+   ========================================================================== */
+.notif-promo-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, #180a11, #0a0a0f);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  z-index: 99999;
+  max-width: 380px;
+  width: calc(100% - 48px);
+  transform: translateY(150%);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.notif-promo-banner.show {
+  transform: translateY(0);
+}
+
+.notif-promo-icon {
+  font-size: 22px;
+  background: rgba(255, 192, 203, 0.07);
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #ffc0cb;
+  flex-shrink: 0;
+}
+
+.notif-promo-text {
+  flex-grow: 1;
+}
+
+.notif-promo-text h4 {
+  margin: 0 0 2px 0;
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+}
+
+.notif-promo-text p {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+  font-family: system-ui, sans-serif;
+}
+
+.notif-promo-btn {
+  background: linear-gradient(135deg, #800000, #b00055);
+  color: white;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.notif-promo-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .notif-promo-banner {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    width: calc(100% - 32px);
+    padding: 12px 14px;
+    gap: 12px;
+  }
+}
 </style>
 </head>
 
@@ -698,7 +786,14 @@ body{
 <div class="homeModal" id="homeLightbox" onclick="this.style.display='none'">
   <img id="lightboxImg" src="">
 </div>
-
+ <div class="notif-promo-banner" id="globalNotifBanner">
+  <div class="notif-promo-icon">🔔</div>
+  <div class="notif-promo-text">
+    <h4>Enable Live Alerts</h4>
+    <p>Receive academic portal updates, approvals, and system changes instantly.</p>
+  </div>
+  <button class="notif-promo-btn" id="activateGlobalNotifBtn">Allow</button>
+</div>
 <footer class="footer">
   <div class="footerContainer">
     <div class="footerBrand">
@@ -725,12 +820,12 @@ body{
   <div class="footerBottom">
     <div>&copy; 2026 Tyneceploh Educational Foundation. All Rights Reserved.</div>
     <div>Monrovia, Liberia</div>
-  </div>
 </footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 import { setupPushNotifications } from "./push-setup.js";
 
 const app = initializeApp({
@@ -745,8 +840,59 @@ const app = initializeApp({
 
 const db = getFirestore(app);
     
-setupPushNotifications(db, app);
+ // CENTRALIZED WEB PUSH REGISTRATION GATEWAY
 
+async function initializeGlobalNotificationEngine() {
+  try {
+    // 1. Cross-Platform Validation (Ensures strict compliance checks for iPhones/Safari layout states)
+    const pushCapable = await isSupported();
+    if (!pushCapable) {
+      console.log("Push notifications are not supported on this device/browser layout.");
+      return;
+    }
+
+    // 2. Session Context Analysis (Identifies if visitor is a public guest or returning user)
+    const savedSession = localStorage.getItem("user");
+    let targetUserIdentifier = "anonymous_guest";
+    let targetRole = "guest";
+
+    if (savedSession) {
+      const sessionUser = JSON.parse(savedSession);
+      if (sessionUser && sessionUser.userId) {
+        targetUserIdentifier = sessionUser.userId;
+        targetRole = sessionUser.role || "guest";
+      }
+    }
+
+    // 3. Conditional UI Rendering Routing
+    if (Notification.permission === "granted") {
+      // If permission is already authorized, register silently to keep token up to date
+      setupPushNotifications(db, app, targetUserIdentifier, targetRole);
+    } else if (Notification.permission === "default") {
+      // Delay prompt slide-in for 2 seconds to provide a smooth user experience
+      setTimeout(() => {
+        const banner = document.getElementById("globalNotifBanner");
+        if (banner) banner.classList.add("show");
+      }, 2000);
+
+      const activateBtn = document.getElementById("activateGlobalNotifBtn");
+      if (activateBtn) {
+        activateBtn.addEventListener("click", () => {
+          const banner = document.getElementById("globalNotifBanner");
+          if (banner) banner.classList.remove("show");
+          
+          // Fire the central pipeline registration
+          setupPushNotifications(db, app, targetUserIdentifier, targetRole);
+        });
+      }
+    }
+  } catch (error) {
+    console.log("Notification entry gateway held gracefully:", error);
+  }
+}
+
+// Execute the notification engine check
+initializeGlobalNotificationEngine();
 window.goLogin = () => location.href="login.html";
 window.openAnnouncements = () => location.href="users-announcement.html";
 
@@ -857,7 +1003,7 @@ async function loadHonoree(){
 
     setTimeout(()=>{
       box.innerHTML=`
-        <img src="${pick.studentPhoto||'https://via.placeholder.com/80'}" onerror="this.src='https://via.placeholder.com/80'">
+        <img src="${pick.studentPhoto||'https://picsum.photos/80'}" onerror="this.src='https://picsum.photos/80'">
         <div>
           <div class="hName">${pick.studentName}</div>
           <div class="hMeta">Rank #${pick.rank || "N/A"}${pick.mainAverage ? ` • Avg ${pick.mainAverage}%` : ''}${pick.class ? ` • Class ${pick.class}` : ''}</div>
@@ -928,7 +1074,7 @@ async function loadRandomDirectory() {
 
       return `
         <div class="displayCard">
-          <img src="${u.photoURL || 'https://via.placeholder.com/80'}" onerror="this.src='https://via.placeholder.com/80'">
+          <img src="${u.photoURL || 'https://picsum.photos/80'}" onerror="this.src='https://picsum.photos/80'">
           <div class="dName">${u.name}</div>
           <div class="dRole">${badgeText}</div>
           <div class="dSub">${metadataSub}</div>
@@ -1057,6 +1203,5 @@ loadRandomDirectory();
 loadRandomGallery();
 loadClassPulse();
 </script>
-
 </body>
 </html>
