@@ -449,7 +449,6 @@ function formatDate(t){
 
 <button class="logout" onclick="logout()">Logout</button>
 
-<!-- THE CUSTOM IN-APP NOTIFICATION REQUEST ELEMENT -->
 <div class="notif-overlay" id="notifPromptOverlay">
   <div class="notif-modal">
     <div class="notif-icon">🔔</div>
@@ -518,8 +517,6 @@ function logout(){
   location.href = "login.html";
 }
 </script>
-
-<!-- ASYNC NOTIFICATION ENGINE BRIDGE WITH CUSTOM IN-APP MODAL HOOKS -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -541,33 +538,33 @@ try {
   const acceptBtn = document.getElementById("acceptNotifBtn");
   const dismissBtn = document.getElementById("dismissNotifBtn");
 
-  // Only display the custom layout context if permissions haven't been resolved yet
-  if (user && user.userId && Notification.permission === "default") {
+  // Read current tracking cache to skip showing prompt if they already accepted via homepage
+  const cachedTokenDocId = localStorage.getItem("tef_notification_doc_id");
+  const userRole = (user.role || "teacher").toLowerCase();
+
+  if ((Notification.permission === "granted" || cachedTokenDocId) && user && user.userId) {
+    // PASS BOTH USER ID AND EXPLICIT ROLE CONFIGURATION STRINGS (Aligns to 4 parameters)
+    setupPushNotifications(db, app, user.userId, userRole);
+  } else if (Notification.permission === "default" && user && user.userId) {
     
-    // Slight delayed introduction for smoother UI presentation
     setTimeout(() => {
       overlay.classList.add("show");
     }, 1200);
 
     acceptBtn.addEventListener("click", () => {
       overlay.classList.remove("show");
-      // Seamlessly hand over execution control back to your push-setup module
-      setupPushNotifications(db, app, user.userId);
+      // Execute pipeline explicitly feeding account data to upgrade database mapping
+      setupPushNotifications(db, app, user.userId, userRole);
     });
 
     dismissBtn.addEventListener("click", () => {
       overlay.classList.remove("show");
     });
-
-  } else if (user && user.userId && Notification.permission === "granted") {
-    // If permission is already configured, background execution handles updates silently
-    setupPushNotifications(db, app, user.userId);
   }
 
 } catch (err) {
   console.error("Notification initialization failed gracefully:", err);
 }
 </script>
-
 </body>
 </html>
