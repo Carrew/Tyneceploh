@@ -259,6 +259,110 @@
       }
 
     }
+      /* CUSTOM ADMIN NOTIFICATION DESIGN SYSTEM OVERLAYS */
+    .notif-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+    }
+
+    .notif-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .notif-modal {
+      background: #0f0f18;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .notif-overlay.show .notif-modal {
+      transform: translateY(0);
+    }
+
+    .notif-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 77, 109, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--accent);
+      font-size: 26px;
+      border: 1px solid rgba(255, 77, 109, 0.2);
+    }
+
+    .notif-modal h3 {
+      font-size: 19px;
+      color: #fff;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .notif-modal p {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .notif-btn-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .notif-btn {
+      flex: 1;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .notif-btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .notif-btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .notif-btn-secondary {
+      background: #1b1b25;
+      color: #fff;
+      border: 1px solid var(--border);
+    }
+
+    .notif-btn-secondary:hover {
+      background: rgba(255,255,255,0.05);
+    }
 
   </style>
 </head>
@@ -519,6 +623,17 @@ onclick="toggleMenu()"></div>
   onclick="logout()">
     Logout
   </button>
+    <div class="notif-overlay" id="notifPromptOverlay">
+  <div class="notif-modal">
+    <div class="notif-icon">🔔</div>
+    <h3>Enable Admin Notifications</h3>
+    <p>Receive real-time alerts regarding critical platform system actions, pending class grade approvals, balance changes, and immediate administrative updates.</p>
+    <div class="notif-btn-group">
+      <button class="notif-btn notif-btn-secondary" id="dismissNotifBtn">Not Now</button>
+      <button class="notif-btn notif-btn-primary" id="acceptNotifBtn">Enable</button>
+    </div>
+  </div>
+</div>
 
 </div>
 
@@ -592,6 +707,55 @@ function logout(){
 
 }
 
+</script>
+    <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { setupPushNotifications } from "./push-setup.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain: "tyneceploh.firebaseapp.com",
+  projectId: "tyneceploh",
+  messagingSenderId: "161024255934",
+  appId: "1:161024255934:web:2bca05f1d6af871cc57bef"
+};
+
+try {
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const overlay = document.getElementById("notifPromptOverlay");
+  const acceptBtn = document.getElementById("acceptNotifBtn");
+  const dismissBtn = document.getElementById("dismissNotifBtn");
+
+  // Check storage tracking state parameters
+  const cachedTokenDocId = localStorage.getItem("tef_notification_doc_id");
+  const userRole = (user.role || "admin").toLowerCase();
+
+  if ((Notification.permission === "granted" || cachedTokenDocId) && user && user.userId) {
+    // Run real-time channel validation mapping directly
+    setupPushNotifications(db, app, user.userId, userRole);
+  } else if (Notification.permission === "default" && user && user.userId) {
+    
+    // Smooth timing delay for system panel entrance consistency
+    setTimeout(() => {
+      overlay.classList.add("show");
+    }, 1500);
+
+    acceptBtn.addEventListener("click", () => {
+      overlay.classList.remove("show");
+      setupPushNotifications(db, app, user.userId, userRole);
+    });
+
+    dismissBtn.addEventListener("click", () => {
+      overlay.classList.remove("show");
+    });
+  }
+
+} catch (err) {
+  console.error("Admin push notification initialization failure context:", err);
+}
 </script>
 
 </body>
