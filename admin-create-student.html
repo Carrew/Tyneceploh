@@ -527,6 +527,8 @@ import {
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import { triggerToRole } from "./trigger-notification.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain: "tyneceploh.firebaseapp.com",
@@ -903,6 +905,18 @@ window.saveStudent = async function(){
         studentData
       );
 
+      // TRIGGER NOTIFICATION TO ADMINS ABOUT NEW STUDENT
+      try {
+        await triggerToRole(db, 
+          "👤 New Student Added",
+          `${studentData.name} (ID: ${userId}) has been added to class ${studentData.class}`,
+          "admin",
+          "student_created"
+        );
+      } catch (err) {
+        console.error("Error triggering notification:", err);
+      }
+
       showMessage(
         "success",
         `✅ Student created successfully.<br><br>
@@ -999,7 +1013,7 @@ window.deleteStudent = async function(id){
 
     showMessage(
       "success",
-      "🗑️ Student deleted successfully."
+      "✅ Student deleted successfully."
     );
 
     loadStudents();
@@ -1017,11 +1031,7 @@ window.deleteStudent = async function(id){
 
 window.resetForm = function(){
 
-  document.getElementById("formTitle").innerText =
-    "Create Student";
-
   document.getElementById("editId").value = "";
-
   document.getElementById("name").value = "";
   document.getElementById("class").value = "";
   document.getElementById("dob").value = "";
@@ -1031,6 +1041,7 @@ window.resetForm = function(){
   document.getElementById("contact").value = "";
   document.getElementById("status").value = "New";
   document.getElementById("photo").value = "";
+  document.getElementById("formTitle").innerText = "Create Student";
 };
 
 loadStudents();
@@ -1038,5 +1049,4 @@ loadStudents();
 </script>
 
 </body>
-  
 </html>

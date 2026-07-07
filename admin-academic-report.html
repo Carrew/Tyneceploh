@@ -383,6 +383,9 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import { triggerToRole }
+from "./trigger-notification.js";
+
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
   authDomain:"tyneceploh.firebaseapp.com",
@@ -861,6 +864,25 @@ generateBtn.onclick = async () => {
     generatedAt:Date.now()
 
   });
+
+  // TRIGGER NOTIFICATION TO ALL ADMINS AND TEACHERS
+  try {
+    await triggerToRole(db, 
+      "📊 Academic Report Generated",
+      `A ${type} report for ${className} has been generated with an average of ${classAverage}%`,
+      "admin",
+      "report_generated"
+    );
+    
+    await triggerToRole(db, 
+      "📊 Academic Report Generated",
+      `A ${type} report for ${className} has been generated with an average of ${classAverage}%`,
+      "teacher",
+      "report_generated"
+    );
+  } catch (err) {
+    console.error("Error triggering notification:", err);
+  }
 
   document.getElementById("detailsBox").innerHTML = `
 
