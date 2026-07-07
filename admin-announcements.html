@@ -58,6 +58,14 @@
       background: rgba(0,0,0,0.4);
       border-radius:8px;
     }
+
+    .success {
+      border-left-color: #28a745;
+    }
+
+    .error {
+      border-left-color: #dc3545;
+    }
   </style>
 </head>
 
@@ -72,10 +80,9 @@
 
   <label>Audience Type</label>
   <select id="type" onchange="toggleFields()">
-    <option value="public">Public</option>
-    <option value="role">Role Based</option>
+    <option value="public">Public (All Users)</option>
+    <option value="role">Role Based (Select Roles)</option>
     <option value="class">Class Based</option>
-    <option value="private">Private</option>
   </select>
 
   <div id="roleBox" class="hidden">
@@ -83,6 +90,7 @@
     <select id="roles" multiple>
       <option value="student">Student</option>
       <option value="teacher">Teacher</option>
+      <option value="admin">Admin</option>
       <option value="janitor">Janitor</option>
       <option value="security">Security</option>
       <option value="coordinator">Coordinator</option>
@@ -93,6 +101,11 @@
     <label>Target Class</label>
     <select id="classes"></select>
   </div>
+
+  <label style="margin-top: 15px;">
+    <input type="checkbox" id="notifyCheckbox" checked>
+    Send Push Notifications to Selected Users
+  </label>
 
   <button onclick="send()" id="btn">Publish</button>
 
@@ -109,6 +122,8 @@ import {
   addDoc,
   getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { triggerToRole, triggerToPublic } from "./trigger-notification.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -156,8 +171,10 @@ window.toggleFields = function(){
 };
 
 // -------------------
-function toast(msg){
-  msgBox.innerHTML = `<div class="toast">${msg}</div>`;
+function toast(msg, type = "default"){
+  const msgBox = document.getElementById("msg");
+  const toastClass = type === "success" ? "toast success" : type === "error" ? "toast error" : "toast";
+  msgBox.innerHTML = `<div class="${toastClass}">${msg}</div>`;
 }
 
 // -------------------
@@ -170,6 +187,7 @@ window.send = async function(){
   try{
 
     const type = document.getElementById("type").value;
+    const shouldNotify = document.getElementById("notifyCheckbox").checked;
 
     const roles = [...document.getElementById("roles").selectedOptions]
       .map(o => o.value);
@@ -177,12 +195,13 @@ window.send = async function(){
     const cls = document.getElementById("classes").value;
 
     if(!title.value || !message.value){
-      toast("Fill all fields");
+      toast("❌ Fill all fields", "error");
       btn.disabled = false;
       btn.innerText = "Publish";
       return;
     }
 
+    // Save announcement to Firestore
     await addDoc(collection(db,"announcements"),{
       title: title.value,
       message: message.value,
@@ -194,14 +213,49 @@ window.send = async function(){
       createdAt: Date.now()
     });
 
-    toast("Announcement published successfully");
+    // SEND PUSH NOTIFICATIONS
+    if(shouldNotify){
+      
+      if(type === "public"){
+        // Broadcast to all users
+        await triggerToPublic(db, 
+          `📢 ${title.value}`,
+          message.value,
+          "announcement"
+        );
+      }
+      else if(type === "role" && roles.length > 0){
+        // Send to each selected role
+        for(const role of roles){
+          await triggerToRole(db,
+            `📢 ${title.value}`,
+            message.value,
+            role,
+            "announcement"
+          );
+        }
+      }
+      else if(type === "class"){
+        // For class-based, trigger to students in that class
+        // (Note: This requires a triggerToClass function or filtering)
+        await triggerToRole(db,
+          `📢 ${title.value}`,
+          message.value,
+          "student",
+          "announcement_class"
+        );
+      }
+    }
+
+    toast("✅ Announcement published successfully with notifications!", "success");
 
     title.value = "";
     message.value = "";
-    roles.length = 0;
+    document.getElementById("roles").selectedIndex = -1;
 
   }catch(err){
-    toast("Failed to publish announcement");
+    console.error("Error publishing announcement:", err);
+    toast("❌ Failed to publish announcement. Check console for details.", "error");
   }
 
   btn.disabled = false;
