@@ -2,50 +2,48 @@
  * TRIGGER NOTIFICATION FOR BACKEND LISTENER
  * Works with the new tef-notification-backend real-time listener
  * 
- * The backend listens to the "notifications" collection for documents with pushSent == null
- * When found, it sends FCM messages based on the fcmToken and marks pushSent as true
+ * The backend listens to the "notifications" collection and automatically:
+ * 1. Detects new documents where pushSent == null
+ * 2. Sends FCM push notifications to the fcmToken
+ * 3. Updates pushSent: true after sending
  * 
- * Usage:
- * - Individual: triggerNotification(db, "Title", "Message", fcmToken, "event_type")
- * - Role-based: triggerNotificationToRole(db, "admin", "Title", "Message", "event_type")
- * - Public/Class: triggerNotificationToMultiple(db, [fcmToken1, fcmToken2], "Title", "Message", "event_type")
+ * Usage: 
+ *   await triggerToIndividual(db, "Student Created", "New student TEF001 added", "device_token_here")
+ *   await triggerToRole(db, "Report Ready", "Academic report generated", "admin")
+ *   await triggerToPublic(db, "School Announcement", "Important announcement")
  */
 
 import {
   addDoc,
   collection,
-  getDocs,
+  serverTimestamp,
   query,
   where,
-  serverTimestamp
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /**
- * Trigger notification to a SINGLE INDIVIDUAL USER
- * @param {Object} db - Firestore database instance
- * @param {string} title - Notification title
- * @param {string} message - Notification body/message
- * @param {string} fcmToken - Device FCM token of the recipient
- * @param {string} eventType - Category of event (e.g., "student_created", "report_generated")
+ * Trigger notification to INDIVIDUAL device
  */
-export async function triggerNotification(db, title, message, fcmToken, eventType = "general") {
+export async function triggerToIndividual(db, title, message, fcmToken, eventType = "general") {
   try {
     if (!fcmToken) {
       console.warn("No FCM token provided - notification skipped");
-      return { success: false, message: "No FCM token" };
+      return { success: false, error: "No FCM token" };
     }
 
     await addDoc(collection(db, "notifications"), {
       title,
       message,
-      fcmToken,          // Single device token
+      fcmToken,
       eventType,
-      pushSent: null,    // Backend sets to true after sending
+      pushSent: null,
       createdAt: serverTimestamp(),
-      status: "pending"
+      status: "pending",
+      targetType: "individual"
     });
 
-    return { success: true, message: "Notification triggered for individual" };
+    return { success: true, message: "Notification queued for individual" };
   } catch (error) {
     console.error("Error triggering individual notification:", error);
     return { success: false, error: error.message };
@@ -53,56 +51,53 @@ export async function triggerNotification(db, title, message, fcmToken, eventTyp
 }
 
 /**
- * Trigger notification to all users with a SPECIFIC ROLE
- * Looks up all users with that role and sends to their FCM tokens
- * @param {Object} db - Firestore database instance
- * @param {string} targetRole - Role to target ("admin", "teacher", "student", etc.)
- * @param {string} title - Notification title
- * @param {string} message - Notification body/message
- * @param {string} eventType - Category of event
+ * Trigger notification to ALL USERS with a specific ROLE
+ * Example: Send to all "teachers" or all "students"
  */
-export async function triggerNotificationToRole(db, targetRole, title, message, eventType = "general") {
+export async function triggerToRole(db, title, message, role, eventType = "general") {
   try {
-    // Find all users with the target role
-    const usersQuery = query(
-      collection(db, "users"),
-      where("role", "==", targetRole)
-    );
-    
-    const snap = await getDocs(usersQuery);
-    const tokens = [];
+    if (!role) {
+      throw new Error("Role must be specified");
+    }
 
-    snap.forEach(doc => {
-      const userData = doc.data();
+    // Get all users with this role
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("role", "==", role));
+    const snap = await getDocs(q);
+
+    const promises = [];
+    let count = 0;
+
+    snap.forEach(docSnap => {
+      const userData = docSnap.data();
+      
+      // Only create notification if user has FCM token
       if (userData.fcmToken) {
-        tokens.push(userData.fcmToken);
+        promises.push(
+          addDoc(collection(db, "notifications"), {
+            title,
+            message,
+            fcmToken: userData.fcmToken,
+            eventType,
+            userId: userData.userId,
+            pushSent: null,
+            createdAt: serverTimestamp(),
+            status: "pending",
+            targetType: "role",
+            targetRole: role
+          })
+        );
+        count++;
       }
     });
 
-    if (tokens.length === 0) {
-      console.warn(`No users found with role: ${targetRole}`);
-      return { success: false, message: "No users with this role" };
+    if (promises.length > 0) {
+      await Promise.all(promises);
     }
-
-    // Create notification document for each token
-    const promises = tokens.map(token =>
-      addDoc(collection(db, "notifications"), {
-        title,
-        message,
-        fcmToken: token,
-        eventType,
-        targetRole,
-        pushSent: null,
-        createdAt: serverTimestamp(),
-        status: "pending"
-      })
-    );
-
-    await Promise.all(promises);
 
     return { 
       success: true, 
-      message: `Notification triggered for ${tokens.length} ${targetRole}(s)` 
+      message: `Notification queued for ${count} ${role}(s)` 
     };
   } catch (error) {
     console.error("Error triggering role-based notification:", error);
@@ -111,149 +106,72 @@ export async function triggerNotificationToRole(db, targetRole, title, message, 
 }
 
 /**
- * Trigger notification to MULTIPLE USERS (by class or custom list)
- * @param {Object} db - Firestore database instance
- * @param {string} targetClass - Class to target (e.g., "7th Grade")
- * @param {string} title - Notification title
- * @param {string} message - Notification body/message
- * @param {string} eventType - Category of event
+ * Trigger notification to ALL USERS (public broadcast)
+ * Warning: This sends to everyone with an FCM token!
  */
-export async function triggerNotificationToClass(db, targetClass, title, message, eventType = "general") {
+export async function triggerToPublic(db, title, message, eventType = "general") {
   try {
-    // Find all users in the target class
-    const classQuery = query(
-      collection(db, "users"),
-      where("class", "==", targetClass)
-    );
-    
-    const snap = await getDocs(classQuery);
-    const tokens = [];
+    // Get all users
+    const usersRef = collection(db, "users");
+    const snap = await getDocs(usersRef);
 
-    snap.forEach(doc => {
-      const userData = doc.data();
+    const promises = [];
+    let count = 0;
+
+    snap.forEach(docSnap => {
+      const userData = docSnap.data();
+      
+      // Only create notification if user has FCM token
       if (userData.fcmToken) {
-        tokens.push(userData.fcmToken);
+        promises.push(
+          addDoc(collection(db, "notifications"), {
+            title,
+            message,
+            fcmToken: userData.fcmToken,
+            eventType,
+            userId: userData.userId,
+            pushSent: null,
+            createdAt: serverTimestamp(),
+            status: "pending",
+            targetType: "public",
+            broadcastAt: new Date().toISOString()
+          })
+        );
+        count++;
       }
     });
 
-    if (tokens.length === 0) {
-      console.warn(`No users found in class: ${targetClass}`);
-      return { success: false, message: "No users in this class" };
+    if (promises.length > 0) {
+      await Promise.all(promises);
     }
-
-    // Create notification document for each token
-    const promises = tokens.map(token =>
-      addDoc(collection(db, "notifications"), {
-        title,
-        message,
-        fcmToken: token,
-        eventType,
-        targetClass,
-        pushSent: null,
-        createdAt: serverTimestamp(),
-        status: "pending"
-      })
-    );
-
-    await Promise.all(promises);
 
     return { 
       success: true, 
-      message: `Notification triggered for ${tokens.length} student(s) in ${targetClass}` 
-    };
-  } catch (error) {
-    console.error("Error triggering class-based notification:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Trigger notification to SPECIFIC FCM TOKENS (custom list/array)
- * @param {Object} db - Firestore database instance
- * @param {Array} fcmTokens - Array of FCM tokens
- * @param {string} title - Notification title
- * @param {string} message - Notification body/message
- * @param {string} eventType - Category of event
- */
-export async function triggerNotificationToList(db, fcmTokens, title, message, eventType = "general") {
-  try {
-    if (!Array.isArray(fcmTokens) || fcmTokens.length === 0) {
-      console.warn("No FCM tokens provided");
-      return { success: false, message: "Empty token list" };
-    }
-
-    // Create notification document for each token
-    const promises = fcmTokens.map(token =>
-      addDoc(collection(db, "notifications"), {
-        title,
-        message,
-        fcmToken: token,
-        eventType,
-        pushSent: null,
-        createdAt: serverTimestamp(),
-        status: "pending"
-      })
-    );
-
-    await Promise.all(promises);
-
-    return { 
-      success: true, 
-      message: `Notification triggered for ${fcmTokens.length} recipient(s)` 
-    };
-  } catch (error) {
-    console.error("Error triggering list notification:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Trigger PUBLIC notification (no FCM token filtering - broadcast to all)
- * @param {Object} db - Firestore database instance
- * @param {string} title - Notification title
- * @param {string} message - Notification body/message
- * @param {string} eventType - Category of event
- */
-export async function triggerPublicNotification(db, title, message, eventType = "general") {
-  try {
-    // Get all users and their tokens
-    const snap = await getDocs(collection(db, "users"));
-    const tokens = [];
-
-    snap.forEach(doc => {
-      const userData = doc.data();
-      if (userData.fcmToken) {
-        tokens.push(userData.fcmToken);
-      }
-    });
-
-    if (tokens.length === 0) {
-      console.warn("No users with FCM tokens found");
-      return { success: false, message: "No users to notify" };
-    }
-
-    // Create notification document for each token
-    const promises = tokens.map(token =>
-      addDoc(collection(db, "notifications"), {
-        title,
-        message,
-        fcmToken: token,
-        eventType,
-        isPublic: true,
-        pushSent: null,
-        createdAt: serverTimestamp(),
-        status: "pending"
-      })
-    );
-
-    await Promise.all(promises);
-
-    return { 
-      success: true, 
-      message: `Public notification triggered for ${tokens.length} user(s)` 
+      message: `Public notification queued for ${count} user(s)` 
     };
   } catch (error) {
     console.error("Error triggering public notification:", error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Generic wrapper - automatically detects target type
+ * targetType: "individual" | "role" | "public"
+ */
+export async function triggerNotification(db, title, message, options = {}) {
+  const { 
+    fcmToken, 
+    role, 
+    targetType = "individual", 
+    eventType = "general" 
+  } = options;
+
+  if (targetType === "role") {
+    return await triggerToRole(db, title, message, role, eventType);
+  } else if (targetType === "public") {
+    return await triggerToPublic(db, title, message, eventType);
+  } else {
+    return await triggerToIndividual(db, title, message, fcmToken, eventType);
   }
 }
