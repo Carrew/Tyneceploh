@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>TEF Alumni</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.08);
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:system-ui;
+}
+
+body{
+  background:
+  radial-gradient(circle at top,#1a0010,var(--bg));
+  color:white;
+  min-height:100vh;
+}
+
+header{
+  text-align:center;
+  padding:45px 20px;
+}
+
+header h1{
+  color:var(--pink);
+  font-size:34px;
+}
+
+header p{
+  opacity:.7;
+  margin-top:10px;
+}
+
+.controls{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+  display:grid;
+  gap:15px;
+  grid-template-columns:
+  repeat(auto-fit,minmax(220px,1fr));
+}
+
+input,
+select{
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--card);
+  color:white;
+  outline:none;
+}
+
+.grid{
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+  display:grid;
+  grid-template-columns:
+  repeat(auto-fill,minmax(250px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:24px;
+  padding:25px;
+  text-align:center;
+  border:1px solid var(--border);
+  transition:.3s;
+}
+
+.card:hover{
+  transform:translateY(-6px);
+}
+
+.photo{
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  object-fit:cover;
+  border:4px solid var(--pink);
+  margin:auto;
+}
+
+.name{
+  margin-top:15px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.title{
+  color:#ffd700;
+  margin-top:6px;
+  font-size:14px;
+}
+
+.class{
+  opacity:.8;
+  margin-top:12px;
+}
+
+.year{
+  margin-top:8px;
+  color:#ffc0cb;
+}
+
+.empty{
+  text-align:center;
+  opacity:.7;
+  padding:50px;
+}
+
+.stats{
+  max-width:1100px;
+  margin:auto;
+  padding:0 20px 20px;
+  display:grid;
+  gap:15px;
+  grid-template-columns:
+  repeat(3,1fr);
+}
+
+.stat{
+  background:var(--card);
+  padding:20px;
+  border-radius:18px;
+  text-align:center;
+}
+
+.stat b{
+  display:block;
+  color:var(--pink);
+  margin-bottom:10px;
+}
+
+.stat span{
+  font-size:24px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<h1>🎓 TEF Alumni</h1>
+
+<p>
+Once a TEF student, always family.
+</p>
+
+</header>
+
+<div class="stats">
+
+<div class="stat">
+<b>Total Alumni</b>
+<span id="total">0</span>
+</div>
+
+<div class="stat">
+<b>Classes</b>
+<span id="classes">0</span>
+</div>
+
+<div class="stat">
+<b>Titles</b>
+<span id="titles">0</span>
+</div>
+
+</div>
+
+<div class="controls">
+
+<input
+id="search"
+placeholder="Search alumni..."
+oninput="render()">
+
+<select id="classFilter"
+onchange="render()">
+<option value="">
+All Classes
+</option>
+</select>
+
+<select id="yearFilter"
+onchange="render()">
+<option value="">
+All Years
+</option>
+</select>
+
+</div>
+
+<div id="grid" class="grid">
+Loading...
+</div>
+
+<script type="module">
+
+import {
+initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+getDocs
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app =
+initializeApp({
+apiKey:
+"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+projectId:
+"tyneceploh"
+});
+
+const db =
+getFirestore(app);
+
+let alumni=[];
+
+async function load(){
+
+const snap =
+await getDocs(
+collection(db,"alumni")
+);
+
+alumni=[];
+
+snap.forEach(doc=>{
+  alumni.push(doc.data());
+});
+
+populateFilters();
+updateStats();
+render();
+
+}
+
+function populateFilters(){
+
+const classes =
+[
+...new Set(
+alumni
+.map(a=>a.class)
+.filter(Boolean)
+)
+].sort();
+
+const years =
+[
+...new Set(
+alumni
+.map(a=>a.graduationYear)
+.filter(Boolean)
+)
+].sort();
+
+document.getElementById(
+"classFilter"
+).innerHTML =
+`
+<option value="">
+All Classes
+</option>
+`+
+classes.map(c=>
+`
+<option>
+${c}
+</option>
+`
+).join("");
+
+document.getElementById(
+"yearFilter"
+).innerHTML =
+`
+<option value="">
+All Years
+</option>
+`+
+years.map(y=>
+`
+<option>
+${y}
+</option>
+`
+).join("");
+
+}
+
+function updateStats(){
+
+document.getElementById(
+"total"
+).innerText =
+alumni.length;
+
+document.getElementById(
+"classes"
+).innerText =
+new Set(
+alumni.map(a=>a.class)
+).size;
+
+document.getElementById(
+"titles"
+).innerText =
+alumni.filter(
+a=>a.title
+).length;
+
+}
+
+window.render = function(){
+
+const search =
+document.getElementById(
+"search"
+).value.toLowerCase();
+
+const classFilter =
+document.getElementById(
+"classFilter"
+).value;
+
+const yearFilter =
+document.getElementById(
+"yearFilter"
+).value;
+
+const filtered =
+alumni.filter(a=>{
+
+const matchesSearch =
+(a.name||"")
+.toLowerCase()
+.includes(search);
+
+const matchesClass =
+!classFilter ||
+a.class===classFilter;
+
+const matchesYear =
+!yearFilter ||
+String(a.graduationYear)
+===yearFilter;
+
+return (
+matchesSearch &&
+matchesClass &&
+matchesYear
+);
+
+});
+
+const grid =
+document.getElementById("grid");
+
+if(filtered.length===0){
+
+grid.innerHTML=
+`
+<div class="empty">
+No alumni found.
+</div>
+`;
+
+return;
+}
+
+grid.innerHTML =
+filtered.map(a=>`
+<div class="card">
+
+<img
+class="photo"
+src="${
+a.photoURL ||
+'https://via.placeholder.com/150'
+}">
+
+<div class="name">
+${a.name||"-"}
+</div>
+
+${
+a.title
+?
+`
+<div class="title">
+🏆 ${a.title}
+</div>
+`
+:
+""
+}
+
+<div class="class">
+📚 ${a.class||"-"}
+</div>
+
+<div class="year">
+🎓 ${a.graduationYear||"-"}
+</div>
+
+</div>
+`).join("");
+
+}
+
+load();
+
+</script>
+
+</body>
+</html>
