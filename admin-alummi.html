@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Alumni Management - TEF</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <style>
+    :root{
+      --maroon:#800000;
+      --pink:#ffc0cb;
+      --bg:#0b0b0f;
+      --card:rgba(255,255,255,.06);
+    }
+
+    *{
+      box-sizing:border-box;
+      font-family:system-ui;
+    }
+
+    body{
+      margin:0;
+      padding:20px;
+      background:
+      radial-gradient(circle at top,#1a0010,var(--bg));
+      color:white;
+    }
+
+    h2{
+      text-align:center;
+      color:var(--pink);
+      margin-bottom:20px;
+    }
+
+    .box{
+      background:var(--card);
+      padding:18px;
+      border-radius:16px;
+      margin-bottom:20px;
+    }
+
+    input,
+    textarea,
+    button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border:none;
+      border-radius:10px;
+      font-size:14px;
+    }
+
+    input,
+    textarea{
+      background:rgba(255,255,255,.08);
+      color:white;
+    }
+
+    textarea{
+      min-height:80px;
+      resize:vertical;
+    }
+
+    button{
+      background:
+      linear-gradient(
+      135deg,
+      var(--maroon),
+      var(--pink)
+      );
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:16px;
+      padding:15px;
+      margin-bottom:15px;
+      border-left:4px solid var(--pink);
+    }
+
+    .top{
+      display:flex;
+      gap:15px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    img{
+      width:80px;
+      height:80px;
+      border-radius:50%;
+      object-fit:cover;
+      border:3px solid var(--pink);
+    }
+
+    .name{
+      font-size:18px;
+      font-weight:bold;
+    }
+
+    .title{
+      color:var(--pink);
+      margin-top:3px;
+    }
+
+    .class{
+      opacity:.8;
+      margin-top:4px;
+      font-size:14px;
+    }
+
+    .quote{
+      margin-top:12px;
+      opacity:.85;
+      font-style:italic;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:15px;
+    }
+
+    .actions button{
+      margin:0;
+    }
+
+    .danger{
+      background:#c0392b;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🎓 Alumni Management</h2>
+
+<div class="box">
+
+  <input id="name"
+  placeholder="Full Name">
+
+  <input id="class"
+  placeholder="Class of 2025">
+
+  <input id="title"
+  placeholder="Title (Optional)">
+
+  <textarea id="quote"
+  placeholder="Quote or Message (Optional)"></textarea>
+
+  <input type="file" id="photo">
+
+  <input type="hidden" id="editId">
+
+  <button onclick="saveAlumni()">
+    Save Alumni
+  </button>
+
+</div>
+
+<input
+id="search"
+placeholder="Search alumni..."
+oninput="renderAlumni()">
+
+<br><br>
+
+<div id="list">
+  Loading...
+</div>
+
+<script type="module">
+
+import {
+  initializeApp
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:
+  "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:
+  "tyneceploh.firebaseapp.com",
+  projectId:
+  "tyneceploh"
+});
+
+const db = getFirestore(app);
+
+let alumniCache = [];
+
+async function uploadImage(file){
+
+  if(!file) return "";
+
+  const formData = new FormData();
+
+  formData.append(
+    "file",
+    file
+  );
+
+  formData.append(
+    "upload_preset",
+    "Tyneceploh"
+  );
+
+  const res =
+  await fetch(
+    "https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",
+    {
+      method:"POST",
+      body:formData
+    }
+  );
+
+  const data =
+  await res.json();
+
+  return data.secure_url || "";
+}
+
+async function loadAlumni(){
+
+  const snap =
+  await getDocs(
+    collection(db,"alumni")
+  );
+
+  alumniCache = [];
+
+  snap.forEach(d=>{
+    alumniCache.push({
+      ...d.data(),
+      docId:d.id
+    });
+  });
+
+  alumniCache.sort(
+    (a,b)=>
+      (b.createdAt||0)-
+      (a.createdAt||0)
+  );
+
+  renderAlumni();
+}
+
+window.renderAlumni =
+function(){
+
+  const search =
+  document.getElementById(
+    "search"
+  ).value.toLowerCase();
+
+  const filtered =
+  alumniCache.filter(a=>
+    (a.name||"")
+    .toLowerCase()
+    .includes(search)
+    ||
+    (a.class||"")
+    .toLowerCase()
+    .includes(search)
+  );
+
+  document.getElementById(
+    "list"
+  ).innerHTML =
+  filtered.map(a=>`
+
+    <div class="card">
+
+      <div class="top">
+
+        <img src="${
+          a.photoURL ||
+          'https://via.placeholder.com/80'
+        }">
+
+        <div>
+
+          <div class="name">
+            ${a.name}
+          </div>
+
+          ${
+            a.title
+            ?
+            `<div class="title">${a.title}</div>`
+            :
+            ''
+          }
+
+          <div class="class">
+            🎓 ${a.class}
+          </div>
+
+        </div>
+
+      </div>
+
+      ${
+        a.quote
+        ?
+        `<div class="quote">"${a.quote}"</div>`
+        :
+        ''
+      }
+
+      <div class="actions">
+
+        <button
+        onclick="editAlumni('${a.docId}')">
+          Edit
+        </button>
+
+        <button
+        class="danger"
+        onclick="deleteAlumni('${a.docId}')">
+          Delete
+        </button>
+
+      </div>
+
+    </div>
+
+  `).join("");
+
+};
+
+window.saveAlumni =
+async function(){
+
+  const editId =
+  document.getElementById(
+    "editId"
+  ).value;
+
+  const name =
+  document.getElementById(
+    "name"
+  ).value.trim();
+
+  const className =
+  document.getElementById(
+    "class"
+  ).value.trim();
+
+  const title =
+  document.getElementById(
+    "title"
+  ).value.trim();
+
+  const quote =
+  document.getElementById(
+    "quote"
+  ).value.trim();
+
+  if(!name || !className){
+    alert(
+      "Name and Class are required."
+    );
+    return;
+  }
+
+  let photoURL = "";
+
+  const file =
+  document.getElementById(
+    "photo"
+  ).files[0];
+
+  if(file){
+    photoURL =
+    await uploadImage(file);
+  }
+
+  const data = {
+    name,
+    class:className,
+    title,
+    quote,
+    createdAt:Date.now()
+  };
+
+  if(photoURL){
+    data.photoURL = photoURL;
+  }
+
+  if(!editId){
+
+    await addDoc(
+      collection(db,"alumni"),
+      data
+    );
+
+    alert(
+      "Alumni added."
+    );
+
+  }else{
+
+    await updateDoc(
+      doc(
+        db,
+        "alumni",
+        editId
+      ),
+      data
+    );
+
+    document.getElementById(
+      "editId"
+    ).value = "";
+  }
+
+  document.getElementById(
+    "name"
+  ).value = "";
+
+  document.getElementById(
+    "class"
+  ).value = "";
+
+  document.getElementById(
+    "title"
+  ).value = "";
+
+  document.getElementById(
+    "quote"
+  ).value = "";
+
+  document.getElementById(
+    "photo"
+  ).value = "";
+
+  loadAlumni();
+};
+
+window.editAlumni =
+function(id){
+
+  const a =
+  alumniCache.find(
+    x=>x.docId===id
+  );
+
+  if(!a) return;
+
+  document.getElementById(
+    "editId"
+  ).value = a.docId;
+
+  document.getElementById(
+    "name"
+  ).value = a.name || "";
+
+  document.getElementById(
+    "class"
+  ).value = a.class || "";
+
+  document.getElementById(
+    "title"
+  ).value = a.title || "";
+
+  document.getElementById(
+    "quote"
+  ).value = a.quote || "";
+};
+
+window.deleteAlumni =
+async function(id){
+
+  if(
+    !confirm(
+      "Delete alumni?"
+    )
+  ) return;
+
+  await deleteDoc(
+    doc(
+      db,
+      "alumni",
+      id
+    )
+  );
+
+  loadAlumni();
+};
+
+loadAlumni();
+
+</script>
+
+</body>
+</html>
