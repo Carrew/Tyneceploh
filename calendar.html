@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#800000">
+  <meta name="description" content="Tyneceploh Educational Foundation academic calendar and important school events.">
+  <title>Academic Calendar | Tyneceploh Educational Foundation</title>
+
+  <style>
+    :root{
+      --maroon:#800000;
+      --maroon-dark:#590000;
+      --pink:#ffc0cb;
+      --pink-soft:#ffe8ed;
+      --green:#25bd6b;
+      --blue:#4aa7df;
+      --orange:#e8a12d;
+      --purple:#9470df;
+
+      --bg:#09090d;
+      --surface:#121219;
+      --surface2:#181820;
+      --border:rgba(255,255,255,.09);
+      --text:#fff;
+      --muted:#a8a8b4;
+    }
+
+    *{box-sizing:border-box}
+
+    html{scroll-behavior:smooth}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at 10% 0%,rgba(128,0,0,.36),transparent 30%),
+        radial-gradient(circle at 90% 4%,rgba(255,192,203,.10),transparent 25%),
+        var(--bg);
+    }
+
+    button,input,select{font:inherit}
+
+    .container{
+      width:min(1080px,calc(100% - 28px));
+      margin:auto;
+    }
+
+    /* HEADER */
+
+    .hero{
+      padding:35px 0 25px;
+    }
+
+    .hero-inner{
+      position:relative;
+      overflow:hidden;
+      padding:30px;
+      border:1px solid var(--border);
+      border-radius:24px;
+      background:
+        linear-gradient(135deg,rgba(128,0,0,.70),rgba(128,0,0,.20)),
+        linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+      box-shadow:0 25px 60px rgba(0,0,0,.30);
+    }
+
+    .hero-inner::after{
+      content:"";
+      position:absolute;
+      width:220px;
+      height:220px;
+      right:-70px;
+      top:-80px;
+      border-radius:50%;
+      background:rgba(255,192,203,.12);
+      filter:blur(3px);
+    }
+
+    .school-label{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding:7px 11px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      color:var(--pink-soft);
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.3px;
+    }
+
+    .hero h1{
+      position:relative;
+      z-index:1;
+      margin:15px 0 7px;
+      max-width:700px;
+      font-size:clamp(28px,5vw,45px);
+      line-height:1.08;
+      letter-spacing:-1px;
+    }
+
+    .hero p{
+      position:relative;
+      z-index:1;
+      max-width:650px;
+      margin:0;
+      color:#e3dfe1;
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    /* ACTIVE SESSION */
+
+    .session-banner{
+      margin:18px 0;
+      padding:19px;
+      border:1px solid rgba(255,192,203,.14);
+      border-radius:18px;
+      background:rgba(255,255,255,.045);
+    }
+
+    .session-banner-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:15px;
+    }
+
+    .eyebrow{
+      color:var(--muted);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .session-name{
+      margin-top:5px;
+      font-size:21px;
+      font-weight:900;
+    }
+
+    .active-pill{
+      padding:7px 11px;
+      border-radius:999px;
+      color:#70e9a1;
+      background:rgba(37,189,107,.12);
+      font-size:10px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .session-dates{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;
+      color:#c7c7cf;
+      font-size:12px;
+    }
+
+    .session-dates span{
+      padding:7px 9px;
+      border-radius:9px;
+      background:rgba(255,255,255,.045);
+    }
+
+    /* CONTROLS */
+
+    .controls{
+      display:grid;
+      grid-template-columns:1fr 210px;
+      gap:10px;
+      margin:20px 0;
+    }
+
+    .control{
+      width:100%;
+      padding:13px 14px;
+      color:#fff;
+      background:rgba(255,255,255,.055);
+      border:1px solid var(--border);
+      border-radius:12px;
+      outline:none;
+    }
+
+    .control:focus{
+      border-color:rgba(255,192,203,.55);
+      box-shadow:0 0 0 3px rgba(255,192,203,.06);
+    }
+
+    .control::placeholder{color:#777783}
+
+    select option{
+      color:#fff;
+      background:#17171e;
+    }
+
+    /* SUMMARY */
+
+    .summary{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-bottom:20px;
+    }
+
+    .summary-card{
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:rgba(255,255,255,.035);
+    }
+
+    .summary-number{
+      font-size:22px;
+      font-weight:900;
+    }
+
+    .summary-label{
+      margin-top:3px;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    /* SECTION */
+
+    .section{
+      margin-bottom:25px;
+    }
+
+    .section-heading{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .section-heading h2{
+      margin:0;
+      font-size:20px;
+      color:var(--pink);
+    }
+
+    .section-heading p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* UPCOMING */
+
+    .upcoming{
+      display:grid;
+      gap:10px;
+    }
+
+    .upcoming-card{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:rgba(255,255,255,.035);
+    }
+
+    .upcoming-date{
+      flex:none;
+      width:54px;
+      height:54px;
+      display:grid;
+      place-items:center;
+      border-radius:13px;
+      background:linear-gradient(145deg,var(--maroon),#9c1733);
+      text-align:center;
+    }
+
+    .upcoming-day{
+      font-size:19px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    .upcoming-month{
+      margin-top:2px;
+      font-size:8px;
+      font-weight:900;
+      text-transform:uppercase;
+    }
+
+    .upcoming-info{
+      min-width:0;
+      flex:1;
+    }
+
+    .upcoming-title{
+      font-size:13px;
+      font-weight:850;
+    }
+
+    .upcoming-meta{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:10px;
+    }
+
+    /* EVENT LIST */
+
+    .event-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .event{
+      position:relative;
+      overflow:hidden;
+      padding:17px;
+      border:1px solid var(--border);
+      border-left:4px solid var(--pink);
+      border-radius:16px;
+      background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+    }
+
+    .event.past{
+      opacity:.62;
+    }
+
+    .event.today{
+      border-left-color:var(--green);
+      box-shadow:0 0 0 1px rgba(37,189,107,.08);
+    }
+
+    .event-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:15px;
+    }
+
+    .event-title{
+      margin:0;
+      font-size:16px;
+      line-height:1.35;
+    }
+
+    .category{
+      flex:none;
+      padding:5px 9px;
+      border-radius:999px;
+      color:var(--pink);
+      background:rgba(255,192,203,.10);
+      font-size:9px;
+      font-weight:900;
+      text-transform:uppercase;
+    }
+
+    .event-description{
+      margin:9px 0 0;
+      color:#bdbdc7;
+      font-size:12px;
+      line-height:1.6;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .event-date{
+      margin-top:13px;
+      padding:11px;
+      border-radius:11px;
+      background:rgba(255,255,255,.035);
+    }
+
+    .event-date-label{
+      color:#858591;
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:.7px;
+      text-transform:uppercase;
+    }
+
+    .event-date-value{
+      margin-top:4px;
+      color:#eee;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.5;
+    }
+
+    .event-status{
+      display:inline-flex;
+      margin-top:10px;
+      padding:5px 9px;
+      border-radius:999px;
+      font-size:9px;
+      font-weight:900;
+    }
+
+    .status-upcoming{
+      color:#70e9a1;
+      background:rgba(37,189,107,.11);
+    }
+
+    .status-today{
+      color:#ffc55f;
+      background:rgba(232,161,45,.12);
+    }
+
+    .status-past{
+      color:#aaaab2;
+      background:rgba(150,150,160,.10);
+    }
+
+    /* LOADING / EMPTY / ERROR */
+
+    .state{
+      min-height:180px;
+      display:grid;
+      place-items:center;
+      padding:25px;
+      border:1px solid var(--border);
+      border-radius:17px;
+      background:rgba(255,255,255,.025);
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .spinner{
+      width:30px;
+      height:30px;
+      margin:0 auto 11px;
+      border:3px solid rgba(255,255,255,.12);
+      border-top-color:var(--pink);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .state-icon{
+      margin-bottom:8px;
+      font-size:30px;
+    }
+
+    .retry{
+      margin-top:10px;
+      padding:9px 13px;
+      border-radius:10px;
+      background:var(--maroon);
+      font-size:11px;
+      font-weight:800;
+    }
+
+    /* FOOTER */
+
+    footer{
+      padding:20px 0 35px;
+      text-align:center;
+      color:#777783;
+      font-size:10px;
+      line-height:1.6;
+    }
+
+    /* MOBILE */
+
+    @media(max-width:650px){
+      .container{width:min(100% - 20px,1080px)}
+      .hero{padding-top:18px}
+      .hero-inner{padding:22px}
+      .session-banner-top{align-items:flex-start}
+      .controls{grid-template-columns:1fr}
+      .summary{grid-template-columns:repeat(3,1fr)}
+      .summary-card{padding:11px}
+      .summary-number{font-size:18px}
+      .summary-label{font-size:9px}
+      .event-head{gap:8px}
+      .category{font-size:8px}
+    }
+
+    @media(max-width:430px){
+      .hero h1{font-size:27px}
+      .session-name{font-size:18px}
+      .summary{gap:6px}
+      .upcoming-card{padding:11px}
+      .upcoming-date{width:48px;height:48px}
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-inner">
+
+      <div class="school-label">
+        📅 TEF • SCHOOL CALENDAR
+      </div>
+
+      <h1>Academic Calendar</h1>
+
+      <p>
+        Stay up to date with examinations, holidays, academic activities,
+        meetings, celebrations and other important school dates.
+      </p>
+
+    </div>
+  </header>
+
+
+  <!-- ACTIVE SESSION -->
+  <section class="session-banner">
+
+    <div class="session-banner-top">
+
+      <div>
+        <div class="eyebrow">Current Academic Session</div>
+        <div class="session-name" id="activeSession">
+          Loading...
+        </div>
+      </div>
+
+      <div class="active-pill" id="activeStatus">
+        ● ACTIVE
+      </div>
+
+    </div>
+
+    <div class="session-dates" id="sessionDates"></div>
+
+  </section>
+
+
+  <!-- CONTROLS -->
+  <section class="controls">
+
+    <input
+      class="control"
+      id="search"
+      type="search"
+      placeholder="🔎 Search calendar events..."
+      autocomplete="off"
+    >
+
+    <select class="control" id="categoryFilter">
+      <option value="">All categories</option>
+      <option>Holiday</option>
+      <option>Exam</option>
+      <option>Sports</option>
+      <option>Meeting</option>
+      <option>Academic</option>
+      <option>Deadline</option>
+      <option>Celebration</option>
+      <option>Emergency</option>
+      <option>Other</option>
+    </select>
+
+  </section>
+
+
+  <!-- SUMMARY -->
+  <section class="summary">
+
+    <div class="summary-card">
+      <div class="summary-number" id="totalEvents">0</div>
+      <div class="summary-label">Total Events</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-number" id="upcomingEvents">0</div>
+      <div class="summary-label">Upcoming</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-number" id="categoriesCount">0</div>
+      <div class="summary-label">Categories</div>
+    </div>
+
+  </section>
+
+
+  <!-- UPCOMING -->
+  <section class="section">
+
+    <div class="section-heading">
+      <div>
+        <h2>Coming Up</h2>
+        <p>The next important dates on the TEF calendar.</p>
+      </div>
+    </div>
+
+    <div id="upcoming" class="upcoming">
+
+      <div class="state">
+        <div>
+          <div class="spinner"></div>
+          Loading upcoming events...
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ALL EVENTS -->
+  <section class="section">
+
+    <div class="section-heading">
+      <div>
+        <h2>All Calendar Events</h2>
+        <p>Browse the complete academic calendar.</p>
+      </div>
+    </div>
+
+    <div id="events" class="event-list">
+
+      <div class="state">
+        <div>
+          <div class="spinner"></div>
+          Loading calendar...
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <footer>
+    Tyneceploh Educational Foundation<br>
+    Engaging minds, Nurturing Hearts, Shaping God's world.
+  </footer>
+
+</div>
+
+
+<script type="module">
+
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+/* =========================================================
+   FIREBASE
+========================================================= */
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+
+/* =========================================================
+   CACHE
+========================================================= */
+
+let sessions = [];
+let events = [];
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const $ = id => document.getElementById(id);
+
+
+/* =========================================================
+   DATE HELPERS
+========================================================= */
+
+function parseDate(value){
+
+  if(!value) return null;
+
+  const date = new Date(value + "T00:00:00");
+
+  return Number.isNaN(date.getTime())
+    ? null
+    : date;
+}
+
+
+function formatDate(value){
+
+  const date = parseDate(value);
+
+  if(!date) return "Date unavailable";
+
+  return date.toLocaleDateString("en-US",{
+    weekday:"long",
+    month:"long",
+    day:"numeric",
+    year:"numeric"
+  });
+}
+
+
+function formatShortDate(value){
+
+  const date = parseDate(value);
+
+  if(!date) return "Date unavailable";
+
+  return date.toLocaleDateString("en-US",{
+    month:"long",
+    day:"numeric",
+    year:"numeric"
+  });
+}
+
+
+function getDateKey(date){
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth()+1).padStart(2,"0"),
+    String(date.getDate()).padStart(2,"0")
+  ].join("-");
+}
+
+
+function todayKey(){
+
+  return getDateKey(new Date());
+}
+
+
+function eventState(event){
+
+  const today = todayKey();
+
+  if(event.endDate < today){
+    return "past";
+  }
+
+  if(event.startDate <= today && event.endDate >= today){
+    return "today";
+  }
+
+  return "upcoming";
+}
+
+
+function escapeHTML(value){
+
+  if(value === undefined || value === null){
+    return "";
+  }
+
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+/* =========================================================
+   LOAD
+========================================================= */
+
+async function loadCalendar(){
+
+  try{
+
+    const sessionSnap = await getDocs(
+      query(
+        collection(db,"academicSessions"),
+        orderBy("createdAt","desc")
+      )
+    );
+
+    sessions = [];
+
+    sessionSnap.forEach(d => {
+
+      sessions.push({
+        docId:d.id,
+        ...d.data()
+      });
+
+    });
+
+
+    const eventSnap = await getDocs(
+      query(
+        collection(db,"schoolCalendar"),
+        orderBy("startDate","asc")
+      )
+    );
+
+    events = [];
+
+    eventSnap.forEach(d => {
+
+      const data = d.data();
+
+      /*
+       * Public calendar only displays active events.
+       * Existing events without status remain visible.
+       */
+      if(data.status && data.status !== "active"){
+        return;
+      }
+
+      events.push({
+        docId:d.id,
+        ...data
+      });
+
+    });
+
+
+    renderActiveSession();
+    renderSummary();
+    renderUpcoming();
+    renderEvents();
+
+  }catch(error){
+
+    console.error(error);
+
+    $("activeSession").textContent =
+      "Calendar unavailable";
+
+    $("activeStatus").textContent =
+      "⚠ ERROR";
+
+    $("sessionDates").innerHTML = "";
+
+    $("upcoming").innerHTML = `
+      <div class="state">
+        <div>
+          <div class="state-icon">⚠️</div>
+          <strong>Unable to load the calendar</strong>
+          <div style="margin-top:5px">
+            Please check your internet connection and try again.
+          </div>
+          <button class="retry" onclick="location.reload()">
+            Try Again
+          </button>
+        </div>
+      </div>
+    `;
+
+    $("events").innerHTML = `
+      <div class="state">
+        <div>
+          <div class="state-icon">⚠️</div>
+          The academic calendar could not be loaded.
+        </div>
+      </div>
+    `;
+
+  }
+}
+
+
+/* =========================================================
+   ACTIVE SESSION
+========================================================= */
+
+function renderActiveSession(){
+
+  const active =
+    sessions.find(s => s.active === true);
+
+
+  if(!active){
+
+    $("activeSession").textContent =
+      "No active session";
+
+    $("activeStatus").textContent =
+      "○ NOT SET";
+
+    $("activeStatus").style.color =
+      "#aaa";
+
+    $("sessionDates").innerHTML = `
+      <span>The school has not published an active academic session.</span>
+    `;
+
+    return;
+  }
+
+
+  $("activeSession").textContent =
+    active.name || "Academic Session";
+
+  $("activeStatus").textContent =
+    "● ACTIVE";
+
+
+  $("sessionDates").innerHTML = `
+    <span>Starts: ${escapeHTML(formatShortDate(active.startDate))}</span>
+    <span>Ends: ${escapeHTML(formatShortDate(active.endDate))}</span>
+  `;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+function renderSummary(){
+
+  const today = todayKey();
+
+  const upcoming =
+    events.filter(e => e.endDate >= today);
+
+
+  const categories =
+    new Set(
+      events.map(e => e.category || "Other")
+    );
+
+
+  $("totalEvents").textContent =
+    events.length;
+
+  $("upcomingEvents").textContent =
+    upcoming.length;
+
+  $("categoriesCount").textContent =
+    categories.size;
+}
+
+
+/* =========================================================
+   UPCOMING
+========================================================= */
+
+function renderUpcoming(){
+
+  const today = todayKey();
+
+  const list = events
+    .filter(e => e.endDate >= today)
+    .sort((a,b) =>
+      String(a.startDate).localeCompare(String(b.startDate))
+    )
+    .slice(0,5);
+
+
+  if(!list.length){
+
+    $("upcoming").innerHTML = `
+      <div class="state">
+        <div>
+          <div class="state-icon">🌿</div>
+          <strong>No upcoming events</strong>
+          <div style="margin-top:5px">
+            There are currently no upcoming calendar dates.
+          </div>
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  $("upcoming").innerHTML = list.map(e => {
+
+    const date =
+      parseDate(e.startDate);
+
+    const day =
+      date ? date.getDate() : "—";
+
+    const month =
+      date
+      ? date.toLocaleDateString("en-US",{month:"short"})
+      : "";
+
+
+    return `
+      <div class="upcoming-card">
+
+        <div class="upcoming-date">
+          <div>
+            <div class="upcoming-day">${day}</div>
+            <div class="upcoming-month">${month}</div>
+          </div>
+        </div>
+
+        <div class="upcoming-info">
+
+          <div class="upcoming-title">
+            ${escapeHTML(e.title)}
+          </div>
+
+          <div class="upcoming-meta">
+            ${escapeHTML(formatShortDate(e.startDate))}
+            ·
+            ${escapeHTML(e.category || "Other")}
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+
+/* =========================================================
+   EVENTS
+========================================================= */
+
+function renderEvents(){
+
+  const search =
+    $("search").value
+      .toLowerCase()
+      .trim();
+
+  const category =
+    $("categoryFilter").value;
+
+
+  const filtered = events
+    .filter(e => {
+
+      const matchesSearch =
+        !search ||
+        String(e.title || "")
+          .toLowerCase()
+          .includes(search) ||
+        String(e.description || "")
+          .toLowerCase()
+          .includes(search) ||
+        String(e.category || "")
+          .toLowerCase()
+          .includes(search) ||
+        String(e.session || "")
+          .toLowerCase()
+          .includes(search);
+
+
+      const matchesCategory =
+        !category ||
+        e.category === category;
+
+
+      return matchesSearch && matchesCategory;
+
+    })
+    .sort((a,b) =>
+      String(a.startDate)
+        .localeCompare(String(b.startDate))
+    );
+
+
+  if(!filtered.length){
+
+    $("events").innerHTML = `
+      <div class="state">
+        <div>
+          <div class="state-icon">
+            ${search || category ? "🔎" : "🗓️"}
+          </div>
+
+          <strong>
+            ${
+              search || category
+              ? "No matching events"
+              : "No calendar events"
+            }
+          </strong>
+
+          <div style="margin-top:5px">
+            ${
+              search || category
+              ? "Try changing your search or category filter."
+              : "The school has not published any calendar events yet."
+            }
+          </div>
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  $("events").innerHTML =
+    filtered.map(renderEvent).join("");
+}
+
+
+function renderEvent(e){
+
+  const state =
+    eventState(e);
+
+  let statusText = "UPCOMING";
+
+  if(state === "past"){
+    statusText = "PAST";
+  }
+
+  if(state === "today"){
+    statusText = "HAPPENING NOW";
+  }
+
+
+  const dateText =
+    e.startDate === e.endDate
+      ? formatDate(e.startDate)
+      : `${formatShortDate(e.startDate)} to ${formatShortDate(e.endDate)}`;
+
+
+  return `
+    <article class="event ${state}">
+
+      <div class="event-head">
+
+        <div>
+          <h3 class="event-title">
+            ${escapeHTML(e.title)}
+          </h3>
+        </div>
+
+        <span class="category">
+          ${escapeHTML(e.category || "Other")}
+        </span>
+
+      </div>
+
+
+      ${
+        e.description
+        ? `
+          <div class="event-description">
+            ${escapeHTML(e.description)}
+          </div>
+        `
+        : ""
+      }
+
+
+      <div class="event-date">
+
+        <div class="event-date-label">
+          Event Date
+        </div>
+
+        <div class="event-date-value">
+          ${escapeHTML(dateText)}
+        </div>
+
+      </div>
+
+
+      <span class="event-status status-${state}">
+        ${
+          state === "today"
+          ? "● "
+          : ""
+        }
+        ${statusText}
+      </span>
+
+    </article>
+  `;
+}
+
+
+/* =========================================================
+   SEARCH / FILTER
+========================================================= */
+
+$("search").addEventListener(
+  "input",
+  renderEvents
+);
+
+$("categoryFilter").addEventListener(
+  "change",
+  renderEvents
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+loadCalendar();
+
+</script>
+
+</body>
+</html>
