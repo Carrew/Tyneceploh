@@ -882,7 +882,7 @@ async function submitGradeSheet(){
       updatedAt:now
     };
 
-    await withTimeout(addDoc(collection(db,"gradeSubmissions"), sheetData), 10000, "Submitting grade sheet");
+    await withTimeout(addDoc(collection(db,"Grades"), sheetData), 10000, "Submitting grade sheet");
 
     // Notifications are best-effort: if the helper module is missing or
     // fails, the grade sheet is still saved — we just log a warning.
