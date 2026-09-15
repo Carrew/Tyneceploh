@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade Approval - TEF</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --glass:rgba(255,255,255,.045);
+  --card:rgba(255,255,255,.065);
+  --border:rgba(255,255,255,.10);
+  --text:#fff;
+  --muted:rgba(255,255,255,.62);
+  --green:#27ae60;
+  --red:#c0392b;
+  --blue:#2980b9;
+  --orange:#f39c12;
+  --shadow:0 18px 50px rgba(0,0,0,.42);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:radial-gradient(circle at 8% 0%,#2a0016 0,transparent 34%),
+             radial-gradient(circle at 100% 100%,#26000e 0,transparent 32%),var(--bg);
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.header{
+  padding:25px 18px 24px;background:linear-gradient(135deg,#800000,#21000d);
+  box-shadow:var(--shadow)
+}
+.header-inner{width:min(1180px,calc(100% - 4px));margin:auto}
+.brand{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}
+.brand h1{margin:0;color:var(--pink);font-size:clamp(23px,5vw,32px)}
+.brand p{margin:5px 0 0;color:rgba(255,255,255,.70);font-size:13px}
+.admin-profile{
+  margin-top:18px;padding:13px 15px;border:1px solid rgba(255,255,255,.12);
+  border-radius:17px;background:rgba(0,0,0,.18);display:flex;align-items:center;gap:12px
+}
+.avatar{
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:#800000;border:2px solid var(--pink);color:var(--pink);font-weight:900
+}
+.admin-name{font-weight:850}
+.admin-meta{font-size:12px;color:rgba(255,255,255,.62);margin-top:3px}
+.container{width:min(1180px,calc(100% - 24px));margin:20px auto 45px}
+.status-stack{display:flex;flex-direction:column;gap:9px;width:min(1180px,calc(100% - 24px));margin:15px auto 0}
+.banner{
+  padding:13px 15px;border-radius:14px;border:1px solid var(--border);
+  display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700
+}
+.banner .msg{flex:1}.banner button{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:5px 9px;font-weight:800}
+.banner.success{background:rgba(39,174,96,.14);color:#7ff0aa;border-color:rgba(39,174,96,.35)}
+.banner.error{background:rgba(192,57,43,.14);color:#ff938a;border-color:rgba(192,57,43,.35)}
+.banner.info{background:rgba(41,128,185,.14);color:#83cfff;border-color:rgba(41,128,185,.35)}
+.panel{
+  background:var(--glass);border:1px solid var(--border);border-radius:22px;
+  padding:19px;box-shadow:var(--shadow);backdrop-filter:blur(14px)
+}
+.panel h2{margin:0 0 4px;font-size:19px}
+.sub{color:var(--muted);font-size:12px;line-height:1.5}
+.toolbar{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 1fr;gap:10px;margin-top:16px}
+input,select,textarea{
+  width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--border);
+  outline:none;background:rgba(255,255,255,.065);color:#fff
+}
+select option{background:#171219;color:#fff}
+input:focus,select:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.12)}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:15px}
+.stat{padding:13px;border:1px solid var(--border);border-radius:15px;background:rgba(255,255,255,.035)}
+.stat b{display:block;font-size:21px}.stat span{font-size:11px;color:var(--muted)}
+.list{margin-top:17px;display:grid;gap:10px}
+.submission{
+  border:1px solid var(--border);border-radius:17px;background:rgba(255,255,255,.035);
+  padding:15px;transition:.18s
+}
+.submission:hover{background:rgba(255,255,255,.055);transform:translateY(-1px)}
+.rowtop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.student{font-weight:900;font-size:16px}.meta{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.5}
+.badge{padding:6px 9px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase;white-space:nowrap}
+.badge.pending{background:rgba(243,156,18,.18);color:#ffc56b}
+.badge.resubmitted{background:rgba(41,128,185,.18);color:#83cfff}
+.badge.approved{background:rgba(39,174,96,.18);color:#7ff0aa}
+.badge.rejected{background:rgba(192,57,43,.18);color:#ff938a}
+.grade-preview{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.mini{padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid var(--border);font-size:10px}
+.mini b{color:var(--pink)}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.btn{
+  border:0;border-radius:11px;padding:10px 14px;font-weight:850;min-height:40px;
+  transition:.18s
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.primary{background:linear-gradient(135deg,var(--maroon),#b00055);color:#fff}
+.green{background:linear-gradient(135deg,#1d8b4d,var(--green));color:#fff}
+.red{background:linear-gradient(135deg,#8d241b,var(--red));color:#fff}
+.dark{background:#25252d;color:#fff}
+.outline{background:transparent;color:#fff;border:1px solid var(--border)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.empty{text-align:center;padding:38px;color:var(--muted)}
+.hidden{display:none!important}
+
+/* Modal */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:50;
+  display:none;align-items:center;justify-content:center;padding:15px
+}
+.modal.show{display:flex}
+.modal-box{
+  width:min(900px,100%);max-height:92vh;overflow:auto;background:#111117;
+  border:1px solid var(--border);border-radius:23px;box-shadow:0 30px 90px rgba(0,0,0,.65)
+}
+.modal-head{
+  position:sticky;top:0;z-index:2;padding:17px 18px;background:rgba(17,17,23,.96);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;gap:12px;align-items:flex-start
+}
+.modal-title{font-size:19px;font-weight:900}.close{border:0;background:rgba(255,255,255,.08);color:#fff;border-radius:9px;width:36px;height:36px;font-size:20px}
+.modal-body{padding:18px}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+.info-box{padding:11px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--border)}
+.info-box span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.info-box b{display:block;margin-top:3px;font-size:12px}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:15px}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{padding:11px;border-bottom:1px solid var(--border);text-align:left;font-size:12px}
+th{background:rgba(128,0,0,.4);color:var(--pink);font-size:11px}
+.subject-name{font-weight:800}
+.score{font-weight:900}
+.score.pass{color:#58d68d}.score.fail{color:#ff7770}
+.subject-status{font-size:10px;font-weight:900}
+.subject-status.approved{color:#7ff0aa}.subject-status.rejected{color:#ff938a}.subject-status.pending{color:#ffc56b}
+.subject-actions{display:flex;gap:6px;flex-wrap:wrap}
+.small-btn{border:0;border-radius:8px;padding:7px 8px;font-size:10px;font-weight:900}
+.small-btn.reject{background:rgba(192,57,43,.18);color:#ff938a}
+.small-btn.approve{background:rgba(39,174,96,.18);color:#7ff0aa}
+.small-btn.edit{background:rgba(41,128,185,.18);color:#83cfff}
+.review-box{
+  margin-top:16px;padding:14px;border-radius:15px;background:rgba(128,0,0,.12);
+  border:1px solid rgba(255,192,203,.10)
+}
+.review-box textarea{min-height:80px;resize:vertical;margin-top:8px}
+.review-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px}
+.notice{font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px}
+.history{margin-top:17px}.history-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:11px}
+.history-item:last-child{border-bottom:0}.history-item b{color:var(--pink)}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:80;display:none;align-items:center;justify-content:center;padding:15px}
+.confirm-overlay.show{display:flex}
+.confirm-box{width:min(460px,100%);background:#15151c;border:1px solid var(--border);border-radius:20px;padding:20px;box-shadow:var(--shadow)}
+.confirm-box h3{margin:0 0 6px}.confirm-box p{color:var(--muted);font-size:13px;line-height:1.5}.confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
+.toast{
+  position:fixed;right:15px;bottom:15px;z-index:100;max-width:360px;
+  padding:13px 15px;border-radius:13px;border:1px solid var(--border);background:#19191f;
+  box-shadow:var(--shadow);font-size:12px;font-weight:800;display:none
+}
+.toast.show{display:block}.toast.success{color:#7ff0aa}.toast.error{color:#ff938a}
+
+@media(max-width:900px){
+  .toolbar{grid-template-columns:repeat(2,1fr)}
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .info-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .container{width:min(100% - 16px,1180px)}
+  .status-stack{width:min(100% - 16px,1180px)}
+  .toolbar,.stats{grid-template-columns:1fr}
+  .panel{padding:15px;border-radius:18px}
+  .rowtop{align-items:flex-start}
+  .modal{padding:8px}.modal-box{border-radius:18px}
+  .info-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div>
+        <h1>Grade Approval</h1>
+        <p>Tyneceploh Educational Foundation</p>
+      </div>
+    </div>
+    <div class="admin-profile">
+      <div class="avatar" id="adminAvatar">A</div>
+      <div>
+        <div class="admin-name" id="adminName">Administrator</div>
+        <div class="admin-meta" id="adminMeta">Checking session...</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="statusStack" class="status-stack"></div>
+
+<main class="container">
+  <section class="panel">
+    <h2>Grade Submissions</h2>
+    <div class="sub">Review teacher submissions and approve or return individual subjects without invalidating the whole sheet.</div>
+
+    <div class="toolbar">
+      <input id="searchInput" placeholder="Search student, teacher, ID...">
+      <select id="statusFilter">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="resubmitted">Resubmitted</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Returned</option>
+      </select>
+      <select id="classFilter"><option value="all">All classes</option></select>
+      <select id="periodFilter"><option value="all">All periods</option></select>
+      <select id="teacherFilter"><option value="all">All teachers</option></select>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b id="statAll">0</b><span>Total sheets</span></div>
+      <div class="stat"><b id="statPending">0</b><span>Needs review</span></div>
+      <div class="stat"><b id="statApproved">0</b><span>Approved</span></div>
+      <div class="stat"><b id="statReturned">0</b><span>Returned</span></div>
+      <div class="stat"><b id="statSubjects">0</b><span>Subjects awaiting review</span></div>
+    </div>
+
+    <div id="submissionList" class="list">
+      <div class="empty">Loading grade submissions...</div>
+    </div>
+  </section>
+</main>
+
+<div id="modal" class="modal" aria-hidden="true">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalTitle">Grade Sheet</div>
+        <div class="sub" id="modalSub"></div>
+      </div>
+      <button class="close" id="closeModal" type="button">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<div id="confirmOverlay" class="confirm-overlay">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Confirm action</h3>
+    <p id="confirmText"></p>
+    <div class="confirm-actions">
+      <button class="btn dark" id="confirmCancel" type="button">Cancel</button>
+      <button class="btn red" id="confirmProceed" type="button">Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  const stack=document.getElementById("statusStack");
+  window.showBanner=function(type,msg){
+    const el=document.createElement("div");
+    el.className="banner "+type;
+    el.innerHTML="<div>"+(type==="success"?"✓":type==="error"?"!":"i")+"</div><div class='msg'></div>";
+    el.querySelector(".msg").textContent=msg;
+    const x=document.createElement("button");x.textContent="×";x.onclick=()=>el.remove();
+    el.appendChild(x);stack.appendChild(el);
+    if(type!=="error") setTimeout(()=>el.remove(),4500);
+  };
+  window.showToast=function(msg,type="success"){
+    const t=document.getElementById("toast");t.textContent=msg;t.className="toast show "+type;
+    clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.className="toast",3500);
+  };
+})();
+</script>
+
+<script type="module">
+let db=null;
+let firebaseReady=false;
+let admin=null;
+let submissions=[];
+let selectedSubmission=null;
+let confirmAction=null;
+let busy=false;
+
+const calls={};
+const periods=["1st Period","2nd Period","3rd Period","Semester Exam","4th Period","5th Period","6th Period","Final Exam"];
+
+const $=id=>document.getElementById(id);
+
+function esc(v){
+  return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function timeout(p,ms,label){
+  return Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error(label+" timed out")),ms))]);
+}
+function semesterFor(period){
+  return ["1st Period","2nd Period","3rd Period","Semester Exam"].includes(period) ? "Semester 1" :
+         ["4th Period","5th Period","6th Period","Final Exam"].includes(period) ? "Semester 2" : "";
+}
+function loadAdminSession(){
+  let raw=null;
+  try{raw=localStorage.getItem("user")}catch(e){}
+  if(!raw){
+    showBanner("error","You are not logged in. Redirecting to login.");
+    setTimeout(()=>location.href="login.html",900);return null;
+  }
+  try{
+    const u=JSON.parse(raw);
+    if(!u || u.role!=="admin"){
+      showBanner("error","Administrator access is required.");
+      setTimeout(()=>location.href="login.html",900);return null;
+    }
+    return u;
+  }catch(e){
+    showBanner("error","Your session could not be verified. Please sign in again.");
+    setTimeout(()=>location.href="login.html",900);return null;
+  }
+}
+function paintAdmin(){
+  $("adminName").textContent=admin.name||"Administrator";
+  $("adminMeta").textContent=(admin.userId||"Admin")+(admin.role?" • "+admin.role:"");
+  $("adminAvatar").textContent=(admin.name||"A").trim().charAt(0).toUpperCase();
+}
+async function loadFirebase(){
+  try{
+    const [appMod,fsMod]=await timeout(Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+    ]),10000,"Firebase SDK");
+    const config={
+      apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHV4",
+      authDomain:"tyneceploh.firebaseapp.com",
+      projectId:"tyneceploh"
+    };
+    db=fsMod.getFirestore(appMod.initializeApp(config));
+    calls.collection=fsMod.collection;
+    calls.getDocs=fsMod.getDocs;
+    calls.query=fsMod.query;
+    calls.where=fsMod.where;
+    calls.orderBy=fsMod.orderBy;
+    calls.limit=fsMod.limit;
+    calls.doc=fsMod.doc;
+    calls.getDoc=fsMod.getDoc;
+    calls.updateDoc=fsMod.updateDoc;
+    calls.addDoc=fsMod.addDoc;
+    firebaseReady=true;
+    return true;
+  }catch(e){
+    showBanner("error","Cannot connect to Firebase. Check your connection and reload.");
+    return false;
+  }
+}
+
+async function loadSubmissions(){
+  if(!firebaseReady)return;
+  $("submissionList").innerHTML='<div class="empty">Loading grade submissions...</div>';
+  try{
+    const {collection,getDocs,query,orderBy,limit}=calls;
+    let snap;
+    try{
+      snap=await timeout(getDocs(query(collection(db,"gradeSubmissions"),orderBy("createdAt","desc"),limit(200))),12000,"Loading submissions");
+    }catch(indexErr){
+      snap=await timeout(getDocs(collection(db,"gradeSubmissions")),12000,"Loading submissions");
+    }
+    submissions=[];
+    snap.forEach(d=>submissions.push({...d.data(),docId:d.id}));
+    submissions.sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+    buildFilters();
+    render();
+  }catch(e){
+    $("submissionList").innerHTML='<div class="empty">Grade submissions could not be loaded.</div>';
+    showBanner("error","Grade submissions could not be loaded. Check your connection and permissions.");
+  }
+}
+
+function buildFilters(){
+  const classes=[...new Set(submissions.map(x=>x.class).filter(Boolean))].sort();
+  const teachers=[...new Set(submissions.map(x=>x.teacherName).filter(Boolean))].sort();
+  $("classFilter").innerHTML='<option value="all">All classes</option>'+classes.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+  $("teacherFilter").innerHTML='<option value="all">All teachers</option>'+teachers.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+  $("periodFilter").innerHTML='<option value="all">All periods</option>'+periods.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+}
+
+function sheetStatus(s){
+  if(s.status==="approved" || s.status==="rejected" || s.status==="pending" || s.status==="resubmitted")return s.status;
+  return "pending";
+}
+
+function subjectState(g){
+  return g.reviewStatus || "pending";
+}
+
+function sheetCounts(s){
+  const grades=Array.isArray(s.grades)?s.grades:[];
+  const pending=grades.filter(g=>subjectState(g)==="pending").length;
+  const rejected=grades.filter(g=>subjectState(g)==="rejected").length;
+  const approved=grades.filter(g=>subjectState(g)==="approved").length;
+  return {grades,pending,rejected,approved};
+}
+
+function effectiveSheetStatus(s){
+  const c=sheetCounts(s);
+  if(c.grades.length && c.pending===0 && c.rejected===0)return "approved";
+  if(c.rejected>0)return "rejected";
+  return sheetStatus(s);
+}
+
+function filtered(){
+  const q=$("searchInput").value.trim().toLowerCase();
+  const st=$("statusFilter").value,cl=$("classFilter").value,p=$("periodFilter").value,t=$("teacherFilter").value;
+  return submissions.filter(s=>{
+    const status=effectiveSheetStatus(s);
+    const hay=[s.sheetId,s.studentName,s.studentId,s.teacherName,s.teacherId,s.class,s.period,s.semester].join(" ").toLowerCase();
+    return (!q||hay.includes(q)) &&
+      (st==="all"||status===st) &&
+      (cl==="all"||s.class===cl) &&
+      (p==="all"||s.period===p) &&
+      (t==="all"||s.teacherName===t);
+  });
+}
+
+function renderStats(){
+  $("statAll").textContent=submissions.length;
+  $("statPending").textContent=submissions.filter(s=>{
+    const c=sheetCounts(s);return c.pending>0 || sheetStatus(s)==="pending" || sheetStatus(s)==="resubmitted";
+  }).length;
+  $("statApproved").textContent=submissions.filter(s=>effectiveSheetStatus(s)==="approved").length;
+  $("statReturned").textContent=submissions.filter(s=>effectiveSheetStatus(s)==="rejected").length;
+  $("statSubjects").textContent=submissions.reduce((n,s)=>n+sheetCounts(s).pending,0);
+}
+
+function render(){
+  renderStats();
+  const list=filtered();
+  const box=$("submissionList");
+  if(!list.length){box.innerHTML='<div class="empty">No grade sheets match the current filters.</div>';return;}
+  box.innerHTML=list.map(s=>{
+    const c=sheetCounts(s);
+    const status=effectiveSheetStatus(s);
+    const avg=c.grades.length?(c.grades.reduce((a,g)=>a+Number(g.score||0),0)/c.grades.length).toFixed(1):"—";
+    const date=s.createdAt?new Date(Number(s.createdAt)).toLocaleString():"Date unavailable";
+    const chips=c.grades.slice(0,5).map(g=>`<span class="mini">${esc(g.subject)} <b>${esc(g.score)}</b></span>`).join("");
+    const more=c.grades.length>5?`<span class="mini">+${c.grades.length-5} more</span>`:"";
+    const action=status==="approved"?"View Sheet":"Review Sheet";
+    return `<article class="submission">
+      <div class="rowtop">
+        <div>
+          <div class="student">${esc(s.studentName||"Student")}</div>
+          <div class="meta">${esc(s.class||"Class not set")} • ${esc(s.period||"Period not set")} • ${esc(s.semester||semesterFor(s.period)||"")}<br>
+          Teacher: ${esc(s.teacherName||"Unknown")} • ${c.grades.length} subject(s) • Average: ${avg}<br>
+          Submitted: ${esc(date)}</div>
+        </div>
+        <span class="badge ${esc(status)}">${status==="rejected"?"Returned":esc(status)}</span>
+      </div>
+      <div class="grade-preview">${chips}${more}</div>
+      <div class="card-actions">
+        <button class="btn primary" data-open="${esc(s.docId)}">${action}</button>
+      </div>
+    </article>`;
+  }).join("");
+  box.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openSheet(b.dataset.open));
+}
+
+function openSheet(id){
+  const s=submissions.find(x=>x.docId===id);if(!s)return;
+  selectedSubmission=s;
+  $("modal").classList.add("show");
+  $("modal").setAttribute("aria-hidden","false");
+  $("modalTitle").textContent=s.studentName||"Grade Sheet";
+  $("modalSub").textContent=`${s.class||"Class not set"} • ${s.period||"Period not set"} • ${s.semester||semesterFor(s.period)}`;
+  renderModal(s);
+}
+
+function renderModal(s){
+  const c=sheetCounts(s);
+  const avg=c.grades.length?(c.grades.reduce((a,g)=>a+Number(g.score||0),0)/c.grades.length).toFixed(1):"—";
+  const date=s.createdAt?new Date(Number(s.createdAt)).toLocaleString():"Date unavailable";
+  const rows=c.grades.map((g,i)=>{
+    const state=subjectState(g);
+    const score=Number(g.score);
+    return `<tr>
+      <td>${i+1}</td>
+      <td><div class="subject-name">${esc(g.subject)}</div></td>
+      <td><span class="score ${score>=70?"pass":"fail"}">${esc(g.score)}</span></td>
+      <td><span class="subject-status ${esc(state)}">${state==="rejected"?"Returned":state}</span></td>
+      <td>
+        <div class="subject-actions">
+          ${state!=="approved"?`<button class="small-btn approve" data-subject-approve="${i}">Approve</button>`:""}
+          ${state!=="rejected"?`<button class="small-btn reject" data-subject-reject="${i}">Reject subject</button>`:""}
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+
+  const history=Array.isArray(s.reviewHistory)?s.reviewHistory.slice().reverse().map(h=>`
+    <div class="history-item"><b>${esc(h.action||"Review")}</b> • ${esc(h.subject||"Sheet")} • ${esc(h.adminName||"Administrator")}<br>
+    <span class="meta">${esc(h.feedback||"No feedback")} • ${h.at?esc(new Date(Number(h.at)).toLocaleString()):""}</span></div>`).join(""):"";
+
+  $("modalContent").innerHTML=`
+    <div class="info-grid">
+      <div class="info-box"><span>Student</span><b>${esc(s.studentName||"—")}</b></div>
+      <div class="info-box"><span>Student ID</span><b>${esc(s.studentId||"—")}</b></div>
+      <div class="info-box"><span>Teacher</span><b>${esc(s.teacherName||"—")}</b></div>
+      <div class="info-box"><span>Teacher ID</span><b>${esc(s.teacherId||"—")}</b></div>
+      <div class="info-box"><span>Class</span><b>${esc(s.class||"—")}</b></div>
+      <div class="info-box"><span>Period</span><b>${esc(s.period||"—")}</b></div>
+      <div class="info-box"><span>Semester</span><b>${esc(s.semester||semesterFor(s.period)||"—")}</b></div>
+      <div class="info-box"><span>Average</span><b>${avg}</b></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Subject</th><th>Score</th><th>Review</th><th>Action</th></tr></thead>
+        <tbody>${rows||'<tr><td colspan="5">No subjects in this sheet.</td></tr>'}</tbody>
+      </table>
+    </div>
+
+    <div class="review-box">
+      <b>Sheet review</b>
+      <div class="notice">Rejecting a subject marks only that subject as returned. The other subjects stay intact and can remain approved.</div>
+      <textarea id="sheetFeedback" placeholder="Optional review note or feedback...">${esc(s.feedback||"")}</textarea>
+      <div class="review-actions">
+        <button class="btn green" id="approveAllBtn" type="button">Approve All Remaining</button>
+        <button class="btn red" id="returnSheetBtn" type="button">Return Sheet</button>
+        <button class="btn outline" id="saveNoteBtn" type="button">Save Note</button>
+      </div>
+      <div class="notice">A returned sheet does not delete the submission. Its review history remains attached to it.</div>
+    </div>
+
+    ${history?`<div class="history"><h3>Review History</h3>${history}</div>`:""}
+    <div class="notice">Submitted: ${esc(date)} • Sheet ID: ${esc(s.sheetId||s.docId)}</div>
+  `;
+
+  $("approveAllBtn").onclick=()=>approveRemaining(s.docId);
+  $("returnSheetBtn").onclick=()=>returnEntireSheet(s.docId);
+  $("saveNoteBtn").onclick=()=>saveSheetNote(s.docId);
+
+  document.querySelectorAll("[data-subject-approve]").forEach(b=>b.onclick=()=>approveSubject(s.docId,Number(b.dataset.subjectApprove)));
+  document.querySelectorAll("[data-subject-reject]").forEach(b=>b.onclick=()=>rejectSubject(s.docId,Number(b.dataset.subjectReject)));
+}
+
+function closeModal(){
+  $("modal").classList.remove("show");$("modal").setAttribute("aria-hidden","true");selectedSubmission=null;
+}
+$("closeModal").onclick=closeModal;
+$("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal()});
+
+function ask(title,text,action){
+  $("confirmTitle").textContent=title;$("confirmText").textContent=text;
+  confirmAction=action;$("confirmOverlay").classList.add("show");
+}
+$("confirmCancel").onclick=()=>{$("confirmOverlay").classList.remove("show");confirmAction=null};
+$("confirmProceed").onclick=async()=>{
+  $("confirmOverlay").classList.remove("show");
+  const fn=confirmAction;confirmAction=null;
+  if(fn)await fn();
+};
+
+async function updateSheet(id,grades,extra={}){
+  if(busy)return;
+  busy=true;
+  try{
+    const s=submissions.find(x=>x.docId===id);if(!s)throw new Error("Submission not found");
+    const now=Date.now();
+    const history=Array.isArray(s.reviewHistory)?s.reviewHistory.slice():[];
+    const event=extra.historyEvent;
+    if(event)history.push({...event,adminId:admin.userId||"",adminName:admin.name||"Administrator",at:now});
+    const payload={
+      grades,
+      updatedAt:now,
+      reviewHistory:history,
+      ...extra.fields
+    };
+    await timeout(calls.updateDoc(calls.doc(db,"gradeSubmissions",id),payload),10000,"Updating grade sheet");
+    Object.assign(s,payload);
+    render();
+    if(selectedSubmission && selectedSubmission.docId===id)renderModal(s);
+    return true;
+  }catch(e){
+    showBanner("error","The review change could not be saved. Please try again.");
+    return false;
+  }finally{busy=false}
+}
+
+async function approveSubject(id,index){
+  const s=submissions.find(x=>x.docId===id);if(!s||!Array.isArray(s.grades[index]?s.grades:[]))return;
+  const g=s.grades[index];
+  ask("Approve this subject?",`Approve ${g.subject} (${g.score}) for ${s.studentName}? Other subjects will not be changed.`,async()=>{
+    const grades=s.grades.map(x=>({...x}));
+    grades[index].reviewStatus="approved";
+    grades[index].reviewedAt=Date.now();
+    grades[index].reviewedBy=admin.userId||"";
+    await updateSheet(id,grades,{historyEvent:{action:"Subject approved",subject:g.subject,feedback:""}});
+    showToast(`${g.subject} approved. Other subjects were left unchanged.`);
+  });
+}
+
+async function rejectSubject(id,index){
+  const s=submissions.find(x=>x.docId===id);if(!s)return;
+  const g=s.grades[index];
+  const reason=prompt(`Why is "${g.subject}" being returned? This applies only to this subject.`);
+  if(reason===null)return;
+  if(!reason.trim()){showBanner("error","Please provide feedback for the rejected subject.");return;}
+  const grades=s.grades.map(x=>({...x}));
+  grades[index].reviewStatus="rejected";
+  grades[index].reviewedAt=Date.now();
+  grades[index].reviewedBy=admin.userId||"";
+  grades[index].reviewFeedback=reason.trim();
+  const ok=await updateSheet(id,grades,{
+    fields:{status:"rejected",feedback:reason.trim()},
+    historyEvent:{action:"Subject returned",subject:g.subject,feedback:reason.trim()}
+  });
+  if(ok){
+    showToast(`${g.subject} was returned. The rest of the grade sheet remains intact.`);
+    notifyTeacher(s,`${g.subject} was returned for correction.`);
+  }
+}
+
+async function approveRemaining(id){
+  const s=submissions.find(x=>x.docId===id);if(!s)return;
+  ask("Approve remaining subjects?",`This will approve every subject that is not already approved. Subjects already returned will remain returned.`,async()=>{
+    const grades=s.grades.map(g=>{
+      const x={...g};
+      if(subjectState(x)==="pending"){x.reviewStatus="approved";x.reviewedAt=Date.now();x.reviewedBy=admin.userId||""}
+      return x;
+    });
+    const allApproved=grades.length>0&&grades.every(g=>subjectState(g)==="approved");
+    const ok=await updateSheet(id,grades,{
+      fields:{status:allApproved?"approved":"rejected",feedback:$("sheetFeedback")?.value.trim()||s.feedback||""},
+      historyEvent:{action:"Remaining subjects approved",subject:"Sheet",feedback:$("sheetFeedback")?.value.trim()||""}
+    });
+    if(ok){showToast(allApproved?"Grade sheet fully approved.":"Remaining subjects approved.");notifyTeacher(s,allApproved?"The full grade sheet was approved.":"Remaining subjects were approved.");}
+  });
+}
+
+async function returnEntireSheet(id){
+  const s=submissions.find(x=>x.docId===id);if(!s)return;
+  const feedback=$("sheetFeedback")?.value.trim()||"";
+  if(!feedback){showBanner("error","Add feedback before returning the entire sheet.");return;}
+  ask("Return entire sheet?",`This will mark the whole sheet as returned. Use this only when multiple subjects need correction.`,async()=>{
+    const grades=s.grades.map(g=>({...g,reviewStatus:"rejected",reviewedAt:Date.now(),reviewedBy:admin.userId||"",reviewFeedback:feedback}));
+    const ok=await updateSheet(id,grades,{
+      fields:{status:"rejected",feedback},
+      historyEvent:{action:"Entire sheet returned",subject:"Sheet",feedback}
+    });
+    if(ok){showToast("Entire grade sheet returned.");notifyTeacher(s,"The grade sheet was returned for correction.");}
+  });
+}
+
+async function saveSheetNote(id){
+  const s=submissions.find(x=>x.docId===id);if(!s)return;
+  const feedback=$("sheetFeedback")?.value.trim()||"";
+  const ok=await updateSheet(id,s.grades,{fields:{feedback},historyEvent:{action:"Review note saved",subject:"Sheet",feedback}});
+  if(ok)showToast("Review note saved.");
+}
+
+async function notifyTeacher(s,message){
+  try{
+    const mod=await import("./notification-helper.js");
+    await mod.sendNotification(db,{
+      userId:s.teacherId,
+      title:"Grade Sheet Review",
+      message,
+      type:"approval",
+      link:"teacher-submit-grades.html"
+    });
+  }catch(e){}
+}
+
+$("searchInput").addEventListener("input",render);
+["statusFilter","classFilter","periodFilter","teacherFilter"].forEach(id=>$(id).addEventListener("change",render));
+
+async function boot(){
+  admin=loadAdminSession();if(!admin)return;
+  paintAdmin();
+  const ok=await loadFirebase();
+  if(ok)await loadSubmissions();
+}
+boot().catch(e=>showBanner("error","The grade approval page could not finish loading. Please reload."));
+</script>
+</body>
+</html>
