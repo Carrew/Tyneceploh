@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Grade Submission - TEF</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,.06);
+  --glass:rgba(255,255,255,.045);
+  --border:rgba(255,255,255,.1);
+  --text:#fff;
+  --muted:rgba(255,255,255,.62);
+  --green:#27ae60;
+  --red:#c0392b;
+  --blue:#2980b9;
+  --orange:#f39c12;
+  --shadow:0 18px 50px rgba(0,0,0,.42);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,#2a0016 0,transparent 34%),
+    radial-gradient(circle at 100% 100%,#26000e 0,transparent 32%),
+    var(--bg);
+}
+
+button,input,select{font:inherit}
+button{cursor:pointer}
+
+.header{
+  padding:26px 18px 24px;
+  background:linear-gradient(135deg,#800000,#21000d);
+  box-shadow:var(--shadow);
+}
+
+.header-inner{max-width:1100px;margin:auto}
+
+.brand{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.brand h1{margin:0;color:var(--pink);font-size:clamp(22px,5vw,32px)}
+.brand p{margin:5px 0 0;color:rgba(255,255,255,.72);font-size:13px}
+
+.teacher-profile{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:20px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  background:rgba(0,0,0,.18);
+}
+
+.teacher-photo{
+  width:58px;height:58px;border-radius:50%;object-fit:cover;
+  border:2px solid var(--pink);background:#222;flex-shrink:0;
+}
+
+.teacher-name{font-weight:800;font-size:17px}
+.teacher-meta{margin-top:3px;color:rgba(255,255,255,.65);font-size:12px}
+.teacher-meta.err{color:#ff938a}
+
+/* ===== STATUS BANNER (on-page errors, not console-only) ===== */
+.status-stack{
+  width:min(1100px,calc(100% - 28px));
+  margin:16px auto 0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.status-banner{
+  padding:14px 16px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.5;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  animation:slideIn .25s ease;
+  box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.status-banner .icon{
+  width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;flex:0 0 22px;
+  background:rgba(255,255,255,.14);
+  color:inherit;font-size:12px;font-weight:900;
+}
+.status-banner .dismiss-btn{font-size:18px;line-height:1;padding:2px 8px}
+
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+.status-banner .icon{font-size:16px;line-height:1;margin-top:1px}
+.status-banner .msg{flex:1}
+.status-banner .msg small{display:block;margin-top:4px;font-weight:500;opacity:.75;font-size:11px}
+
+.status-banner button{
+  border:0;background:rgba(255,255,255,.12);color:#fff;
+  border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800;flex-shrink:0;
+}
+.status-banner button:hover{background:rgba(255,255,255,.22)}
+
+.status-banner.error{background:rgba(192,57,43,.16);border:1px solid rgba(192,57,43,.4);color:#ff9b90}
+.status-banner.warning{background:rgba(243,156,18,.16);border:1px solid rgba(243,156,18,.4);color:#ffcf7a}
+.status-banner.info{background:rgba(41,128,185,.16);border:1px solid rgba(41,128,185,.4);color:#83cfff}
+.status-banner.success{background:rgba(39,174,96,.16);border:1px solid rgba(39,174,96,.4);color:#7ff0aa}
+
+.container{width:min(1100px,calc(100% - 28px));margin:22px auto 45px}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+
+.panel{
+  background:var(--glass);border:1px solid var(--border);border-radius:22px;
+  padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(14px);
+}
+
+.panel h2{margin:0 0 5px;font-size:19px}
+.panel-sub{color:var(--muted);font-size:12px;margin-bottom:17px}
+
+label{display:block;margin:13px 0 7px;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+
+input,select{
+  width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--border);
+  outline:none;background:rgba(255,255,255,.07);color:#fff;
+}
+select option{background:#171219;color:#fff}
+input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.14)}
+select:disabled,input:disabled{opacity:.5;cursor:not-allowed}
+
+.locked{opacity:.55;pointer-events:none}
+
+.period-info{
+  margin-top:14px;padding:12px;border-radius:14px;
+  background:rgba(128,0,0,.18);border:1px solid rgba(255,192,203,.12);
+  color:rgba(255,255,255,.78);font-size:12px;
+}
+.period-info strong{color:var(--pink)}
+
+.sheet-panel{margin-top:18px}
+
+.sheet-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sheet-summary{display:flex;gap:9px;flex-wrap:wrap}
+
+.pill{padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--border);color:rgba(255,255,255,.75);font-size:11px}
+.pill b{color:#fff}
+
+.table-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left}
+th{background:rgba(128,0,0,.4);color:var(--pink);font-size:12px}
+td{font-size:13px;background:rgba(255,255,255,.018)}
+
+.subject-input{min-width:230px}
+.score-input{width:120px}
+.score-status{font-size:11px;font-weight:800}
+.pass{color:#58d68d}
+.fail{color:#ff7770}
+
+.remove-btn{border:0;background:rgba(192,57,43,.15);color:#ff8b82;padding:8px 10px;border-radius:9px;font-weight:800}
+.remove-btn:hover{background:rgba(192,57,43,.3)}
+
+.empty-row{text-align:center;color:var(--muted);padding:28px}
+.error-row{text-align:center;color:#ff938a;padding:28px;font-size:13px}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:800;transition:.2s;min-height:44px}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.btn-primary{color:#fff;background:linear-gradient(135deg,var(--maroon),#b00055)}
+.btn-green{color:#fff;background:linear-gradient(135deg,#1d8b4d,var(--green))}
+.btn-dark{color:#fff;background:#25252d}
+.btn-outline{color:#fff;background:transparent;border:1px solid var(--border)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+.message{display:none;margin-top:15px;padding:13px 15px;border-radius:13px;font-size:13px;font-weight:700}
+.message.success{display:block;background:rgba(39,174,96,.14);border:1px solid rgba(39,174,96,.35);color:#7ff0aa}
+.message.error{display:block;background:rgba(192,57,43,.14);border:1px solid rgba(192,57,43,.35);color:#ff938a}
+.message.info{display:block;background:rgba(41,128,185,.14);border:1px solid rgba(41,128,185,.35);color:#83cfff}
+
+.sheets{margin-top:18px}
+.sheet-card{padding:15px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--border);margin-top:10px}
+.sheet-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sheet-title{font-weight:800}
+.sheet-meta{margin-top:5px;color:var(--muted);font-size:12px}
+
+.status-badge{padding:6px 10px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase}
+.pending{background:rgba(243,156,18,.18);color:#ffc56b}
+.resubmitted{background:rgba(41,128,185,.18);color:#83cfff}
+.approved{background:rgba(39,174,96,.18);color:#7ff0aa}
+.rejected{background:rgba(192,57,43,.18);color:#ff938a}
+
+.notice{color:var(--muted);font-size:12px;line-height:1.55}
+
+
+@media(max-width:760px){
+  .grid{grid-template-columns:1fr}
+  .container{width:min(100% - 20px,1100px)}
+  .panel{padding:16px}
+  .debug-body{height:150px}
+}
+
+@media print{
+  body{background:#fff;color:#000}
+  .header,.panel:not(.sheet-panel),.actions,.sheets,.status-stack{display:none!important}
+  .container{width:100%;margin:0}
+  .sheet-panel{box-shadow:none;border:0;background:#fff}
+  th,td{color:#000;border:1px solid #ccc}
+  th{background:#eee}
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div>
+        <h1>Teacher Grade Submission</h1>
+        <p>Tyneceploh Educational Foundation</p>
+      </div>
+    </div>
+
+    <div class="teacher-profile">
+      <img id="teacherPhoto" class="teacher-photo" alt="Teacher photo">
+      <div>
+        <div id="teacherName" class="teacher-name">Teacher</div>
+        <div id="teacherMeta" class="teacher-meta">Checking session...</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ON-PAGE ERROR / STATUS BANNERS -->
+<div id="statusStack" class="status-stack"></div>
+
+<main class="container">
+
+  <div class="grid">
+
+    <section class="panel">
+      <h2>Grade Sheet</h2>
+      <div class="panel-sub">Choose the student and academic period for this submission.</div>
+
+      <label for="student">Student</label>
+      <select id="student">
+        <option value="">Select student</option>
+      </select>
+
+      <label for="period">Academic Period</label>
+      <select id="period">
+        <option value="">Select period</option>
+        <option value="1st Period">1st Period</option>
+        <option value="2nd Period">2nd Period</option>
+        <option value="3rd Period">3rd Period</option>
+        <option value="Semester Exam">Semester Exam</option>
+        <option value="4th Period">4th Period</option>
+        <option value="5th Period">5th Period</option>
+        <option value="6th Period">6th Period</option>
+        <option value="Final Exam">Final Exam</option>
+      </select>
+
+      <div id="periodInfo" class="period-info">
+        Select a period to identify its semester.
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Submission Guide</h2>
+      <div class="panel-sub">A grade sheet contains multiple subjects for one student and one period.</div>
+
+      <div class="notice">
+        Add every subject you are responsible for before submitting the sheet.
+        The administrator reviews the sheet. If one grade needs correction,
+        the sheet can be returned for editing and resubmission.
+        Scores are stored individually inside the grade sheet so each subject
+        remains identifiable.
+      </div>
+
+      <div class="period-info">
+        <strong>Semester 1:</strong> 1st Period → Semester Exam<br>
+        <strong>Semester 2:</strong> 4th Period → Final Exam
+      </div>
+    </section>
+
+  </div>
+
+  <section id="sheetPanel" class="panel sheet-panel locked">
+
+    <div class="sheet-toolbar">
+      <div>
+        <h2>Grade Table</h2>
+        <div class="panel-sub">Build the complete grade sheet before submitting.</div>
+      </div>
+
+      <div class="sheet-summary">
+        <div class="pill">Subjects: <b id="subjectCount">0</b></div>
+        <div class="pill">Completed: <b id="completedCount">0</b></div>
+        <div class="pill">Average: <b id="sheetAverage">—</b></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Subject</th>
+            <th>Score</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="gradeRows">
+          <tr>
+            <td colspan="5" class="empty-row">Select a student and period first.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button id="addSubjectBtn" class="btn btn-primary" type="button">＋ Add Subject</button>
+      <button id="submitBtn" class="btn btn-green" type="button">Submit Grade Sheet</button>
+      <button id="clearBtn" class="btn btn-dark" type="button">Clear Sheet</button>
+    </div>
+
+    <div id="message" class="message"></div>
+
+  </section>
+
+  <section class="panel sheets">
+    <h2>Recent Grade Sheets</h2>
+    <div class="panel-sub">Your recent submissions and their review status.</div>
+    <div id="recentSheets">
+      No grade sheets loaded.
+    </div>
+  </section>
+
+</main>
+
+<!-- ================================================================
+     PLAIN (non-module) SCRIPT: user-facing status utilities.
+     This runs independently of the Firebase/module script below, so
+     the panel and error banners still work even if the module script
+     fails to load entirely (e.g. no internet, CDN blocked).
+     ================================================================ -->
+<script>
+(function(){
+  var stack = document.getElementById('statusStack');
+
+  window.showBanner = function(type, message, opts){
+    opts = opts || {};
+    var id = opts.id || ('b_' + Math.random().toString(36).slice(2,8));
+    var existing = document.getElementById(id);
+    if(existing) existing.remove();
+
+    var icon = { error:'!', warning:'!', info:'i', success:'✓' }[type] || 'i';
+    var el = document.createElement('div');
+    el.id = id;
+    el.className = 'status-banner ' + (type === 'warning' ? 'warning' : type);
+
+    var iconEl = document.createElement('span');
+    iconEl.className = 'icon';
+    iconEl.setAttribute('aria-hidden','true');
+    iconEl.textContent = icon;
+
+    var msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.textContent = String(message || '');
+
+    if(opts.detail){
+      var small = document.createElement('small');
+      small.textContent = String(opts.detail);
+      msg.appendChild(small);
+    }
+
+    el.appendChild(iconEl);
+    el.appendChild(msg);
+
+    if(opts.actionLabel && typeof opts.onAction === 'function'){
+      var actionBtn = document.createElement('button');
+      actionBtn.type = 'button';
+      actionBtn.textContent = opts.actionLabel;
+      actionBtn.addEventListener('click', opts.onAction);
+      el.appendChild(actionBtn);
+    }
+
+    if(!opts.sticky){
+      var dismiss = document.createElement('button');
+      dismiss.type = 'button';
+      dismiss.className = 'dismiss-btn';
+      dismiss.setAttribute('aria-label','Dismiss message');
+      dismiss.textContent = '×';
+      dismiss.addEventListener('click', function(){ el.remove(); });
+      el.appendChild(dismiss);
+    }
+
+    stack.appendChild(el);
+    return id;
+  };
+
+  window.dismissBanner = function(id){
+    var el = document.getElementById(id);
+    if(el) el.remove();
+  };
+
+  // Catch failures that happen before the application can render its own message.
+  window.addEventListener('error', function(e){
+    window.showBanner('error', 'Something went wrong loading this page.', {
+      id:'global-error',
+      detail: e && e.message ? e.message : 'Please reload the page and try again.',
+      sticky:true,
+      actionLabel:'Reload',
+      onAction:function(){ location.reload(); }
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(e){
+    var reason = e.reason && e.reason.message ? e.reason.message : e.reason;
+    window.showBanner('error', 'The page could not complete an operation.', {
+      id:'global-rejection',
+      detail: reason ? String(reason) : 'Please check your connection and try again.'
+    });
+  });
+
+  // If initialization stalls, explain the problem without exposing technical logs.
+  window.__appReady = false;
+  setTimeout(function(){
+    if(!window.__appReady){
+      window.showBanner('error', 'The page is taking too long to load your data.', {
+        id:'watchdog',
+        detail:'Check your internet connection and reload the page.',
+        actionLabel:'Reload',
+        onAction:function(){ location.reload(); },
+        sticky:true
+      });
+      var meta = document.getElementById('teacherMeta');
+      if(meta && /checking|loading/i.test(meta.textContent)){
+        meta.textContent = 'Could not confirm session — check connection';
+        meta.classList.add('err');
+      }
+    }
+  }, 12000);
+})();
+</script>
+
+<script type="module">
+
+const studentSelect = document.getElementById("student");
+const periodSelect = document.getElementById("period");
+const periodInfo = document.getElementById("periodInfo");
+const sheetPanel = document.getElementById("sheetPanel");
+const gradeRows = document.getElementById("gradeRows");
+const message = document.getElementById("message");
+
+let students = [];
+let gradeItems = [];
+let submitting = false;
+let user = null;
+let db = null;
+let firebaseReady = false;
+
+const firestoreCalls = {}; // populated once the SDK loads
+
+const periods = [
+  "1st Period","2nd Period","3rd Period","Semester Exam",
+  "4th Period","5th Period","6th Period","Final Exam"
+];
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function showMessage(text,type="info"){
+  message.className = "message " + type;
+  message.textContent = text;
+}
+function clearMessage(){
+  message.className = "message";
+  message.textContent = "";
+}
+
+function withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error(label + " timed out after " + (ms/1000) + "s")), ms))
+  ]);
+}
+
+// ===== STEP 1: read + validate the logged-in user from localStorage =====
+// This runs synchronously, first, before anything network-related, so the
+// header never sits on "Checking session..." waiting on Firebase.
+function loadSessionUser(){
+  let raw;
+  try{
+    raw = localStorage.getItem("user");
+  }catch(err){
+    window.showBanner('error', 'We couldn\'t verify your session.',
+      { detail:'Your browser is blocking session storage. Please enable site storage and try again.', sticky:true });
+    return null;
+  }
+
+  if(!raw){
+    window.showBanner('warning', 'You are not logged in. Redirecting to login…', { sticky:true });
+    setTimeout(() => { location.href = "login.html"; }, 900);
+    return null;
+  }
+
+  let parsed;
+  try{
+    parsed = JSON.parse(raw);
+  }catch(err){
+    window.showBanner('error', 'Your session could not be verified.',
+      { detail:'Please sign in again to continue.', actionLabel:'Go to login',
+        onAction:() => { location.href = "login.html"; }, sticky:true });
+    return null;
+  }
+
+  if(!parsed || parsed.role !== "teacher"){
+    window.showBanner('warning', 'Teacher access is required. Redirecting to sign in…', { sticky:true });
+    setTimeout(() => { location.href = "login.html"; }, 900);
+    return null;
+  }
+  return parsed;
+}
+
+// ===== STEP 2: paint the profile header immediately from local data =====
+function setupProfile(u){
+  try{
+    document.getElementById("teacherName").textContent = u.name || "Teacher";
+
+    const teacherId = u.userId || "No ID";
+    const classes = Array.isArray(u.classes)
+      ? (u.classes.length ? u.classes.join(", ") : "No classes assigned")
+      : (u.class || "No classes assigned");
+
+    const meta = document.getElementById("teacherMeta");
+    meta.textContent = `${teacherId} • Classes: ${classes}`;
+    meta.classList.remove("err");
+
+    const photo = document.getElementById("teacherPhoto");
+    photo.src = u.photoURL || "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#800000"/><text x="50" y="58" text-anchor="middle" font-size="38" fill="#ffc0cb">T</text></svg>');
+  }catch(err){
+    const meta = document.getElementById("teacherMeta");
+    meta.textContent = "Profile unavailable";
+    meta.classList.add("err");
+    window.showBanner('error', 'Could not display your profile information.', { detail: String(err && err.message || err) });
+  }
+}
+
+function getSemester(period){
+  if(["1st Period","2nd Period","3rd Period","Semester Exam"].includes(period)) return "Semester 1";
+  if(["4th Period","5th Period","6th Period","Final Exam"].includes(period)) return "Semester 2";
+  return "";
+}
+
+function updatePeriodInfo(){
+  const period = periodSelect.value;
+  const semester = getSemester(period);
+  if(!period){
+    periodInfo.innerHTML = "Select a period to identify its semester.";
+    sheetPanel.classList.add("locked");
+    return;
+  }
+  periodInfo.innerHTML = `<strong>${escapeHtml(period)}</strong> belongs to <strong>${escapeHtml(semester)}</strong>.`;
+  if(studentSelect.value) sheetPanel.classList.remove("locked");
+}
+
+function updateLock(){
+  if(studentSelect.value && periodSelect.value) sheetPanel.classList.remove("locked");
+  else sheetPanel.classList.add("locked");
+}
+
+function updateSummary(){
+  const completed = gradeItems.filter(g => g.subject.trim() && g.score !== "" && !isNaN(Number(g.score)));
+  const scores = completed.map(g => Number(g.score));
+  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0) / scores.length).toFixed(1) : "—";
+  document.getElementById("subjectCount").textContent = gradeItems.length;
+  document.getElementById("completedCount").textContent = completed.length;
+  document.getElementById("sheetAverage").textContent = avg;
+}
+
+function renderRows(){
+  updateSummary();
+
+  if(!gradeItems.length){
+    gradeRows.innerHTML = `<tr><td colspan="5" class="empty-row">No subjects added yet. Click "Add Subject".</td></tr>`;
+    return;
+  }
+
+  gradeRows.innerHTML = gradeItems.map((item,index)=>{
+    const score = item.score === "" ? "" : Number(item.score);
+    let status = "—", statusClass = "";
+    if(score !== "" && !isNaN(score)){
+      if(score >= 70){ status="PASS"; statusClass="pass"; }
+      else { status="BELOW PASS"; statusClass="fail"; }
+    }
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td><input class="subject-input" data-index="${index}" data-field="subject" value="${escapeHtml(item.subject)}" placeholder="e.g. Mathematics"></td>
+        <td><input class="score-input" data-index="${index}" data-field="score" type="number" min="0" max="100" step="0.1" value="${escapeHtml(item.score)}" placeholder="0–100"></td>
+        <td><span class="score-status ${statusClass}">${status}</span></td>
+        <td><button class="remove-btn" data-remove="${index}">Remove</button></td>
+      </tr>
+    `;
+  }).join("");
+
+  document.querySelectorAll("[data-field]").forEach(input=>{
+    input.addEventListener("input",()=>{
+      const index = Number(input.dataset.index);
+      const field = input.dataset.field;
+      let value = input.value;
+
+      // Keep the value being typed intact. Re-rendering the whole table on
+      // every keystroke causes number inputs to lose their caret position,
+      // which can make typing "60" feel reversed.
+      if(field === "score" && value !== ""){
+        const numericValue = Number(value);
+        if(!Number.isNaN(numericValue) && numericValue > 100){
+          value = "100";
+          input.value = value;
+        }
+        if(!Number.isNaN(numericValue) && numericValue < 0){
+          value = "0";
+          input.value = value;
+        }
+      }
+
+      gradeItems[index][field] = value;
+
+      // Update only the row status and summary instead of rebuilding the
+      // inputs, so the cursor stays exactly where the teacher is typing.
+      if(field === "score"){
+        const row = input.closest("tr");
+        const statusEl = row ? row.querySelector(".score-status") : null;
+        const score = value === "" ? "" : Number(value);
+
+        if(statusEl){
+          statusEl.className = "score-status";
+          if(score !== "" && !Number.isNaN(score)){
+            if(score >= 70){
+              statusEl.textContent = "PASS";
+              statusEl.classList.add("pass");
+            }else{
+              statusEl.textContent = "BELOW PASS";
+              statusEl.classList.add("fail");
+            }
+          }else{
+            statusEl.textContent = "—";
+          }
+        }
+      }
+
+      updateSummary();
+    });
+  });
+
+  document.querySelectorAll("[data-remove]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      gradeItems.splice(Number(button.dataset.remove),1);
+      renderRows();
+    });
+  });
+}
+
+function focusEditedField(index,field){
+  const input = document.querySelector(`[data-index="${index}"][data-field="${field}"]`);
+  if(input){
+    input.focus();
+    try{ input.setSelectionRange(input.value.length,input.value.length); }catch(e){}
+  }
+}
+
+function addSubject(){
+  gradeItems.push({ subject:"", score:"" });
+  renderRows();
+  setTimeout(()=>{
+    const inputs = document.querySelectorAll('[data-field="subject"]');
+    const last = inputs[inputs.length - 1];
+    if(last) last.focus();
+  },0);
+}
+
+function clearSheet(){
+  gradeItems = [];
+  clearMessage();
+  renderRows();
+}
+
+// ===== STEP 3: load the Firebase SDK defensively =====
+// Uses dynamic import (not static "import ... from") specifically so a
+// network failure rejects a promise we can catch, instead of throwing a
+// module-load error that silently halts the whole script.
+async function loadFirebaseSdk(){
+  try{
+    const [appMod, fsMod] = await withTimeout(Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+    ]), 10000, "Firebase SDK load");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+      authDomain: "tyneceploh.firebaseapp.com",
+      projectId: "tyneceploh"
+    };
+
+    const app = appMod.initializeApp(firebaseConfig);
+    db = fsMod.getFirestore(app);
+
+    firestoreCalls.collection = fsMod.collection;
+    firestoreCalls.getDocs = fsMod.getDocs;
+    firestoreCalls.addDoc = fsMod.addDoc;
+    firestoreCalls.query = fsMod.query;
+    firestoreCalls.where = fsMod.where;
+    firestoreCalls.orderBy = fsMod.orderBy;
+    firestoreCalls.limit = fsMod.limit;
+
+    firebaseReady = true;
+    return true;
+  }catch(err){
+    window.showBanner('error', 'Cannot connect to the server.',
+      { id:'fb-load-error',
+        detail:'You appear to be offline, or the connection to Firebase was blocked. Student data, submissions and recent sheets will not load until this is fixed.',
+        actionLabel:'Retry', onAction: retryConnection, sticky:true });
+    return false;
+  }
+}
+
+async function retryConnection(){
+  window.dismissBanner('fb-load-error');
+  const ok = await loadFirebaseSdk();
+  if(ok){
+    window.showBanner('success', 'Connection restored.', { id:'fb-restored' });
+    setTimeout(() => window.dismissBanner('fb-restored'), 3000);
+    await Promise.all([loadStudents(), loadRecentSheets()]);
+  }
+}
+
+async function loadStudents(){
+  studentSelect.innerHTML = `<option value="">Loading students...</option>`;
+
+  if(!firebaseReady){
+    studentSelect.innerHTML = `<option value="">Unavailable — check connection</option>`;
+    updateLock();
+    return;
+  }
+
+  try{
+    const { collection, getDocs } = firestoreCalls;
+    const snap = await withTimeout(getDocs(collection(db,"users")), 10000, "Loading students");
+
+    students = [];
+    snap.forEach(d=>{
+      const data = d.data();
+      if(
+        data.role === "student" &&
+        Array.isArray(user.classes) &&
+        user.classes.includes(data.class)
+      ){
+        students.push({ ...data, docId:d.id });
+      }
+    });
+
+    students.sort((a,b)=>(a.name || "").localeCompare(b.name || ""));
+
+    if(!students.length){
+      studentSelect.innerHTML = `<option value="">No students found in assigned classes</option>`;
+      updateLock();
+      return;
+    }
+
+    studentSelect.innerHTML = `
+      <option value="">Select student</option>
+      ${students.map(s=>`
+        <option value="${escapeHtml(s.userId || "")}">
+          ${escapeHtml(s.name || "Unnamed")}
+          ${s.class ? ` (${escapeHtml(s.class)})` : ""}
+        </option>
+      `).join("")}
+    `;
+  }catch(err){
+    studentSelect.innerHTML = `<option value="">Could not load students</option>`;
+    window.showBanner('error', /permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Your access could not be verified.' : 'Students could not be loaded.',
+      { id:'students-error', detail:/permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Please sign in again and make sure you are using a teacher account.' : 'Please check your connection and try again.',
+        actionLabel:/permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Go to login' : 'Retry', onAction:() => { window.dismissBanner('students-error'); loadStudents(); } });
+  }
+
+  updateLock();
+}
+
+async function submitGradeSheet(){
+  if(submitting) return;
+  clearMessage();
+
+  if(!firebaseReady){
+    showMessage("Cannot submit — not connected to the server. Check your connection and retry.","error");
+    window.showBanner('error', 'Cannot submit: no connection to the server.',
+      { id:'submit-offline', actionLabel:'Retry connection', onAction: retryConnection });
+    return;
+  }
+
+  const studentId = studentSelect.value;
+  const period = periodSelect.value;
+  const student = students.find(s => s.userId === studentId);
+
+  if(!student){ showMessage("Please select a valid student.","error"); return; }
+  if(!period){ showMessage("Please select an academic period.","error"); return; }
+  if(!gradeItems.length){ showMessage("Add at least one subject before submitting.","error"); return; }
+
+  const cleanGrades = [];
+  const seenSubjects = new Set();
+
+  for(let i=0;i<gradeItems.length;i++){
+    const subject = gradeItems[i].subject.trim();
+    const rawScore = gradeItems[i].score.trim();
+
+    if(!subject){ showMessage(`Subject ${i+1} is missing.`,"error"); return; }
+    if(rawScore === ""){ showMessage(`Score is missing for ${subject}.`,"error"); return; }
+
+    const score = Number(rawScore);
+    if(isNaN(score) || score < 0 || score > 100){
+      showMessage(`${subject} has an invalid score. Scores must be between 0 and 100.`,"error");
+      return;
+    }
+
+    const key = subject.toLowerCase();
+    if(seenSubjects.has(key)){ showMessage(`Duplicate subject found: ${subject}.`,"error"); return; }
+    seenSubjects.add(key);
+
+    cleanGrades.push({ subject, score });
+  }
+
+  const semester = getSemester(period);
+  const confirmed = confirm(
+    `Submit ${cleanGrades.length} subject grade(s) for ${student.name}?\n\nPeriod: ${period}\nSemester: ${semester}`
+  );
+  if(!confirmed) return;
+
+  submitting = true;
+  const submitBtn = document.getElementById("submitBtn");
+  const addBtn = document.getElementById("addSubjectBtn");
+  submitBtn.disabled = true;
+  addBtn.disabled = true;
+  submitBtn.textContent = "Submitting...";
+
+  try{
+    const { collection, addDoc } = firestoreCalls;
+    const now = Date.now();
+
+    const sheetData = {
+      sheetId: "GS-" + now.toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,7).toUpperCase(),
+      teacherId:user.userId,
+      teacherName:user.name,
+      studentId:student.userId,
+      studentName:student.name,
+      class:student.class || "",
+      period, semester,
+      grades:cleanGrades,
+      gradeCount:cleanGrades.length,
+      status:"pending",
+      feedback:"",
+      createdAt:now,
+      updatedAt:now
+    };
+
+    await withTimeout(addDoc(collection(db,"gradeSubmissions"), sheetData), 10000, "Submitting grade sheet");
+
+    // Notifications are best-effort: if the helper module is missing or
+    // fails, the grade sheet is still saved — we just log a warning.
+    try{
+      const notifMod = await withTimeout(
+        import("./notification-helper.js"), 6000, "Loading notification helper");
+
+      try{
+        await notifMod.sendNotification(db,{
+          userId:student.userId,
+          title:"Grade Sheet Submitted",
+          message:`Your ${period} grade sheet has been submitted for review.`,
+          type:"academic",
+          link:"student-results.html"
+        });
+      }catch(e){ }
+
+      try{
+        await notifMod.sendNotification(db,{
+          role:"admin",
+          title:"Grade Sheet Awaiting Approval",
+          message:`${user.name} submitted ${period} grades for ${student.name} (${student.class || "Class not set"}).`,
+          type:"approval",
+          link:"grade-approval.html"
+        });
+      }catch(e){ }
+
+    }catch(notifErr){
+    }
+
+    showMessage(`Grade sheet submitted successfully for ${student.name}.`,"success");
+    window.showBanner("success", "Grade sheet submitted successfully.", { id:"submit-success", detail:`${student.name} • ${period}` });
+    gradeItems = [];
+    renderRows();
+    loadRecentSheets();
+
+  }catch(err){
+    showMessage("The grade sheet could not be submitted. Check your connection and try again.","error");
+    window.showBanner('error', /permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Submission was not authorized.' : 'Submission failed.', { detail:/permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Your session or teacher permissions could not be verified. Please sign in again.' : 'Please check your connection and try again.', actionLabel:/permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Go to login' : 'Retry', onAction:/permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? function(){ location.href="login.html"; } : function(){ retryConnection(); } });
+  }finally{
+    submitting = false;
+    submitBtn.disabled = false;
+    addBtn.disabled = false;
+    submitBtn.textContent = "Submit Grade Sheet";
+  }
+}
+
+async function loadRecentSheets(){
+  const container = document.getElementById("recentSheets");
+  container.innerHTML = "Loading recent submissions...";
+
+  if(!firebaseReady){
+    container.innerHTML = `<div class="notice">Unavailable — check your connection and retry.</div>`;
+    return;
+  }
+
+  try{
+    const { collection, getDocs, query, where, orderBy, limit } = firestoreCalls;
+    let list;
+
+    try{
+      const q = query(collection(db,"gradeSubmissions"), where("teacherId","==",user.userId), orderBy("createdAt","desc"), limit(10));
+      const snap = await withTimeout(getDocs(q), 10000, "Loading recent sheets");
+      list = [];
+      snap.forEach(d => list.push({ ...d.data(), docId:d.id }));
+    }catch(indexError){
+      const all = await withTimeout(getDocs(collection(db,"gradeSubmissions")), 10000, "Loading recent sheets (fallback)");
+      list = [];
+      all.forEach(d=>{
+        const data = d.data();
+        if(data.teacherId === user.userId) list.push({ ...data, docId:d.id });
+      });
+      list.sort((a,b)=>Number(b.createdAt || 0) - Number(a.createdAt || 0));
+      list = list.slice(0,10);
+    }
+
+    renderRecentSheets(list);
+  }catch(err){
+    container.innerHTML = `<div class="notice">Recent submissions could not be loaded.</div>`;
+    window.showBanner('error', 'Recent grade sheets could not be loaded.',
+      { id:'recent-error', detail:/permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Please sign in again and make sure you are using a teacher account.' : 'Please check your connection and try again.',
+        actionLabel:/permission|unauthenticated|unauthorized/i.test(String(err && err.message || err)) ? 'Go to login' : 'Retry', onAction:() => { window.dismissBanner('recent-error'); loadRecentSheets(); } });
+  }
+}
+
+function renderRecentSheets(list){
+  const container = document.getElementById("recentSheets");
+
+  if(!list.length){
+    container.innerHTML = `<div class="notice">No grade sheets submitted yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(sheet=>{
+    const status = sheet.status || "pending";
+    const count = Array.isArray(sheet.grades) ? sheet.grades.length : Number(sheet.gradeCount || 0);
+    const date = sheet.createdAt ? new Date(sheet.createdAt).toLocaleString() : "Date unavailable";
+    const feedback = sheet.feedback ? `<div class="sheet-meta">Feedback: ${escapeHtml(sheet.feedback)}</div>` : "";
+
+    return `
+      <div class="sheet-card">
+        <div class="sheet-top">
+          <div>
+            <div class="sheet-title">${escapeHtml(sheet.studentName || "Student")}</div>
+            <div class="sheet-meta">
+              ${escapeHtml(sheet.class || "Class not set")}
+              • ${escapeHtml(sheet.period || "Period not set")}
+              • ${escapeHtml(sheet.semester || "")}
+              • ${count} subject(s)
+            </div>
+            <div class="sheet-meta">Submitted: ${escapeHtml(date)}</div>
+            ${feedback}
+          </div>
+          <div class="status-badge ${escapeHtml(status)}">${escapeHtml(status)}</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ===== BOOT SEQUENCE =====
+async function boot(){
+  user = loadSessionUser();
+  if(!user) return; // already redirecting
+
+  setupProfile(user);
+
+  studentSelect.addEventListener("change",()=>{
+    clearMessage();
+    updateLock();
+    updatePeriodInfo();
+    if(studentSelect.value){
+      const student = students.find(s=>s.userId === studentSelect.value);
+      if(student){ gradeItems = []; renderRows(); }
+    }
+  });
+
+  periodSelect.addEventListener("change",()=>{
+    clearMessage();
+    updatePeriodInfo();
+    updateLock();
+  });
+
+  document.getElementById("addSubjectBtn").addEventListener("click",addSubject);
+  document.getElementById("clearBtn").addEventListener("click",clearSheet);
+  document.getElementById("submitBtn").addEventListener("click",submitGradeSheet);
+
+  renderRows();
+
+  const ok = await loadFirebaseSdk();
+  window.__appReady = true; // watchdog satisfied regardless of outcome — we handled it visibly
+
+  if(ok){
+    await Promise.all([loadStudents(), loadRecentSheets()]);
+  }else{
+    studentSelect.innerHTML = `<option value="">Unavailable — check connection</option>`;
+    document.getElementById("recentSheets").innerHTML =
+      `<div class="notice">Unavailable — check your connection and retry.</div>`;
+  }
+}
+
+boot().catch(err=>{
+  window.showBanner('error', 'We could not finish loading the grade page.',
+    { detail:'Please check your connection and reload the page.', sticky:true, actionLabel:'Reload', onAction:()=>location.reload() });
+  window.__appReady = true;
+});
+
+</script>
+
+</body>
+</html>
