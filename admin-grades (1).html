@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade Approval Management - TEF Admin</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,.06);
+  --glass:rgba(255,255,255,.045);
+  --border:rgba(255,255,255,.1);
+  --text:#fff;
+  --muted:rgba(255,255,255,.62);
+  --green:#27ae60;
+  --red:#c0392b;
+  --blue:#2980b9;
+  --orange:#f39c12;
+  --shadow:0 18px 50px rgba(0,0,0,.42);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,#2a0016 0,transparent 34%),
+    radial-gradient(circle at 100% 100%,#26000e 0,transparent 32%),
+    var(--bg);
+}
+
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+
+.header{
+  padding:26px 18px 24px;
+  background:linear-gradient(135deg,#800000,#21000d);
+  box-shadow:var(--shadow);
+}
+
+.header-inner{max-width:1200px;margin:auto}
+
+.brand{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.brand h1{margin:0;color:var(--pink);font-size:clamp(22px,5vw,32px)}
+.brand p{margin:5px 0 0;color:rgba(255,255,255,.72);font-size:13px}
+
+.admin-profile{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:20px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  background:rgba(0,0,0,.18);
+}
+.admin-avatar{
+  width:50px;height:50px;border-radius:50%;background:var(--pink);color:var(--maroon);
+  display:grid;place-items:center;font-weight:900;font-size:20px;flex-shrink:0;
+}
+.admin-name{font-weight:800;font-size:17px}
+.admin-meta{margin-top:3px;color:rgba(255,255,255,.65);font-size:12px}
+
+/* Status Stack Banners */
+.status-stack{
+  width:min(1200px,calc(100% - 28px));
+  margin:16px auto 0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.status-banner{
+  padding:14px 16px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.5;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.status-banner.error{background:rgba(192,57,43,.16);border:1px solid rgba(192,57,43,.4);color:#ff9b90}
+.status-banner.success{background:rgba(39,174,96,.16);border:1px solid rgba(39,174,96,.4);color:#7ff0aa}
+
+.container{width:min(1200px,calc(100% - 28px));margin:22px auto 45px}
+
+.filter-bar{
+  background:var(--glass);border:1px solid var(--border);border-radius:18px;
+  padding:16px 20px;display:flex;gap:15px;flex-wrap:wrap;align-items:center;margin-bottom:20px;
+  backdrop-filter:blur(14px);
+}
+.filter-group{flex:1;min-width:200px}
+.filter-group label{display:block;margin-bottom:6px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+select,input{
+  width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+  outline:none;background:rgba(255,255,255,.07);color:#fff;
+}
+select option{background:#171219;color:#fff}
+select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.14)}
+
+.submissions-grid{display:flex;flex-direction:column;gap:18px}
+
+.panel{
+  background:var(--glass);border:1px solid var(--border);border-radius:22px;
+  padding:22px;box-shadow:var(--shadow);backdrop-filter:blur(14px);
+}
+.sheet-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:14px}
+.sheet-title{font-size:18px;font-weight:800;color:#fff}
+.sheet-meta{color:var(--muted);font-size:12px;margin-top:4px}
+
+.status-badge{padding:6px 12px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase;display:inline-block}
+.pending{background:rgba(243,156,18,.18);color:#ffc56b}
+.resubmitted{background:rgba(41,128,185,.18);color:#83cfff}
+.approved{background:rgba(39,174,96,.18);color:#7ff0aa}
+.rejected{background:rgba(192,57,43,.18);color:#ff938a}
+
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);margin-bottom:16px}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left}
+th{background:rgba(128,0,0,.4);color:var(--pink);font-size:12px}
+td{font-size:13px;background:rgba(255,255,255,.018)}
+
+.subject-status{font-weight:800;font-size:11px}
+.sub-pending{color:#ffc56b}
+.sub-approved{color:#58d68d}
+.sub-rejected{color:#ff7770}
+
+.action-cell{display:flex;gap:6px;align-items:center}
+.btn{border:0;border-radius:9px;padding:7px 12px;font-weight:800;font-size:11px;transition:.2s}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-approve{background:rgba(39,174,96,.2);color:#7ff0aa;border:1px solid rgba(39,174,96,.4)}
+.btn-reject{background:rgba(192,57,43,.2);color:#ff938a;border:1px solid rgba(192,57,43,.4)}
+.btn-primary{background:linear-gradient(135deg,var(--maroon),#b00055);color:#fff;padding:10px 16px;font-size:12px;border-radius:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.sheet-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.empty-state{text-align:center;padding:40px;color:var(--muted)}
+
+/* Rejection Modal */
+.modal-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);
+  backdrop-filter:blur(5px);display:none;place-items:center;z-index:1000;padding:15px;
+}
+.modal{
+  background:#171219;border:1px solid var(--border);border-radius:20px;
+  width:min(450px,100%);padding:24px;box-shadow:var(--shadow);
+}
+.modal h3{margin:0 0 8px;font-size:18px;color:var(--pink)}
+.modal p{color:var(--muted);font-size:12px;margin-bottom:14px}
+textarea{
+  width:100%;height:100px;padding:12px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,.07);color:#fff;resize:vertical;outline:none;margin-bottom:15px;
+}
+textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.14)}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div>
+        <h1>Grade Approval Dashboard</h1>
+        <p>Tyneceploh Educational Foundation — Admin Review Portal</p>
+      </div>
+    </div>
+    <div class="admin-profile">
+      <div id="adminAvatar" class="admin-avatar">A</div>
+      <div>
+        <div id="adminName" class="admin-name">Administrator</div>
+        <div id="adminMeta" class="admin-meta">Checking admin session...</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="statusStack" class="status-stack"></div>
+
+<main class="container">
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label for="classFilter">Filter by Class</label>
+      <select id="classFilter">
+        <option value="all">All Classes</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="statusFilter">Filter by Status</label>
+      <select id="statusFilter">
+        <option value="all">All Submissions</option>
+        <option value="pending" selected>Pending / Resubmitted</option>
+        <option value="approved">Fully Approved</option>
+        <option value="rejected">Has Rejections</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="searchFilter">Search Teacher / Student</label>
+      <input type="text" id="searchFilter" placeholder="Type name...">
+    </div>
+  </div>
+
+  <div id="submissionsContainer" class="submissions-grid">
+    <div class="panel empty-state">Loading submissions...</div>
+  </div>
+</main>
+
+<!-- Rejection Reason Modal -->
+<div id="rejectionModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Reject Subject Grade</h3>
+    <p id="rejectionModalSub">Provide a clear reason why this grade is being returned for correction.</p>
+    <textarea id="rejectionReasonInput" placeholder="Enter mandatory correction instructions..."></textarea>
+    <div class="modal-actions">
+      <button id="cancelRejectBtn" class="btn" style="background:rgba(255,255,255,.1);color:#fff">Cancel</button>
+      <button id="confirmRejectBtn" class="btn btn-reject">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var stack = document.getElementById('statusStack');
+  window.showBanner = function(type, message, opts){
+    opts = opts || {};
+    var id = opts.id || ('b_' + Math.random().toString(36).slice(2,8));
+    var el = document.createElement('div');
+    el.id = id;
+    el.className = 'status-banner ' + type;
+    el.innerHTML = `<div style="flex:1"><b>${escapeHtml(message)}</b>${opts.detail ? `<small style="display:block;margin-top:3px;opacity:.75">${escapeHtml(opts.detail)}</small>` : ''}</div>`;
+    stack.appendChild(el);
+    setTimeout(() => el.remove(), 6000);
+  };
+  function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+})();
+</script>
+
+<script type="module">
+let db = null;
+let user = null;
+let fsMod = null;
+let allSubmissions = [];
+let activeRejectionTarget = null;
+
+const classFilter = document.getElementById("classFilter");
+const statusFilter = document.getElementById("statusFilter");
+const searchFilter = document.getElementById("searchFilter");
+const submissionsContainer = document.getElementById("submissionsContainer");
+const rejectionModal = document.getElementById("rejectionModal");
+const rejectionReasonInput = document.getElementById("rejectionReasonInput");
+
+function escapeHtml(value){
+  return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+}
+
+function loadSessionUser(){
+  try{
+    const raw = localStorage.getItem("user");
+    if(!raw){ location.href = "login.html"; return null; }
+    const parsed = JSON.parse(raw);
+    if(parsed.role !== "admin"){
+      alert("Unauthorized: Admin access required.");
+      location.href = "login.html";
+      return null;
+    }
+    return parsed;
+  }catch(e){
+    location.href = "login.html";
+    return null;
+  }
+}
+
+async function initFirebase(){
+  const [appMod, firestoreMod] = await Promise.all([
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+  ]);
+  const app = appMod.initializeApp({
+    apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+    authDomain: "tyneceploh.firebaseapp.com",
+    projectId: "tyneceploh"
+  });
+  db = firestoreMod.getFirestore(app);
+  fsMod = firestoreMod;
+  return fsMod;
+}
+
+async function fetchSubmissions(){
+  const { collection, getDocs, query, orderBy } = fsMod;
+  try{
+    const q = query(collection(db, "Grades"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    allSubmissions = [];
+    snap.forEach(d => allSubmissions.push({ ...d.data(), docId: d.id }));
+    
+    populateClassDropdown();
+    renderSubmissions();
+  }catch(err){
+    submissionsContainer.innerHTML = `<div class="panel empty-state" style="color:#ff938a">Error loading grade submissions. Please check permissions.</div>`;
+  }
+}
+
+function populateClassDropdown(){
+  const classesSet = new Set();
+  allSubmissions.forEach(sheet => {
+    if(sheet.class) classesSet.add(sheet.class.trim());
+  });
+
+  const currentVal = classFilter.value;
+  classFilter.innerHTML = `<option value="all">All Classes</option>` + 
+    Array.from(classesSet).sort().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  
+  if(classesSet.has(currentVal)) classFilter.value = currentVal;
+}
+
+function renderSubmissions(){
+  const classVal = classFilter.value;
+  const statusVal = statusFilter.value;
+  const searchVal = searchFilter.value.toLowerCase().trim();
+
+  const filtered = allSubmissions.filter(sheet => {
+    const sheetClass = (sheet.class || "").trim();
+    const sheetStatus = String(sheet.status || "pending").toLowerCase();
+    
+    // Class filter matching
+    if(classVal !== "all" && sheetClass !== classVal) return false;
+
+    // Status matching
+    if(statusVal === "pending" && sheetStatus !== "pending" && sheetStatus !== "resubmitted") return false;
+    if(statusVal === "approved" && sheetStatus !== "approved") return false;
+    if(statusVal === "rejected" && sheetStatus !== "rejected" && !sheet.grades?.some(g => g.status === "rejected")) return false;
+
+    // Search matching
+    if(searchVal){
+      const teacher = (sheet.teacherName || "").toLowerCase();
+      const student = (sheet.studentName || "").toLowerCase();
+      if(!teacher.includes(searchVal) && !student.includes(searchVal)) return false;
+    }
+    return true;
+  });
+
+  if(!filtered.length){
+    submissionsContainer.innerHTML = `<div class="panel empty-state">No grade submissions match your current filters.</div>`;
+    return;
+  }
+
+  submissionsContainer.innerHTML = filtered.map(sheet => {
+    const grades = Array.isArray(sheet.grades) ? sheet.grades : [];
+    const sheetStatus = String(sheet.status || "pending").toLowerCase();
+    const isSheetApproved = sheetStatus === "approved";
+
+    const rows = grades.map((g, idx) => {
+      const gStatus = String(g.status || "pending").toLowerCase();
+      const isSubjectApproved = gStatus === "approved";
+      
+      let statusBadgeClass = "sub-pending";
+      let statusText = "Pending Review";
+      if(isSubjectApproved){ statusBadgeClass = "sub-approved"; statusText = "Approved (Locked)"; }
+      else if(gStatus === "rejected"){ statusBadgeClass = "sub-rejected"; statusText = "Returned for Correction"; }
+      else if(gStatus === "resubmitted"){ statusBadgeClass = "sub-pending"; statusText = "Resubmitted"; }
+
+      // Approved individual subjects or fully approved sheets are locked from further editing buttons
+      const actionButtons = isSubjectApproved ? `
+        <span style="font-size:11px;color:var(--muted);font-weight:700">Locked</span>
+      ` : `
+        <div class="action-cell">
+          <button class="btn btn-approve" data-action="approve-sub" data-sheet="${sheet.docId}" data-index="${idx}">Approve</button>
+          <button class="btn btn-reject" data-action="reject-sub" data-sheet="${sheet.docId}" data-index="${idx}">Reject</button>
+        </div>
+      `;
+
+      return `
+        <tr>
+          <td><b>${escapeHtml(g.subject)}</b></td>
+          <td><b>${escapeHtml(g.score)}</b> / 100</td>
+          <td>
+            <span class="subject-status ${statusBadgeClass}">${statusText}</span>
+            ${g.feedback ? `<div style="font-size:11px;color:#ff938a;margin-top:2px">Reason: ${escapeHtml(g.feedback)}</div>` : ""}
+          </td>
+          <td>${actionButtons}</td>
+        </tr>
+      `;
+    }).join("");
+
+    return `
+      <div class="panel">
+        <div class="sheet-header">
+          <div>
+            <div class="sheet-title">${escapeHtml(sheet.studentName || "Student")} <span style="font-weight:400;font-size:14px;color:var(--muted)">(${escapeHtml(sheet.class || "No Class")})</span></div>
+            <div class="sheet-meta">
+              Teacher: <b>${escapeHtml(sheet.teacherName || "Unknown")}</b> • 
+              Period: <b>${escapeHtml(sheet.period || "")}</b> (${escapeHtml(sheet.semester || "")}) • 
+              Submitted: ${new Date(sheet.createdAt || Date.now()).toLocaleDateString()}
+            </div>
+          </div>
+          <div>
+            <span class="status-badge ${escapeHtml(sheetStatus)}">${escapeHtml(sheetStatus)}</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Subject Review Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+
+        <div class="sheet-footer">
+          <div style="font-size:12px;color:var(--muted)">
+            Sheet ID: ${escapeHtml(sheet.sheetId || sheet.docId)}
+          </div>
+          <button class="btn btn-primary" data-action="approve-all" data-sheet="${sheet.docId}" ${isSheetApproved ? "disabled" : ""}>
+            ${isSheetApproved ? "Sheet Fully Approved" : "Approve All Remaining Subjects"}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  attachEventListeners();
+}
+
+function attachEventListeners(){
+  document.querySelectorAll("[data-action]").forEach(btn => {
+    if(btn.disabled) return;
+    btn.addEventListener("click", async (e) => {
+      const action = btn.dataset.action;
+      const sheetId = btn.dataset.sheet;
+      const sheet = allSubmissions.find(s => s.docId === sheetId);
+      if(!sheet) return;
+
+      if(action === "approve-sub"){
+        const index = Number(btn.dataset.index);
+        await updateSubjectStatus(sheet, index, "approved", "");
+      } else if(action === "reject-sub"){
+        const index = Number(btn.dataset.index);
+        activeRejectionTarget = { sheetDocId: sheetId, subjectIndex: index };
+        rejectionReasonInput.value = "";
+        document.getElementById("rejectionModalSub").textContent = `Returning "${sheet.grades[index].subject}" for ${sheet.studentName}.`;
+        rejectionModal.style.display = "grid";
+        rejectionReasonInput.focus();
+      } else if(action === "approve-all"){
+        if(!confirm(`Approve all remaining subjects for ${sheet.studentName}?`)) return;
+        const updatedGrades = sheet.grades.map(g => ({
+          ...g,
+          status: "approved",
+          feedback: g.status === "approved" ? g.feedback : "",
+          reviewedBy: user.name,
+          reviewedAt: Date.now()
+        }));
+        await saveSheetChanges(sheetId, updatedGrades, "approved", "");
+      }
+    });
+  });
+}
+
+async function updateSubjectStatus(sheet, subjectIndex, newStatus, feedbackText){
+  const grades = [...sheet.grades];
+  grades[subjectIndex] = {
+    ...grades[subjectIndex],
+    status: newStatus,
+    feedback: feedbackText,
+    reviewedBy: user.name,
+    reviewedAt: Date.now()
+  };
+
+  const allApproved = grades.every(g => g.status === "approved");
+  const hasRejections = grades.some(g => g.status === "rejected");
+  const overallStatus = allApproved ? "approved" : (hasRejections ? "rejected" : "pending");
+
+  await saveSheetChanges(sheet.docId, grades, overallStatus, hasRejections ? "One or more subjects returned for correction." : "");
+}
+
+async function saveSheetChanges(sheetDocId, grades, overallStatus, sheetFeedback){
+  const { doc, updateDoc } = fsMod;
+  try{
+    await updateDoc(doc(db, "Grades", sheetDocId), {
+      grades: grades,
+      status: overallStatus,
+      feedback: sheetFeedback,
+      updatedAt: Date.now()
+    });
+    showBanner("success", "Grade review saved successfully.");
+    
+    const { collection, getDocs, query, orderBy } = fsMod;
+    const snap = await getDocs(query(collection(db, "Grades"), orderBy("createdAt", "desc")));
+    allSubmissions = [];
+    snap.forEach(d => allSubmissions.push({ ...d.data(), docId: d.id }));
+    renderSubmissions();
+  }catch(err){
+    showBanner("error", "Failed to update grade status. Check your connection.");
+  }
+}
+
+// Modal wiring
+document.getElementById("cancelRejectBtn").addEventListener("click", () => {
+  rejectionModal.style.display = "none";
+  activeRejectionTarget = null;
+});
+
+document.getElementById("confirmRejectBtn").addEventListener("click", async () => {
+  const reason = rejectionReasonInput.value.trim();
+  if(!reason){
+    alert("A mandatory reason for rejection must be provided.");
+    rejectionReasonInput.focus();
+    return;
+  }
+  if(!activeRejectionTarget) return;
+
+  rejectionModal.style.display = "none";
+  const { sheetDocId, subjectIndex } = activeRejectionTarget;
+  const sheet = allSubmissions.find(s => s.docId === sheetDocId);
+  
+  await updateSubjectStatus(sheet, subjectIndex, "rejected", reason);
+  activeRejectionTarget = null;
+});
+
+// Filters wiring
+classFilter.addEventListener("change", renderSubmissions);
+statusFilter.addEventListener("change", renderSubmissions);
+searchFilter.addEventListener("input", renderSubmissions);
+
+// Boot
+async function boot(){
+  user = loadSessionUser();
+  if(!user) return;
+  document.getElementById("adminName").textContent = user.name || "Administrator";
+  document.getElementById("adminMeta").textContent = `${user.userId || "Admin"} • Role: Administrator`;
+
+  try{
+    await initFirebase();
+    await fetchSubmissions();
+  }catch(err){
+    submissionsContainer.innerHTML = `<div class="panel empty-state" style="color:#ff938a">Could not connect to database.</div>`;
+  }
+}
+
+boot();
+</script>
+
+</body>
+</html>
