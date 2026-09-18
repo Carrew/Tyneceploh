@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#800000">
+<title>Academic Report Management - TEF Admin</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --maroon2:#b00055;
+  --pink:#ffc0cb;
+  --bg:#09090d;
+  --card:rgba(255,255,255,.055);
+  --card2:rgba(255,255,255,.075);
+  --border:rgba(255,255,255,.105);
+  --text:#fff;
+  --muted:rgba(255,255,255,.62);
+  --green:#27ae60;
+  --red:#c0392b;
+  --blue:#2980b9;
+  --orange:#f39c12;
+  --gold:#f5c542;
+  --shadow:0 18px 55px rgba(0,0,0,.42);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 8% 0%,#2a0016 0,transparent 32%),
+    radial-gradient(circle at 100% 100%,#26000e 0,transparent 30%),
+    var(--bg);
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.48;transform:none!important}
+.header{
+  padding:24px 18px 22px;
+  background:linear-gradient(135deg,#800000,#26000f);
+  box-shadow:var(--shadow);
+}
+.header-inner{width:min(1250px,calc(100% - 4px));margin:auto}
+.topline{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+.brand h1{margin:0;color:var(--pink);font-size:clamp(23px,5vw,34px)}
+.brand p{margin:5px 0 0;color:rgba(255,255,255,.72);font-size:13px}
+.admin-profile{
+  display:flex;align-items:center;gap:10px;padding:10px 13px;
+  border:1px solid rgba(255,255,255,.13);border-radius:16px;
+  background:rgba(0,0,0,.18);min-width:190px;
+}
+.admin-avatar{
+  width:42px;height:42px;border-radius:50%;background:var(--pink);color:var(--maroon);
+  display:grid;place-items:center;font-weight:900;flex-shrink:0
+}
+.admin-name{font-weight:800;font-size:14px}
+.admin-meta{color:rgba(255,255,255,.6);font-size:11px;margin-top:2px}
+.container{width:min(1250px,calc(100% - 28px));margin:22px auto 50px}
+.status-stack{display:flex;flex-direction:column;gap:10px;margin:16px auto 0;width:min(1250px,calc(100% - 28px))}
+.banner{padding:13px 15px;border-radius:14px;font-size:13px;line-height:1.45;font-weight:650}
+.banner.success{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.4);color:#7ff0aa}
+.banner.error{background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);color:#ff9b90}
+.banner.info{background:rgba(41,128,185,.15);border:1px solid rgba(41,128,185,.4);color:#8ed2ff}
+.setup{
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px
+}
+.panel{
+  background:var(--card);border:1px solid var(--border);border-radius:22px;
+  padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(14px)
+}
+.panel h2,.panel h3{margin:0}
+.section-title{font-size:18px;color:var(--pink);margin-bottom:4px!important}
+.section-sub{font-size:12px;color:var(--muted);margin:0 0 18px}
+.steps{
+  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px
+}
+.step{
+  display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:999px;
+  background:rgba(255,255,255,.045);border:1px solid var(--border);
+  color:var(--muted);font-size:11px;font-weight:800
+}
+.step b{
+  width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.09);color:#fff
+}
+.step.active{color:#fff;border-color:rgba(255,192,203,.35)}
+.step.active b{background:var(--pink);color:var(--maroon)}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.field label{
+  display:block;font-size:10px;text-transform:uppercase;font-weight:800;
+  color:var(--muted);margin-bottom:6px
+}
+select,input{
+  width:100%;padding:12px;border-radius:11px;border:1px solid var(--border);
+  outline:none;background:rgba(255,255,255,.065);color:#fff
+}
+select option{background:#171219;color:#fff}
+select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.12)}
+.help{
+  padding:12px;border-radius:12px;background:rgba(255,255,255,.035);
+  border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.55;margin-top:14px
+}
+.primary{
+  width:100%;border:0;border-radius:12px;padding:13px 15px;margin-top:14px;
+  color:#fff;background:linear-gradient(135deg,var(--maroon),var(--maroon2));
+  font-weight:900;transition:.2s
+}
+.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.secondary{
+  border:1px solid var(--border);border-radius:11px;padding:10px 13px;
+  color:#fff;background:rgba(255,255,255,.06);font-weight:800
+}
+.source-box{display:grid;gap:10px}
+.source-status{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid var(--border)
+}
+.source-status strong{font-size:13px}
+.badge{
+  display:inline-block;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:900;
+  text-transform:uppercase;white-space:nowrap
+}
+.badge.good{background:rgba(39,174,96,.18);color:#7ff0aa}
+.badge.warn{background:rgba(243,156,18,.18);color:#ffc56b}
+.badge.bad{background:rgba(192,57,43,.18);color:#ff938a}
+.badge.info{background:rgba(41,128,185,.18);color:#8ed2ff}
+.stats{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px
+}
+.stat{
+  padding:15px;border-radius:16px;background:var(--card);border:1px solid var(--border)
+}
+.stat small{display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase}
+.stat strong{display:block;font-size:23px;margin-top:5px;color:var(--pink)}
+.preview-panel{margin-bottom:18px}
+.preview-head{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:15px;
+  flex-wrap:wrap;margin-bottom:15px
+}
+.preview-actions{display:flex;gap:8px;flex-wrap:wrap}
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search-row input{flex:1;min-width:220px}
+.table-wrap{overflow:auto;border-radius:15px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;min-width:980px}
+th,td{padding:11px 12px;border-bottom:1px solid var(--border);text-align:left;font-size:12px}
+th{background:rgba(128,0,0,.48);color:var(--pink);font-size:10px;text-transform:uppercase;position:sticky;top:0;z-index:2}
+td{background:rgba(255,255,255,.018);vertical-align:top}
+.rank{font-weight:900;color:var(--pink);font-size:15px}
+.student-name{font-weight:800}
+.student-id{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.avg{font-weight:900;font-size:15px}
+.honor{display:inline-block;padding:5px 9px;border-radius:999px;background:rgba(245,197,66,.15);color:#ffd966;font-size:10px;font-weight:900}
+.no-honor{color:#777;font-size:10px}
+.subject-list{display:grid;gap:5px;min-width:290px}
+.subject-item{
+  display:flex;justify-content:space-between;gap:12px;padding:5px 7px;
+  border-radius:7px;background:rgba(255,255,255,.035)
+}
+.subject-item span:first-child{font-weight:700}
+.score-good{color:#72e6a0;font-weight:800}
+.score-low{color:#ff8d84;font-weight:800}
+.records-head{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px
+}
+.records-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.record-filters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:13px}
+.record-list{display:grid;gap:10px}
+.record{
+  display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:12px;align-items:center;
+  padding:13px;border:1px solid var(--border);border-radius:15px;background:rgba(255,255,255,.025)
+}
+.record-title{font-weight:850;font-size:13px}
+.record-meta{font-size:10px;color:var(--muted);margin-top:3px}
+.empty{text-align:center;padding:35px;color:var(--muted);font-size:12px}
+.lock-note{
+  margin-top:12px;padding:11px;border-radius:11px;background:rgba(243,156,18,.08);
+  border:1px solid rgba(243,156,18,.2);color:#ffc56b;font-size:11px;line-height:1.5
+}
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);
+  display:none;place-items:center;z-index:9999;padding:18px
+}
+.loader{
+  width:min(430px,100%);padding:25px;border-radius:20px;background:#171219;
+  border:1px solid var(--border);box-shadow:var(--shadow);text-align:center
+}
+.spinner{
+  width:42px;height:42px;border:4px solid rgba(255,255,255,.15);
+  border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader strong{display:block;font-size:15px}
+.loader span{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.hidden{display:none!important}
+@media(max-width:950px){
+  .setup{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .record{grid-template-columns:1fr 1fr}
+  .record button{grid-column:1/-1}
+}
+@media(max-width:650px){
+  .topline{flex-direction:column}
+  .admin-profile{width:100%}
+  .container{width:min(100% - 20px,1250px)}
+  .form-grid,.record-filters{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .panel{padding:15px;border-radius:17px}
+  .header{padding:20px 12px}
+  .status-stack{width:calc(100% - 20px)}
+}
+</style>
+</head>
+
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="topline">
+      <div class="brand">
+        <h1>Academic Report Management</h1>
+        <p>Tyneceploh Educational Foundation — Final Academic Data Center</p>
+      </div>
+      <div class="admin-profile">
+        <div id="adminAvatar" class="admin-avatar">A</div>
+        <div>
+          <div id="adminName" class="admin-name">Administrator</div>
+          <div id="adminMeta" class="admin-meta">Checking admin session...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="statusStack" class="status-stack"></div>
+
+<main class="container">
+
+  <section class="setup">
+    <div class="panel">
+      <div class="steps">
+        <div class="step active"><b>1</b> Select report</div>
+        <div class="step"><b>2</b> Check approvals</div>
+        <div class="step"><b>3</b> Preview</div>
+        <div class="step"><b>4</b> Finalize</div>
+      </div>
+
+      <h2 class="section-title">Create Academic Report</h2>
+      <p class="section-sub">Reports are built only from fully approved grade sheets.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="reportType">Report Type</label>
+          <select id="reportType">
+            <option value="">Select report type</option>
+            <option value="period">Period Report</option>
+            <option value="semester">Semester Report</option>
+            <option value="yearly">Yearly Report</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="classSelect">Class</label>
+          <select id="classSelect" disabled>
+            <option value="">Loading classes...</option>
+          </select>
+        </div>
+
+        <div class="field" id="periodField">
+          <label for="periodSelect">Period</label>
+          <select id="periodSelect">
+            <option value="">Select period</option>
+            <option>1st Period</option>
+            <option>2nd Period</option>
+            <option>3rd Period</option>
+            <option>Semester Exam</option>
+            <option>4th Period</option>
+            <option>5th Period</option>
+            <option>6th Period</option>
+            <option>Final Exam</option>
+          </select>
+        </div>
+
+        <div class="field hidden" id="semesterField">
+          <label for="semesterSelect">Semester</label>
+          <select id="semesterSelect">
+            <option value="">Select semester</option>
+            <option value="Semester 1">Semester 1</option>
+            <option value="Semester 2">Semester 2</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="previewBtn" class="primary" disabled>Check Approved Sheets & Build Preview</button>
+
+      <div class="help">
+        <b>Important:</b> A report is never saved until you press <b>Create Final Academic Report</b>.
+        For semester/yearly reports, every required period must have a fully approved sheet for every student included.
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-title">Approval Source</h2>
+      <p class="section-sub">Live status from the <b>Grades</b> approval collection.</p>
+
+      <div class="source-box">
+        <div class="source-status">
+          <div>
+            <strong id="sourceTitle">Waiting for selection</strong>
+            <div id="sourceDetail" class="record-meta">Choose a report type and class.</div>
+          </div>
+          <span id="sourceBadge" class="badge info">Waiting</span>
+        </div>
+
+        <div class="source-status">
+          <div>
+            <strong>Fully approved sheets</strong>
+            <div id="approvedCountDetail" class="record-meta">No report selection yet.</div>
+          </div>
+          <strong id="approvedCount" style="font-size:18px">0</strong>
+        </div>
+
+        <div class="source-status">
+          <div>
+            <strong>Already generated</strong>
+            <div class="record-meta">Duplicate report protection is active.</div>
+          </div>
+          <strong id="existingStatus" style="font-size:12px;color:#7ff0aa">None</strong>
+        </div>
+      </div>
+
+      <div class="lock-note">
+        <b>Duplicate protection:</b> the final report uses a deterministic Firestore document ID and an atomic transaction.
+        Two clicks or two admin tabs cannot create the same report twice.
+      </div>
+    </div>
+  </section>
+
+  <section id="previewSection" class="hidden">
+    <div class="stats">
+      <div class="stat"><small>Students</small><strong id="studentCount">0</strong></div>
+      <div class="stat"><small>Class Average</small><strong id="classAverage">0.0%</strong></div>
+      <div class="stat"><small>Honor Students</small><strong id="honorCount">0</strong></div>
+      <div class="stat"><small>Passed</small><strong id="passCount">0</strong></div>
+      <div class="stat"><small>Failed</small><strong id="failCount">0</strong></div>
+    </div>
+
+    <div class="panel preview-panel">
+      <div class="preview-head">
+        <div>
+          <h2 class="section-title">Finalization Preview</h2>
+          <p id="previewDescription" class="section-sub">Calculated from approved source data only.</p>
+        </div>
+        <div class="preview-actions">
+          <button id="refreshPreviewBtn" class="secondary">Recheck</button>
+          <button id="createBtn" class="primary" style="width:auto;margin:0;padding:10px 15px" disabled>
+            Create Final Academic Report
+          </button>
+        </div>
+      </div>
+
+      <div class="search-row">
+        <input id="studentSearch" type="search" placeholder="Search student name or student ID...">
+        <select id="honorFilter" style="max-width:190px">
+          <option value="all">All honor status</option>
+          <option value="honor">Honor students</option>
+          <option value="none">No honor</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Student</th>
+              <th>Subjects & Scores</th>
+              <th>Main Average</th>
+              <th>Honor</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody">
+            <tr><td colspan="5" class="empty">No preview generated.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="records-head">
+      <div>
+        <h2 class="section-title">Generated Academic Reports</h2>
+        <p>These are the finalized records stored in <b>academic_reports</b>.</p>
+      </div>
+      <button id="reloadReportsBtn" class="secondary">Refresh Records</button>
+    </div>
+
+    <div class="record-filters">
+      <select id="recordTypeFilter">
+        <option value="all">All report types</option>
+        <option value="period">Period</option>
+        <option value="semester">Semester</option>
+        <option value="yearly">Yearly</option>
+      </select>
+      <select id="recordClassFilter">
+        <option value="all">All classes</option>
+      </select>
+      <input id="recordSearch" placeholder="Search class / period / semester...">
+      <select id="recordHonorFilter">
+        <option value="all">All honor totals</option>
+        <option value="hasHonor">Has honor students</option>
+        <option value="noHonor">No honor students</option>
+      </select>
+    </div>
+
+    <div id="recordList" class="record-list">
+      <div class="empty">Loading generated reports...</div>
+    </div>
+  </section>
+
+</main>
+
+<div id="loadingOverlay" class="overlay">
+  <div class="loader">
+    <div class="spinner"></div>
+    <strong id="loadingTitle">Working...</strong>
+    <span id="loadingDetail">Please wait.</span>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, query, orderBy,
+  doc, getDoc, runTransaction, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzqN9LMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const PERIODS = [
+  "1st Period","2nd Period","3rd Period","Semester Exam",
+  "4th Period","5th Period","6th Period","Final Exam"
+];
+
+const SEMESTERS = {
+  "Semester 1":["1st Period","2nd Period","3rd Period","Semester Exam"],
+  "Semester 2":["4th Period","5th Period","6th Period","Final Exam"]
+};
+
+let adminUser = null;
+let allGrades = [];
+let allReports = [];
+let currentPreview = null;
+let busy = false;
+
+const $ = id => document.getElementById(id);
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function normalize(value){
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function safeNumber(value){
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function showBanner(type,message,detail=""){
+  const el = document.createElement("div");
+  el.className = "banner " + type;
+  el.innerHTML = `<div>${escapeHtml(message)}${detail ? `<div style="font-weight:500;opacity:.78;margin-top:3px">${escapeHtml(detail)}</div>` : ""}</div>`;
+  $("statusStack").prepend(el);
+  setTimeout(()=>el.remove(),7000);
+}
+
+function setLoading(show,title="Working...",detail="Please wait."){
+  $("loadingOverlay").style.display = show ? "grid" : "none";
+  $("loadingTitle").textContent = title;
+  $("loadingDetail").textContent = detail;
+}
+
+function setFormLocked(locked){
+  ["reportType","classSelect","periodSelect","semesterSelect","previewBtn","refreshPreviewBtn","createBtn"].forEach(id=>{
+    $(id).disabled = locked || (id==="classSelect" && allGrades.length===0);
+  });
+}
+
+function loadSession(){
+  try{
+    const raw = localStorage.getItem("user");
+    if(!raw){
+      location.href="login.html";
+      return false;
+    }
+    const u = JSON.parse(raw);
+    if(normalize(u.role) !== "admin"){
+      alert("Unauthorized: Admin access required.");
+      location.href="login.html";
+      return false;
+    }
+    adminUser = u;
+    $("adminName").textContent = u.name || "Administrator";
+    $("adminMeta").textContent = `${u.userId || "Admin"} • Role: Administrator`;
+    $("adminAvatar").textContent = (u.name || "A").trim().charAt(0).toUpperCase();
+    return true;
+  }catch(e){
+    location.href="login.html";
+    return false;
+  }
+}
+
+function isFullyApproved(sheet){
+  if(normalize(sheet.status) !== "approved") return false;
+  if(!Array.isArray(sheet.grades) || !sheet.grades.length) return false;
+  return sheet.grades.every(g => normalize(g.status) === "approved");
+}
+
+function getSheetYear(sheet){
+  return sheet.academicYear || sheet.schoolYear || sheet.year || sheet.session || null;
+}
+
+function getStudentKey(sheet){
+  return String(sheet.studentId || sheet.studentID || sheet.studentUid || sheet.uid || sheet.studentName || "").trim();
+}
+
+function getReportYear(className, selectedSheets=[]){
+  const years = [...new Set(selectedSheets.map(getSheetYear).filter(Boolean).map(String))];
+  if(years.length === 1) return years[0];
+  if(years.length > 1) return years.sort().join("-");
+  return "current";
+}
+
+function normalizeClass(value){
+  return normalize(value);
+}
+
+function reportKey(type,className,period,semester,academicYear){
+  const parts = [
+    academicYear || "current",
+    type,
+    className,
+    period || "",
+    semester || ""
+  ];
+  return parts.map(v=>normalize(v).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")).join("__");
+}
+
+function selectedMeta(){
+  const type = $("reportType").value;
+  const className = $("classSelect").value;
+  const period = type==="period" ? $("periodSelect").value : null;
+  const semester = type==="semester" ? $("semesterSelect").value : null;
+  return {type,className,period,semester};
+}
+
+function requiredPeriods(meta){
+  if(meta.type==="period") return [meta.period];
+  if(meta.type==="semester") return SEMESTERS[meta.semester] || [];
+  if(meta.type==="yearly") return PERIODS.slice();
+  return [];
+}
+
+function refreshDynamicFields(){
+  const type = $("reportType").value;
+  $("periodField").classList.toggle("hidden",type!=="period");
+  $("semesterField").classList.toggle("hidden",type!=="semester");
+  updateSourceStatus();
+}
+
+function populateClasses(){
+  const classes = [...new Set(
+    allGrades.map(g=>String(g.class || "").trim()).filter(Boolean)
+  )].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+
+  $("classSelect").innerHTML =
+    `<option value="">Select class</option>` +
+    classes.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+
+  $("classSelect").disabled = classes.length===0;
+}
+
+function getApprovedSheets(){
+  return allGrades.filter(isFullyApproved);
+}
+
+function findExistingReport(meta){
+  const candidates = allReports.filter(r =>
+    normalize(r.reportType)===normalize(meta.type) &&
+    normalize(r.class)===normalize(meta.className) &&
+    normalize(r.period)===normalize(meta.period) &&
+    normalize(r.semester)===normalize(meta.semester)
+  );
+  return candidates[0] || null;
+}
+
+function updateSourceStatus(){
+  const meta = selectedMeta();
+  if(!meta.type || !meta.className){
+    $("sourceTitle").textContent="Waiting for selection";
+    $("sourceDetail").textContent="Choose a report type and class.";
+    $("sourceBadge").textContent="Waiting";
+    $("sourceBadge").className="badge info";
+    $("approvedCount").textContent="0";
+    $("approvedCountDetail").textContent="No report selection yet.";
+    $("existingStatus").textContent="None";
+    $("previewBtn").disabled=true;
+    return;
+  }
+
+  const periods = requiredPeriods(meta);
+  const approved = getApprovedSheets().filter(s =>
+    normalize(s.className || s.class)===normalizeClass(meta.className) &&
+    periods.includes(String(s.period || "").trim())
+  );
+
+  const existing = findExistingReport(meta);
+
+  $("approvedCount").textContent = approved.length;
+  $("approvedCountDetail").textContent =
+    `${approved.length} fully approved sheet${approved.length===1?"":"s"} matching this selection.`;
+
+  if(existing){
+    $("existingStatus").textContent="Already generated";
+    $("existingStatus").style.color="#ffc56b";
+    $("sourceBadge").textContent="Already Generated";
+    $("sourceBadge").className="badge warn";
+    $("sourceTitle").textContent="This report already exists";
+    $("sourceDetail").textContent="Creation is locked to prevent duplicate academic records.";
+    $("previewBtn").disabled=true;
+  }else{
+    $("existingStatus").textContent="None";
+    $("existingStatus").style.color="#7ff0aa";
+    $("sourceTitle").textContent="Approved source data available";
+    $("sourceDetail").textContent=`Required periods: ${periods.join(", ")}`;
+    $("sourceBadge").textContent="Ready to check";
+    $("sourceBadge").className="badge good";
+    $("previewBtn").disabled=busy;
+  }
+}
+
+async function loadGrades(){
+  setLoading(true,"Loading approved grade data...","Reading the Grades approval collection.");
+  try{
+    const snap = await getDocs(query(collection(db,"Grades"),orderBy("createdAt","desc")));
+    allGrades = snap.docs.map(d=>({...d.data(),docId:d.id}));
+    populateClasses();
+    updateSourceStatus();
+  }catch(err){
+    console.error(err);
+    showBanner("error","Could not load grade submissions.","Check Firestore permissions and the Grades collection.");
+    $("classSelect").innerHTML=`<option value="">Unable to load classes</option>`;
+  }finally{
+    setLoading(false);
+  }
+}
+
+async function loadReports(){
+  try{
+    const snap = await getDocs(collection(db,"academic_reports"));
+    allReports = snap.docs.map(d=>({...d.data(),docId:d.id}));
+    populateReportClassFilter();
+    renderReportList();
+    updateSourceStatus();
+  }catch(err){
+    console.error(err);
+    $("recordList").innerHTML=`<div class="empty">Could not load generated reports. Check Firestore permissions.</div>`;
+  }
+}
+
+function populateReportClassFilter(){
+  const classes=[...new Set(allReports.map(r=>String(r.class||"").trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const old=$("recordClassFilter").value;
+  $("recordClassFilter").innerHTML=
+    `<option value="all">All classes</option>`+
+    classes.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  if(classes.includes(old)) $("recordClassFilter").value=old;
+}
+
+function renderReportList(){
+  const type=$("recordTypeFilter").value;
+  const cls=$("recordClassFilter").value;
+  const search=normalize($("recordSearch").value);
+  const honor=$("recordHonorFilter").value;
+
+  const filtered=allReports.filter(r=>{
+    if(type!=="all" && normalize(r.reportType)!==type) return false;
+    if(cls!=="all" && String(r.class||"")!==cls) return false;
+
+    const hay=normalize([
+      r.class,r.period,r.semester,r.academicYear,r.schoolYear,r.reportId,r.reportKey
+    ].join(" "));
+    if(search && !hay.includes(search)) return false;
+
+    const honors=Number(r.honorStudents ?? r.honorCount ?? 0);
+    if(honor==="hasHonor" && honors<=0) return false;
+    if(honor==="noHonor" && honors>0) return false;
+    return true;
+  });
+
+  if(!filtered.length){
+    $("recordList").innerHTML=`<div class="empty">No generated reports match these filters.</div>`;
+    return;
+  }
+
+  $("recordList").innerHTML=filtered
+    .sort((a,b)=>Number(b.generatedAt?.seconds||0)-Number(a.generatedAt?.seconds||0))
+    .map(r=>{
+      const typeLabel = r.reportType==="period" ? "Period" : r.reportType==="semester" ? "Semester" : "Yearly";
+      const detail = r.period || r.semester || "Full academic year";
+      const date = formatTimestamp(r.generatedAt);
+      const students=Number(r.totalStudents||Array.isArray(r.students)?r.students.length:0);
+      const avg=Number(r.classAverage||0).toFixed(1);
+      const honors=Number(r.honorStudents ?? r.honorCount ?? 0);
+
+      return `
+        <div class="record">
+          <div>
+            <div class="record-title">${escapeHtml(r.class||"Unknown Class")} — ${escapeHtml(typeLabel)}</div>
+            <div class="record-meta">${escapeHtml(detail)}${r.academicYear ? ` • ${escapeHtml(r.academicYear)}`:""}</div>
+          </div>
+          <div>
+            <div class="record-title">${avg}% average</div>
+            <div class="record-meta">${students} students • ${honors} honor</div>
+          </div>
+          <div>
+            <span class="badge good">Finalized</span>
+            <div class="record-meta">${escapeHtml(date)}</div>
+          </div>
+          <button class="secondary" data-view-report="${escapeHtml(r.docId)}">View</button>
+        </div>`;
+    }).join("");
+
+  document.querySelectorAll("[data-view-report]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const r=allReports.find(x=>x.docId===btn.dataset.viewReport);
+      if(r) openSavedReport(r);
+    });
+  });
+}
+
+function formatTimestamp(value){
+  if(!value) return "Date unavailable";
+  try{
+    if(typeof value==="object" && value.seconds){
+      return new Date(value.seconds*1000).toLocaleString();
+    }
+    if(typeof value==="number") return new Date(value).toLocaleString();
+    if(typeof value==="string") return new Date(value).toLocaleString();
+  }catch(e){}
+  return "Date unavailable";
+}
+
+function getStudentGroups(sheets){
+  const map=new Map();
+
+  sheets.forEach(sheet=>{
+    const key=getStudentKey(sheet);
+    if(!key) return;
+    if(!map.has(key)){
+      map.set(key,{
+        studentId:sheet.studentId || sheet.studentID || "",
+        studentName:sheet.studentName || "Student",
+        class:sheet.class || "",
+        sheets:[]
+      });
+    }
+    map.get(key).sheets.push(sheet);
+  });
+
+  return [...map.values()];
+}
+
+function buildStudentReport(student,sheets,meta){
+  const subjects={};
+
+  sheets.forEach(sheet=>{
+    const period=String(sheet.period||"").trim();
+    const grades=Array.isArray(sheet.grades)?sheet.grades:[];
+    grades.forEach(g=>{
+      const subject=String(g.subject||"").trim();
+      const score=safeNumber(g.score);
+      if(!subject || score===null) return;
+
+      if(!subjects[subject]) subjects[subject]={breakdown:[]};
+      subjects[subject].breakdown.push({period,score});
+    });
+  });
+
+  const subjectEntries=Object.entries(subjects);
+  if(!subjectEntries.length) return null;
+
+  const subjectAverages=[];
+  const allScores=[];
+
+  subjectEntries.forEach(([subject,data])=>{
+    const sum=data.breakdown.reduce((a,b)=>a+b.score,0);
+    data.average=Number((sum/data.breakdown.length).toFixed(1));
+    subjectAverages.push(sum/data.breakdown.length);
+    data.breakdown.sort((a,b)=>PERIODS.indexOf(a.period)-PERIODS.indexOf(b.period));
+    data.breakdown.forEach(x=>allScores.push(x.score));
+  });
+
+  const mainAverage=subjectAverages.reduce((a,b)=>a+b,0)/subjectAverages.length;
+  const failed=allScores.some(s=>s<70);
+
+  let honor="";
+  if(!failed){
+    if(mainAverage>=90) honor="Proprietor List";
+    else if(mainAverage>=85) honor="Principal List";
+    else if(mainAverage>=80) honor="Honor Roll";
+  }
+
+  return {
+    studentId:student.studentId || "",
+    studentName:student.studentName || "Student",
+    class:student.class || meta.className,
+    subjects,
+    mainAverage:Number(mainAverage.toFixed(1)),
+    honor,
+    passed:!failed
+  };
+}
+
+function validateAndBuild(meta){
+  const periods=requiredPeriods(meta);
+  if(!meta.type || !meta.className) return {error:"Select a report type and class."};
+  if(meta.type==="period" && !meta.period) return {error:"Select a period."};
+  if(meta.type==="semester" && !meta.semester) return {error:"Select a semester."};
+
+  const approved=getApprovedSheets().filter(s=>
+    normalizeClass(s.class)===normalizeClass(meta.className) &&
+    periods.includes(String(s.period||"").trim())
+  );
+
+  if(!approved.length){
+    return {error:`No fully approved grade sheets were found for ${meta.className}.`};
+  }
+
+  const groups=getStudentGroups(approved);
+  const incomplete=[];
+  const complete=[];
+
+  groups.forEach(student=>{
+    const present=[...new Set(student.sheets.map(s=>String(s.period||"").trim()))];
+    const missing=periods.filter(p=>!present.includes(p));
+    if(missing.length) incomplete.push({
+      name:student.studentName,
+      id:student.studentId,
+      missing
+    });
+    else complete.push(student);
+  });
+
+  if(!complete.length){
+    return {
+      error:"No student has a complete set of fully approved data for this report.",
+      detail:`Required: ${periods.join(", ")}`
+    };
+  }
+
+  /*
+    Strict completeness rule:
+    We do not create a report if a student represented in the selected
+    approved sheets is missing a required period. This prevents partial
+    rankings/honor lists from becoming official academic data.
+  */
+  if(incomplete.length){
+    const sample=incomplete.slice(0,5)
+      .map(x=>`${x.name}${x.id?` (${x.id})`:""} — missing ${x.missing.join(", ")}`)
+      .join(" | ");
+
+    return {
+      error:`Report blocked: ${incomplete.length} student${incomplete.length===1?"":"s"} have incomplete approved data.`,
+      detail:sample + (incomplete.length>5 ? ` + ${incomplete.length-5} more.`:"")
+    };
+  }
+
+  const students=[];
+  for(const student of complete){
+    const result=buildStudentReport(student,student.sheets,meta);
+    if(result) students.push(result);
+  }
+
+  if(!students.length) return {error:"Approved sheets contain no usable score data."};
+
+  students.sort((a,b)=>{
+    if(b.mainAverage!==a.mainAverage) return b.mainAverage-a.mainAverage;
+    return String(a.studentName).localeCompare(String(b.studentName));
+  });
+
+  /*
+    Competition ranking:
+    1, 2, 2, 4
+    Students with equal main averages share the same rank.
+  */
+  let previous=null;
+  let rank=0;
+  students.forEach((s,index)=>{
+    if(previous===null || s.mainAverage!==previous) rank=index+1;
+    s.rank=rank;
+    previous=s.mainAverage;
+  });
+
+  const classAverage=students.reduce((a,b)=>a+b.mainAverage,0)/students.length;
+  const honorCount=students.filter(s=>s.honor).length;
+  const passCount=students.filter(s=>s.passed).length;
+
+  return {
+    meta,
+    students,
+    totalStudents:students.length,
+    classAverage:Number(classAverage.toFixed(1)),
+    honorStudents:honorCount,
+    passCount,
+    failCount:students.length-passCount,
+    sourceSheetIds:approved.map(s=>s.docId),
+    sourceSheetCount:approved.length,
+    academicYear:getReportYear(meta.className,approved),
+    generatedBy:{
+      uid:adminUser?.uid || adminUser?.userId || "",
+      name:adminUser?.name || "Administrator"
+    }
+  };
+}
+
+function renderPreview(){
+  if(!currentPreview){
+    $("previewSection").classList.add("hidden");
+    return;
+  }
+
+  $("previewSection").classList.remove("hidden");
+  $("studentCount").textContent=currentPreview.totalStudents;
+  $("classAverage").textContent=currentPreview.classAverage.toFixed(1)+"%";
+  $("honorCount").textContent=currentPreview.honorStudents;
+  $("passCount").textContent=currentPreview.passCount;
+  $("failCount").textContent=currentPreview.failCount;
+
+  const meta=currentPreview.meta;
+  $("previewDescription").textContent =
+    `${meta.className} • ${meta.type==="period"?meta.period:meta.type==="semester"?meta.semester:"Full Year"} • ${currentPreview.totalStudents} complete student records.`;
+
+  renderPreviewRows();
+  $("createBtn").disabled=false;
+}
+
+function renderPreviewRows(){
+  if(!currentPreview) return;
+
+  const search=normalize($("studentSearch").value);
+  const honorFilter=$("honorFilter").value;
+
+  const students=currentPreview.students.filter(s=>{
+    if(search && !normalize(`${s.studentName} ${s.studentId}`).includes(search)) return false;
+    if(honorFilter==="honor" && !s.honor) return false;
+    if(honorFilter==="none" && s.honor) return false;
+    return true;
+  });
+
+  if(!students.length){
+    $("previewBody").innerHTML=`<tr><td colspan="5" class="empty">No students match this filter.</td></tr>`;
+    return;
+  }
+
+  $("previewBody").innerHTML=students.map(s=>{
+    const subjectHtml=Object.entries(s.subjects).sort(([a],[b])=>a.localeCompare(b)).map(([subject,d])=>{
+      const breakdown=d.breakdown.map(x=>
+        `<span class="${x.score>=70?"score-good":"score-low"}">${escapeHtml(x.period)}: ${x.score}</span>`
+      ).join(" • ");
+      return `<div class="subject-item"><span>${escapeHtml(subject)} <small style="color:#777">Avg ${d.average}</small></span><span>${breakdown}</span></div>`;
+    }).join("");
+
+    return `
+      <tr>
+        <td><span class="rank">#${s.rank}</span></td>
+        <td>
+          <span class="student-name">${escapeHtml(s.studentName)}</span>
+          <span class="student-id">${escapeHtml(s.studentId)}</span>
+        </td>
+        <td><div class="subject-list">${subjectHtml}</div></td>
+        <td><span class="avg">${s.mainAverage.toFixed(1)}%</span></td>
+        <td>${s.honor ? `<span class="honor">${escapeHtml(s.honor)}</span>` : `<span class="no-honor">No Honor</span>`}</td>
+      </tr>`;
+  }).join("");
+}
+
+async function buildPreview(){
+  if(busy) return;
+  const meta=selectedMeta();
+
+  if(findExistingReport(meta)){
+    showBanner("error","This academic report already exists.","No duplicate record will be created.");
+    updateSourceStatus();
+    return;
+  }
+
+  busy=true;
+  setFormLocked(true);
+  setLoading(true,"Checking approved sheets...","Only Grades documents with fully approved status are being considered.");
+
+  try{
+    const result=validateAndBuild(meta);
+
+    if(result.error){
+      currentPreview=null;
+      $("previewSection").classList.add("hidden");
+      $("createBtn").disabled=true;
+      showBanner("error",result.error,result.detail||"No academic report was created.");
+      return;
+    }
+
+    currentPreview=result;
+    renderPreview();
+    showBanner("success","Preview ready.","No database write has happened yet. Review the ranking before finalizing.");
+    window.scrollTo({top:$("previewSection").getBoundingClientRect().top + window.scrollY - 15,behavior:"smooth"});
+  }catch(err){
+    console.error(err);
+    showBanner("error","Could not build the academic report preview.",err.message || "Unexpected error.");
+  }finally{
+    busy=false;
+    setFormLocked(false);
+    updateSourceStatus();
+    $("createBtn").disabled=!currentPreview;
+    setLoading(false);
+  }
+}
+
+function serializeStudents(students){
+  return students.map(s=>({
+    studentId:s.studentId,
+    studentName:s.studentName,
+    class:s.class,
+    subjects:s.subjects,
+    mainAverage:s.mainAverage,
+    rank:s.rank,
+    honor:s.honor,
+    passed:s.passed
+  }));
+}
+
+async function createFinalReport(){
+  if(busy || !currentPreview) return;
+
+  const meta=currentPreview.meta;
+  const key=reportKey(
+    meta.type,meta.className,meta.period,meta.semester,currentPreview.academicYear
+  );
+
+  const reportRef=doc(db,"academic_reports",key);
+
+  if(!confirm(
+    `Create the FINAL academic report?\n\n`+
+    `${meta.className}\n`+
+    `${meta.type==="period"?meta.period:meta.type==="semester"?meta.semester:"Full Academic Year"}\n`+
+    `${currentPreview.totalStudents} students\n`+
+    `Class average: ${currentPreview.classAverage}%\n\n`+
+    `This record becomes the source for report cards, honor lists and rankings.`
+  )) return;
+
+  busy=true;
+  setFormLocked(true);
+  setLoading(true,"Saving final academic report...","Running an atomic duplicate check and writing the finalized snapshot.");
+
+  try{
+    const students=serializeStudents(currentPreview.students);
+
+    await runTransaction(db,async(transaction)=>{
+      const existing=await transaction.get(reportRef);
+
+      if(existing.exists()){
+        throw new Error("DUPLICATE_REPORT");
+      }
+
+      transaction.set(reportRef,{
+        schemaVersion:1,
+        reportKey:key,
+        reportType:meta.type,
+        class:meta.className,
+        period:meta.period || null,
+        semester:meta.semester || null,
+        periods:requiredPeriods(meta),
+        academicYear:currentPreview.academicYear || null,
+
+        students,
+        totalStudents:currentPreview.totalStudents,
+        classAverage:currentPreview.classAverage,
+        honorStudents:currentPreview.honorStudents,
+        honorCount:currentPreview.honorStudents,
+        passCount:currentPreview.passCount,
+        failCount:currentPreview.failCount,
+
+        sourceCollection:"Grades",
+        sourceSheetIds:currentPreview.sourceSheetIds,
+        sourceSheetCount:currentPreview.sourceSheetCount,
+        sourceRule:"Only fully approved grade sheets; every required period must be present for every included student.",
+
+        rankingRule:"Competition ranking by mainAverage descending; equal averages share the same rank.",
+        honorRule:{
+          minimumScore:70,
+          proprietorList:90,
+          principalList:85,
+          honorRoll:80
+        },
+
+        generatedBy:currentPreview.generatedBy,
+        generatedAt:serverTimestamp()
+      });
+    });
+
+    showBanner(
+      "success",
+      "Academic report created successfully.",
+      "This finalized record is now ready to feed report cards, honor listings and other academic pages."
+    );
+
+    currentPreview=null;
+    $("previewSection").classList.add("hidden");
+    await loadReports();
+    await loadGrades();
+
+    window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+  }catch(err){
+    console.error(err);
+    if(err.message==="DUPLICATE_REPORT"){
+      showBanner("error","This report was already created.","Another admin tab or earlier click created the same deterministic report record. Nothing was duplicated.");
+      currentPreview=null;
+      $("previewSection").classList.add("hidden");
+      await loadReports();
+    }else{
+      showBanner("error","Final report was not created.",err.message || "The database write failed. No partial report was intentionally saved.");
+    }
+  }finally{
+    busy=false;
+    setFormLocked(false);
+    updateSourceStatus();
+    $("createBtn").disabled=!currentPreview;
+    setLoading(false);
+  }
+}
+
+function openSavedReport(report){
+  const students=Array.isArray(report.students)?report.students:[];
+  currentPreview={
+    meta:{
+      type:report.reportType,
+      className:report.class,
+      period:report.period || null,
+      semester:report.semester || null
+    },
+    students,
+    totalStudents:report.totalStudents || students.length,
+    classAverage:Number(report.classAverage||0),
+    honorStudents:Number(report.honorStudents ?? report.honorCount ?? 0),
+    passCount:Number(report.passCount||0),
+    failCount:Number(report.failCount||0),
+    academicYear:report.academicYear || "current",
+    sourceSheetIds:report.sourceSheetIds || [],
+    sourceSheetCount:report.sourceSheetCount || 0,
+    saved:true
+  };
+  renderPreview();
+  $("createBtn").disabled=true;
+  showBanner("info","Viewing a finalized report.","This view reads the saved snapshot from academic_reports. It cannot overwrite the existing record.");
+  window.scrollTo({top:$("previewSection").getBoundingClientRect().top + window.scrollY - 15,behavior:"smooth"});
+}
+
+$("reportType").addEventListener("change",()=>{
+  currentPreview=null;
+  $("previewSection").classList.add("hidden");
+  refreshDynamicFields();
+});
+
+$("classSelect").addEventListener("change",()=>{
+  currentPreview=null;
+  $("previewSection").classList.add("hidden");
+  updateSourceStatus();
+});
+
+$("periodSelect").addEventListener("change",updateSourceStatus);
+$("semesterSelect").addEventListener("change",updateSourceStatus);
+
+$("previewBtn").addEventListener("click",buildPreview);
+$("refreshPreviewBtn").addEventListener("click",buildPreview);
+$("createBtn").addEventListener("click",createFinalReport);
+
+$("studentSearch").addEventListener("input",renderPreviewRows);
+$("honorFilter").addEventListener("change",renderPreviewRows);
+
+["recordTypeFilter","recordClassFilter","recordHonorFilter"].forEach(id=>{
+  $(id).addEventListener("change",renderReportList);
+});
+$("recordSearch").addEventListener("input",renderReportList);
+
+$("reloadReportsBtn").addEventListener("click",async()=>{
+  setLoading(true,"Refreshing finalized reports...","Reading academic_reports.");
+  try{await loadReports();showBanner("success","Report records refreshed.");}
+  finally{setLoading(false);}
+});
+
+async function boot(){
+  if(!loadSession()) return;
+
+  setLoading(true,"Starting Academic Report Management...","Loading approved grade sheets and finalized reports.");
+  try{
+    await Promise.all([loadGrades(),loadReports()]);
+    showBanner("info","Ready.","Select a report type and class. Only fully approved grade sheets can become final academic data.");
+  }catch(err){
+    console.error(err);
+    showBanner("error","The page could not finish loading.",err.message||"Please refresh and try again.");
+  }finally{
+    setLoading(false);
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
