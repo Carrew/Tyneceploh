@@ -1,181 +1,529 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Visionary Admin - TEF</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <title>Visionary Admin - TEF</title>
   <style>
+    :root {
+      --bg-main: #0b0b0f;
+      --bg-card: rgba(255, 255, 255, 0.05);
+      --bg-card-hover: rgba(255, 255, 255, 0.08);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #ffffff;
+      --text-muted: #9ca3af;
+      --accent-gradient: linear-gradient(135deg, #800000, #ffc0cb);
+      --accent-hover-shadow: rgba(128, 0, 0, 0.4);
+      --danger: #ef4444;
+      --success: #27ae60;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: system-ui;
-      background: radial-gradient(circle at top, #1a0010, #0b0b0f);
-      color: white;
-      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #1a0010, var(--bg-main));
+      color: var(--text-main);
+      padding: 30px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .card {
-      background: rgba(255,255,255,0.06);
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-      backdrop-filter: blur(10px);
-    }
-
-    input, button {
+    .container {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
+      max-width: 850px;
     }
 
+    header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: #ffc0cb;
+      margin-bottom: 6px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      padding: 24px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: #f3f4f6;
+    }
+
+    /* Buttons */
     button {
-      background: linear-gradient(135deg, #800000, #ffc0cb);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--accent-gradient);
       color: white;
       cursor: pointer;
       font-weight: bold;
+      font-size: 0.9rem;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      box-shadow: 0 4px 12px var(--accent-hover-shadow);
+    }
+
+    button:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px var(--accent-hover-shadow);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Modern Drag-and-Drop Zones */
+    .dropzone {
+      border: 2px dashed rgba(255, 192, 203, 0.25);
+      background: rgba(255, 255, 255, 0.01);
+      padding: 24px;
+      border-radius: var(--radius-sm);
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 14px;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: #ffc0cb;
+      background: rgba(255, 192, 203, 0.04);
+    }
+
+    .dropzone input[type="file"] {
+      display: none;
+    }
+
+    .dropzone-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .dropzone-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .dropzone-text span {
+      color: #ffc0cb;
+      font-weight: 500;
+    }
+
+    .file-indicator {
+      font-size: 0.85rem;
+      color: #34d399;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* Previews & Management Grids */
+    .preview-container {
+      margin-bottom: 16px;
+      border-radius: 10px;
+      overflow: hidden;
+      max-height: 200px;
+      background: #000;
+      border: 1px solid var(--border-color);
+    }
+
+    .preview-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
-    img {
-      width: 100%;
-      border-radius: 10px;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #27ae60;
-      padding: 10px 15px;
+    .grid-item {
+      position: relative;
+      background: #000;
       border-radius: 8px;
-      display: none;
+      overflow: hidden;
+      height: 110px;
+      border: 1px solid var(--border-color);
     }
 
-    .danger {
-      background: #e74c3c;
+    .grid-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .remove-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(239, 68, 68, 0.85);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: var(--transition);
+      padding: 0;
+    }
+
+    .remove-badge:hover {
+      background: var(--danger);
+      transform: scale(1.1);
+    }
+
+    /* Inline Toast Notifications */
+    #notification-container {
+      margin-bottom: 16px;
+    }
+
+    .notification {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeIn 0.25s ease;
+      border: 1px solid transparent;
+    }
+
+    .notification.success {
+      background: rgba(39, 174, 96, 0.12);
+      border-color: rgba(39, 174, 96, 0.25);
+      color: #2ecc71;
+    }
+
+    .notification.error {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+
+    .notification.info {
+      background: rgba(255, 192, 203, 0.12);
+      border-color: rgba(255, 192, 203, 0.25);
+      color: #ffc0cb;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
-
 <body>
 
-<h2>🎯 Visionary Admin Panel</h2>
+  <div class="container">
+    <header>
+      <h2>👑 Our Visionary — Admin Panel</h2>
+      <p class="subtitle">Manage the hero profile image and gallery portfolio for Mrs. Margret Ploh Chattah's tribute.</p>
+    </header>
 
-<div class="card">
-  <h3>Main Image</h3>
-  <input type="file" id="mainImg">
-  <button onclick="uploadMain()">Upload Main Image</button>
-</div>
+    <!-- Inline Toast Notification Banner -->
+    <div id="notification-container"></div>
 
-<div class="card">
-  <h3>Gallery Upload</h3>
-  <input type="file" id="galleryImgs" multiple>
-  <button onclick="uploadGallery()">Upload Gallery</button>
-</div>
-
-<div class="card">
-  <h3>Gallery</h3>
-  <div id="gallery" class="grid"></div>
-</div>
-
-<div id="toast" class="toast"></div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const app = initializeApp({
-  apiKey:"YOUR_KEY",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
-});
-
-const db = getFirestore(app);
-
-const docRef = doc(db, "visionary", "content");
-
-function toast(msg, err=false){
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.className = err ? "toast danger" : "toast";
-  t.style.display = "block";
-  setTimeout(()=> t.style.display="none", 3000);
-}
-
-async function upload(file){
-  const form = new FormData();
-  form.append("file", file);
-  form.append("upload_preset", "Tyneceploh");
-
-  const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload",{
-    method:"POST",
-    body:form
-  });
-
-  const data = await res.json();
-  return data.secure_url;
-}
-
-window.uploadMain = async function(){
-  const file = document.getElementById("mainImg").files[0];
-  if(!file) return toast("Select image", true);
-
-  const url = await upload(file);
-
-  await setDoc(docRef, { mainImage: url }, { merge:true });
-
-  toast("Main image updated");
-}
-
-window.uploadGallery = async function(){
-  const files = document.getElementById("galleryImgs").files;
-  if(!files.length) return toast("No images selected", true);
-
-  const snap = await getDoc(docRef);
-  let gallery = snap.exists() ? snap.data().gallery || [] : [];
-
-  for(let f of files){
-    const url = await upload(f);
-    gallery.push(url);
-  }
-
-  await setDoc(docRef, { gallery }, { merge:true });
-
-  toast("Gallery updated");
-  load();
-}
-
-async function load(){
-  const snap = await getDoc(docRef);
-  const data = snap.data();
-
-  const g = document.getElementById("gallery");
-  g.innerHTML = (data?.gallery || []).map((img,i)=>`
-    <div>
-      <img src="${img}">
-      <button onclick="del(${i})">Delete</button>
+    <!-- Main Hero Image Card -->
+    <div class="card">
+      <h3>Main Visionary Portrait</h3>
+      <div id="mainPreviewWrapper" class="preview-container" style="display: none;">
+        <img id="currentMainImg" alt="Main Visionary Preview">
+      </div>
+      
+      <div class="dropzone" id="mainDropzone" onclick="document.getElementById('mainFileInput').click()">
+        <div class="dropzone-icon">🖼️</div>
+        <div class="dropzone-text">Click or drop a new portrait image here</div>
+        <input type="file" id="mainFileInput" accept="image/*" onchange="handleMainSelection(this)">
+        <div id="mainFileIndicator" class="file-indicator"></div>
+      </div>
+      
+      <button onclick="uploadMainImage()" id="uploadMainBtn">Update Main Portrait</button>
     </div>
-  `).join("");
-}
 
-window.del = async function(i){
-  const snap = await getDoc(docRef);
-  let gallery = snap.data().gallery || [];
-  gallery.splice(i,1);
+    <!-- Gallery Photos Card -->
+    <div class="card">
+      <h3>Gallery Photos Management</h3>
+      <div id="galleryGrid" class="grid">
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px;">Loading gallery items...</div>
+      </div>
 
-  await setDoc(docRef,{gallery},{merge:true});
-  toast("Deleted");
-  load();
-}
+      <div class="dropzone" id="galleryDropzone" onclick="document.getElementById('galleryFileInput').click()">
+        <div class="dropzone-icon">📂</div>
+        <div class="dropzone-text">Add more gallery photos (multiple selection supported)</div>
+        <input type="file" id="galleryFileInput" multiple accept="image/*" onchange="handleGallerySelection(this)">
+        <div id="galleryFileIndicator" class="file-indicator"></div>
+      </div>
 
-load();
-</script>
+      <button onclick="uploadGalleryImages()" id="uploadGalleryBtn">Upload & Add to Gallery</button>
+    </div>
+  </div>
 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey: "YOUR_KEY",
+      authDomain: "tyneceploh.firebaseapp.com",
+      projectId: "tyneceploh"
+    });
+
+    const db = getFirestore(app);
+    const docRef = doc(db, "visionary", "content");
+
+    let visionaryData = {
+      mainImage: "",
+      gallery: []
+    };
+
+    // Inline Toast Notification Banner Helper
+    window.showNotice = function(msg, type = 'success') {
+      const container = document.getElementById("notification-container");
+      container.innerHTML = `
+        <div class="notification ${type}">
+          <span>${msg}</span>
+          <button class="secondary" onclick="this.parentElement.remove()" style="padding: 2px 8px; width: auto; font-size: 0.8rem;">✕</button>
+        </div>
+      `;
+      setTimeout(() => {
+        const el = container.querySelector('.notification');
+        if (el) el.remove();
+      }, 4000);
+    };
+
+    // Cloudinary Uploader worker
+    async function uploadToCloudinary(file) {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("upload_preset", "Tyneceploh");
+
+      const res = await fetch("https://api.cloudinary.com/v1_1/dfyzyf9eo/image/upload", {
+        method: "POST",
+        body: form
+      });
+
+      if (!res.ok) throw new Error("Cloudinary upload failed");
+      const data = await res.json();
+      return data.secure_url;
+    }
+
+    // Load initial data from Firebase Firestore
+    async function loadContent() {
+      try {
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          visionaryData = snap.data();
+        }
+        renderUI();
+      } catch (err) {
+        showNotice("Failed to load content from database.", "error");
+      }
+    }
+
+    function renderUI() {
+      // Render Main Image
+      const previewWrapper = document.getElementById("mainPreviewWrapper");
+      const mainImgTag = document.getElementById("currentMainImg");
+      if (visionaryData.mainImage) {
+        mainImgTag.src = visionaryData.mainImage;
+        previewWrapper.style.display = "block";
+      } else {
+        previewWrapper.style.display = "none";
+      }
+
+      // Render Gallery Grid
+      const galleryGrid = document.getElementById("galleryGrid");
+      const galleryList = visionaryData.gallery || [];
+
+      if (galleryList.length === 0) {
+        galleryGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 15px; font-size: 0.85rem;">No gallery photos added yet.</div>`;
+        return;
+      }
+
+      galleryGrid.innerHTML = galleryList.map((url, index) => `
+        <div class="grid-item">
+          <img src="${url}" loading="lazy" alt="Gallery item">
+          <button class="remove-badge" title="Remove photo" onclick="removeGalleryImage(${index})">✕</button>
+        </div>
+      `).join("");
+    }
+
+    // File selection UI feedback handlers
+    window.handleMainSelection = function(input) {
+      const indicator = document.getElementById("mainFileIndicator");
+      if (input.files.length > 0) {
+        indicator.innerText = `✓ Selected: ${input.files[0].name}`;
+      } else {
+        indicator.innerText = "";
+      }
+    };
+
+    window.handleGallerySelection = function(input) {
+      const indicator = document.getElementById("galleryFileIndicator");
+      if (input.files.length > 0) {
+        indicator.innerText = `✓ ${input.files.length} photo(s) queued for upload`;
+      } else {
+        indicator.innerText = "";
+      }
+    };
+
+    // Drag-and-Drop Event Listeners setup
+    function setupDragAndDrop(dropzoneId, inputId) {
+      const dropzone = document.getElementById(dropzoneId);
+      ['dragenter', 'dragover'].forEach(eName => {
+        dropzone.addEventListener(eName, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); }, false);
+      });
+      ['dragleave', 'drop'].forEach(eName => {
+        dropzone.addEventListener(eName, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); }, false);
+      });
+    }
+    setupDragAndDrop('mainDropzone', 'mainFileInput');
+    setupDragAndDrop('galleryDropzone', 'galleryFileInput');
+
+    document.getElementById('mainDropzone').addEventListener('drop', (e) => {
+      document.getElementById('mainFileInput').files = e.dataTransfer.files;
+      handleMainSelection(document.getElementById('mainFileInput'));
+    });
+
+    document.getElementById('galleryDropzone').addEventListener('drop', (e) => {
+      document.getElementById('galleryFileInput').files = e.dataTransfer.files;
+      handleGallerySelection(document.getElementById('galleryFileInput'));
+    });
+
+    // UPLOAD MAIN PORTRAIT
+    window.uploadMainImage = async function() {
+      const input = document.getElementById("mainFileInput");
+      const btn = document.getElementById("uploadMainBtn");
+
+      if (!input.files.length) return showNotice("Please select a portrait image first.", "error");
+
+      try {
+        btn.disabled = true;
+        btn.innerText = "Uploading to Cloudinary...";
+        
+        const url = await uploadToCloudinary(input.files[0]);
+        visionaryData.mainImage = url;
+
+        btn.innerText = "Saving to Database...";
+        await setDoc(docRef, visionaryData, { merge: true });
+
+        input.value = "";
+        document.getElementById("mainFileIndicator").innerText = "";
+        showNotice("Main visionary portrait updated successfully!");
+        renderUI();
+      } catch (err) {
+        showNotice("Failed to update main image.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Update Main Portrait";
+      }
+    };
+
+    // UPLOAD GALLERY IMAGES
+    window.uploadGalleryImages = async function() {
+      const input = document.getElementById("galleryFileInput");
+      const btn = document.getElementById("uploadGalleryBtn");
+      const files = input.files;
+
+      if (!files.length) return showNotice("Please select at least one photo.", "error");
+
+      try {
+        btn.disabled = true;
+        if (!visionaryData.gallery) visionaryData.gallery = [];
+
+        for (let i = 0; i < files.length; i++) {
+          btn.innerText = `Uploading (${i + 1}/${files.length})...`;
+          const url = await uploadToCloudinary(files[i]);
+          visionaryData.gallery.push(url);
+        }
+
+        btn.innerText = "Saving changes...";
+        await setDoc(docRef, visionaryData, { merge: true });
+
+        input.value = "";
+        document.getElementById("galleryFileIndicator").innerText = "";
+        showNotice(`Successfully added ${files.length} photo(s) to the gallery!`);
+        renderUI();
+      } catch (err) {
+        showNotice("Error uploading gallery images.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Upload & Add to Gallery";
+      }
+    };
+
+    // REMOVE GALLERY IMAGE
+    window.removeGalleryImage = async function(index) {
+      if (!confirm("Remove this photo from the gallery?")) return;
+
+      try {
+        visionaryData.gallery.splice(index, 1);
+        await setDoc(docRef, visionaryData, { merge: true });
+        showNotice("Photo removed from gallery.", "info");
+        renderUI();
+      } catch (err) {
+        showNotice("Failed to remove photo.", "error");
+      }
+    };
+
+    // Boot loader
+    loadContent();
+  </script>
 </body>
 </html>
