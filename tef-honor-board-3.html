@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#12070c">
+<title>TEF Honor Board</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --maroon-2:#a30a4d;
+  --pink:#ffc0cb;
+  --bg:#08080b;
+  --surface:#111116;
+  --surface-2:#17171e;
+  --line:rgba(255,255,255,.09);
+  --text:#fff;
+  --muted:#a7a7b0;
+  --gold:#f3c969;
+  --green:#63e6a2;
+  --blue:#7fc8ff;
+  --danger:#ff7b87;
+  --shadow:0 24px 70px rgba(0,0,0,.34);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(900px 500px at 8% -5%,rgba(128,0,0,.30),transparent 65%),
+    radial-gradient(700px 500px at 100% 20%,rgba(163,10,77,.13),transparent 65%),
+    var(--bg);
+}
+button,select{font:inherit}
+button{cursor:pointer}
+
+.app{
+  width:min(1240px,calc(100% - 28px));
+  margin:auto;
+  padding:18px 0 38px;
+}
+
+/* NAVIGATION */
+.nav{
+  position:sticky;
+  top:12px;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:10px 12px;
+  margin-bottom:20px;
+  background:rgba(12,12,16,.82);
+  border:1px solid var(--line);
+  border-radius:18px;
+  backdrop-filter:blur(18px);
+  box-shadow:0 14px 45px rgba(0,0,0,.24);
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.brand-mark{
+  width:38px;height:38px;
+  display:grid;place-items:center;
+  border-radius:12px;
+  background:linear-gradient(145deg,var(--maroon),var(--maroon-2));
+  box-shadow:0 8px 22px rgba(128,0,0,.28);
+  font-size:18px;
+}
+.brand-text{min-width:0}
+.brand-text strong{display:block;font-size:13px;letter-spacing:.2px}
+.brand-text span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.nav-links{display:flex;gap:4px}
+.nav-links a{
+  color:var(--muted);
+  text-decoration:none;
+  padding:9px 12px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:750;
+  transition:.2s;
+}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,.06)}
+@media(max-width:620px){
+  .nav-links a{padding:8px;font-size:11px}
+  .nav-links a:nth-child(3){display:none}
+}
+
+/* HERO */
+.hero{
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:end;
+  gap:24px;
+  padding:34px;
+  min-height:225px;
+  border:1px solid var(--line);
+  border-radius:28px;
+  background:
+    linear-gradient(135deg,rgba(128,0,0,.96),rgba(48,0,18,.96) 58%,rgba(15,8,12,.98));
+  box-shadow:var(--shadow);
+}
+.hero:after{
+  content:"";
+  position:absolute;
+  width:330px;height:330px;
+  right:-100px;top:-160px;
+  border:1px solid rgba(255,192,203,.16);
+  border-radius:50%;
+  box-shadow:0 0 0 50px rgba(255,192,203,.025),0 0 0 100px rgba(255,192,203,.018);
+}
+.eyebrow{
+  display:inline-flex;
+  padding:7px 10px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  background:rgba(0,0,0,.14);
+  color:var(--pink);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.hero h1{
+  position:relative;
+  z-index:1;
+  margin:13px 0 7px;
+  font-size:clamp(30px,5vw,50px);
+  line-height:1;
+  letter-spacing:-1.6px;
+}
+.hero p{
+  position:relative;
+  z-index:1;
+  margin:0;
+  color:rgba(255,255,255,.68);
+  font-size:13px;
+}
+.hero-side{
+  position:relative;
+  z-index:2;
+  min-width:150px;
+  padding:14px 16px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;
+  background:rgba(0,0,0,.16);
+  text-align:right;
+}
+.hero-side small{
+  display:block;color:rgba(255,255,255,.56);
+  font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;
+}
+.hero-side strong{display:block;margin-top:4px;font-size:18px}
+@media(max-width:680px){
+  .hero{grid-template-columns:1fr;padding:25px;min-height:0}
+  .hero-side{text-align:left;width:max-content}
+}
+
+/* CONTROLS */
+.section{scroll-margin-top:92px}
+.controls{
+  margin-top:16px;
+  padding:16px;
+  display:grid;
+  grid-template-columns:1.25fr 1fr 1fr auto;
+  gap:10px;
+  align-items:end;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:rgba(255,255,255,.035);
+  backdrop-filter:blur(14px);
+}
+.field label{
+  display:block;
+  margin:0 0 6px 2px;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+}
+select{
+  width:100%;
+  min-height:46px;
+  padding:11px 13px;
+  color:#fff;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  outline:none;
+}
+select:focus{
+  border-color:rgba(255,192,203,.55);
+  box-shadow:0 0 0 3px rgba(255,192,203,.10);
+}
+select option{background:#151117;color:#fff}
+.primary{
+  min-height:46px;
+  padding:11px 18px;
+  border:0;
+  border-radius:12px;
+  color:#fff;
+  font-weight:850;
+  background:linear-gradient(135deg,var(--maroon),var(--maroon-2));
+  box-shadow:0 10px 24px rgba(128,0,0,.22);
+  transition:.2s;
+}
+.primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.primary:disabled{opacity:.6;cursor:wait;transform:none}
+@media(max-width:900px){.controls{grid-template-columns:1fr 1fr}.controls .primary{grid-column:1/-1}}
+@media(max-width:560px){.controls{grid-template-columns:1fr}}
+
+/* STATUS */
+.notice{
+  display:none;
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:13px;
+  font-size:12px;
+  border:1px solid var(--line);
+}
+.notice.show{display:block}
+.notice.info{background:rgba(127,200,255,.07);color:#c6e7ff}
+.notice.error{background:rgba(255,123,135,.08);color:#ffc1c7}
+
+/* STATS */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:16px 0;
+}
+.stat{
+  padding:17px;
+  border:1px solid var(--line);
+  border-radius:17px;
+  background:rgba(255,255,255,.035);
+}
+.stat small{
+  display:block;color:var(--muted);
+  font-size:9px;font-weight:900;
+  letter-spacing:.7px;text-transform:uppercase;
+}
+.stat strong{display:block;margin-top:5px;font-size:25px;letter-spacing:-.5px}
+.stat .sub{display:block;margin-top:3px;color:#777781;font-size:10px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:380px){.stats{grid-template-columns:1fr}}
+
+/* BOARD */
+.board-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:15px;
+  margin:25px 2px 12px;
+}
+.board-head h2{margin:0;font-size:20px;letter-spacing:-.4px}
+.board-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.board{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+}
+.student{
+  position:relative;
+  overflow:hidden;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+  box-shadow:0 14px 40px rgba(0,0,0,.22);
+  transition:.22s;
+}
+.student:hover{
+  transform:translateY(-3px);
+  border-color:rgba(255,192,203,.18);
+}
+.student:before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;width:3px;
+}
+.student.proprietor:before{background:var(--gold)}
+.student.principal:before{background:var(--green)}
+.student.honor:before{background:var(--blue)}
+
+.top{display:flex;align-items:center;gap:13px}
+.avatar-wrap{position:relative;flex:0 0 62px}
+.avatar{
+  display:block;
+  width:62px;height:62px;
+  object-fit:cover;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.18);
+  background:#1b1b20;
+}
+.avatar-fallback{
+  width:62px;height:62px;
+  display:grid;place-items:center;
+  border-radius:50%;
+  color:#fff;
+  font-size:21px;font-weight:900;
+  background:linear-gradient(145deg,#4b0014,#a30a4d);
+  border:2px solid rgba(255,192,203,.22);
+}
+.photo-dot{
+  position:absolute;
+  right:1px;bottom:2px;
+  width:12px;height:12px;
+  border-radius:50%;
+  background:var(--green);
+  border:3px solid #111116;
+}
+.name{font-size:15px;font-weight:850;line-height:1.25}
+.student-id{margin-top:3px;color:var(--pink);font-size:10px;font-weight:700}
+.rank{margin-top:3px;color:var(--muted);font-size:10px}
+.badge{
+  display:inline-flex;
+  margin-top:14px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:9px;font-weight:900;letter-spacing:.7px;
+}
+.badge.proprietor{color:#ffe29b;background:rgba(243,201,105,.11);border:1px solid rgba(243,201,105,.24)}
+.badge.principal{color:#88efb4;background:rgba(99,230,162,.09);border:1px solid rgba(99,230,162,.22)}
+.badge.honor{color:#91d1ff;background:rgba(127,200,255,.09);border:1px solid rgba(127,200,255,.22)}
+.meta{
+  display:flex;align-items:end;justify-content:space-between;gap:12px;
+  margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+}
+.meta span:first-child{color:var(--muted);font-size:10px}
+.average{font-size:19px;font-weight:950}
+.empty{
+  grid-column:1/-1;
+  padding:58px 20px;
+  text-align:center;
+  border:1px dashed rgba(255,255,255,.13);
+  border-radius:20px;
+  background:rgba(255,255,255,.025);
+}
+.empty-icon{font-size:28px;opacity:.8}
+.empty h3{margin:10px 0 5px;font-size:16px}
+.empty p{margin:0;color:var(--muted);font-size:11px}
+@media(max-width:980px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.board{grid-template-columns:1fr}}
+
+/* RULES */
+.rules{
+  margin-top:24px;
+  padding:20px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:rgba(255,255,255,.028);
+}
+.rules h2{margin:0;font-size:15px}
+.rules p{margin:5px 0 13px;color:var(--muted);font-size:11px}
+.rule-list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.rule{
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.025);
+  color:#c9c9d0;
+  font-size:10px;
+  line-height:1.45;
+}
+@media(max-width:620px){.rule-list{grid-template-columns:1fr}}
+
+.footer{
+  padding:22px 4px 0;
+  text-align:center;
+  color:#5f5f68;
+  font-size:9px;
+}
+.spinner{
+  display:inline-block;
+  width:15px;height:15px;
+  margin-right:7px;
+  vertical-align:-3px;
+  border:2px solid rgba(255,255,255,.2);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .75s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <nav class="nav">
+    <div class="brand">
+      <div class="brand-mark">🏆</div>
+      <div class="brand-text">
+        <strong>TEF Academic</strong>
+        <span>Tyneceploh Educational Foundation</span>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="#boardSection">Honor Board</a>
+      <a href="#rules">Rules</a>
+      <a href="#footer">About</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="eyebrow">Official Academic Recognition</span>
+      <h1>Honor Board</h1>
+      <p>Celebrating students who meet TEF's academic recognition standards.</p>
+    </div>
+    <div class="hero-side">
+      <small>Current selection</small>
+      <strong id="selectionLabel">Not selected</strong>
+    </div>
+  </header>
+
+  <section class="section controls" aria-label="Honor Board filters">
+    <div class="field">
+      <label for="classSelect">Class</label>
+      <select id="classSelect">
+        <option value="">Loading classes...</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="reportType">Report Type</label>
+      <select id="reportType">
+        <option value="period">Period</option>
+        <option value="semester">Semester</option>
+        <option value="yearly">Yearly</option>
+      </select>
+    </div>
+
+    <div class="field" id="periodField">
+      <label for="periodSelect">Academic Period</label>
+      <select id="periodSelect">
+        <option>1st Period</option>
+        <option>2nd Period</option>
+        <option>3rd Period</option>
+        <option>Semester Exam</option>
+        <option>4th Period</option>
+        <option>5th Period</option>
+        <option>6th Period</option>
+        <option>Final Exam</option>
+      </select>
+    </div>
+
+    <div class="field" id="semesterField" style="display:none">
+      <label for="semesterSelect">Semester</label>
+      <select id="semesterSelect">
+        <option>Semester 1</option>
+        <option>Semester 2</option>
+      </select>
+    </div>
+
+    <button class="primary" id="generateBtn">View Honor Board</button>
+  </section>
+
+  <div id="notice" class="notice"></div>
+
+  <section class="stats" aria-label="Honor Board summary">
+    <div class="stat">
+      <small>Students on Board</small>
+      <strong id="honorCount">0</strong>
+      <span class="sub">Qualified students</span>
+    </div>
+    <div class="stat">
+      <small>Proprietor List</small>
+      <strong id="proprietorCount">0</strong>
+      <span class="sub">90% and above</span>
+    </div>
+    <div class="stat">
+      <small>Principal List</small>
+      <strong id="principalCount">0</strong>
+      <span class="sub">85% and above</span>
+    </div>
+    <div class="stat">
+      <small>Honor Roll</small>
+      <strong id="honorRollCount">0</strong>
+      <span class="sub">80% and above</span>
+    </div>
+  </section>
+
+  <section id="boardSection" class="section">
+    <div class="board-head">
+      <div>
+        <h2>Recognized Students</h2>
+        <p id="boardSubtitle">Choose a class and academic period to view recognition.</p>
+      </div>
+    </div>
+    <div id="board" class="board">
+      <div class="empty">
+        <div class="empty-icon">🎓</div>
+        <h3>Select a class and academic period</h3>
+        <p>The official honor classifications will appear here.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="rules" class="section rules">
+    <h2>Honor Board standards</h2>
+    <p>Recognition follows the rules used by the older TEF Honor Board.</p>
+    <div class="rule-list">
+      <div class="rule">Every recorded score must be <strong>70% or higher</strong>.</div>
+      <div class="rule"><strong>90%+</strong> average → Proprietor List.</div>
+      <div class="rule"><strong>85%+</strong> average → Principal List.</div>
+      <div class="rule"><strong>80%+</strong> average → Honor Roll.</div>
+      <div class="rule">Any recorded score below 70% makes the student ineligible.</div>
+      <div class="rule">Only students who qualify are displayed on the Honor Board.</div>
+    </div>
+  </section>
+
+  <footer id="footer" class="footer">
+    TEF Academic Honor Board • Student photographs are loaded from the student's TEF profile.
+  </footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+const PERIODS = [
+  "1st Period","2nd Period","3rd Period","Semester Exam",
+  "4th Period","5th Period","6th Period","Final Exam"
+];
+
+const SEMESTERS = {
+  "Semester 1":["1st Period","2nd Period","3rd Period","Semester Exam"],
+  "Semester 2":["4th Period","5th Period","6th Period","Final Exam"]
+};
+
+let reports = [];
+let studentProfiles = new Map();
+
+const classSelect = document.getElementById("classSelect");
+const reportType = document.getElementById("reportType");
+const periodSelect = document.getElementById("periodSelect");
+const semesterSelect = document.getElementById("semesterSelect");
+const periodField = document.getElementById("periodField");
+const semesterField = document.getElementById("semesterField");
+const generateBtn = document.getElementById("generateBtn");
+const board = document.getElementById("board");
+const notice = document.getElementById("notice");
+
+function escapeHTML(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function showNotice(message,type="info"){
+  notice.textContent = message;
+  notice.className = `notice show ${type}`;
+}
+
+function clearNotice(){
+  notice.textContent = "";
+  notice.className = "notice";
+}
+
+/*
+  IMPORTANT PHOTO LOGIC
+  The academic_reports snapshot contains studentId/studentName, but the
+  report generator does not currently copy photoURL into that snapshot.
+  Therefore the Honor Board resolves each studentId against the users
+  collection, where Student Management stores the real Cloudinary photoURL.
+
+  There is deliberately NO school-logo fallback here.
+*/
+function getStudentProfile(student){
+  const id = String(
+    student.studentId ||
+    student.userId ||
+    ""
+  ).trim();
+
+  return studentProfiles.get(id) || null;
+}
+
+function getPhotoURL(student){
+  const profile = getStudentProfile(student);
+
+  return (
+    student.photoURL ||
+    profile?.photoURL ||
+    profile?.avatar ||
+    ""
+  );
+}
+
+function getInitials(name){
+  const parts = String(name || "Student")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if(parts.length >= 2){
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  return (parts[0]?.[0] || "S").toUpperCase();
+}
+
+function avatarHTML(student){
+  const photo = getPhotoURL(student);
+  const initials = getInitials(student.studentName);
+
+  if(photo){
+    return `
+      <div class="avatar-wrap">
+        <img
+          class="avatar"
+          src="${escapeHTML(photo)}"
+          alt="${escapeHTML(student.studentName || "Student")} photo"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='grid';this.parentElement.querySelector('.photo-dot').style.display='none';"
+        >
+        <div class="avatar-fallback" style="display:none">${initials}</div>
+        <span class="photo-dot" aria-hidden="true"></span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="avatar-wrap">
+      <div class="avatar-fallback">${initials}</div>
+    </div>
+  `;
+}
+
+/* Older TEF Honor Board rules. */
+function classifyHonor(student){
+  const allScores = [];
+
+  Object.values(student.subjects || {}).forEach(subject=>{
+    (subject.breakdown || []).forEach(item=>{
+      const score = Number(item.score);
+      if(Number.isFinite(score)) allScores.push(score);
+    });
+  });
+
+  /*
+    Recalculate each subject average from its breakdown where possible.
+    This makes the board resilient if an older snapshot has an incomplete
+    stored subject.average field.
+  */
+  const subjectAverages = Object.values(student.subjects || {})
+    .map(subject=>{
+      const scores = (subject.breakdown || [])
+        .map(x=>Number(x.score))
+        .filter(Number.isFinite);
+
+      if(scores.length){
+        return scores.reduce((a,b)=>a+b,0) / scores.length;
+      }
+
+      const stored = Number(subject.average);
+      return Number.isFinite(stored) ? stored : null;
+    })
+    .filter(x=>Number.isFinite(x));
+
+  const mainAverage = subjectAverages.length
+    ? subjectAverages.reduce((a,b)=>a+b,0) / subjectAverages.length
+    : Number(student.mainAverage);
+
+  const eligible =
+    allScores.length > 0 &&
+    allScores.every(score=>score >= 70);
+
+  if(!eligible) return {type:null,average:mainAverage};
+
+  if(mainAverage >= 90) return {type:"proprietor",average:mainAverage};
+  if(mainAverage >= 85) return {type:"principal",average:mainAverage};
+  if(mainAverage >= 80) return {type:"honor",average:mainAverage};
+
+  return {type:null,average:mainAverage};
+}
+
+function reportMatches(report,className,type,period,semester){
+  if(String(report.class || "").trim() !== String(className).trim()) return false;
+
+  if(type === "period"){
+    return report.reportType === "period" &&
+      String(report.period || "").trim() === String(period || "").trim();
+  }
+
+  if(type === "semester"){
+    return report.reportType === "semester" &&
+      String(report.semester || "").trim() === String(semester || "").trim();
+  }
+
+  if(type === "yearly"){
+    return report.reportType === "yearly";
+  }
+
+  return false;
+}
+
+function chooseReport(className,type,period,semester){
+  return reports
+    .filter(r=>reportMatches(r,className,type,period,semester))
+    .sort((a,b)=>Number(b.generatedAt || 0)-Number(a.generatedAt || 0))[0] || null;
+}
+
+function updateControls(){
+  const type = reportType.value;
+  periodField.style.display = type === "period" ? "block" : "none";
+  semesterField.style.display = type === "semester" ? "block" : "none";
+}
+
+function resetStats(){
+  document.getElementById("honorCount").textContent = "0";
+  document.getElementById("proprietorCount").textContent = "0";
+  document.getElementById("principalCount").textContent = "0";
+  document.getElementById("honorRollCount").textContent = "0";
+}
+
+function render(students){
+  resetStats();
+
+  if(!students.length){
+    board.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">✨</div>
+        <h3>No eligible students found</h3>
+        <p>No student met the Honor Board requirements for this selection.</p>
+      </div>
+    `;
+    return;
+  }
+
+  students.sort((a,b)=>{
+    const averageDiff = b.average - a.average;
+    if(averageDiff !== 0) return averageDiff;
+    return String(a.raw.studentName || "").localeCompare(String(b.raw.studentName || ""));
+  });
+
+  students.forEach((s,index)=>s.rank=index+1);
+
+  const proprietor = students.filter(s=>s.type==="proprietor").length;
+  const principal = students.filter(s=>s.type==="principal").length;
+  const honor = students.filter(s=>s.type==="honor").length;
+
+  document.getElementById("honorCount").textContent = students.length;
+  document.getElementById("proprietorCount").textContent = proprietor;
+  document.getElementById("principalCount").textContent = principal;
+  document.getElementById("honorRollCount").textContent = honor;
+
+  board.innerHTML = students.map(student=>{
+    const badge = student.type === "proprietor"
+      ? "PROPRIETOR LIST"
+      : student.type === "principal"
+        ? "PRINCIPAL LIST"
+        : "HONOR ROLL";
+
+    const id = student.raw.studentId || "—";
+
+    return `
+      <article class="student ${student.type}">
+        <div class="top">
+          ${avatarHTML(student.raw)}
+          <div>
+            <div class="name">${escapeHTML(student.raw.studentName || "Unnamed Student")}</div>
+            <div class="student-id">${escapeHTML(id)}</div>
+            <div class="rank">Class Rank #${student.rank}</div>
+          </div>
+        </div>
+
+        <span class="badge ${student.type}">${badge}</span>
+
+        <div class="meta">
+          <span>Academic Average</span>
+          <span class="average">${Number(student.average).toFixed(1)}%</span>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function loadData(){
+  classSelect.innerHTML = `<option value="">Loading classes...</option>`;
+
+  try{
+    const [reportSnap,userSnap] = await Promise.all([
+      getDocs(collection(db,"academic_reports")),
+      getDocs(collection(db,"users"))
+    ]);
+
+    reports = reportSnap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .filter(r=>Array.isArray(r.students));
+
+    studentProfiles = new Map();
+
+    userSnap.docs.forEach(d=>{
+      const data = d.data();
+
+      if(data.role !== "student") return;
+
+      const id = String(data.userId || "").trim();
+      if(id) studentProfiles.set(id,data);
+    });
+
+    const classes = [...new Set(
+      reports.map(r=>String(r.class || "").trim()).filter(Boolean)
+    )].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
+
+    classSelect.innerHTML = classes.length
+      ? `<option value="">Select Class</option>` +
+        classes.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join("")
+      : `<option value="">No classes found</option>`;
+
+    if(classes.length){
+      showNotice(
+        `${reports.length} academic report snapshot${reports.length===1?"":"s"} loaded. Student photos are resolved from TEF profiles.`,
+        "info"
+      );
+    }else{
+      showNotice("No academic reports are available yet.","error");
+    }
+  }catch(error){
+    console.error(error);
+    classSelect.innerHTML = `<option value="">Unable to load classes</option>`;
+    showNotice("Unable to load academic reports and student profiles.","error");
+  }
+}
+
+function generate(){
+  clearNotice();
+
+  const className = classSelect.value;
+  const type = reportType.value;
+  const period = periodSelect.value;
+  const semester = semesterSelect.value;
+
+  if(!className){
+    showNotice("Please select a class first.","error");
+    return;
+  }
+
+  const report = chooseReport(className,type,period,semester);
+
+  if(!report){
+    board.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        <h3>No academic report found</h3>
+        <p>No generated report exists for this class and academic selection.</p>
+      </div>
+    `;
+    resetStats();
+    document.getElementById("selectionLabel").textContent = "No report";
+    document.getElementById("boardSubtitle").textContent = "Try another class or academic selection.";
+    showNotice("There is no generated academic report for this selection.","error");
+    return;
+  }
+
+  const classified = [];
+
+  (report.students || []).forEach(student=>{
+    const result = classifyHonor(student);
+
+    if(result.type){
+      classified.push({
+        raw:student,
+        type:result.type,
+        average:result.average
+      });
+    }
+  });
+
+  const label = type === "period"
+    ? period
+    : type === "semester"
+      ? semester
+      : "Yearly Report";
+
+  document.getElementById("selectionLabel").textContent = label;
+  document.getElementById("boardSubtitle").textContent =
+    `${className} • ${label} • Latest generated academic report`;
+
+  render(classified);
+
+  showNotice(
+    `${className} • ${label} • Honor Board generated from the latest academic report.`,
+    "info"
+  );
+}
+
+reportType.addEventListener("change",updateControls);
+generateBtn.addEventListener("click",generate);
+
+updateControls();
+loadData();
+</script>
+</body>
+</html>
