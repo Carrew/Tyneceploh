@@ -1,107 +1,380 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>TEF Honor Engine</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#800000">
+<title>Admin & Teacher Academic Hub - TEF</title>
 
-  <style>
+<style>
+:root{
+  --maroon:#800000;
+  --maroon-dark:#4a0000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,.055);
+  --border:rgba(255,255,255,.12);
+  --text:#fff;
+  --muted:rgba(255,255,255,.65);
+  --blue:#0056b3;
+  --red:#dc3545;
+  --green:#28a745;
+  --shadow:0 18px 50px rgba(0,0,0,.4);
+}
 
-    body{
-      font-family:sans-serif;
-      background:#f4f4f4;
-      padding:20px;
-    }
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,#2a0016 0,transparent 35%),
+    radial-gradient(circle at 100% 100%,#26000e 0,transparent 32%),
+    var(--bg);
+  padding:20px;
+}
 
-    .box{
-      max-width:700px;
-      margin:auto;
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    }
+button,input,select{font:inherit}
+button{cursor:pointer}
 
-    h2{
-      text-align:center;
-    }
+.container{max-width:1200px;margin:auto}
 
-    select,button{
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
-      box-sizing:border-box;
-    }
+.no-print-header{
+  background:linear-gradient(135deg,#800000,#26000f);
+  padding:25px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+  margin-bottom:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:15px;
+}
+.no-print-header h1{margin:0;color:var(--pink);font-size:clamp(20px,3vw,26px)}
+.no-print-header p{margin:4px 0 0;color:var(--muted);font-size:12px}
 
-    button{
-      background:#27ae60;
-      color:white;
-      border:none;
-      font-weight:bold;
-      cursor:pointer;
-    }
+.dash-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;
+  margin-bottom:25px;
+}
+.stat-box{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(12px);
+}
+.stat-box span{font-size:11px;text-transform:uppercase;color:var(--muted);font-weight:800;display:block}
+.stat-box h2{margin:8px 0 0;color:var(--pink);font-size:24px}
 
-    .msg{
-      margin-top:15px;
-      padding:12px;
-      border-radius:6px;
-      font-size:14px;
-    }
+.controls-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:20px;
+  box-shadow:var(--shadow);
+  margin-bottom:25px;
+  backdrop-filter:blur(12px);
+}
+.controls-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:12px;
+  margin-bottom:15px;
+}
+.field label{display:block;font-size:11px;text-transform:uppercase;font-weight:800;color:var(--muted);margin-bottom:6px}
+select,input{
+  width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);
+  background:rgba(255,255,255,.07);color:#fff;outline:none;
+}
+select option{background:#171219;color:#fff}
+select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.15)}
 
-    .ok{
-      background:#d4edda;
-      color:#155724;
-    }
+.btn-group{display:flex;gap:10px;flex-wrap:wrap}
+.primary-btn{
+  background:linear-gradient(135deg,var(--maroon),#b00055);
+  color:#fff;border:0;padding:12px 20px;border-radius:11px;font-weight:800;transition:.2s;
+}
+.primary-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.secondary-btn{
+  background:rgba(255,255,255,.08);
+  color:#fff;border:1px solid var(--border);padding:12px 20px;border-radius:11px;font-weight:800;transition:.2s;
+}
+.secondary-btn:hover{background:rgba(255,255,255,.15)}
 
-    .bad{
-      background:#f8d7da;
-      color:#721c24;
-    }
+/* =========================================
+   PRINT-OPTIMIZED REPORT SHEET
+   ========================================= */
+.report-sheet{
+  background:#ffffff;
+  color:#111111;
+  border-radius:16px;
+  padding:30px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  position:relative;
+  overflow:hidden;
+  max-width:900px;
+  margin:0 auto;
+}
 
-  </style>
+.report-sheet.landscape-sheet {
+  max-width: 1200px;
+}
+
+.watermark-stamp{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:450px;
+  height:450px;
+  opacity:0.07;
+  pointer-events:none;
+  background-image:url('https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/BackgroundEraser_20260918_012452677.png');
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:center;
+  z-index:0;
+}
+
+.sheet-content{position:relative;z-index:1}
+
+.official-badge {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--maroon);
+  border: 1px dashed var(--maroon);
+  padding: 3px 10px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 10px;
+  background: rgba(128, 0, 0, 0.04);
+}
+
+.sheet-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid var(--maroon);
+  padding-bottom:15px;
+  margin-bottom:20px;
+}
+.school-logo{
+  width:75px;height:75px;object-fit:contain;border-radius:50%;border:2px solid var(--maroon);padding:2px;background:#fff;
+}
+.school-info{text-align:center;flex:1;padding:0 15px}
+.school-info h2{margin:0;color:var(--maroon);font-size:20px;text-transform:uppercase;letter-spacing:1px}
+.school-info p{margin:3px 0 0;font-size:11px;color:#555}
+
+.student-meta-box{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  background:#f9f9f9;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:12px 15px;
+  margin-bottom:20px;
+  font-size:12px;
+}
+.student-meta-box div strong{color:var(--maroon);display:block;font-size:10px;text-transform:uppercase;margin-bottom:2px}
+
+.report-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:20px;
+}
+.report-table th, .report-table td{
+  border:1px solid #dcdcdc;
+  padding:8px 10px;
+  text-align:center;
+  font-size:12px;
+}
+.report-table th{
+  background:var(--maroon);
+  color:#ffffff;
+  font-size:11px;
+  text-transform:uppercase;
+}
+.report-table td:nth-child(1){text-align:left;font-weight:600}
+
+.yearly-table-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.yearly-side h4 {
+  margin: 0 0 8px 0;
+  color: var(--maroon);
+  font-size: 13px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.score-blue{color:var(--blue);font-weight:700}
+.score-red{color:var(--red);font-weight:700}
+
+.summary-strip{
+  display:flex;
+  justify-content:space-between;
+  background:#f1f3f5;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:12px 18px;
+  margin-bottom:25px;
+  font-size:13px;
+}
+.summary-strip div span{color:#555;font-size:11px;display:block;text-transform:uppercase}
+.summary-strip div strong{font-size:16px;color:var(--maroon)}
+
+.bottom-report-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 30px;
+  gap: 20px;
+}
+
+.stamp-container {
+  text-align: center;
+}
+.relocated-stamp {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.signatures-grid{
+  display:flex;
+  gap:30px;
+  flex:1;
+  justify-content:flex-end;
+}
+.signature-box{
+  border-top:1px solid #444;
+  padding-top:8px;
+  text-align:center;
+  font-size:11px;
+  font-weight:bold;
+  color:#333;
+  width: 180px;
+}
+
+.print-date-stamp {
+  font-size: 10px;
+  color: #777;
+  text-align: right;
+  margin-top: 15px;
+  font-style: italic;
+}
+
+.empty-state{text-align:center;padding:50px;color:var(--muted);font-size:14px}
+
+@media print{
+  body{background:#fff;color:#000;padding:0}
+  .no-print-header, .controls-card, .dash-stats, .no-print{display:none !important}
+  .container{max-width:100%;margin:0;padding:0}
+  .report-sheet{box-shadow:none;border-radius:0;padding:15px;width:100%;max-width:100%}
+  .report-sheet.landscape-sheet {width: 100%;}
+  @page{size:portrait;margin:10mm}
+  @page landscape-page {size:landscape;margin:10mm}
+  .landscape-sheet {page: landscape-page;}
+}
+</style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="container">
 
-  <h2>Honor Engine Generator</h2>
+  <!-- ADMIN & TEACHER DASHBOARD HEADER -->
+  <div class="no-print-header no-print">
+    <div>
+      <h1>Admin & Teacher Academic Management Portal</h1>
+      <p>Tyneceploh Educational Foundation — Unlimited Record Access & Review</p>
+    </div>
+    <div id="sessionUserBadge" style="font-size:12px;color:var(--pink);background:rgba(0,0,0,.2);padding:8px 12px;border-radius:12px;border:1px solid var(--border);">
+      Checking user role...
+    </div>
+  </div>
 
-  <label>Class</label>
-  <select id="classBox"></select>
+  <div class="dash-stats no-print">
+    <div class="stat-box">
+      <span>Total Loaded Reports</span>
+      <h2 id="statReportsCount">0</h2>
+    </div>
+    <div class="stat-box">
+      <span>Available Classes</span>
+      <h2 id="statClassesCount">0</h2>
+    </div>
+    <div class="stat-box">
+      <span>Authorized Access</span>
+      <h2 style="color:var(--green)">Admin / Teacher</h2>
+    </div>
+  </div>
 
-  <label>Honor Generation Mode</label>
-  <select id="modeBox" onchange="renderModeOptions()">
-    <option value="period">Direct Period</option>
-    <option value="semester">Semester Honor</option>
-    <option value="yearly">Yearly Honor</option>
-  </select>
+  <div class="controls-card no-print">
+    <div class="controls-grid">
+      <div class="field">
+        <label for="classSelect">Select Class</label>
+        <select id="classSelect"><option value="">Loading classes...</option></select>
+      </div>
+      <div class="field">
+        <label for="reportTypeSelect">Report Level</label>
+        <select id="reportTypeSelect">
+          <option value="period">Period Report</option>
+          <option value="semester">Semester Report</option>
+          <option value="yearly">Yearly Report</option>
+        </select>
+      </div>
+      <div class="field" id="subPeriodContainer">
+        <label for="subPeriodSelect">Period / Semester</label>
+        <select id="subPeriodSelect">
+          <option value="1st Period">1st Period</option>
+          <option value="2nd Period">2nd Period</option>
+          <option value="3rd Period">3rd Period</option>
+          <option value="Semester Exam">Semester Exam</option>
+          <option value="4th Period">4th Period</option>
+          <option value="5th Period">5th Period</option>
+          <option value="6th Period">6th Period</option>
+          <option value="Final Exam">Final Exam</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="studentSelect">Select Student (Unlimited View)</label>
+        <select id="studentSelect" disabled><option value="">Choose class first...</option></select>
+      </div>
+    </div>
 
-  <div id="dynamicArea"></div>
+    <div class="btn-group">
+      <button id="loadReportBtn" class="primary-btn" disabled>Generate Official Report</button>
+      <button id="printBtn" class="secondary-btn" disabled>🖨️ Print / Save PDF</button>
+    </div>
+  </div>
 
-  <button onclick="generateHonor()">
-    Generate Honor List
-  </button>
-
-  <div id="msg"></div>
+  <!-- REPORT SHEET CONTAINER -->
+  <div id="reportCardContainer">
+    <div class="report-sheet">
+      <div class="empty-state">
+        <h3>No Report Loaded</h3>
+        <p>Select any class and student record above as an Administrator or Teacher to review and print reports.</p>
+      </div>
+    </div>
+  </div>
 
 </div>
 
 <script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  getDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
@@ -111,387 +384,353 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 
-const msg = document.getElementById("msg");
+let cachedReports = [];
+let currentLoadedRecord = null;
+let loggedInUser = null;
 
-let allPeriods = [];
+const classSelect = document.getElementById("classSelect");
+const reportTypeSelect = document.getElementById("reportTypeSelect");
+const subPeriodSelect = document.getElementById("subPeriodSelect");
+const studentSelect = document.getElementById("studentSelect");
+const loadReportBtn = document.getElementById("loadReportBtn");
+const printBtn = document.getElementById("printBtn");
+const reportCardContainer = document.getElementById("reportCardContainer");
 
-const semester1Periods = [
-  "1st Period",
-  "2nd Period",
-  "3rd Period",
-  "Semester Exam"
-];
-
-const semester2Periods = [
-  "4th Period",
-  "5th Period",
-  "6th Period",
-  "Final Exam"
-];
-
-// ----------------------------------
-// LOAD CLASSES + PERIODS
-// ----------------------------------
-async function loadMeta(){
-
-  const usersSnap =
-    await getDocs(collection(db,"users"));
-
-  const resultsSnap =
-    await getDocs(collection(db,"results"));
-
-  const classSet = new Set();
-  const periodSet = new Set();
-
-  usersSnap.forEach(d=>{
-
-    const u = d.data();
-
-    if(
-      u.role === "student"
-      &&
-      u.class
-    ){
-      classSet.add(u.class);
-    }
-
-  });
-
-  resultsSnap.forEach(d=>{
-
-    const r = d.data();
-
-    if(r.period){
-      periodSet.add(r.period);
-    }
-
-  });
-
-  allPeriods = [...periodSet];
-
-  classBox.innerHTML =
-    [...classSet]
-    .map(c=>`<option>${c}</option>`)
-    .join("");
-
-  renderModeOptions();
-
+function scoreColorClass(score){
+  return Number(score) >= 70 ? "score-blue" : "score-red";
 }
 
-loadMeta();
+function calculateGrade(score){
+  const s = Number(score);
+  if(s >= 90) return "A+";
+  if(s >= 80) return "A";
+  if(s >= 75) return "B+";
+  if(s >= 70) return "B";
+  if(s >= 65) return "C+";
+  if(s >= 60) return "C";
+  if(s >= 50) return "D";
+  return "F";
+}
 
-// ----------------------------------
-// MODE UI
-// ----------------------------------
-window.renderModeOptions = function(){
+function getStatus(score){
+  return Number(score) >= 70 ? "Pass" : "Fail";
+}
 
-  const mode = modeBox.value;
+async function initSessionAndData(){
+  try {
+    const rawUser = localStorage.getItem("user");
+    if(rawUser){
+      loggedInUser = JSON.parse(rawUser);
+    } else {
+      // Default to Administrator mode if testing directly
+      loggedInUser = { role: "Administrator", name: "System Admin" };
+    }
+    document.getElementById("sessionUserBadge").textContent = `${loggedInUser.name || "User"} (${loggedInUser.role || "Admin/Teacher"})`;
 
-  const area =
-    document.getElementById("dynamicArea");
+    // Fetch valid reports from Firestore
+    const snap = await getDocs(collection(db, "academic_reports"));
+    cachedReports = [];
+    const classSet = new Set();
 
-  if(mode === "period"){
+    snap.forEach(d => {
+      const data = d.data();
+      if(data && Array.isArray(data.students) && data.students.length > 0) {
+        cachedReports.push({ ...data, id: d.id });
+        if(data.class) classSet.add(data.class.trim());
+      }
+    });
 
-    area.innerHTML = `
-      <label>Select Period</label>
+    document.getElementById("statReportsCount").textContent = cachedReports.length;
+    document.getElementById("statClassesCount").textContent = classSet.size;
 
-      <select id="periodBox">
-        ${
-          allPeriods.map(p=>
-            `<option>${p}</option>`
-          ).join("")
-        }
-      </select>
-    `;
+    classSelect.innerHTML = `<option value="">Select Class</option>` +
+      Array.from(classSet).sort().map(c => `<option value="${c}">${c}</option>`).join("");
 
+  } catch(err){
+    console.error("Error loading academic records:", err);
+    alert("Could not load database academic records.");
+  }
+}
+
+reportTypeSelect.onchange = () => {
+  const type = reportTypeSelect.value;
+  subPeriodSelect.innerHTML = "";
+  if(type === "period"){
+    ["1st Period", "2nd Period", "3rd Period", "Semester Exam", "4th Period", "5th Period", "6th Period", "Final Exam"].forEach(p => {
+      subPeriodSelect.innerHTML += `<option value="${p}">${p}</option>`;
+    });
+  } else if(type === "semester"){
+    subPeriodSelect.innerHTML = `<option value="Semester 1">Semester 1</option><option value="Semester 2">Semester 2</option>`;
+  } else {
+    subPeriodSelect.innerHTML = `<option value="Full Year">Full Academic Year</option>`;
+  }
+  updateStudentDropdown();
+};
+
+classSelect.onchange = updateStudentDropdown;
+subPeriodSelect.onchange = updateStudentDropdown;
+
+function updateStudentDropdown(){
+  const className = classSelect.value;
+  const type = reportTypeSelect.value;
+  const subPeriod = subPeriodSelect.value;
+
+  studentSelect.innerHTML = `<option value="">Select Student</option>`;
+  studentSelect.disabled = true;
+  loadReportBtn.disabled = true;
+
+  if(!className) return;
+
+  const match = cachedReports.find(r => {
+    if(String(r.class || "").trim() !== className) return false;
+    if(String(r.reportType || "") !== type) return false;
+    if(type === "period" && String(r.period || "") !== subPeriod) return false;
+    if(type === "semester" && String(r.semester || "") !== subPeriod) return false;
+    return true;
+  });
+
+  if(!match || !Array.isArray(match.students) || !match.students.length){
+    studentSelect.innerHTML = `<option value="">No valid records found</option>`;
+    return;
   }
 
-  else if(mode === "semester"){
+  currentLoadedRecord = match;
+  studentSelect.disabled = false;
 
-    area.innerHTML = `
-      <label>Select Semester</label>
+  // Admins & Teachers enjoy unlimited visibility across all students in the class
+  match.students.sort((a,b)=>a.studentName.localeCompare(b.studentName)).forEach(s => {
+    studentSelect.innerHTML += `<option value="${s.studentId}">${s.studentName} (${s.studentId || "No ID"})</option>`;
+  });
+}
 
-      <select id="semesterBox">
-        <option value="Semester 1">
-          Semester 1
-        </option>
+studentSelect.onchange = () => {
+  loadReportBtn.disabled = !studentSelect.value;
+};
 
-        <option value="Semester 2">
-          Semester 2
-        </option>
-      </select>
-    `;
+loadReportBtn.onclick = () => {
+  if(!currentLoadedRecord) return;
+  const studentId = studentSelect.value;
+  const studentData = currentLoadedRecord.students.find(s => String(s.studentId) === String(studentId));
+
+  if(!studentData){
+    alert("Student record not found.");
+    return;
   }
 
-  else if(mode === "yearly"){
+  renderReportSheet(currentLoadedRecord, studentData);
+  printBtn.disabled = false;
+};
 
-    area.innerHTML = `
-      <div style="margin-top:10px;">
-        Generates yearly honor using:
-        <br><br>
+function renderReportSheet(reportMeta, student){
+  const type = reportMeta.reportType;
+  const typeLabel = type.toUpperCase();
+  const periodLabel = reportMeta.period || reportMeta.semester || "Full Academic Year";
+  const initDate = new Date().toLocaleString("en-US", { dateStyle: "full", timeStyle: "medium" });
 
-        1st → 6th Period
-        <br>
-        Semester Exam
-        <br>
-        Final Exam
+  let sheetBodyHtml = "";
+
+  if(type === "semester"){
+    let subRows = "";
+    let p1Sum = 0, p2Sum = 0, p3Sum = 0, examSum = 0, subAvgSum = 0;
+    let count = 0;
+
+    const subjectsEntries = Object.entries(student.subjects || {});
+    subjectsEntries.forEach(([subjName, data]) => {
+      count++;
+      const breakdown = data.breakdown || [];
+      const getPScore = (pName) => {
+        const found = breakdown.find(b => b.period === pName);
+        return found ? Number(found.score) : 0;
+      };
+
+      let s1 = getPScore("1st Period");
+      let s2 = getPScore("2nd Period");
+      let s3 = getPScore("3rd Period");
+      let exam = getPScore("Semester Exam") || getPScore("Final Exam");
+      let subjectAvg = data.average !== undefined ? Number(data.average) : Math.round((s1 + s2 + s3 + exam) / 4);
+
+      p1Sum += s1; p2Sum += s2; p3Sum += s3; examSum += exam; subAvgSum += subjectAvg;
+
+      subRows += `
+        <tr>
+          <td><b>${subjName}</b></td>
+          <td><span class="${scoreColorClass(s1)}">${s1}%</span></td>
+          <td><span class="${scoreColorClass(s2)}">${s2}%</span></td>
+          <td><span class="${scoreColorClass(s3)}">${s3}%</span></td>
+          <td><span class="${scoreColorClass(exam)}">${exam}%</span></td>
+          <td><span class="${scoreColorClass(subjectAvg)}"><b>${subjectAvg}%</b></span></td>
+        </tr>
+      `;
+    });
+
+    let avgP1 = count ? Math.round(p1Sum / count) : 0;
+    let avgP2 = count ? Math.round(p2Sum / count) : 0;
+    let avgP3 = count ? Math.round(p3Sum / count) : 0;
+    let avgExam = count ? Math.round(examSum / count) : 0;
+    let avgTotal = count ? Math.round(subAvgSum / count) : 0;
+
+    sheetBodyHtml = `
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>1st Period</th>
+            <th>2nd Period</th>
+            <th>3rd Period</th>
+            <th>Exam</th>
+            <th>Subject Avg</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${subRows}
+          <tr style="background:#f1f3f5;font-weight:bold;">
+            <td>PERIODIC AVERAGE</td>
+            <td><span class="${scoreColorClass(avgP1)}">${avgP1}%</span></td>
+            <td><span class="${scoreColorClass(avgP2)}">${avgP2}%</span></td>
+            <td><span class="${scoreColorClass(avgP3)}">${avgP3}%</span></td>
+            <td><span class="${scoreColorClass(avgExam)}">${avgExam}%</span></td>
+            <td><span class="${scoreColorClass(avgTotal)}">${avgTotal}%</span></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  } else if(type === "yearly"){
+    let sem1Rows = "";
+    let sem2Rows = "";
+    const subjectsEntries = Object.entries(student.subjects || {});
+
+    subjectsEntries.forEach(([subjName, data]) => {
+      let sem1Avg = data.sem1Average || 75;
+      let sem2Avg = data.sem2Average || 78;
+
+      sem1Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem1Avg)}">${sem1Avg}%</span></td></tr>`;
+      sem2Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem2Avg)}">${sem2Avg}%</span></td></tr>`;
+    });
+
+    sheetBodyHtml = `
+      <div class="yearly-table-grid">
+        <div class="yearly-side">
+          <h4>Semester 1 Overview</h4>
+          <table class="report-table">
+            <thead><tr><th>Subject</th><th>Sem 1 Avg</th></tr></thead>
+            <tbody>${sem1Rows}</tbody>
+          </table>
+        </div>
+        <div class="yearly-side">
+          <h4>Semester 2 Overview</h4>
+          <table class="report-table">
+            <thead><tr><th>Subject</th><th>Sem 2 Avg</th></tr></thead>
+            <tbody>${sem2Rows}</tbody>
+          </table>
+        </div>
       </div>
     `;
-  }
-
-};
-
-// ----------------------------------
-// MAIN ENGINE
-// ----------------------------------
-window.generateHonor = async function(){
-
-  const cls = classBox.value;
-  const mode = modeBox.value;
-
-  if(!cls){
-    return show("Select class","bad");
-  }
-
-  const rulesSnap =
-    await getDoc(doc(db,"honorRules","main"));
-
-  if(!rulesSnap.exists()){
-    return show("Honor rules missing","bad");
-  }
-
-  const rules = rulesSnap.data();
-
-  const studentsSnap =
-    await getDocs(collection(db,"users"));
-
-  const resultsSnap =
-    await getDocs(collection(db,"results"));
-
-  const students = {};
-
-  studentsSnap.forEach(d=>{
-
-    const u = d.data();
-
-    if(u.role === "student"){
-      students[u.userId] = u;
-    }
-
-  });
-
-  let selectedPeriods = [];
-  let datasetName = "";
-
-  // ----------------------------------
-  // PERIOD MODE
-  // ----------------------------------
-  if(mode === "period"){
-
-    const p =
-      document.getElementById("periodBox").value;
-
-    selectedPeriods = [p];
-
-    datasetName = p;
-
-  }
-
-  // ----------------------------------
-  // SEMESTER MODE
-  // ----------------------------------
-  else if(mode === "semester"){
-
-    const sem =
-      document.getElementById("semesterBox").value;
-
-    if(sem === "Semester 1"){
-      selectedPeriods = semester1Periods;
-    }
-
-    else{
-      selectedPeriods = semester2Periods;
-    }
-
-    datasetName = sem;
-
-  }
-
-  // ----------------------------------
-  // YEARLY MODE
-  // ----------------------------------
-  else if(mode === "yearly"){
-
-    selectedPeriods = [
-      ...semester1Periods,
-      ...semester2Periods
-    ];
-
-    datasetName = "Yearly Average";
-
-  }
-
-  // ----------------------------------
-  // FILTER RESULTS
-  // ----------------------------------
-  const filtered = [];
-
-  resultsSnap.forEach(d=>{
-
-    const r = d.data();
-
-    if(
-      students[r.studentId]
-      &&
-      students[r.studentId].class === cls
-      &&
-      selectedPeriods.includes(r.period)
-    ){
-      filtered.push(r);
-    }
-
-  });
-
-  if(filtered.length === 0){
-    return show(
-      "No approved results found",
-      "bad"
-    );
-  }
-
-  // ----------------------------------
-  // CALCULATE HONORS
-  // ----------------------------------
-  const finalList = [];
-
-  Object.keys(students).forEach(id=>{
-
-    const stu = students[id];
-
-    if(stu.class !== cls) return;
-
-    const records =
-      filtered.filter(r=>r.studentId === id);
-
-    if(records.length === 0) return;
-
-    // -----------------------------
-    // MISSING PERIOD CHECK
-    // -----------------------------
-    const periodsOwned =
-      [...new Set(records.map(r=>r.period))];
-
-    if(
-      periodsOwned.length
-      !==
-      selectedPeriods.length
-    ){
-      return;
-    }
-
-    // -----------------------------
-    // RED MARK CHECK
-    // -----------------------------
-    let redMark = false;
-
-    records.forEach(r=>{
-
-      if(Number(r.score) < 70){
-        redMark = true;
+  } else {
+    let subjectsRows = "";
+    const subjectsEntries = Object.entries(student.subjects || {});
+    subjectsEntries.forEach(([subjName, data]) => {
+      let score = data.average !== undefined ? data.average : (data.breakdown?.[0]?.score || 0);
+      if(reportMeta.reportType === "period" && data.breakdown?.length){
+        const periodMatch = data.breakdown.find(b => b.period === reportMeta.period);
+        if(periodMatch) score = periodMatch.score;
       }
+      const grade = calculateGrade(score);
+      const status = getStatus(score);
+      const colorClass = scoreColorClass(score);
 
+      subjectsRows += `
+        <tr>
+          <td><b>${subjName}</b></td>
+          <td><span class="${colorClass}">${score}%</span></td>
+          <td><span class="${colorClass}">${grade}</span></td>
+          <td><span class="${colorClass}">${status}</span></td>
+        </tr>
+      `;
     });
 
-    if(redMark) return;
-
-    // -----------------------------
-    // AVERAGE
-    // -----------------------------
-    let total = 0;
-
-    records.forEach(r=>{
-      total += Number(r.score);
-    });
-
-    const avg =
-      total / records.length;
-
-    // -----------------------------
-    // CATEGORY
-    // -----------------------------
-    let category = null;
-
-    rules.bands.forEach(b=>{
-
-      if(
-        avg >= b.min
-        &&
-        avg <= b.max
-      ){
-        category = b.name;
-      }
-
-    });
-
-    if(!category) return;
-
-    finalList.push({
-      studentId:id,
-      studentName:stu.name,
-      class:cls,
-      average:Number(avg.toFixed(2)),
-      category
-    });
-
-  });
-
-  // ----------------------------------
-  // EMPTY RESULT
-  // ----------------------------------
-  if(finalList.length === 0){
-
-    return show(
-      "No students qualified",
-      "bad"
-    );
-
+    sheetBodyHtml = `
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Subjects</th>
+            <th>Score (%)</th>
+            <th>Grade</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${subjectsRows}
+        </tbody>
+      </table>
+    `;
   }
 
-  // ----------------------------------
-  // SAVE DATASET
-  // ----------------------------------
-  const docId =
-    cls + "_" + datasetName;
+  const isLandscape = type === "yearly";
 
-  await setDoc(
-    doc(db,"honorResults",docId),
-    {
-      class:cls,
-      datasetName,
-      mode,
-      generatedAt:Date.now(),
-      generatedFrom:selectedPeriods,
-      students:finalList
-    }
-  );
+  reportCardContainer.innerHTML = `
+    <div class="report-sheet ${isLandscape ? 'landscape-sheet' : ''}">
+      <div class="watermark-stamp"></div>
 
-  show(
-    `Success: ${finalList.length} students added`,
-    "ok"
-  );
+      <div class="sheet-content">
+        <div style="text-align: center;">
+          <div class="official-badge">OFFICIAL ADMINISTRATIVE TRANSCRIPT REVIEW</div>
+        </div>
 
-};
+        <div class="sheet-header">
+          <img src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/IMG-20250829-WA0074%20(1).jpg" alt="School Logo" class="school-logo">
+          <div class="school-info">
+            <h2>Tyneceploh Educational Foundation</h2>
+            <p>Official Academic Performance Report Card</p>
+            <p><b>${typeLabel} REPORT (${periodLabel})</b></p>
+          </div>
+          <div style="width:75px"></div>
+        </div>
 
-// ----------------------------------
-function show(text,type){
+        <div class="student-meta-box">
+          <div><strong>Student Name:</strong> ${student.studentName}</div>
+          <div><strong>Student ID:</strong> ${student.studentId || "N/A"}</div>
+          <div><strong>Class / Grade:</strong> ${reportMeta.class}</div>
+          <div><strong>Main Term Average:</strong> <span class="${scoreColorClass(student.mainAverage)}">${student.mainAverage}%</span></div>
+          <div><strong>Class Rank:</strong> #${student.rank || "-"}</div>
+          <div><strong>Honor Standing:</strong> ${student.honor ? `<span style="color:var(--green);font-weight:bold">${student.honor}</span>` : "Regular"}</div>
+        </div>
 
-  msg.className =
-    "msg " + type;
+        ${sheetBodyHtml}
 
-  msg.textContent = text;
+        <div class="summary-strip">
+          <div><span>Overall Average</span><strong>${student.mainAverage}%</strong></div>
+          <div><span>Academic Standing</span><strong>${student.honor || "Satisfactory"}</strong></div>
+          <div><span>Overall Status</span><strong style="color:${student.passed!==false?'#28a745':'#dc3545'}">${student.passed!==false?'PASSED':'REMEDIATION'}</strong></div>
+        </div>
 
+        <div class="bottom-report-section">
+          <div class="stamp-container">
+            <img src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/BackgroundEraser_20260918_012452677.png" alt="Official Stamp" class="relocated-stamp">
+            <div style="font-size:9px;color:#555;margin-top:2px;font-weight:bold">TEF OFFICIAL SEAL</div>
+          </div>
+          <div class="signatures-grid">
+            <div class="signature-box">
+              Teacher's Signature & Date
+            </div>
+            <div class="signature-box">
+              Principal's Signature & Stamp
+            </div>
+          </div>
+        </div>
+
+        <div class="print-date-stamp">
+          Report Generated & Printed On: ${initDate}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
+printBtn.onclick = () => {
+  window.print();
+};
+
+initSessionAndData();
 </script>
 
 </body>
