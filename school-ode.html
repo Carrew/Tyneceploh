@@ -3,128 +3,267 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Ode - TEF</title>
+
+  <title>School Ode | Tyneceploh Educational Foundation</title>
 
   <style>
-    :root{
-      --maroon:#800000;
-      --pink:#ffc0cb;
-      --bg:#0b0b0f;
-      --card:rgba(255,255,255,0.06);
-      --text:#ffffff;
+    :root {
+      --maroon: #800000;
+      --dark-maroon: #4d0000;
+      --pink: #ffc0cb;
+      --light-pink: #ffe4ea;
+      --bg: #08080c;
+      --card: rgba(255, 255, 255, 0.07);
+      --card-border: rgba(255, 192, 203, 0.18);
+      --text: #ffffff;
+      --muted: #cfcfcf;
     }
 
-    body{
-      margin:0;
-      font-family:system-ui, sans-serif;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color:var(--text);
-      padding:20px;
+    * {
+      box-sizing: border-box;
     }
 
-    header{
-      text-align:center;
-      margin-bottom:20px;
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(128, 0, 0, 0.45), transparent 45%),
+        linear-gradient(135deg, #08080c, #160009);
+      color: var(--text);
+      padding: 32px 18px;
     }
 
-    header h1{
-      color:var(--pink);
-      margin:0;
+    header {
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto 30px;
     }
 
-    .container{
-      max-width:900px;
-      margin:auto;
-      background:var(--card);
-      padding:20px;
-      border-radius:15px;
-      backdrop-filter: blur(10px);
+    .school-icon {
+      font-size: 42px;
+      margin-bottom: 8px;
     }
 
-    .section{
-      margin-bottom:25px;
+    header h1 {
+      margin: 0;
+      color: var(--pink);
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -0.5px;
     }
 
-    .title{
-      color:var(--pink);
-      font-weight:bold;
-      margin-bottom:10px;
+    header p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+      letter-spacing: 1px;
     }
 
-    pre{
-      white-space:pre-wrap;
-      line-height:1.6;
-      font-size:15px;
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
+      padding: clamp(22px, 5vw, 42px);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
 
-    .chorus{
-      color:#ffd1dc;
-      font-weight:bold;
+    .section {
+      margin-bottom: 38px;
     }
 
-    footer{
-      text-align:center;
-      margin-top:20px;
-      font-size:12px;
-      opacity:0.7;
+    .section:last-of-type {
+      margin-bottom: 15px;
     }
 
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: var(--pink);
+      font-size: 1.15rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .title::after {
+      content: "";
+      height: 2px;
+      flex: 1;
+      background: linear-gradient(
+        to right,
+        rgba(255, 192, 203, 0.5),
+        transparent
+      );
+    }
+
+    .lyrics {
+      margin: 0;
+      padding: 22px 24px;
+      white-space: pre-wrap;
+      font-family: inherit;
+      font-size: clamp(1.15rem, 2.8vw, 1.45rem);
+      line-height: 1.9;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.18);
+      border-left: 4px solid var(--maroon);
+      border-radius: 0 14px 14px 0;
+    }
+
+    .chorus {
+      color: var(--light-pink);
+      font-weight: 700;
+      font-size: clamp(1.2rem, 3vw, 1.5rem);
+      background:
+        linear-gradient(
+          135deg,
+          rgba(128, 0, 0, 0.25),
+          rgba(255, 192, 203, 0.06)
+        );
+      border-left-color: var(--pink);
+    }
+
+    .final {
+      text-align: center;
+    }
+
+    .final .lyrics {
+      border: 1px solid rgba(255, 192, 203, 0.2);
+      border-radius: 14px;
+      color: var(--pink);
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    footer {
+      margin-top: 35px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    footer strong {
+      color: var(--pink);
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 22px 12px;
+      }
+
+      .container {
+        border-radius: 18px;
+      }
+
+      .lyrics {
+        padding: 18px;
+        line-height: 1.8;
+      }
+
+      .title {
+        font-size: 1rem;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+        color: black;
+      }
+
+      header h1,
+      .title,
+      .chorus,
+      footer strong {
+        color: var(--dark-maroon);
+      }
+
+      header p,
+      footer {
+        color: #444;
+      }
+
+      .container {
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: none;
+      }
+
+      .lyrics {
+        color: #111;
+        background: #fafafa;
+      }
+    }
   </style>
 </head>
+
 <body>
 
-<header>
-  <h1>🎓 Tyneceploh Educational Foundation</h1>
-  <p>School Ode</p>
-</header>
+  <header>
+    <div class="school-icon">🎓</div>
 
-<div class="container">
+    <h1>Tyneceploh Educational Foundation</h1>
 
-  <div class="section">
-    <div class="title">Verse</div>
-    <pre>
-We meet here from all walks of life
+    <p>School Ode</p>
+  </header>
+
+  <main class="container">
+
+    <section class="section">
+      <div class="title">Verse</div>
+
+      <pre class="lyrics">We meet here from all walks of life
 From different homes and families
 We hope to be as one
 Foundation that so strong
 To keep us safe from strife
 We cross the Rubicon
-By trusting God alone
-    </pre>
-  </div>
+By trusting God alone</pre>
+    </section>
 
-  <div class="section">
-    <div class="title">Chorus</div>
-    <pre class="chorus">
-Tyneceploh Educational Foundation
+
+    <section class="section">
+      <div class="title">Chorus</div>
+
+      <pre class="lyrics chorus">Tyneceploh Educational Foundation
 Tyneceploh we love you
 Tyneceploh prepare our hearts for life here
-And life to come
-    </pre>
-  </div>
+And life to come</pre>
+    </section>
 
-  <div class="section">
-    <div class="title">Verse</div>
-    <pre>
-We are not the same
+
+    <section class="section">
+      <div class="title">Verse</div>
+
+      <pre class="lyrics">We are not the same
 On our way to face the world
 You've shown the way, you made us proud
-You've built us for good future
-    </pre>
-  </div>
+You've built us for good future</pre>
+    </section>
 
-  <div class="section">
-    <div class="title">Final Chorus</div>
-    <pre class="chorus">
-Chorus 2x
-    </pre>
-  </div>
 
-  <footer>
-    Written by: Vanii Kaizolu
-  </footer>
+    <section class="section final">
+      <div class="title">Final Chorus</div>
 
-</div>
+      <pre class="lyrics chorus">Chorus × 2</pre>
+    </section>
+
+
+    <footer>
+      Written by: <strong>Vanii Kaizolu</strong>
+    </footer>
+
+  </main>
 
 </body>
 </html>
