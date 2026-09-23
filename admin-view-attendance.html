@@ -1,274 +1,394 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Attendance Admin View</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <title>TEF Attendance Report</title>
   <style>
-    :root{
-      --bg:#0b0b0f;
-      --card:rgba(255,255,255,0.06);
-      --glass:rgba(255,255,255,0.08);
-      --text:#fff;
-      --blue:#3498db;
-      --orange:#e67e22;
-      --red:#c0392b;
-      --green:#27ae60;
+    :root {
+      --bg: #f4f4f4;
+      --card: #ffffff;
+      --text: #222;
+      --muted: #666;
+      --maroon: #800000;
+      --pink: #ff4d6d;
+      --green: #27ae60;
+      --red: #c0392b;
+      --orange: #e67e22;
+      --blue: #2980b9;
+      --shadow: 0 8px 20px rgba(0,0,0,0.06);
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .header {
+      background: linear-gradient(135deg, var(--maroon), var(--pink));
+      color: white;
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .header h2 { margin: 0; font-size: 22px; }
+    .header p { margin: 4px 0 0; font-size: 13px; opacity: 0.9; }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-print { background: #ffffff; color: var(--maroon); }
+    .btn-pdf { background: #222222; color: #ffffff; }
+
+    /* Filters Card */
+    .filter-card {
+      background: var(--card);
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 20px 0;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 160px;
+    }
+    .filter-group label {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .filter-group input, .filter-group select {
+      padding: 9px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    .btn-filter { background: var(--maroon); color: white; height: 38px; }
+
+    /* Report Table */
+    .report-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      padding: 20px;
+    }
+    .report-title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #eee;
+    }
+    .report-title-bar h3 { margin: 0; color: var(--maroon); }
+    .summary-text { font-size: 13px; color: var(--muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+    }
+    th {
+      background: #f8f9fa;
+      color: var(--muted);
+      font-weight: 700;
+      padding: 12px;
+      border-bottom: 2px solid #e9ecef;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #f1f1f1;
+    }
+    tr:hover { background: #fbfbfb; }
+
+    /* Status Badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .badge-ON_TIME { background: #d4edda; color: #155724; }
+    .badge-LATE { background: #f8d7da; color: #721c24; }
+    .badge-EARLY { background: #d1ecf1; color: #0c5460; }
+    .badge-EARLY_EXIT { background: #fff3cd; color: #856404; }
+    .badge-OVERTIME { background: #e2e3e5; color: #383d41; }
+    .badge-NONE { background: #f1f1f1; color: #888; }
+
+    .time-sub {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
     }
 
-    body{
-      margin:0;
-      font-family:system-ui;
-      background: radial-gradient(circle at top, #1a0010, var(--bg));
-      color:var(--text);
-      padding:20px;
+    #loading {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+      font-weight: bold;
     }
 
-    .top{
-      position:sticky;
-      top:0;
-      z-index:10;
-      backdrop-filter: blur(10px);
-      background: rgba(0,0,0,0.4);
-      padding:15px;
-      border-radius:12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:20px;
-      border:1px solid rgba(255,255,255,0.08);
+    /* Print Styles */
+    @media print {
+      body { background: white; padding: 0; color: black; }
+      .header, .filter-card, .actions { display: none !important; }
+      .report-card { box-shadow: none; padding: 0; }
+      table { border: 1px solid #ccc; }
+      th, td { padding: 8px; border: 1px solid #ddd; }
     }
-
-    h2{
-      margin:0;
-      color:#ffc0cb;
-      font-size:18px;
-    }
-
-    input[type="date"]{
-      padding:10px;
-      border-radius:10px;
-      border:none;
-      background:rgba(255,255,255,0.1);
-      color:white;
-      outline:none;
-    }
-
-    .summary{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-      gap:12px;
-      margin-bottom:20px;
-    }
-
-    .sum-card{
-      background:var(--card);
-      padding:14px;
-      border-radius:12px;
-      text-align:center;
-      border:1px solid rgba(255,255,255,0.08);
-    }
-
-    .sum-number{
-      font-size:20px;
-      font-weight:bold;
-      margin-top:5px;
-    }
-
-    .green{color:var(--green);}
-    .orange{color:var(--orange);}
-    .red{color:var(--red);}
-
-    #list{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .card{
-      background:var(--card);
-      padding:15px;
-      border-radius:14px;
-      border-left:4px solid var(--blue);
-      backdrop-filter: blur(10px);
-      transition:0.2s ease;
-    }
-
-    .card:hover{
-      transform:scale(1.01);
-    }
-
-    .late{ border-left-color:var(--orange); }
-    .danger{ border-left-color:var(--red); }
-
-    button{
-      padding:8px 12px;
-      border:none;
-      border-radius:8px;
-      cursor:pointer;
-      font-weight:bold;
-      background:linear-gradient(135deg,#800000,#ffc0cb);
-      color:white;
-    }
-
-    .meta{
-      opacity:0.8;
-      font-size:13px;
-    }
-
-    .loading{
-      opacity:0.7;
-      text-align:center;
-      padding:30px;
-    }
-
-    @media(max-width:600px){
-      .top{
-        flex-direction:column;
-        gap:10px;
-        align-items:flex-start;
-      }
-    }
-
   </style>
-</head>
 
+  <!-- FingerprintJS UMD for user lock check & html2pdf library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
 <body>
 
-<div class="top">
-  <h2>Daily Attendance Report</h2>
-  <input type="date" id="datePicker">
-</div>
+<div class="container">
+  
+  <div class="header">
+    <div>
+      <h2>TEF Attendance Reports</h2>
+      <p>View daily attendance logs, work hours, and export official PDFs.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+      <button class="btn btn-pdf" id="btnExportPDF">📥 Save PDF</button>
+    </div>
+  </div>
 
-<div class="summary" id="summary">
-  <div class="loading">Loading summary...</div>
-</div>
+  <!-- Filter Controls -->
+  <div class="filter-card">
+    <div class="filter-group">
+      <label>Start Date</label>
+      <input type="date" id="startDate">
+    </div>
+    <div class="filter-group">
+      <label>End Date</label>
+      <input type="date" id="endDate">
+    </div>
+    <div class="filter-group">
+      <label>Staff Role</label>
+      <select id="roleFilter">
+        <option value="ALL">All Roles</option>
+        <option value="teacher">Teacher</option>
+        <option value="admin">Admin</option>
+        <option value="staff">Staff</option>
+      </select>
+    </div>
+    <button class="btn btn-filter" id="btnApplyFilter">Apply Filter</button>
+  </div>
 
-<div id="list">
-  <div class="loading">Loading attendance...</div>
+  <!-- Attendance Table Section -->
+  <div class="report-card" id="pdfContent">
+    <div class="report-title-bar">
+      <div>
+        <h3>Tyneceploh Educational Foundation</h3>
+        <div class="summary-text" id="reportSubtitle">Daily Attendance Log</div>
+      </div>
+      <div class="summary-text" id="totalRecordsCount">0 Records Found</div>
+    </div>
+
+    <div id="loading">Loading attendance records...</div>
+
+    <table id="attendanceTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Clock In</th>
+          <th>Clock Out</th>
+          <th>Total Worked</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Records populated dynamically -->
+      </tbody>
+    </table>
+  </div>
+
 </div>
 
 <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"; 
+  import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  const firebaseConfig = { 
+    apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4", 
+    authDomain: "tyneceploh.firebaseapp.com", 
+    projectId: "tyneceploh" 
+  }; 
 
-const app = initializeApp({
-  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
-  authDomain:"tyneceploh.firebaseapp.com",
-  projectId:"tyneceploh"
-});
+  const app = initializeApp(firebaseConfig); 
+  const db = getFirestore(app); 
 
-const db = getFirestore(app);
-
-const user = JSON.parse(localStorage.getItem("user"));
-if(!user || user.role !== "admin"){
-  location.href = "login.html";
-}
-
-const datePicker = document.getElementById("datePicker");
-datePicker.value = new Date().toISOString().split("T")[0];
-datePicker.addEventListener("change", load);
-
-let records = [];
-
-async function load(){
-
-  document.getElementById("list").innerHTML = `<div class="loading">Loading...</div>`;
-  document.getElementById("summary").innerHTML = `<div class="loading">Loading...</div>`;
-
-  const selectedDate = datePicker.value;
-
-  const snap = await getDocs(collection(db,"attendanceRecords"));
-
-  records = [];
-
-  snap.forEach(d=>{
-    const data = d.data();
-    if(data.date === selectedDate){
-      records.push({...data, docId:d.id});
-    }
-  });
-
-  render();
-}
-
-function render(){
-
-  const list = document.getElementById("list");
-  const summary = document.getElementById("summary");
-
-  if(records.length === 0){
-    list.innerHTML = `<div class="loading">No attendance records.</div>`;
-    summary.innerHTML = `<div class="loading">No records found.</div>`;
-    return;
+  // Redirect non-authenticated or student users
+  const currentUser = JSON.parse(localStorage.getItem("user")); 
+  if (!currentUser || currentUser.role === "student") { 
+    location.href = "login.html"; 
   }
 
-  const lateCount = records.filter(r => (r.violations || []).includes("Late Clock In")).length;
-  const earlyCount = records.filter(r => (r.violations || []).includes("Early Clock Out")).length;
+  // Pre-fill default dates (Current month to date)
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  
+  document.getElementById("startDate").value = firstDayOfMonth.toISOString().split("T")[0];
+  document.getElementById("endDate").value = today.toISOString().split("T")[0];
 
-  summary.innerHTML = `
-    <div class="sum-card">
-      Total Staff
-      <div class="sum-number">${records.length}</div>
-    </div>
+  function formatTime(timestamp) {
+    if (!timestamp) return "--:--";
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
 
-    <div class="sum-card">
-      Late Clock In
-      <div class="sum-number orange">${lateCount}</div>
-    </div>
+  function formatDuration(startTime, endTime) {
+    if (!startTime || !endTime) return "--";
+    const diffMs = endTime - startTime;
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return `${hours}h ${mins}m`;
+  }
 
-    <div class="sum-card">
-      Early Clock Out
-      <div class="sum-number red">${earlyCount}</div>
-    </div>
+  async function fetchAttendance() {
+    const loadingEl = document.getElementById("loading");
+    const tableEl = document.getElementById("attendanceTable");
+    const tbodyEl = document.getElementById("tableBody");
+    
+    loadingEl.style.display = "block";
+    tableEl.style.display = "none";
+    tbodyEl.innerHTML = "";
 
-    <div class="sum-card">
-      Clean Records
-      <div class="sum-number green">${records.length - (lateCount + earlyCount)}</div>
-    </div>
-  `;
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
+    const selectedRole = document.getElementById("roleFilter").value;
 
-  list.innerHTML = records.map(r => {
+    try {
+      // Query attendance Daily records
+      const q = query(
+        collection(db, "attendanceDaily"),
+        orderBy("date", "desc")
+      );
 
-    const violations = r.violations || [];
+      const snapshot = await getDocs(q);
+      let records = [];
 
-    let cls = "card";
-    if(violations.includes("Late Clock In")) cls += " late";
-    if(violations.includes("Missing Clock Out")) cls += " danger";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        
+        // Date Filter (Client-side filtering for flexible string dates)
+        if (data.date >= start && data.date <= end) {
+          // Role Filter
+          if (selectedRole === "ALL" || data.role === selectedRole) {
+            records.push(data);
+          }
+        }
+      });
 
-    return `
-      <div class="${cls}">
-        <h3>${r.name}</h3>
+      document.getElementById("totalRecordsCount").innerText = `${records.length} Record(s) Found`;
+      document.getElementById("reportSubtitle").innerText = `Log from ${start} to ${end}`;
 
-        <div class="meta">
-          ${r.role || "staff"}
-        </div>
+      if (records.length === 0) {
+        loadingEl.innerText = "No attendance logs found for the selected range.";
+        return;
+      }
 
-        <br>
+      records.forEach(r => {
+        const tr = document.createElement("tr");
 
-        <b>Clock In:</b> ${r.clockInReadable || "-"}<br><br>
-        <b>Clock Out:</b> ${r.clockOutReadable || "-"}<br><br>
+        const clockInStatus = r.clockIn?.status || "NONE";
+        const clockOutStatus = r.clockOut?.status || "NONE";
 
-        <b>Violations:</b><br>
-        ${violations.length ? violations.join(", ") : "None"}
+        const clockInMinutes = r.clockIn?.minutes ? ` (${r.clockIn.minutes}m)` : "";
+        const clockOutMinutes = r.clockOut?.minutes ? ` (${r.clockOut.minutes}m)` : "";
 
-        <br><br>
+        tr.innerHTML = `
+          <td><strong>${r.date}</strong></td>
+          <td>${r.name || 'Unknown'}</td>
+          <td><span style="text-transform:capitalize;">${r.role || 'staff'}</span></td>
+          <td>
+            ${formatTime(r.clockIn?.time)}
+            <span class="badge badge-${clockInStatus}">${clockInStatus}${clockInMinutes}</span>
+          </td>
+          <td>
+            ${r.clockOut ? formatTime(r.clockOut.time) : '--:--'}
+            ${r.clockOut ? `<span class="badge badge-${clockOutStatus}">${clockOutStatus}${clockOutMinutes}</span>` : ''}
+          </td>
+          <td><strong>${formatDuration(r.clockIn?.time, r.clockOut?.time)}</strong></td>
+        `;
 
-        <button onclick="edit('${r.docId}')">
-          Open Record
-        </button>
-      </div>
-    `;
-  }).join("");
-}
+        tbodyEl.appendChild(tr);
+      });
 
-window.edit = function(id){
-  location.href = `attendance-edit.html?id=${id}`;
-};
+      loadingEl.style.display = "none";
+      tableEl.style.display = "table";
 
-load();
+    } catch (err) {
+      console.error("Error loading records:", err);
+      loadingEl.innerText = "Error loading records: " + err.message;
+    }
+  }
 
+  // Filter Trigger
+  document.getElementById("btnApplyFilter").addEventListener("click", fetchAttendance);
+
+  // PDF Generation Trigger
+  document.getElementById("btnExportPDF").addEventListener("click", () => {
+    const element = document.getElementById("pdfContent");
+    const opt = {
+      margin:       0.5,
+      filename:     `TEF_Attendance_Report_${document.getElementById("startDate").value}_to_${document.getElementById("endDate").value}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+  });
+
+  // Initial Load
+  fetchAttendance();
 </script>
 
 </body>
