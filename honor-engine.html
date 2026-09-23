@@ -554,11 +554,11 @@ function renderReportSheet(reportMeta, student){
       subRows += `
         <tr>
           <td><b>${subjName}</b></td>
-          <td><span class="${scoreColorClass(s1)}">${s1}%</span></td>
-          <td><span class="${scoreColorClass(s2)}">${s2}%</span></td>
-          <td><span class="${scoreColorClass(s3)}">${s3}%</span></td>
-          <td><span class="${scoreColorClass(exam)}">${exam}%</span></td>
-          <td><span class="${scoreColorClass(subjectAvg)}"><b>${subjectAvg}%</b></span></td>
+          <td><span class="${scoreColorClass(s1)}">${s1}</span></td>
+          <td><span class="${scoreColorClass(s2)}">${s2}</span></td>
+          <td><span class="${scoreColorClass(s3)}">${s3}</span></td>
+          <td><span class="${scoreColorClass(exam)}">${exam}</span></td>
+          <td><span class="${scoreColorClass(subjectAvg)}"><b>${subjectAvg}</b></span></td>
         </tr>
       `;
     });
@@ -585,11 +585,11 @@ function renderReportSheet(reportMeta, student){
           ${subRows}
           <tr style="background:#f1f3f5;font-weight:bold;">
             <td>PERIODIC AVERAGE</td>
-            <td><span class="${scoreColorClass(avgP1)}">${avgP1}%</span></td>
-            <td><span class="${scoreColorClass(avgP2)}">${avgP2}%</span></td>
-            <td><span class="${scoreColorClass(avgP3)}">${avgP3}%</span></td>
-            <td><span class="${scoreColorClass(avgExam)}">${avgExam}%</span></td>
-            <td><span class="${scoreColorClass(avgTotal)}">${avgTotal}%</span></td>
+            <td><span class="${scoreColorClass(avgP1)}">${avgP1}</span></td>
+            <td><span class="${scoreColorClass(avgP2)}">${avgP2}</span></td>
+            <td><span class="${scoreColorClass(avgP3)}">${avgP3}</span></td>
+            <td><span class="${scoreColorClass(avgExam)}">${avgExam}</span></td>
+            <td><span class="${scoreColorClass(avgTotal)}">${avgTotal}</span></td>
           </tr>
         </tbody>
       </table>
@@ -603,8 +603,8 @@ function renderReportSheet(reportMeta, student){
       let sem1Avg = data.sem1Average || 75;
       let sem2Avg = data.sem2Average || 78;
 
-      sem1Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem1Avg)}">${sem1Avg}%</span></td></tr>`;
-      sem2Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem2Avg)}">${sem2Avg}%</span></td></tr>`;
+      sem1Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem1Avg)}">${sem1Avg}</span></td></tr>`;
+      sem2Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem2Avg)}">${sem2Avg}</span></td></tr>`;
     });
 
     sheetBodyHtml = `
@@ -641,7 +641,7 @@ function renderReportSheet(reportMeta, student){
       subjectsRows += `
         <tr>
           <td><b>${subjName}</b></td>
-          <td><span class="${colorClass}">${score}%</span></td>
+          <td><span class="${colorClass}">${score}</span></td>
           <td><span class="${colorClass}">${grade}</span></td>
           <td><span class="${colorClass}">${status}</span></td>
         </tr>
@@ -690,7 +690,7 @@ function renderReportSheet(reportMeta, student){
           <div><strong>Student Name:</strong> ${student.studentName}</div>
           <div><strong>Student ID:</strong> ${student.studentId || "N/A"}</div>
           <div><strong>Class / Grade:</strong> ${reportMeta.class}</div>
-          <div><strong>Main Term Average:</strong> <span class="${scoreColorClass(student.mainAverage)}">${student.mainAverage}%</span></div>
+          <div><strong>Main Term Average:</strong> <span class="${scoreColorClass(student.mainAverage)}">${student.mainAverage}</span></div>
           <div><strong>Class Rank:</strong> #${student.rank || "-"}</div>
           <div><strong>Honor Standing:</strong> ${student.honor ? `<span style="color:var(--green);font-weight:bold">${student.honor}</span>` : "Regular"}</div>
         </div>
@@ -698,7 +698,7 @@ function renderReportSheet(reportMeta, student){
         ${sheetBodyHtml}
 
         <div class="summary-strip">
-          <div><span>Overall Average</span><strong>${student.mainAverage}%</strong></div>
+          <div><span>Overall Average</span><strong>${student.mainAverage}</strong></div>
           <div><span>Academic Standing</span><strong>${student.honor || "Satisfactory"}</strong></div>
           <div><span>Overall Status</span><strong style="color:${student.passed!==false?'#28a745':'#dc3545'}">${student.passed!==false?'PASSED':'REMEDIATION'}</strong></div>
         </div>
