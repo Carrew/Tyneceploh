@@ -156,13 +156,6 @@
     .badge-OVERTIME { background: #e2e3e5; color: #383d41; }
     .badge-NONE { background: #f1f1f1; color: #888; }
 
-    .time-sub {
-      display: block;
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
     #loading {
       text-align: center;
       padding: 30px;
@@ -180,7 +173,7 @@
     }
   </style>
 
-  <!-- FingerprintJS UMD for user lock check & html2pdf library -->
+  <!-- Export to PDF library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -253,7 +246,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"; 
-  import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
+  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
 
   const firebaseConfig = { 
     apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4", 
@@ -270,12 +263,10 @@
     location.href = "login.html"; 
   }
 
-  // Pre-fill default dates (Current month to date)
-  const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  
-  document.getElementById("startDate").value = firstDayOfMonth.toISOString().split("T")[0];
-  document.getElementById("endDate").value = today.toISOString().split("T")[0];
+  // DEFAULT TO TODAY'S DATE FOR BOTH START AND END
+  const todayStr = new Date().toISOString().split("T")[0];
+  document.getElementById("startDate").value = todayStr;
+  document.getElementById("endDate").value = todayStr;
 
   function formatTime(timestamp) {
     if (!timestamp) return "--:--";
@@ -305,7 +296,6 @@
     const selectedRole = document.getElementById("roleFilter").value;
 
     try {
-      // Query attendance Daily records
       const q = query(
         collection(db, "attendanceDaily"),
         orderBy("date", "desc")
@@ -317,7 +307,7 @@
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
         
-        // Date Filter (Client-side filtering for flexible string dates)
+        // Date Filter
         if (data.date >= start && data.date <= end) {
           // Role Filter
           if (selectedRole === "ALL" || data.role === selectedRole) {
@@ -327,10 +317,15 @@
       });
 
       document.getElementById("totalRecordsCount").innerText = `${records.length} Record(s) Found`;
-      document.getElementById("reportSubtitle").innerText = `Log from ${start} to ${end}`;
+      
+      if (start === end) {
+        document.getElementById("reportSubtitle").innerText = `Log for Today (${start})`;
+      } else {
+        document.getElementById("reportSubtitle").innerText = `Log from ${start} to ${end}`;
+      }
 
       if (records.length === 0) {
-        loadingEl.innerText = "No attendance logs found for the selected range.";
+        loadingEl.innerText = "No attendance logs found for the selected date(s).";
         return;
       }
 
@@ -373,12 +368,16 @@
   // Filter Trigger
   document.getElementById("btnApplyFilter").addEventListener("click", fetchAttendance);
 
-  // PDF Generation Trigger
+  // PDF Export Trigger
   document.getElementById("btnExportPDF").addEventListener("click", () => {
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
+    const filenameDate = start === end ? start : `${start}_to_${end}`;
+
     const element = document.getElementById("pdfContent");
     const opt = {
       margin:       0.5,
-      filename:     `TEF_Attendance_Report_${document.getElementById("startDate").value}_to_${document.getElementById("endDate").value}.pdf`,
+      filename:     `TEF_Attendance_Report_${filenameDate}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2 },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
@@ -387,7 +386,7 @@
     html2pdf().set(opt).from(element).save();
   });
 
-  // Initial Load
+  // Initial Load (loads Today's records automatically)
   fetchAttendance();
 </script>
 
