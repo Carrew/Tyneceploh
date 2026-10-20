@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Grade Submission - TEF</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,.06);
+  --glass:rgba(255,255,255,.045);
+  --border:rgba(255,255,255,.1);
+  --text:#fff;
+  --muted:rgba(255,255,255,.62);
+  --green:#27ae60;
+  --red:#c0392b;
+  --blue:#2980b9;
+  --orange:#f39c12;
+  --shadow:0 18px 50px rgba(0,0,0,.42);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,#2a0016 0,transparent 34%),
+    radial-gradient(circle at 100% 100%,#26000e 0,transparent 32%),
+    var(--bg);
+}
+
+button,input,select{font:inherit}
+button{cursor:pointer}
+
+.header{
+  padding:26px 18px 24px;
+  background:linear-gradient(135deg,#800000,#21000d);
+  box-shadow:var(--shadow);
+}
+
+.header-inner{max-width:1100px;margin:auto}
+
+.brand{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.brand h1{margin:0;color:var(--pink);font-size:clamp(22px,5vw,32px)}
+.brand p{margin:5px 0 0;color:rgba(255,255,255,.72);font-size:13px}
+
+.teacher-profile{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:20px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  background:rgba(0,0,0,.18);
+}
+
+.teacher-photo{
+  width:58px;height:58px;border-radius:50%;object-fit:cover;
+  border:2px solid var(--pink);background:#222;flex-shrink:0;
+}
+
+.teacher-name{font-weight:800;font-size:17px}
+.teacher-meta{margin-top:3px;color:rgba(255,255,255,.65);font-size:12px}
+.teacher-meta.err{color:#ff938a}
+
+/* ===== STATUS BANNER (on-page errors, not console-only) ===== */
+.status-stack{
+  width:min(1100px,calc(100% - 28px));
+  margin:16px auto 0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.status-banner{
+  padding:14px 16px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.5;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  animation:slideIn .25s ease;
+  box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.status-banner .icon{
+  width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;flex:0 0 22px;
+  background:rgba(255,255,255,.14);
+  color:inherit;font-size:12px;font-weight:900;
+}
+.status-banner .dismiss-btn{font-size:18px;line-height:1;padding:2px 8px}
+
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+.status-banner .icon{font-size:16px;line-height:1;margin-top:1px}
+.status-banner .msg{flex:1}
+.status-banner .msg small{display:block;margin-top:4px;font-weight:500;opacity:.75;font-size:11px}
+
+.status-banner button{
+  border:0;background:rgba(255,255,255,.12);color:#fff;
+  border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800;flex-shrink:0;
+}
+.status-banner button:hover{background:rgba(255,255,255,.22)}
+
+.status-banner.error{background:rgba(192,57,43,.16);border:1px solid rgba(192,57,43,.4);color:#ff9b90}
+.status-banner.warning{background:rgba(243,156,18,.16);border:1px solid rgba(243,156,18,.4);color:#ffcf7a}
+.status-banner.info{background:rgba(41,128,185,.16);border:1px solid rgba(41,128,185,.4);color:#83cfff}
+.status-banner.success{background:rgba(39,174,96,.16);border:1px solid rgba(39,174,96,.4);color:#7ff0aa}
+
+.container{width:min(1100px,calc(100% - 28px));margin:22px auto 45px}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+
+.panel{
+  background:var(--glass);border:1px solid var(--border);border-radius:22px;
+  padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(14px);
+}
+
+.panel h2{margin:0 0 5px;font-size:19px}
+.panel-sub{color:var(--muted);font-size:12px;margin-bottom:17px}
+
+label{display:block;margin:13px 0 7px;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+
+input,select{
+  width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--border);
+  outline:none;background:rgba(255,255,255,.07);color:#fff;
+}
+select option{background:#171219;color:#fff}
+input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.14)}
+select:disabled,input:disabled{opacity:.5;cursor:not-allowed}
+
+.locked{opacity:.55;pointer-events:none}
+
+.period-info{
+  margin-top:14px;padding:12px;border-radius:14px;
+  background:rgba(128,0,0,.18);border:1px solid rgba(255,192,203,.12);
+  color:rgba(255,255,255,.78);font-size:12px;
+}
+.period-info strong{color:var(--pink)}
+
+.sheet-panel{margin-top:18px}
+
+.sheet-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sheet-summary{display:flex;gap:9px;flex-wrap:wrap}
+
+.pill{padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--border);color:rgba(255,255,255,.75);font-size:11px}
+.pill b{color:#fff}
+
+.table-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left}
+th{background:rgba(128,0,0,.4);color:var(--pink);font-size:12px}
+td{font-size:13px;background:rgba(255,255,255,.018)}
+
+.subject-input{min-width:230px}
+.score-input{width:120px}
+.score-status{font-size:11px;font-weight:800}
+.pass{color:#58d68d}
+.fail{color:#ff7770}
+
+.remove-btn{border:0;background:rgba(192,57,43,.15);color:#ff8b82;padding:8px 10px;border-radius:9px;font-weight:800}
+.remove-btn:hover{background:rgba(192,57,43,.3)}
+
+.empty-row{text-align:center;color:var(--muted);padding:28px}
+.error-row{text-align:center;color:#ff938a;padding:28px;font-size:13px}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:800;transition:.2s;min-height:44px}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.btn-primary{color:#fff;background:linear-gradient(135deg,var(--maroon),#b00055)}
+.btn-green{color:#fff;background:linear-gradient(135deg,#1d8b4d,var(--green))}
+.btn-dark{color:#fff;background:#25252d}
+.btn-outline{color:#fff;background:transparent;border:1px solid var(--border)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+.message{display:none;margin-top:15px;padding:13px 15px;border-radius:13px;font-size:13px;font-weight:700}
+.message.success{display:block;background:rgba(39,174,96,.14);border:1px solid rgba(39,174,96,.35);color:#7ff0aa}
+.message.error{display:block;background:rgba(192,57,43,.14);border:1px solid rgba(192,57,43,.35);color:#ff938a}
+.message.info{display:block;background:rgba(41,128,185,.14);border:1px solid rgba(41,128,185,.35);color:#83cfff}
+
+/* Class Group Sections for Recent Sheets */
+.sheets{margin-top:18px}
+.class-group-card{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:18px;margin-top:14px;overflow:hidden}
+.class-group-header{padding:14px 18px;background:rgba(128,0,0,.2);display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.class-group-header h3{margin:0;font-size:15px;color:var(--pink);display:flex;align-items:center;gap:8px}
+.class-group-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+.class-group-body.collapsed{display:none}
+.collapse-icon{font-size:12px;transition:transform .2s}
+.collapsed .collapse-icon{transform:rotate(-90deg)}
+
+.sheet-card{padding:15px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--border);margin-top:6px}
+.sheet-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sheet-title{font-weight:800}
+.sheet-meta{margin-top:5px;color:var(--muted);font-size:12px}
+
+.status-badge{padding:6px 10px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase;display:inline-block;margin-bottom:8px}
+.resubmit-sheet-btn{display:block;width:100%;font-size:11px;padding:9px 11px;min-height:38px}
+.pending{background:rgba(243,156,18,.18);color:#ffc56b}
+.resubmitted{background:rgba(41,128,185,.18);color:#83cfff}
+.approved{background:rgba(39,174,96,.18);color:#7ff0aa}
+.rejected{background:rgba(192,57,43,.18);color:#ff938a}
+
+.notice{color:var(--muted);font-size:12px;line-height:1.55}
+
+/* Lock styling on cells */
+td.locked-cell { background: rgba(39,174,96,.04); }
+
+@media(max-width:760px){
+  .grid{grid-template-columns:1fr}
+  .container{width:min(100% - 20px,1100px)}
+  .panel{padding:16px}
+  .debug-body{height:150px}
+}
+
+@media print{
+  body{background:#fff;color:#000}
+  .header,.panel:not(.sheet-panel),.actions,.sheets,.status-stack{display:none!important}
+  .container{width:100%;margin:0}
+  .sheet-panel{box-shadow:none;border:0;background:#fff}
+  th,td{color:#000;border:1px solid #ccc}
+  th{background:#eee}
+}
+
+/* ===== BULK GRADEBOOK ADDITIONS ===== */
+.grid3{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px;align-items:end}
+.grid3 .period-info{margin:0}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.tools input{flex:1 1 200px}.tools select{flex:0 1 190px;width:auto}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:0 0 14px}
+.bar i{display:block;height:100%;background:var(--green);width:0;transition:width .2s}
+th.sticky,td.sticky{position:sticky;left:0;z-index:1;min-width:190px;background:#1d0b14}
+.stu{display:flex;align-items:center;gap:10px}
+.av{width:34px;height:34px;border-radius:50%;background:var(--maroon);color:var(--pink);display:grid;place-items:center;font-size:12px;font-weight:800;flex:0 0 34px}
+.stu b{display:block;font-size:13px}.stu small{color:var(--muted);font-size:11px}
+.cell{width:96px;text-align:center;padding:9px}
+td.missing .cell{border-color:rgba(243,156,18,.55)}
+td.invalid .cell,td.rejected .cell{border-color:var(--red);background:rgba(192,57,43,.14)}
+td.ok .cell{border-color:rgba(39,174,96,.45)}
+.ret{font-size:11px;color:#ff938a;margin-top:4px;max-width:150px}
+small.tag{display:block;margin-top:3px;font-size:10px;color:var(--muted)}
+.th-sub{display:block;font-weight:500;font-size:11px;opacity:.75}
+.th-rm{border:0;background:none;color:#ff8b82;font-size:11px;padding:2px 0;text-decoration:underline}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:14px;z-index:50}
+.modal[hidden]{display:none}
+.modal-card{width:min(520px,100%);max-height:90vh;overflow:auto;background:#1a0f16;border:1px solid var(--border);border-radius:18px;padding:20px}
+.modal-card h2{margin:0 0 12px;font-size:18px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:13px;margin:0 0 12px}.kv dt{color:var(--muted)}.kv dd{margin:0;font-weight:800;text-align:right}
+.misslist{max-height:170px;overflow:auto;font-size:12px;padding:10px;border-radius:12px;background:rgba(243,156,18,.12);border:1px solid rgba(243,156,18,.35);color:#ffcf7a;margin-bottom:6px}
+.btn-danger{color:#fff;background:#a93226}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{color:#ff938a;font-size:12px;margin-top:6px}
+@media(max-width:760px){.grid3{grid-template-columns:1fr}.cell{width:80px}.btn{flex:1 1 140px}}
+
+/* ===== UI/UX REFINEMENTS & MOBILE OPTIMIZATIONS ===== */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.chips:empty{display:none}
+.chip{display:inline-flex;gap:6px;align-items:center;padding:5px 6px 5px 12px;border-radius:999px;background:rgba(128,0,0,.28);border:1px solid rgba(255,192,203,.2);font-size:12px;font-weight:700}
+.chip small{opacity:.7;font-weight:500}
+.chip button{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:50%;width:24px;height:24px;padding:0;line-height:1}
+.chip button:hover{background:rgba(192,57,43,.5)}
+.table-wrap{max-height:68vh;overflow:auto}
+thead th{position:sticky;top:0;z-index:2}
+thead th.sticky{z-index:3}
+tbody tr:nth-child(even) td:not(.sticky){background:rgba(255,255,255,.04)}
+tbody tr:hover td:not(.sticky){background:rgba(255,192,203,.07)}
+.cw{display:flex;flex-direction:column;align-items:center}
+.cell:focus{background:rgba(255,255,255,.14)}
+@media(min-width:761px) and (max-width:980px){.grid3{grid-template-columns:1fr 1fr}.grid3 .period-info{grid-column:1/-1}}
+@media(max-width:760px){
+  .table-wrap{border:0;max-height:none;overflow:visible;border-radius:0}
+  table{min-width:0}
+  table,tbody,tr,td{display:block;width:100%}
+  thead{display:none}
+  tbody tr{border:1px solid var(--border);border-radius:16px;margin-bottom:14px;overflow:hidden;background:rgba(255,255,255,.04);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  td{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+  td:last-child{border-bottom:0}
+  td[data-label]::before{content:attr(data-label);flex:1;color:var(--muted);font-size:13px;font-weight:700}
+  td.sticky{position:static;min-width:0;background:rgba(128,0,0,.38);border-bottom:1px solid var(--border)}
+  tbody tr:nth-child(even) td:not(.sticky){background:transparent}
+  .cw{align-items:flex-end;width:100%}
+  .cell{width:100%;max-width:140px;min-height:46px;font-size:16px}
+  .empty-row{display:block;text-align:center}
+  #sheetPanel .actions{position:static;margin-top:16px;padding:0;background:transparent;border:0}
+  #sheetPanel .actions .btn{flex:1 1 100%;padding:12px}
+  .tools{flex-direction:column}
+  .tools input,.tools select{flex:1 1 100%;width:100%}
+  .sheet-toolbar{flex-direction:column;align-items:stretch}
+  .sheet-summary{display:grid;grid-template-columns:repeat(2, 1fr);gap:6px}
+  .pill{text-align:center}
+  .ret{max-width:none;text-align:right}
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div>
+        <h1>Teacher Grade Submission</h1>
+        <p>Tyneceploh Educational Foundation</p>
+      </div>
+    </div>
+
+    <div class="teacher-profile">
+      <img id="teacherPhoto" class="teacher-photo" alt="Teacher photo">
+      <div>
+        <div id="teacherName" class="teacher-name">Teacher</div>
+        <div id="teacherMeta" class="teacher-meta">Checking session...</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ON-PAGE ERROR / STATUS BANNERS -->
+<div id="statusStack" class="status-stack"></div>
+
+
+<main class="container">
+
+  <section class="panel">
+    <h2>Class Gradebook</h2>
+    <div class="panel-sub">Choose a class and academic period, add subjects, then enter scores for every student.</div>
+    <div class="grid3">
+      <div><label for="classSel">Class</label>
+        <select id="classSel"><option value="">Select class</option></select></div>
+      <div><label for="period">Academic Period</label>
+        <select id="period">
+          <option value="">Select period</option>
+          <option value="1st Period">1st Period</option>
+          <option value="2nd Period">2nd Period</option>
+          <option value="3rd Period">3rd Period</option>
+          <option value="Semester Exam">Semester Exam</option>
+          <option value="4th Period">4th Period</option>
+          <option value="5th Period">5th Period</option>
+          <option value="6th Period">6th Period</option>
+          <option value="Final Exam">Final Exam</option>
+        </select></div>
+      <div id="periodInfo" class="period-info">Select a period to identify its semester.</div>
+    </div>
+  </section>
+
+  <section id="sheetPanel" class="panel sheet-panel locked">
+    <div class="sheet-toolbar">
+      <div>
+        <h2>Grade Entry</h2>
+        <div class="panel-sub" id="hint">Select a class and period to begin.</div>
+      </div>
+      <div class="sheet-summary">
+        <div class="pill">Students: <b id="sStudents">0</b></div>
+        <div class="pill">Subjects: <b id="sSubjects">0</b></div>
+        <div class="pill">Completed: <b id="sDone">0</b></div>
+        <div class="pill">Missing: <b id="sMissing">0</b></div>
+      </div>
+    </div>
+    <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+
+    <div id="chips" class="chips" aria-label="Subjects in this gradebook"></div>
+
+    <div class="tools">
+      <input id="search" type="search" placeholder="Search student name or ID" aria-label="Search students">
+      <select id="filter" aria-label="Filter students">
+        <option value="all">All students</option>
+        <option value="missing">Missing grades</option>
+        <option value="complete">Complete</option>
+        <option value="returned">Returned for correction</option>
+        <option value="invalid">Invalid scores</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead id="gbHead"></thead>
+        <tbody id="gbBody"></tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button id="addSubjectBtn" class="btn btn-primary" type="button">＋ Add Subject</button>
+      <button id="saveDraftBtn" class="btn btn-dark" type="button">Save Draft</button>
+      <button id="submitBtn" class="btn btn-green" type="button">Submit All Grades</button>
+      <button id="clearBtn" class="btn btn-outline" type="button">Discard Draft</button>
+    </div>
+    <div id="message" class="message" role="status"></div>
+  </section>
+
+  <section class="panel sheets">
+    <h2>Recent Grade Sheets</h2>
+    <div class="panel-sub">Your recent submissions organized by class. Click a class header to expand or hide.</div>
+    <div id="recentSheets">No grade sheets loaded.</div>
+  </section>
+
+</main>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div id="modalBody"></div>
+    <div id="modalActions" class="actions"></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     PLAIN (non-module) SCRIPT: user-facing status utilities.
+     ================================================================ -->
+<script>
+(function(){
+  var stack = document.getElementById('statusStack');
+
+  window.showBanner = function(type, message, opts){
+    opts = opts || {};
+    var id = opts.id || ('b_' + Math.random().toString(36).slice(2,8));
+    var existing = document.getElementById(id);
+    if(existing) existing.remove();
+
+    var icon = { error:'!', warning:'!', info:'i', success:'✓' }[type] || 'i';
+    var el = document.createElement('div');
+    el.id = id;
+    el.className = 'status-banner ' + (type === 'warning' ? 'warning' : type);
+
+    var iconEl = document.createElement('span');
+    iconEl.className = 'icon';
+    iconEl.setAttribute('aria-hidden','true');
+    iconEl.textContent = icon;
+
+    var msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.textContent = String(message || '');
+
+    if(opts.detail){
+      var small = document.createElement('small');
+      small.textContent = String(opts.detail);
+      msg.appendChild(small);
+    }
+
+    el.appendChild(iconEl);
+    el.appendChild(msg);
+
+    if(opts.actionLabel && typeof opts.onAction === 'function'){
+      var actionBtn = document.createElement('button');
+      actionBtn.type = 'button';
+      actionBtn.textContent = opts.actionLabel;
+      actionBtn.addEventListener('click', opts.onAction);
+      el.appendChild(actionBtn);
+    }
+
+    if(!opts.sticky){
+      var dismiss = document.createElement('button');
+      dismiss.type = 'button';
+      dismiss.className = 'dismiss-btn';
+      dismiss.setAttribute('aria-label','Dismiss message');
+      dismiss.textContent = '×';
+      dismiss.addEventListener('click', function(){ el.remove(); });
+      el.appendChild(dismiss);
+    }
+
+    stack.appendChild(el);
+    return id;
+  };
+
+  window.dismissBanner = function(id){
+    var el = document.getElementById(id);
+    if(el) el.remove();
+  };
+
+  window.addEventListener('error', function(e){
+    window.showBanner('error', 'Something went wrong loading this page.', {
+      id:'global-error',
+      detail: e && e.message ? e.message : 'Please reload the page and try again.',
+      sticky:true,
+      actionLabel:'Reload',
+      onAction:function(){ location.reload(); }
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(e){
+    var reason = e.reason && e.reason.message ? e.reason.message : e.reason;
+    window.showBanner('error', 'The page could not complete an operation.', {
+      id:'global-rejection',
+      detail: reason ? String(reason) : 'Please check your connection and try again.'
+    });
+  });
+
+  window.__appReady = false;
+  setTimeout(function(){
+    if(!window.__appReady){
+      window.showBanner('error', 'The page is taking too long to load your data.', {
+        id:'watchdog',
+        detail:'Check your internet connection and reload the page.',
+        actionLabel:'Reload',
+        onAction:function(){ location.reload(); },
+        sticky:true
+      });
+      var meta = document.getElementById('teacherMeta');
+      if(meta && /checking|loading/i.test(meta.textContent)){
+        meta.textContent = 'Could not confirm session — check connection';
+        meta.classList.add('err');
+      }
+    }
+  }, 12000);
+})();
+</script>
+
+<script type="module">
+
+const $ = id => document.getElementById(id);
+const classSel = $("classSel"), periodSel = $("period"), periodInfo = $("periodInfo");
+const sheetPanel = $("sheetPanel"), message = $("message");
+const gbHead = $("gbHead"), gbBody = $("gbBody");
+
+let students = [], classStudents = [], sheets = [];
+let subjects = [], scores = {}, server = {}, reserved = {}, failedMap = {};
+let user = null, db = null, firebaseReady = false, busy = false, dirty = false;
+let curClass = "", curPeriod = "";
+const firestoreCalls = {};
+
+const keyOf = s => String(s || "").trim().replace(/\s+/g," ").toLowerCase();
+const cleanName = s => String(s || "").trim().replace(/\s+/g," ");
+const initials = n => String(n || "?").trim().split(/\s+/).slice(0,2).map(w => w[0]).join("").toUpperCase() || "?";
+const errText = e => String(e && e.message || e);
+const isPerm = e => /permission|unauthenticated|unauthorized/i.test(errText(e));
+const assignedClasses = () => Array.isArray(user.classes) ? user.classes : (user.class ? [user.class] : []);
+const draftId = () => [user.userId, curClass, curPeriod].map(s => String(s).replace(/\//g,"-")).join("__");
+const svOf = (sid,k) => server[sid] && server[sid][k];
+const valOf = (sid,k) => (scores[sid] && scores[sid][k]) || "";
+const locked = (sid,k) => { 
+  const s = svOf(sid,k); 
+  return !!s && (s.status === "approved" || s.status === "pending" || s.status === "resubmitted"); 
+};
+function setVal(sid,k,v){ (scores[sid] = scores[sid] || {})[k] = v; }
+function checkScore(v){
+  if(v === "") return "missing";
+  if(!/^\d+(\.\d+)?$/.test(v)) return "invalid";
+  const n = Number(v);
+  return n >= 0 && n <= 100 ? "ok" : "invalid";
+}
+
+// Alphabetical sorting based on Last Name
+function sortByLastName(a, b) {
+  const nameA = (a.name || "").trim();
+  const nameB = (b.name || "").trim();
+  const partsA = nameA.split(/\s+/);
+  const partsB = nameB.split(/\s+/);
+  const lastA = partsA.length > 1 ? partsA[partsA.length - 1] : partsA[0] || "";
+  const lastB = partsB.length > 1 ? partsB[partsB.length - 1] : partsB[0] || "";
+  return lastA.localeCompare(lastB, undefined, { sensitivity: 'accent' });
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function showMessage(text,type="info"){
+  message.className = "message " + type;
+  message.textContent = text;
+}
+function clearMessage(){
+  message.className = "message";
+  message.textContent = "";
+}
+
+function withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error(label + " timed out after " + (ms/1000) + "s")), ms))
+  ]);
+}
+
+function loadSessionUser(){
+  let raw;
+  try{
+    raw = localStorage.getItem("user");
+  }catch(err){
+    window.showBanner('error', 'We couldn\'t verify your session.',
+      { detail:'Your browser is blocking session storage. Please enable site storage and try again.', sticky:true });
+    return null;
+  }
+
+  if(!raw){
+    window.showBanner('warning', 'You are not logged in. Redirecting to login…', { sticky:true });
+    setTimeout(() => { location.href = "login.html"; }, 900);
+    return null;
+  }
+
+  let parsed;
+  try{
+    parsed = JSON.parse(raw);
+  }catch(err){
+    window.showBanner('error', 'Your session could not be verified.',
+      { detail:'Please sign in again to continue.', actionLabel:'Go to login',
+        onAction:() => { location.href = "login.html"; }, sticky:true });
+    return null;
+  }
+
+  if(!parsed || parsed.role !== "teacher"){
+    window.showBanner('warning', 'Teacher access is required. Redirecting to sign in…', { sticky:true });
+    setTimeout(() => { location.href = "login.html"; }, 900);
+    return null;
+  }
+  return parsed;
+}
+
+function setupProfile(u){
+  try{
+    document.getElementById("teacherName").textContent = u.name || "Teacher";
+
+    const teacherId = u.userId || "No ID";
+    const classes = Array.isArray(u.classes)
+      ? (u.classes.length ? u.classes.join(", ") : "No classes assigned")
+      : (u.class || "No classes assigned");
+
+    const meta = document.getElementById("teacherMeta");
+    meta.textContent = `${teacherId} • Classes: ${classes}`;
+    meta.classList.remove("err");
+
+    const photo = document.getElementById("teacherPhoto");
+    photo.src = u.photoURL || "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#800000"/><text x="50" y="58" text-anchor="middle" font-size="38" fill="#ffc0cb">T</text></svg>');
+  }catch(err){
+    const meta = document.getElementById("teacherMeta");
+    meta.textContent = "Profile unavailable";
+    meta.classList.add("err");
+    window.showBanner('error', 'Could not display your profile information.', { detail: String(err && err.message || err) });
+  }
+}
+
+function getSemester(period){
+  if(["1st Period","2nd Period","3rd Period","Semester Exam"].includes(period)) return "Semester 1";
+  if(["4th Period","5th Period","6th Period","Final Exam"].includes(period)) return "Semester 2";
+  return "";
+}
+
+function updatePeriodInfo(){
+  const semester = getSemester(curPeriod);
+  periodInfo.innerHTML = curPeriod
+    ? `<strong>${escapeHtml(curPeriod)}</strong> belongs to <strong>${escapeHtml(semester)}</strong>.`
+    : "Select a period to identify its semester.";
+}
+
+async function loadFirebaseSdk(){
+  try{
+    const [appMod, fsMod] = await withTimeout(Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+    ]), 10000, "Firebase SDK load");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+      authDomain: "tyneceploh.firebaseapp.com",
+      projectId: "tyneceploh"
+    };
+
+    const app = appMod.initializeApp(firebaseConfig);
+    db = fsMod.getFirestore(app);
+
+    firestoreCalls.collection = fsMod.collection;
+    firestoreCalls.getDocs = fsMod.getDocs;
+    firestoreCalls.addDoc = fsMod.addDoc;
+    firestoreCalls.query = fsMod.query;
+    firestoreCalls.where = fsMod.where;
+    firestoreCalls.orderBy = fsMod.orderBy;
+    firestoreCalls.limit = fsMod.limit;
+    firestoreCalls.updateDoc = fsMod.updateDoc;
+    firestoreCalls.doc = fsMod.doc;
+    firestoreCalls.getDoc = fsMod.getDoc;
+    firestoreCalls.setDoc = fsMod.setDoc;
+    firestoreCalls.deleteDoc = fsMod.deleteDoc;
+    firestoreCalls.runTransaction = fsMod.runTransaction;
+
+    firebaseReady = true;
+    return true;
+  }catch(err){
+    window.showBanner('error', 'Cannot connect to the server.',
+      { id:'fb-load-error',
+        detail:'You appear to be offline, or the connection to Firebase was blocked. Student data, submissions and recent sheets will not load until this is fixed.',
+        actionLabel:'Retry', onAction: retryConnection, sticky:true });
+    return false;
+  }
+}
+
+async function retryConnection(){
+  window.dismissBanner('fb-load-error');
+  const ok = await loadFirebaseSdk();
+  if(ok){
+    window.showBanner('success', 'Connection restored.', { id:'fb-restored' });
+    setTimeout(() => window.dismissBanner('fb-restored'), 3000);
+    await Promise.all([loadStudents(), loadRecentSheets()]);
+  }
+}
+
+async function loadStudents(){
+  classSel.innerHTML = `<option value="">Loading classes...</option>`;
+  if(!firebaseReady){ classSel.innerHTML = `<option value="">Unavailable — check connection</option>`; return; }
+  try{
+    const { collection, getDocs } = firestoreCalls;
+    const snap = await withTimeout(getDocs(collection(db,"users")), 10000, "Loading students");
+    const mine = assignedClasses();
+    students = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if(data.role === "student" && mine.includes(data.class)) students.push({ ...data, docId:d.id });
+    });
+    students.sort(sortByLastName);
+    const opts = mine.map(c => {
+      const n = students.filter(s => s.class === c).length;
+      return `<option value="${escapeHtml(c)}">${escapeHtml(c)} (${n} student${n === 1 ? "" : "s"})</option>`;
+    });
+    classSel.innerHTML = mine.length ? `<option value="">Select class</option>${opts.join("")}` : `<option value="">No classes assigned</option>`;
+  }catch(err){
+    classSel.innerHTML = `<option value="">Could not load classes</option>`;
+    window.showBanner('error', isPerm(err) ? 'Your access could not be verified.' : 'Students could not be loaded.',
+      { id:'students-error', detail:isPerm(err) ? 'Please sign in again and make sure you are using a teacher account.' : 'Please check your connection and try again.',
+        actionLabel:isPerm(err) ? 'Go to login' : 'Retry',
+        onAction:() => { if(isPerm(err)){ location.href = "login.html"; } else { window.dismissBanner('students-error'); loadStudents(); } } });
+  }
+}
+
+async function loadSheets(){
+  const { collection, getDocs, query, where } = firestoreCalls;
+  const snap = await withTimeout(getDocs(query(collection(db,"Grades"), where("teacherId","==",user.userId))), 12000, "Loading grade sheets");
+  sheets = [];
+  snap.forEach(d => sheets.push({ ...d.data(), docId:d.id }));
+  sheets.sort((a,b) => Number(a.updatedAt || a.createdAt || 0) - Number(b.updatedAt || b.createdAt || 0));
+}
+
+async function loadRecentSheets(){
+  const container = $("recentSheets");
+  container.innerHTML = `<span class="spinner"></span> Loading recent submissions...`;
+  if(!firebaseReady){ container.innerHTML = `<div class="notice">Unavailable — check your connection and retry.</div>`; return; }
+  try{
+    await loadSheets();
+    renderRecentSheets(sheets.slice().reverse());
+  }catch(err){
+    container.innerHTML = `<div class="notice">Recent submissions could not be loaded.</div>`;
+    window.showBanner('error', 'Recent grade sheets could not be loaded.',
+      { id:'recent-error', detail:isPerm(err) ? 'Please sign in again and make sure you are using a teacher account.' : 'Please check your connection and try again.',
+        actionLabel:isPerm(err) ? 'Go to login' : 'Retry',
+        onAction:() => { if(isPerm(err)){ location.href = "login.html"; } else { window.dismissBanner('recent-error'); loadRecentSheets(); } } });
+  }
+}
+
+function statusOfGrade(g){
+  return String(g && (g.status || g.reviewStatus) || "pending").toLowerCase();
+}
+
+function returnedSubjects(sheet){
+  return (Array.isArray(sheet.grades) ? sheet.grades : []).filter(g =>
+    statusOfGrade(g) === "rejected"
+  );
+}
+
+function sheetNeedsResubmission(sheet){
+  const s = String(sheet.status || "pending").toLowerCase();
+  return s === "rejected" || s === "resubmitted" || returnedSubjects(sheet).length > 0;
+}
+
+function modal(title, html, buttons){
+  return new Promise(resolve => {
+    const m = $("modal"), actions = $("modalActions");
+    $("modalBody").innerHTML = `<h2>${escapeHtml(title)}</h2>${html}`;
+    actions.innerHTML = "";
+    buttons.forEach(b => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "btn " + (b.cls || "btn-outline");
+      el.textContent = b.label;
+      el.addEventListener("click", () => {
+        if(b.check && !b.check()) return;
+        m.hidden = true;
+        resolve(b.value);
+      });
+      actions.appendChild(el);
+    });
+    m.onkeydown = e => {
+      if(e.key === "Escape"){ e.preventDefault(); actions.firstChild.click(); }
+      else if(e.key === "Enter" && e.target.tagName === "INPUT"){ e.preventDefault(); actions.lastChild.click(); }
+    };
+    m.hidden = false;
+    (m.querySelector("input") || actions.firstChild).focus();
+  });
+}
+
+function setBusy(on, label){
+  busy = on;
+  ["addSubjectBtn","saveDraftBtn","submitBtn","clearBtn"].forEach(id => {
+    const b = $(id);
+    if(!b.dataset.label) b.dataset.label = b.textContent;
+    b.disabled = on;
+    b.textContent = b.dataset.label;
+  });
+  if(on && label){
+    const active = label.startsWith("Saving") ? $("saveDraftBtn") : $("submitBtn");
+    active.innerHTML = `<span class="spinner"></span> ${escapeHtml(label)}`;
+  }
+}
+
+function buildServer(addSubjects){
+  server = {};
+  const ids = new Set(classStudents.map(s => s.userId));
+  sheets.filter(sh => sh.period === curPeriod && sh.class === curClass && ids.has(sh.studentId)).forEach(sh => {
+    (Array.isArray(sh.grades) ? sh.grades : []).forEach(g => {
+      const name = cleanName(g.subject), k = keyOf(name);
+      if(!k) return;
+      if(addSubjects && !subjects.some(s => s.key === k)) subjects.push({ name, key:k });
+      (server[sh.studentId] = server[sh.studentId] || {})[k] = {
+        score:String(g.score), status:statusOfGrade(g), feedback:g.feedback || g.reviewFeedback || "", docId:sh.docId
+      };
+    });
+  });
+}
+
+async function openBook(skipDraft){
+  subjects = []; scores = {}; server = {}; reserved = {}; failedMap = {}; dirty = false;
+  sheetPanel.classList.toggle("locked", !(curClass && curPeriod));
+  if(!curClass || !curPeriod){ classStudents = []; render(); return; }
+  classStudents = students.filter(s => s.class === curClass);
+  classStudents.sort(sortByLastName);
+  gbHead.innerHTML = "";
+  gbBody.innerHTML = `<tr><td class="empty-row"><span class="spinner"></span> Loading gradebook...</td></tr>`;
+  if(firebaseReady){
+    try{ await loadSheets(); }
+    catch(err){
+      window.showBanner('error', 'Existing grade sheets could not be loaded.',
+        { id:'book-error', detail:'Submitted scores may be missing from this view. Reload before submitting.', sticky:true,
+          actionLabel:'Reload', onAction:() => location.reload() });
+    }
+  }
+  buildServer(true);
+  Object.keys(server).forEach(sid => Object.keys(server[sid]).forEach(k => setVal(sid,k,server[sid][k].score)));
+  if(!skipDraft) await restoreDraft();
+  render();
+}
+
+async function restoreDraft(){
+  let remote = null, local = null;
+  try{ local = JSON.parse(localStorage.getItem("tefDraft:" + draftId()) || "null"); }catch(e){}
+  if(firebaseReady){
+    try{
+      const { getDoc, doc } = firestoreCalls;
+      const s = await withTimeout(getDoc(doc(db,"GradeDrafts",draftId())), 8000, "Loading draft");
+      if(s.exists()) remote = s.data();
+    }catch(e){ remote = null; }
+  }
+  const d = [remote, local].filter(Boolean).sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+  if(!d || d.teacherId !== user.userId) return;
+  (d.subjects || []).forEach(n => {
+    const k = keyOf(n);
+    if(k && !subjects.some(s => s.key === k)) subjects.push({ name:cleanName(n), key:k });
+  });
+  const ids = new Set(classStudents.map(s => s.userId));
+  (d.entries || []).forEach(e => {
+    const k = keyOf(e.subject);
+    if(ids.has(e.studentId) && subjects.some(s => s.key === k) && !locked(e.studentId,k)) setVal(e.studentId,k,String(e.score));
+  });
+  (d.reserved || []).forEach(r => { if(ids.has(r.studentId) && r.docId) reserved[r.studentId] = r.docId; });
+  showMessage("Draft restored (saved " + new Date(d.updatedAt).toLocaleString() + ").", "info");
+}
+
+async function saveDraft(){
+  if(busy || !curClass || !curPeriod) return false;
+  clearMessage();
+  setBusy(true, "Saving draft...");
+  const entries = [];
+  classStudents.forEach(s => subjects.forEach(sub => {
+    const v = valOf(s.userId, sub.key);
+    if(v !== "" && !locked(s.userId, sub.key)) entries.push({ studentId:s.userId, subject:sub.name, score:v });
+  }));
+  const payload = {
+    teacherId:user.userId, teacherName:user.name || "", class:curClass, period:curPeriod,
+    semester:getSemester(curPeriod), status:"draft", subjects:subjects.map(s => s.name), entries,
+    reserved:Object.entries(reserved).map(([studentId,docId]) => ({ studentId, docId })), updatedAt:Date.now()
+  };
+  let local = false, remote = false;
+  try{ localStorage.setItem("tefDraft:" + draftId(), JSON.stringify(payload)); local = true; }catch(e){}
+  if(firebaseReady){
+    try{
+      const { setDoc, doc } = firestoreCalls;
+      await withTimeout(setDoc(doc(db,"GradeDrafts",draftId()), payload), 10000, "Saving draft");
+      remote = true;
+    }catch(e){}
+  }
+  setBusy(false);
+  render();
+  if(remote){ dirty = false; showMessage("Draft saved. You can leave and continue later.", "success"); return true; }
+  if(local){
+    dirty = false;
+    showMessage("Draft saved on this device only. It could not be saved to the server, so keep using this browser.", "info");
+    window.showBanner('warning', 'Draft saved on this device only.', { id:'draft-local', detail:'The server draft could not be written. Your scores are not lost, but they will not appear on other devices.' });
+    return true;
+  }
+  showMessage("The draft could not be saved. Your scores are still on screen; try again.", "error");
+  return false;
+}
+
+function cellCls(sid,k){
+  if(locked(sid,k)) return "locked-cell";
+  const sv = svOf(sid,k), v = valOf(sid,k);
+  if(sv && sv.status === "rejected" && v === sv.score) return "rejected";
+  return checkScore(v);
+}
+function rowText(sid){
+  if(failedMap[sid]) return `<span class="fail">Not submitted: ${escapeHtml(failedMap[sid])}</span>`;
+  if(!subjects.length) return "—";
+  const done = subjects.filter(s => checkScore(valOf(sid,s.key)) === "ok").length;
+  return done === subjects.length ? `<span class="pass">Complete</span>` : `<span class="score-status" style="color:#ffcf7a">${done}/${subjects.length} entered</span>`;
+}
+function matches(s){
+  const q = $("search").value.trim().toLowerCase();
+  if(q && !(String(s.name || "").toLowerCase().includes(q) || String(s.userId || "").toLowerCase().includes(q))) return false;
+  const f = $("filter").value, sid = s.userId;
+  if(f === "missing") return subjects.some(x => valOf(sid,x.key) === "");
+  if(f === "complete") return subjects.length > 0 && subjects.every(x => checkScore(valOf(sid,x.key)) === "ok");
+  if(f === "returned") return subjects.some(x => cellCls(sid,x.key) === "rejected");
+  if(f === "invalid") return subjects.some(x => cellCls(sid,x.key) === "invalid");
+  return true;
+}
+function renderHead(){
+  gbHead.innerHTML = `<tr><th class="sticky">Student</th>${subjects.map(sub => {
+    const done = classStudents.filter(s => checkScore(valOf(s.userId,sub.key)) === "ok").length;
+    const submitted = classStudents.some(s => svOf(s.userId,sub.key));
+    return `<th>${escapeHtml(sub.name)}<span class="th-sub">${done}/${classStudents.length} entered</span>${submitted ? "" : `<button type="button" class="th-rm" data-rm="${escapeHtml(sub.key)}">Remove</button>`}</th>`;
+  }).join("")}<th>Status</th></tr>`;
+  $("chips").innerHTML = subjects.map(sub => {
+    const done = classStudents.filter(s => checkScore(valOf(s.userId,sub.key)) === "ok").length;
+    const submitted = classStudents.some(s => svOf(s.userId,sub.key));
+    return `<span class="chip">${escapeHtml(sub.name)} <small>${done}/${classStudents.length}</small>${submitted ? "" : `<button type="button" data-chip-rm="${escapeHtml(sub.key)}" aria-label="Remove ${escapeHtml(sub.name)}">×</button>`}</span>`;
+  }).join("");
+}
+$("chips").addEventListener("click", e => {
+  const b = e.target.closest("[data-chip-rm]");
+  if(!b) return;
+  const t = [...gbHead.querySelectorAll("[data-rm]")].find(x => x.dataset.rm === b.dataset.chipRm);
+  if(t) t.click();
+});
+function renderBody(){
+  const hint = $("hint");
+  if(!curClass || !curPeriod){
+    hint.textContent = "Select a class and period to begin.";
+    gbBody.innerHTML = `<tr><td class="empty-row">Select a class and an academic period.</td></tr>`;
+    return;
+  }
+  hint.textContent = subjects.length ? "Enter scores from 0 to 100. Submitted/Approved scores are securely locked from editing." : "No subjects yet. Click Add Subject to start the gradebook.";
+  if(!classStudents.length){ gbBody.innerHTML = `<tr><td class="empty-row">No students found in ${escapeHtml(curClass)}.</td></tr>`; return; }
+  const list = classStudents.filter(matches);
+  if(!list.length){ gbBody.innerHTML = `<tr><td class="empty-row" colspan="${subjects.length + 2}">No students match this search or filter.</td></tr>`; return; }
+  gbBody.innerHTML = list.map(s => {
+    const sid = s.userId;
+    const cells = subjects.map(sub => {
+      const k = sub.key, sv = svOf(sid,k), v = valOf(sid,k);
+      if(locked(sid,k)){
+        const statusLabel = sv.status === "approved" ? "Approved" : "Submitted/Pending";
+        return `<td data-label="${escapeHtml(sub.name)}" class="locked-cell"><b>${escapeHtml(v)}</b><small class="tag pass">${statusLabel}</small></td>`;
+      }
+      const tag = sv && sv.status === "rejected" ? `<div class="ret">Returned: ${escapeHtml(sv.feedback || "Correction requested.")}</div>`
+        : sv ? `<small class="tag">${sv.status === "resubmitted" ? "Resubmitted" : "Submitted"}</small>` : "";
+      return `<td data-label="${escapeHtml(sub.name)}" class="${cellCls(sid,k)}"><div class="cw"><input class="cell" inputmode="decimal" autocomplete="off" data-sid="${escapeHtml(sid)}" data-k="${escapeHtml(k)}" value="${escapeHtml(v)}" aria-label="${escapeHtml(s.name || sid)} – ${escapeHtml(sub.name)}">${tag}</div></td>`;
+    }).join("");
+    return `<tr><td class="sticky"><div class="stu"><span class="av">${escapeHtml(initials(s.name))}</span><div><b>${escapeHtml(s.name || "Unnamed")}</b><small>${escapeHtml(sid)}</small></div></div></td>${cells}<td class="rowstat" data-label="Status">${rowText(sid)}</td></tr>`;
+  }).join("");
+}
+function summary(){
+  let done = 0, miss = 0, bad = 0;
+  classStudents.forEach(s => subjects.forEach(x => {
+    const c = checkScore(valOf(s.userId,x.key));
+    if(c === "ok") done++; else if(c === "missing") miss++; else bad++;
+  }));
+  const total = done + miss + bad;
+  $("sStudents").textContent = classStudents.length;
+  $("sSubjects").textContent = subjects.length;
+  $("sDone").textContent = done;
+  $("sMissing").textContent = miss + (bad ? ` (+${bad} invalid)` : "");
+  $("bar").style.width = (total ? done / total * 100 : 0) + "%";
+}
+function render(){ renderHead(); renderBody(); summary(); }
+
+gbBody.addEventListener("input", e => {
+  const i = e.target.closest(".cell");
+  if(!i) return;
+  const sid = i.dataset.sid, k = i.dataset.k;
+  if(locked(sid,k)) return; // Prevent editing locked cells
+  setVal(sid,k,i.value.trim());
+  dirty = true;
+  delete failedMap[sid];
+  i.closest("td").className = cellCls(sid,k);
+  i.closest("tr").querySelector(".rowstat").innerHTML = rowText(sid);
+  renderHead(); summary();
+});
+gbBody.addEventListener("keydown", e => {
+  const i = e.target.closest(".cell");
+  if(!i) return;
+  let step = 0;
+  if(e.key === "ArrowDown" || (e.key === "Enter" && !e.shiftKey)) step = 1;
+  if(e.key === "ArrowUp" || (e.key === "Enter" && e.shiftKey)) step = -1;
+  if(!step) return;
+  e.preventDefault();
+  const col = [...gbBody.querySelectorAll(".cell")].filter(c => c.dataset.k === i.dataset.k);
+  const next = col[col.indexOf(i) + step];
+  if(next){ next.focus(); next.select(); }
+});
+gbHead.addEventListener("click", async e => {
+  const b = e.target.closest("[data-rm]");
+  if(!b || busy) return;
+  const sub = subjects.find(s => s.key === b.dataset.rm);
+  const entered = classStudents.filter(s => valOf(s.userId,sub.key) !== "").length;
+  if(entered){
+    const ok = await modal("Remove subject?", `<p class="notice">${escapeHtml(sub.name)} has ${entered} unsaved score(s). Removing the column discards them.</p>`,
+      [{ label:"Keep subject", value:false }, { label:"Remove subject", cls:"btn-danger", value:true }]);
+    if(!ok) return;
+  }
+  subjects = subjects.filter(s => s.key !== sub.key);
+  Object.keys(scores).forEach(sid => delete scores[sid][sub.key]);
+  dirty = true; render();
+});
+
+async function addSubject(){
+  if(busy) return;
+  const sugg = new Set([...(Array.isArray(user.subjects) ? user.subjects : []),
+    ...sheets.flatMap(sh => (Array.isArray(sh.grades) ? sh.grades : []).map(g => cleanName(g.subject)))].filter(Boolean));
+  const html = `<label for="subjInput">Subject name</label>
+    <input id="subjInput" list="subjList" maxlength="60" placeholder="e.g. Mathematics" autocomplete="off">
+    <datalist id="subjList">${[...sugg].map(n => `<option value="${escapeHtml(n)}">`).join("")}</datalist>
+    <div id="subjErr" class="err" role="alert"></div>`;
+  const ok = await modal("Add subject", html, [
+    { label:"Cancel", value:false },
+    { label:"Add subject", cls:"btn-primary", value:true, check:() => {
+      const n = cleanName($("subjInput").value), err = $("subjErr");
+      if(!n){ err.textContent = "Enter a subject name."; return false; }
+      if(subjects.some(s => s.key === keyOf(n))){ err.textContent = `${n} is already in this gradebook.`; return false; }
+      return true;
+    } }
+  ]);
+  if(!ok) return;
+  const name = cleanName($("subjInput").value), key = keyOf(name);
+  subjects.push({ name, key });
+  dirty = true; render();
+  const first = [...gbBody.querySelectorAll(".cell")].find(c => c.dataset.k === key);
+  if(first) first.focus();
+}
+
+async function leaveOk(){
+  if(!dirty) return true;
+  const r = await modal("Unsaved changes", `<p class="notice">This gradebook has scores that are not saved. Save them as a draft before leaving?</p>`, [
+    { label:"Stay here", value:"stay" }, { label:"Discard changes", cls:"btn-danger", value:"discard" }, { label:"Save draft", cls:"btn-primary", value:"save" }]);
+  if(r === "stay") return false;
+  if(r === "save") return await saveDraft();
+  return true;
+}
+async function onSelect(){
+  if(busy || (classSel.value === curClass && periodSel.value === curPeriod)) return;
+  if(!(await leaveOk())){ classSel.value = curClass; periodSel.value = curPeriod; return; }
+  curClass = classSel.value; curPeriod = periodSel.value;
+  updatePeriodInfo(); clearMessage();
+  await openBook();
+}
+window.addEventListener("beforeunload", e => { if(dirty){ e.preventDefault(); e.returnValue = ""; } });
+
+async function clearDraft(){
+  if(busy || !curClass || !curPeriod) return;
+  const ok = await modal("Discard draft?", `<p class="notice">Unsubmitted scores and subjects in this gradebook will be removed. Grades already submitted are not affected.</p>`,
+    [{ label:"Keep draft", value:false }, { label:"Discard draft", cls:"btn-danger", value:true }]);
+  if(!ok) return;
+  let failed = false;
+  try{ localStorage.removeItem("tefDraft:" + draftId()); }catch(e){}
+  if(firebaseReady){
+    try{ const { deleteDoc, doc } = firestoreCalls; await withTimeout(deleteDoc(doc(db,"GradeDrafts",draftId())), 8000, "Deleting draft"); }
+    catch(e){ failed = true; }
+  }
+  await openBook(true);
+  showMessage(failed ? "Local changes were cleared, but the saved draft on the server could not be deleted." : "Draft discarded. Submitted grades are unchanged.", failed ? "error" : "info");
+}
+
+function analyse(){
+  const miss = [], inv = [], send = {};
+  let done = 0, sendCount = 0;
+  classStudents.forEach(s => subjects.forEach(sub => {
+    const sid = s.userId, k = sub.key, v = valOf(sid,k), c = checkScore(v);
+    if(locked(sid,k)){ done++; return; }
+    if(c === "missing"){ miss.push({ name:s.name || sid, sub:sub.name }); return; }
+    if(c === "invalid"){ inv.push({ name:s.name || sid, sub:sub.name }); return; }
+    done++;
+    const sv = svOf(sid,k);
+    if(!sv || Number(v) !== Number(sv.score)){
+      (send[sid] = send[sid] || []).push({ subject:sub.name, key:k, score:Number(v) });
+      sendCount++;
+    }
+  }));
+  return { miss, inv, send, done, sendCount };
+}
+function listBy(items){
+  const by = {};
+  items.forEach(x => (by[x.name] = by[x.name] || []).push(x.sub));
+  const rows = Object.entries(by);
+  return rows.slice(0,30).map(([n,l]) => `<div><b>${escapeHtml(n)}</b>: ${l.map(escapeHtml).join(", ")}</div>`).join("") +
+    (rows.length > 30 ? `<div>…and ${rows.length - 30} more student(s)</div>` : "");
+}
+
+async function submitStudentGrades(student, studentScores) {
+  const { collection, doc, addDoc, updateDoc } = firestoreCalls;
+  const existingSheet = sheets.find(sh => 
+    sh.studentId === student.userId && 
+    sh.period === curPeriod && 
+    sh.teacherId === user.userId
+  );
+
+  const now = Date.now();
+  const semester = getSemester(curPeriod);
+
+  let grades = [];
+  if (existingSheet && Array.isArray(existingSheet.grades)) {
+    const existingMap = new Map(existingSheet.grades.map(g => [keyOf(g.subject), g]));
+    
+    grades = studentScores.map(item => {
+      const prior = existingMap.get(keyOf(item.subject));
+      if (prior && String(prior.status || "").toLowerCase() === "approved") {
+        return { ...prior, score: item.score };
+      }
+      return {
+        subject: item.subject,
+        score: item.score,
+        status: prior && String(prior.status || "").toLowerCase() === "rejected" ? "resubmitted" : "pending",
+        feedback: "",
+        reviewedBy: "",
+        reviewedAt: null
+      };
+    });
+
+    existingSheet.grades.forEach(g => {
+      if (!grades.some(newItem => keyOf(newItem.subject) === keyOf(g.subject))) {
+        grades.push(g);
+      }
+    });
+  } else {
+    grades = studentScores.map(item => ({
+      subject: item.subject,
+      score: item.score,
+      status: "pending",
+      feedback: "",
+      reviewedBy: "",
+      reviewedAt: null
+    }));
+  }
+
+  const hasRejections = grades.some(g => String(g.status || "").toLowerCase() === "rejected");
+  const hasResubmitted = grades.some(g => String(g.status || "").toLowerCase() === "resubmitted");
+  const status = hasResubmitted ? "resubmitted" : (hasRejections ? "rejected" : "pending");
+
+  if (existingSheet && existingSheet.docId) {
+    await updateDoc(doc(db, "Grades", existingSheet.docId), {
+      grades,
+      gradeCount: grades.length,
+      status,
+      semester,
+      updatedAt: now
+    });
+  } else {
+    const sheetData = {
+      sheetId: "GS-" + now.toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,7).toUpperCase(),
+      teacherId: user.userId,
+      teacherName: user.name || "Teacher",
+      studentId: student.userId,
+      studentName: student.name || "Student",
+      class: student.class || curClass,
+      period: curPeriod,
+      semester,
+      grades,
+      gradeCount: grades.length,
+      status,
+      feedback: "",
+      createdAt: now,
+      updatedAt: now
+    };
+    await addDoc(collection(db, "Grades"), sheetData);
+  }
+}
+
+async function notifyAfter(oks){
+  try{
+    const mod = await withTimeout(import("./notification-helper.js"), 6000, "Loading notification helper");
+    for(const st of oks){
+      try{ await mod.sendNotification(db,{ userId:st.userId, title:"Grade Sheet Submitted",
+        message:`Your ${curPeriod} grade sheet has been submitted for review.`, type:"academic", link:"student-results.html" }); }catch(e){}
+    }
+    try{ await mod.sendNotification(db,{ role:"admin", title:"Grade Sheet Awaiting Approval",
+      message:`${user.name} submitted ${curPeriod} grades for ${oks.length} student${oks.length === 1 ? "" : "s"} (${curClass}).`,
+      type:"approval", link:"grade-approval.html" }); }catch(e){}
+  }catch(e){}
+}
+
+async function submitAll(){
+  if(busy) return;
+  clearMessage();
+  if(!firebaseReady){
+    showMessage("Cannot submit — not connected to the server. Check your connection and retry.", "error");
+    window.showBanner('error', 'Cannot submit: no connection to the server.', { id:'submit-offline', actionLabel:'Retry connection', onAction:retryConnection });
+    return;
+  }
+  if(!curClass || !curPeriod || !classStudents.length || !subjects.length){ showMessage("Select a class and period, and add at least one subject first.", "error"); return; }
+  const a = analyse();
+  if(a.inv.length){
+    showMessage(`${a.inv.length} invalid score(s). Scores must be numbers from 0 to 100. Use the "Invalid scores" filter to find them.`, "error");
+    $("filter").value = "invalid"; render();
+    return;
+  }
+  if(!a.sendCount){ showMessage("Nothing new to submit. All entered scores are already on file.", "info"); return; }
+  const kv = [["Class",curClass],["Academic period",curPeriod],["Semester",getSemester(curPeriod)],["Students",classStudents.length],
+    ["Subjects",subjects.length],["Completed grades",a.done],["Missing grades",a.miss.length],["Grades sent now",a.sendCount]];
+  const html = `<dl class="kv">${kv.map(([k,v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`).join("")}</dl>` +
+    (a.miss.length ? `<p class="notice">These grades are missing and will not be submitted:</p><div class="misslist">${listBy(a.miss)}</div>` : "");
+  const go = await modal("Submit grades for review?", html, [
+    { label:a.miss.length ? "Go back and fix" : "Cancel", value:false },
+    { label:a.miss.length ? "Submit completed grades only" : "Submit all grades", cls:"btn-green", value:true }]);
+  if(!go) return;
+
+  setBusy(true, "Submitting...");
+  try{ await loadSheets(); }
+  catch(err){
+    setBusy(false);
+    showMessage("Nothing was submitted: existing grade sheets could not be checked. Please try again.", "error");
+    return;
+  }
+
+  const oks = [];
+  const bad = [];
+  const queue = Object.keys(a.send);
+
+  for(const sid of queue){
+    const student = classStudents.find(s => s.userId === sid);
+    if(!student) continue;
+    const studentScores = a.send[sid];
+    try {
+      await withTimeout(submitStudentGrades(student, studentScores), 15000, "Submitting " + (student.name || sid));
+      delete failedMap[sid];
+      oks.push(student);
+    } catch(e) {
+      bad.push(student);
+      failedMap[sid] = isPerm(e) ? "not authorized" : errText(e);
+    }
+  }
+
+  try{ await loadSheets(); }catch(e){}
+  buildServer(false);
+  const failedAny = bad.length > 0;
+  if(!failedAny){
+    dirty = false;
+    try{ localStorage.removeItem("tefDraft:" + draftId()); }catch(e){}
+    try{ const { deleteDoc, doc } = firestoreCalls; await withTimeout(deleteDoc(doc(db,"GradeDrafts",draftId())), 8000, "Deleting draft"); }catch(e){}
+    reserved = {};
+  }
+  setBusy(false);
+  render();
+  renderRecentSheets(sheets.slice().reverse());
+  if(!failedAny){
+    showMessage(`Submitted grades individually for ${oks.length} student(s).` + (a.miss.length ? ` ${a.miss.length} missing grade(s) were not submitted.` : ""), "success");
+    window.showBanner("success", "Grades submitted for review.", { id:"submit-success", detail:`${curClass} • ${curPeriod}` });
+  }else{
+    const names = bad.map(s => s.name || s.userId).join(", ");
+    showMessage(`Partly submitted: ${oks.length} of ${queue.length} students saved. Not submitted: ${names}.`, "error");
+    window.showBanner("error", `${bad.length} of ${queue.length} students were not submitted.`,
+      { id:"submit-partial", detail:names, actionLabel:"Retry", onAction:() => { window.dismissBanner("submit-partial"); submitAll(); } });
+  }
+  if(oks.length) notifyAfter(oks);
+}
+
+async function beginResubmission(sheet){
+  if(busy) return;
+  if(!(await leaveOk())) return;
+  const mine = assignedClasses();
+  if(!mine.includes(sheet.class)){
+    window.showBanner("warning", "This sheet's class is not in your assigned classes.", { id:"resub-class" });
+    return;
+  }
+  classSel.value = sheet.class; periodSel.value = sheet.period || "";
+  curClass = classSel.value; curPeriod = periodSel.value;
+  updatePeriodInfo();
+  await openBook();
+  showMessage("Returned subjects are marked in red. Correct the scores, then submit. Approved subjects stay approved.", "info");
+  const rejected = returnedSubjects(sheet);
+  if(rejected.length){
+    window.showBanner("warning", `${rejected.length} subject${rejected.length === 1 ? "" : "s"} returned for correction.`,
+      { id:"resubmit-guide", detail:rejected.map(g => `${g.subject}: ${g.feedback || "Correction requested."}`).join(" • ") });
+  }
+  sheetPanel.scrollIntoView({ behavior:"smooth", block:"start" });
+  const target = gbBody.querySelector("td.rejected .cell");
+  if(target) target.focus({ preventScroll:true });
+}
+
+function renderRecentSheets(list){
+  const container = document.getElementById("recentSheets");
+
+  if(!list.length){
+    container.innerHTML = `<div class="notice">No grade sheets submitted yet.</div>`;
+    return;
+  }
+
+  // Group sheets by Class name
+  const groupedByClass = {};
+  list.forEach(sheet => {
+    const clsName = sheet.class || "Unassigned Class";
+    groupedByClass[clsName] = groupedByClass[clsName] || [];
+    groupedByClass[clsName].push(sheet);
+  });
+
+  container.innerHTML = Object.entries(groupedByClass).map(([clsName, classSheets], gIndex) => {
+    const groupCardId = `group_${gIndex}`;
+    const sheetsHtml = classSheets.map((sheet, index)=>{
+      const grades = Array.isArray(sheet.grades) ? sheet.grades : [];
+      const count = grades.length || Number(sheet.gradeCount || 0);
+      const approved = grades.filter(g => statusOfGrade(g) === "approved").length;
+      const rejected = grades.filter(g => statusOfGrade(g) === "rejected").length;
+      const date = sheet.updatedAt || sheet.createdAt
+        ? new Date(sheet.updatedAt || sheet.createdAt).toLocaleString()
+        : "Date unavailable";
+      const status = String(sheet.status || "pending").toLowerCase();
+      const returned = returnedSubjects(sheet);
+
+      const subjectFeedback = returned.length
+        ? `<div class="period-info" style="margin-top:10px">
+            <strong>Subjects needing correction</strong><br>
+            ${returned.map(g => `<div style="margin-top:5px">${escapeHtml(g.subject)}: ${escapeHtml(g.feedback || "Correction requested.")}</div>`).join("")}
+          </div>`
+        : "";
+
+      const action = sheetNeedsResubmission(sheet)
+        ? `<button class="btn btn-primary resubmit-sheet-btn" data-sheet-docid="${escapeHtml(sheet.docId)}" type="button">Edit & Resubmit</button>`
+        : "";
+
+      return `
+        <div class="sheet-card">
+          <div class="sheet-top">
+            <div>
+              <div class="sheet-title">${escapeHtml(sheet.studentName || "Student")}</div>
+              <div class="sheet-meta">
+                Period: <b>${escapeHtml(sheet.period || "Period not set")}</b>
+                • ${escapeHtml(sheet.semester || "")}
+                • ${count} subject(s)
+              </div>
+              <div class="sheet-meta">Approved: ${approved} • Returned: ${rejected}</div>
+              <div class="sheet-meta">Updated: ${escapeHtml(date)}</div>
+              ${sheet.feedback ? `<div class="sheet-meta">Sheet feedback: ${escapeHtml(sheet.feedback)}</div>` : ""}
+              ${subjectFeedback}
+            </div>
+            <div>
+              <div class="status-badge ${escapeHtml(status)}">${escapeHtml(status)}</div>
+              ${action}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="class-group-card">
+        <div class="class-group-header" data-toggle-group="${groupCardId}">
+          <h3>📂 Class: ${escapeHtml(clsName)} <small style="opacity:.6;font-size:12px">(${classSheets.length} submission(s))</small></h3>
+          <span class="collapse-icon">▼ Click to hide/view</span>
+        </div>
+        <div id="${groupCardId}" class="class-group-body">
+          ${sheetsHtml}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Attach collapse/expand handlers
+  container.querySelectorAll("[data-toggle-group]").forEach(header => {
+    header.addEventListener("click", () => {
+      const bodyId = header.dataset.toggleGroup;
+      const bodyEl = document.getElementById(bodyId);
+      if(bodyEl){
+        bodyEl.classList.toggle("collapsed");
+        header.classList.toggle("collapsed");
+      }
+    });
+  });
+
+  // Attach resubmit button handlers using docId matching
+  container.querySelectorAll(".resubmit-sheet-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const docId = btn.dataset.sheetDocId;
+      const targetSheet = list.find(s => s.docId === docId);
+      if(targetSheet) beginResubmission(targetSheet);
+    });
+  });
+}
+
+async function boot(){
+  user = loadSessionUser();
+  if(!user) return;
+  setupProfile(user);
+
+  classSel.addEventListener("change", onSelect);
+  periodSel.addEventListener("change", onSelect);
+  $("search").addEventListener("input", renderBody);
+  $("filter").addEventListener("change", renderBody);
+  $("addSubjectBtn").addEventListener("click", addSubject);
+  $("saveDraftBtn").addEventListener("click", saveDraft);
+  $("submitBtn").addEventListener("click", submitAll);
+  $("clearBtn").addEventListener("click", clearDraft);
+  render();
+
+  const ok = await loadFirebaseSdk();
+  window.__appReady = true;
+
+  if(ok){
+    await Promise.all([loadStudents(), loadRecentSheets()]);
+  }else{
+    classSel.innerHTML = `<option value="">Unavailable — check connection</option>`;
+    $("recentSheets").innerHTML = `<div class="notice">Unavailable — check your connection and retry.</div>`;
+  }
+}
+
+boot().catch(err => {
+  window.showBanner('error', 'We could not finish loading the grade page.',
+    { detail:'Please check your connection and reload the page.', sticky:true, actionLabel:'Reload', onAction:() => location.reload() });
+  window.__appReady = true;
+});
+
+</script>
+
+</body>
+</html>
