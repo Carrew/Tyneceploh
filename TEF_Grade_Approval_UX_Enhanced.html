@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade Approval Management - TEF Admin</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,.06);
+  --glass:rgba(255,255,255,.045);
+  --border:rgba(255,255,255,.1);
+  --text:#fff;
+  --muted:rgba(255,255,255,.62);
+  --green:#27ae60;
+  --red:#c0392b;
+  --blue:#2980b9;
+  --orange:#f39c12;
+  --shadow:0 18px 50px rgba(0,0,0,.42);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,#2a0016 0,transparent 34%),
+    radial-gradient(circle at 100% 100%,#26000e 0,transparent 32%),
+    var(--bg);
+}
+
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+
+.header{
+  padding:26px 18px 24px;
+  background:linear-gradient(135deg,#800000,#21000d);
+  box-shadow:var(--shadow);
+}
+
+.header-inner{max-width:1200px;margin:auto}
+
+.brand{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.brand h1{margin:0;color:var(--pink);font-size:clamp(22px,5vw,32px)}
+.brand p{margin:5px 0 0;color:rgba(255,255,255,.72);font-size:13px}
+
+.admin-profile{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:20px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  background:rgba(0,0,0,.18);
+}
+.admin-avatar{
+  width:50px;height:50px;border-radius:50%;background:var(--pink);color:var(--maroon);
+  display:grid;place-items:center;font-weight:900;font-size:20px;flex-shrink:0;
+}
+.admin-name{font-weight:800;font-size:17px}
+.admin-meta{margin-top:3px;color:rgba(255,255,255,.65);font-size:12px}
+
+/* Status Stack Banners */
+.status-stack{
+  width:min(1200px,calc(100% - 28px));
+  margin:16px auto 0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.status-banner{
+  padding:14px 16px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.5;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.status-banner.error{background:rgba(192,57,43,.16);border:1px solid rgba(192,57,43,.4);color:#ff9b90}
+.status-banner.success{background:rgba(39,174,96,.16);border:1px solid rgba(39,174,96,.4);color:#7ff0aa}
+
+.container{width:min(1200px,calc(100% - 28px));margin:22px auto 45px}
+
+.filter-bar{
+  background:var(--glass);border:1px solid var(--border);border-radius:18px;
+  padding:16px 20px;display:flex;gap:15px;flex-wrap:wrap;align-items:center;margin-bottom:20px;
+  backdrop-filter:blur(14px);
+}
+.filter-group{flex:1;min-width:180px}
+.filter-group label{display:block;margin-bottom:6px;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+select,input{
+  width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+  outline:none;background:rgba(255,255,255,.07);color:#fff;
+}
+select option{background:#171219;color:#fff}
+select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.14)}
+
+.submissions-grid{display:flex;flex-direction:column;gap:18px}
+
+.panel{
+  background:var(--glass);border:1px solid var(--border);border-radius:22px;
+  padding:22px;box-shadow:var(--shadow);backdrop-filter:blur(14px);
+}
+.sheet-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:14px}
+.sheet-title{font-size:18px;font-weight:800;color:#fff}
+.sheet-meta{color:var(--muted);font-size:12px;margin-top:4px}
+
+.status-badge{padding:6px 12px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase;display:inline-block}
+.pending{background:rgba(243,156,18,.18);color:#ffc56b}
+.resubmitted{background:rgba(41,128,185,.18);color:#83cfff}
+.approved{background:rgba(39,174,96,.18);color:#7ff0aa}
+.rejected{background:rgba(192,57,43,.18);color:#ff938a}
+
+.table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);margin-bottom:16px}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left}
+th{background:rgba(128,0,0,.4);color:var(--pink);font-size:12px}
+td{font-size:13px;background:rgba(255,255,255,.018)}
+
+.subject-status{font-weight:800;font-size:11px}
+.sub-pending{color:#ffc56b}
+.sub-approved{color:#58d68d}
+.sub-rejected{color:#ff7770}
+
+.action-cell{display:flex;gap:6px;align-items:center}
+.btn{border:0;border-radius:9px;padding:7px 12px;font-weight:800;font-size:11px;transition:.2s}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-approve{background:rgba(39,174,96,.2);color:#7ff0aa;border:1px solid rgba(39,174,96,.4)}
+.btn-reject{background:rgba(192,57,43,.2);color:#ff938a;border:1px solid rgba(192,57,43,.4)}
+.btn-primary{background:linear-gradient(135deg,var(--maroon),#b00055);color:#fff;padding:10px 16px;font-size:12px;border-radius:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.sheet-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.empty-state{text-align:center;padding:40px;color:var(--muted)}
+
+/* Rejection Modal */
+.modal-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);
+  backdrop-filter:blur(5px);display:none;place-items:center;z-index:1000;padding:15px;
+}
+.modal{
+  background:#171219;border:1px solid var(--border);border-radius:20px;
+  width:min(450px,100%);padding:24px;box-shadow:var(--shadow);
+}
+.modal h3{margin:0 0 8px;font-size:18px;color:var(--pink)}
+.modal p{color:var(--muted);font-size:12px;margin-bottom:14px}
+textarea{
+  width:100%;height:100px;padding:12px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,.07);color:#fff;resize:vertical;outline:none;margin-bottom:15px;
+}
+textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.14)}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px}
+
+.overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.metric{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:17px}
+.metric strong{font-size:26px;display:block;margin-top:6px}.metric span,.muted{font-size:12px;color:var(--muted)}
+.bulk-toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:18px;padding:16px 18px;border:1px solid var(--border);border-radius:16px;background:var(--glass)}
+.bulk-toolbar strong{display:block;margin-bottom:5px}.bulk-toolbar .btn{min-height:42px}
+.sheet-progress{height:6px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:12px 0 3px}
+.sheet-progress>span{height:100%;background:#55d99a;display:block;transition:width .2s}
+.teacher-chip{font-size:11px;color:#cfc4cc}.summary-line{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:9px}
+.btn-secondary{background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--border)}
+.sheet-footer .footer-actions{display:flex;gap:8px;flex-wrap:wrap}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+@media(max-width:650px){.overview{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:15px}.filter-bar{padding:13px;gap:10px}.filter-group{min-width:calc(50% - 5px)}.sheet-title{font-size:16px}.bulk-toolbar .btn{width:100%}.table-wrap table{min-width:610px}.header{padding:20px 14px}.metric{padding:12px}.metric strong{font-size:22px}}
+@media(max-width:380px){.filter-group{min-width:100%}}
+
+/* Refined review experience */
+:root{--focus:#ffb6c8}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.btn{min-height:36px;transition:transform .16s,background .16s,opacity .16s;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.58;filter:saturate(.55);cursor:not-allowed}
+.btn.locked{background:rgba(39,174,96,.1);color:#8ee8b1;border:1px solid rgba(39,174,96,.28);opacity:1;cursor:not-allowed;white-space:nowrap}
+.btn.locked svg{width:14px;height:14px}
+.table-wrap tr:hover td{background:rgba(255,255,255,.045)}
+.table-wrap td{vertical-align:middle}
+.review-actions{display:flex;gap:7px;flex-wrap:wrap}
+.review-actions .btn{min-width:76px}
+.toolbar-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.btn-secondary{color:#f8dbe4;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18)}
+.btn-secondary:hover{background:rgba(255,255,255,.13)}
+.skeleton{position:relative;overflow:hidden;background:rgba(255,255,255,.075);border-radius:8px;min-height:16px}
+.skeleton:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.11),transparent);animation:shimmer 1.35s infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.loading-panel{display:grid;gap:16px;min-height:170px}
+.loading-panel .skeleton:first-child{width:45%;height:24px}.loading-panel .skeleton:nth-child(2){width:75%}.loading-panel .skeleton:nth-child(3){height:55px}.loading-panel .skeleton:nth-child(4){width:32%}
+.review-notice{font-size:12px;color:var(--muted);margin-top:8px}
+#saveOverlay{position:fixed;inset:0;z-index:1100;background:rgba(5,5,10,.68);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:20px}
+#saveOverlay.active{display:flex}
+.save-card{background:#21141d;border:1px solid rgba(255,192,203,.22);border-radius:20px;padding:28px;text-align:center;width:min(360px,100%);box-shadow:var(--shadow)}
+.spinner{width:38px;height:38px;border-radius:50%;border:3px solid rgba(255,192,203,.18);border-top-color:var(--pink);animation:spin .8s linear infinite;margin:0 auto 17px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.save-card strong{display:block;margin-bottom:8px}.save-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.empty-state .btn{margin-top:15px}
+@media(max-width:700px){.panel{padding:15px}.filter-bar{padding:13px;gap:10px}.filter-group{min-width:min(145px,100%)}.bulk-toolbar{align-items:stretch}.toolbar-controls{width:100%}.toolbar-controls .btn{flex:1}.table-wrap table{min-width:620px}.sheet-title{font-size:16px}.btn{min-height:40px}}
+@media(prefers-reduced-motion:reduce){.skeleton:after,.spinner{animation:none}.btn{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div>
+        <h1>Grade Approval Dashboard</h1>
+        <p>Tyneceploh Educational Foundation — Admin Review Portal</p>
+      </div>
+    </div>
+    <div class="admin-profile">
+      <div id="adminAvatar" class="admin-avatar">A</div>
+      <div>
+        <div id="adminName" class="admin-name">Administrator</div>
+        <div id="adminMeta" class="admin-meta">Checking admin session...</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="statusStack" class="status-stack"></div>
+
+<main class="container">
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label for="classFilter">Filter by Class</label>
+      <select id="classFilter">
+        <option value="all">All Classes</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="periodFilter">Filter by Period</label>
+      <select id="periodFilter">
+        <option value="all">All Periods</option>
+        <option value="1st Period">1st Period</option>
+        <option value="2nd Period">2nd Period</option>
+        <option value="3rd Period">3rd Period</option>
+        <option value="Semester Exam">Semester Exam</option>
+        <option value="4th Period">4th Period</option>
+        <option value="5th Period">5th Period</option>
+        <option value="6th Period">6th Period</option>
+        <option value="Final Exam">Final Exam</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="statusFilter">Filter by Status</label>
+      <select id="statusFilter">
+        <option value="all" selected>All Submissions</option>
+        <option value="pending">Pending / Resubmitted</option>
+        <option value="approved">Fully Approved</option>
+        <option value="rejected">Has Rejections</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="searchFilter">Search Student</label>
+      <input type="text" id="searchFilter" placeholder="Type student name...">
+    </div>
+  </div>
+
+  <section class="overview" id="overview" aria-label="Review overview"></section>
+  <div class="bulk-toolbar"><div><strong id="resultCount">Student grade sheets</strong><div class="muted">Review all teachers’ submissions together, organized by student.</div></div><div class="toolbar-controls"><button id="refreshBtn" class="btn btn-secondary" type="button">↻ Refresh</button><button id="approveClassBtn" class="btn btn-primary" disabled>Approve Pending Grades in Class</button></div></div>
+  <div id="submissionsContainer" class="submissions-grid">
+    <div class="panel loading-panel" aria-label="Loading grade sheets"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+  </div>
+</main>
+
+<div id="saveOverlay" role="status" aria-live="polite" aria-label="Saving grade changes"><div class="save-card"><div class="spinner"></div><strong id="saveTitle">Saving grade changes</strong><p id="saveDetail">Please wait. Do not close this page until saving finishes.</p></div></div>
+
+<!-- Rejection Reason Modal -->
+<div id="rejectionModal" class="modal-overlay">
+  <div class="modal">
+    <h3>Reject Subject Grade</h3>
+    <p id="rejectionModalSub">Provide a clear reason why this grade is being returned for correction.</p>
+    <textarea id="rejectionReasonInput" placeholder="Enter mandatory correction instructions..."></textarea>
+    <div class="modal-actions">
+      <button id="cancelRejectBtn" class="btn" style="background:rgba(255,255,255,.1);color:#fff">Cancel</button>
+      <button id="confirmRejectBtn" class="btn btn-reject">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var stack = document.getElementById('statusStack');
+  window.showBanner = function(type, message, opts){
+    opts = opts || {};
+    var id = opts.id || ('b_' + Math.random().toString(36).slice(2,8));
+    var el = document.createElement('div');
+    el.id = id;
+    el.className = 'status-banner ' + type;
+    el.innerHTML = `<div style="flex:1"><b>${escapeHtml(message)}</b>${opts.detail ? `<small style="display:block;margin-top:3px;opacity:.75">${escapeHtml(opts.detail)}</small>` : ''}</div>`;
+    stack.appendChild(el);
+    setTimeout(() => el.remove(), 6000);
+  };
+  function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+})();
+</script>
+
+<script type="module">
+let db,fsMod,user,allSubmissions=[],activeRejectionTarget=null,busy=false,loading=true,loadFailed=false;
+const $=id=>document.getElementById(id);
+const classFilter=$('classFilter'),periodFilter=$('periodFilter'),statusFilter=$('statusFilter'),searchFilter=$('searchFilter'),container=$('submissionsContainer'),modal=$('rejectionModal');
+const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
+const validStatus=v=>['approved','rejected','resubmitted'].includes(norm(v))?norm(v):'pending';
+const pending=v=>['pending','resubmitted'].includes(validStatus(v));
+function session(){try{const u=JSON.parse(localStorage.getItem('user')||'null');if(u?.role==='admin')return u;}catch{} location.href='login.html';return null;}
+async function initFirebase(){const [a,f]=await Promise.all([import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')]);const app=a.getApps().length?a.getApp():a.initializeApp({apiKey:'AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4',authDomain:'tyneceploh.firebaseapp.com',projectId:'tyneceploh'});db=f.getFirestore(app);fsMod=f;}
+function loadingMarkup(){return Array.from({length:3},()=>`<div class="panel loading-panel" aria-hidden="true"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>`).join('');}
+async function fetchSubmissions(){loading=true;loadFailed=false;container.setAttribute("aria-busy","true");if(!busy){container.innerHTML=loadingMarkup();$("resultCount").textContent="Loading grade sheets…";$("approveClassBtn").disabled=true;}$("refreshBtn").disabled=true;$("refreshBtn").textContent="Refreshing…";try{const snap=await fsMod.getDocs(fsMod.collection(db,'Grades'));allSubmissions=snap.docs.map(d=>({...d.data(),docId:d.id}));populateClasses();loading=false;render();}catch(e){console.error(e);loadFailed=true;loading=false;render();showBanner('error','Could not load grade records.');}finally{container.removeAttribute("aria-busy");$("refreshBtn").disabled=false;$("refreshBtn").textContent="↻ Refresh";}}
+function populateClasses(){const value=classFilter.value;const names=[...new Set(allSubmissions.map(s=>String(s.class||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));classFilter.innerHTML='<option value="all">All Classes</option>'+names.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(names.includes(value))classFilter.value=value;}
+function studentKey(s){const id=s.studentId||s.studentID||s.studentUid||s.studentUID||s.studentUserId||s.student?.id||s.student?.userId;return id?'id:'+norm(id):'name:'+norm(s.studentName||s.student?.name||s.studentFullName||'Unknown')+'|'+norm(s.class);}
+function sheetKey(s){return JSON.stringify([studentKey(s),norm(s.class),norm(s.period),norm(s.semester),norm(s.academicYear||s.schoolYear||'')]);}
+function timestamp(s){const v=s.updatedAt||s.createdAt;return typeof v?.toMillis==='function'?v.toMillis():typeof v?.seconds==='number'?v.seconds*1000:Number(v)||0;}
+function groups(){const map=new Map();for(const s of allSubmissions){const k=sheetKey(s);if(!map.has(k))map.set(k,{key:k,studentName:s.studentName||s.student?.name||s.studentFullName||'Unknown Student',class:s.class||'Unassigned',period:s.period||'Not set',semester:s.semester||'',year:s.academicYear||s.schoolYear||'',records:[],grades:[],updated:0});const g=map.get(k);g.records.push(s);g.updated=Math.max(g.updated,timestamp(s));(Array.isArray(s.grades)?s.grades:[]).forEach((grade,i)=>g.grades.push({grade,record:s,index:i,teacher:grade.submittedBy||grade.teacherName||grade.teacher||s.submittedBy||s.teacherName||s.teacher||s.submittedByName||'Not recorded'}));}return [...map.values()].sort((a,b)=>a.class.localeCompare(b.class,undefined,{numeric:true})||a.studentName.localeCompare(b.studentName)||a.period.localeCompare(b.period));}
+function state(g){if(!g.grades.length)return 'pending';const ss=g.grades.map(x=>validStatus(x.grade.status));if(ss.every(x=>x==='approved'))return 'approved';if(ss.includes('rejected'))return 'rejected';if(ss.includes('resubmitted'))return 'resubmitted';return 'pending';}
+function filteredGroups(){return groups().filter(g=>(classFilter.value==='all'||g.class.trim()===classFilter.value)&&(periodFilter.value==='all'||g.period.trim()===periodFilter.value)&&(statusFilter.value==='all'||(statusFilter.value==='pending'?['pending','resubmitted'].includes(state(g)):statusFilter.value==='approved'?state(g)==='approved':state(g)==='rejected'))&&(!searchFilter.value.trim()||norm(g.studentName).includes(norm(searchFilter.value))));}
+function render(){if(loading&&!busy){container.innerHTML=loadingMarkup();return;}if(loadFailed){$("approveClassBtn").disabled=true;container.innerHTML='<div class="panel empty-state"><h3>Could not load grade sheets</h3><p>Check your connection or Firestore access, then try again.</p><button class="btn btn-secondary" data-action="retry">Try again</button></div>';return;}const visible=filteredGroups(),all=groups(),grades=all.flatMap(g=>g.grades);const count=p=>grades.filter(x=>p(validStatus(x.grade.status))).length;$('overview').innerHTML=[['Student Sheets',all.length],['Awaiting Review',count(s=>s==='pending'||s==='resubmitted')],['Approved Subjects',count(s=>s==='approved')],['Returned Subjects',count(s=>s==='rejected')]].map(([label,n])=>`<div class="metric"><span>${label}</span><strong>${n}</strong></div>`).join('');$('resultCount').textContent=`${visible.length} student grade sheet${visible.length===1?'':'s'}`;const btn=$('approveClassBtn');const eligible=visible.reduce((n,g)=>n+g.grades.filter(x=>pending(x.grade.status)).length,0);btn.disabled=busy||loading||classFilter.value==='all'||eligible===0;btn.textContent=busy?'Saving...':classFilter.value==='all'?'Select a Class to Approve':`Approve ${eligible} Pending Grade${eligible===1?'':'s'} in ${classFilter.value}`;
+if(!visible.length){container.innerHTML='<div class="panel empty-state">No student grade sheets match these filters.</div>';return;}
+container.innerHTML=visible.map((g,gi)=>{const approved=g.grades.filter(x=>validStatus(x.grade.status)==='approved').length;const toReview=g.grades.filter(x=>pending(x.grade.status)).length;const status=state(g);const rows=g.grades.map((x,i)=>{const s=validStatus(x.grade.status);const text={approved:'Approved · Locked',pending:'Pending Review',resubmitted:'Resubmitted',rejected:'Returned for Correction'}[s];return `<tr><td><b>${esc(x.grade.subject||'Unnamed Subject')}</b><div class="teacher-chip">Submitted by ${esc(x.teacher)}</div></td><td><b>${esc(x.grade.score??'—')}</b> / 100</td><td><span class="subject-status ${s==='approved'?'sub-approved':s==='rejected'?'sub-rejected':'sub-pending'}">${text}</span>${x.grade.feedback?`<div class="teacher-chip">${esc(x.grade.feedback)}</div>`:''}</td><td>${s==='approved'?'<button class="btn locked" disabled title="This grade has been approved and cannot be changed here" aria-label="Approved grade locked">🔒 Approved</button>':`<div class="review-actions"><button class="btn btn-approve" data-action="approve" data-group="${gi}" data-grade="${i}" ${busy?'disabled':''}>Approve</button><button class="btn btn-reject" data-action="reject" data-group="${gi}" data-grade="${i}" ${busy?'disabled':''}>Reject</button></div>`}</td></tr>`}).join('');return `<article class="panel"><div class="sheet-header"><div><div class="sheet-title">${esc(g.studentName)} <span style="font-size:13px;color:var(--muted);font-weight:500">${esc(g.class)}</span></div><div class="sheet-meta">${esc(g.period)}${g.semester?' · '+esc(g.semester):''}${g.year?' · '+esc(g.year):''} · ${g.records.length} submission${g.records.length===1?'':'s'}${g.updated?' · Updated '+new Date(g.updated).toLocaleDateString():''}</div><div class="summary-line"><span>${g.grades.length} subjects</span><span>${approved} approved</span><span>${toReview} awaiting review</span></div><div class="sheet-progress" aria-label="${approved} of ${g.grades.length} subjects approved"><span style="width:${g.grades.length?approved/g.grades.length*100:0}%"></span></div></div><span class="status-badge ${status}">${status}</span></div><div class="table-wrap"><table><thead><tr><th>Subject / Teacher</th><th>Score</th><th>Review Status</th><th>Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="4">No grades submitted yet.</td></tr>'}</tbody></table></div><div class="sheet-footer"><div class="teacher-chip">${g.records.length} source record${g.records.length===1?'':'s'} · Consolidated view</div><div class="footer-actions"><button class="btn btn-primary" data-action="approve-sheet" data-group="${gi}" ${busy||!toReview?'disabled':''}>${toReview?`Approve ${toReview} Pending Subject${toReview===1?'':'s'}`:'🔒 No Pending Subjects'}</button></div></div></article>`}).join('');}
+async function updateGrades(items,newStatus,feedback=''){if(busy||!items.length)return;busy=true;render();$("saveTitle").textContent=newStatus==="approved"?"Approving grades…":"Returning grade…";$("saveDetail").textContent=`Updating ${items.length} subject grade${items.length===1?"":"s"}. Please wait for confirmation.`;$("saveOverlay").classList.add("active");try{const changes=new Map();for(const x of items){if(validStatus(x.grade.status)==='approved')continue;const id=x.record.docId;if(!changes.has(id))changes.set(id,{record:x.record,grades:(x.record.grades||[]).map(v=>({...v}))});changes.get(id).grades[x.index]={...changes.get(id).grades[x.index],status:newStatus,feedback,reviewedBy:user.name||user.userId||'Administrator',reviewedAt:Date.now()};}if(!changes.size){showBanner('success','No changes needed.');return;}const entries=[...changes.values()];for(let offset=0;offset<entries.length;offset+=400){const batch=fsMod.writeBatch(db);for(const entry of entries.slice(offset,offset+400)){const grades=entry.grades;const statuses=grades.map(x=>validStatus(x.status));const overall=statuses.length&&statuses.every(x=>x==='approved')?'approved':statuses.includes('rejected')?'rejected':statuses.includes('resubmitted')?'resubmitted':'pending';batch.update(fsMod.doc(db,'Grades',entry.record.docId),{grades,status:overall,feedback:overall==='rejected'?'One or more subjects returned for correction.':'',updatedAt:Date.now()});}await batch.commit();}showBanner('success',`Updated ${changes.size} submission record${changes.size===1?'':'s'}.`);await fetchSubmissions();}catch(e){console.error(e);showBanner('error','Could not save all grade changes. Refresh to verify the latest statuses.');await fetchSubmissions();}finally{$("saveOverlay").classList.remove("active");busy=false;render();}}
+container.addEventListener('click',async e=>{const btn=e.target.closest('button[data-action]');if(!btn||busy)return;if(btn.dataset.action==='retry'){await fetchSubmissions();return;}const g=filteredGroups()[Number(btn.dataset.group)];if(!g)return;const action=btn.dataset.action;if(action==='approve-sheet'){const items=g.grades.filter(x=>pending(x.grade.status));if(items.length&&confirm(`Approve ${items.length} pending subjects for ${g.studentName}? Rejected grades will remain unchanged.`))await updateGrades(items,'approved');}else{const x=g.grades[Number(btn.dataset.grade)];if(!x)return;if(action==='approve'){if(confirm(`Approve ${x.grade.subject||'this subject'} for ${g.studentName}?`))await updateGrades([x],'approved');}else if(action==='reject'){activeRejectionTarget=x;$('rejectionReasonInput').value='';$('rejectionModalSub').textContent=`Return ${x.grade.subject||'subject'} for ${g.studentName} for correction.`;modal.style.display='grid';$('rejectionReasonInput').focus();}}});
+$('approveClassBtn').addEventListener('click',async()=>{if(classFilter.value==='all'||busy)return;const items=filteredGroups().flatMap(g=>g.grades.filter(x=>pending(x.grade.status)));if(items.length&&confirm(`Approve ${items.length} pending grades in ${classFilter.value} across ${new Set(items.map(x=>studentKey(x.record))).size} students? This respects the current period and search filters. Rejected grades remain unchanged.`))await updateGrades(items,'approved');});
+$('cancelRejectBtn').addEventListener('click',()=>{modal.style.display='none';activeRejectionTarget=null;});$('confirmRejectBtn').addEventListener('click',async()=>{const reason=$('rejectionReasonInput').value.trim();if(!reason){$('rejectionReasonInput').focus();showBanner('error','Enter a reason for returning the grade.');return;}const target=activeRejectionTarget;if(!target)return;modal.style.display='none';activeRejectionTarget=null;await updateGrades([target],'rejected',reason);});modal.addEventListener('click',e=>{if(e.target===modal){modal.style.display='none';activeRejectionTarget=null;}});document.addEventListener('keydown',e=>{if(e.key==='Escape'){modal.style.display='none';activeRejectionTarget=null;}});
+$('refreshBtn').addEventListener('click',()=>{if(!busy)fetchSubmissions();});
+[classFilter,periodFilter,statusFilter].forEach(x=>x.addEventListener('change',render));searchFilter.addEventListener('input',render);
+(async()=>{user=session();if(!user)return;$('adminName').textContent=user.name||'Administrator';$('adminMeta').textContent=`${user.userId||'Admin'} · Role: Administrator`;try{await initFirebase();await fetchSubmissions();}catch(e){console.error(e);loading=false;loadFailed=true;render();showBanner('error','Database connection failed.');}})();
+</script>
+
+</body>
+</html>
