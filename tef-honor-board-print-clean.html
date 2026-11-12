@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#100c12">
+<title>TEF | School Honor Board</title>
+<style>
+:root{--bg:#0d0b10;--panel:#19151c;--panel2:#221b25;--ink:#f8f4f7;--muted:#b7aab6;--line:#ffffff18;--pink:#ffc0cb;--maroon:#800000;--gold:#f5cc7a;--green:#8ee0b6;--blue:#9dd1ff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#370f22 0%,transparent 42%),var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}
+.shell{max-width:1380px;margin:auto;padding:20px 22px 48px}
+nav{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:22px;padding:12px 18px;border:1px solid var(--line);background:#171219e8;border-radius:18px;position:sticky;top:8px;z-index:5;backdrop-filter:blur(18px)}
+.identity{display:flex;align-items:center;gap:12px}.mark{display:grid;place-items:center;background:linear-gradient(135deg,#800000,#bd3263);width:42px;height:42px;border-radius:13px;font-size:21px}.identity strong{display:block;font-size:14px}.identity small{display:block;color:var(--muted);font-size:11px}
+.navright{display:flex;align-items:center;gap:8px}.navright a{color:#e7d9e2;text-decoration:none;padding:10px 12px;border-radius:10px}.navright a:hover{background:#ffffff12}
+.btn{border:1px solid #ffffff25;border-radius:12px;padding:11px 15px;background:#ffffff10;color:white;font-weight:700;transition:.15s}.btn:hover{filter:brightness(1.13)}.btn.primary{background:linear-gradient(120deg,#800000,#b42959);border-color:transparent}.btn.print{background:#f6e7ec;color:#3a1021;border-color:transparent}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:38px;border:1px solid #ffffff20;border-radius:26px;background:radial-gradient(circle at 85% 20%,#9a345c80,transparent 30%),linear-gradient(120deg,#5d001f,#1c111a 78%);overflow:hidden}
+.eyebrow{color:#ffd0da;font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase}.hero h1{font-size:clamp(32px,5vw,58px);line-height:1.08;letter-spacing:-.045em;margin:10px 0}.hero p{margin:0;color:#e5cdd8;max-width:640px}.hero-symbol{font-size:76px;opacity:.8}
+.filters{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1.3fr auto;gap:12px;align-items:end;margin:18px 0 12px;padding:18px;background:#1a151c;border:1px solid var(--line);border-radius:20px}
+.field label{display:block;color:#d2bdc9;font-size:11px;font-weight:750;margin-bottom:7px}.field select,.field input{width:100%;min-width:0;height:43px;padding:0 12px;border:1px solid #ffffff25;background:#29212c;color:white;border-radius:11px;outline:none}.field select:focus,.field input:focus{border-color:var(--pink);box-shadow:0 0 0 3px #ffc0cb22}.field select option{background:#251b28}.field input::placeholder{color:#9c8d9d}
+.message{display:none;border-radius:12px;padding:12px 15px;margin:12px 0;background:#ffffff0d;border:1px solid var(--line);color:#f5dce4}.message.show{display:block}.message.error{background:#5e1b2a55;border-color:#c45a6a77}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:18px 0 26px}.metric{background:#1b161e;border:1px solid var(--line);border-radius:18px;padding:18px}.metric span{display:block;color:var(--muted);font-size:11px;font-weight:650}.metric strong{display:block;font-size:30px;line-height:1.2;margin-top:8px;letter-spacing:-.04em}.metric small{color:#8f8290;font-size:10px}
+.sectionhead{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 0 14px}.sectionhead h2{margin:0;font-size:24px;letter-spacing:-.03em}.sectionhead p{margin:4px 0 0;color:var(--muted);font-size:12px}.count{color:#d4c2ce;font-size:12px}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{background:linear-gradient(150deg,#28202a,#19151d);border:1px solid #ffffff1c;border-radius:20px;padding:19px;min-width:0;position:relative;overflow:hidden;break-inside:avoid;page-break-inside:avoid}.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}.card[data-tier="proprietor"]{--accent:var(--gold)}.card[data-tier="principal"]{--accent:var(--green)}.card[data-tier="honor"]{--accent:var(--blue)}
+.cardtop{display:flex;align-items:center;gap:13px;min-width:0}.portrait{width:66px;height:66px;border-radius:50%;object-fit:cover;flex:none;border:2px solid #ffffff40;background:#392a35}.initials{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;flex:none;background:#71314b;color:#fff;font-weight:850;font-size:22px;border:2px solid #ffffff22}.person{min-width:0}.person h3{font-size:15px;line-height:1.25;margin:0 0 4px;overflow-wrap:anywhere}.person p{margin:0;color:var(--muted);font-size:11px}.tier{display:inline-flex;border:1px solid color-mix(in srgb,var(--accent),transparent 55%);background:color-mix(in srgb,var(--accent),transparent 90%);color:var(--accent);padding:5px 9px;border-radius:30px;font-size:10px;font-weight:800;margin-top:15px}.cardbottom{display:flex;align-items:end;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:13px;margin-top:14px}.cardbottom span{font-size:11px;color:var(--muted)}.cardbottom strong{font-size:23px;letter-spacing:-.03em}
+.empty{grid-column:1/-1;border:1px dashed #ffffff38;border-radius:20px;padding:60px 20px;text-align:center;background:#ffffff06}.empty h3{margin:8px 0}.empty p{margin:0;color:var(--muted)}
+.rules{margin-top:30px;padding:23px;border:1px solid var(--line);border-radius:20px;background:#ffffff07}.rules h2{margin:0 0 7px;font-size:18px}.rules p{margin:0;color:var(--muted)}.rulesgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}.rule{border:1px solid var(--line);border-radius:12px;padding:13px;color:#e3d6df;font-size:12px}.rule strong{display:block;font-size:15px;color:white;margin-bottom:3px}
+footer{color:#998a96;text-align:center;padding-top:28px;font-size:11px}
+.printhead,.printfoot{display:none}
+@media(max-width:1200px){.filters{grid-template-columns:repeat(3,1fr)}.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:880px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}.rulesgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.shell{padding:10px 12px 30px}nav{padding:10px;top:4px}.navright a{display:none}.identity small{font-size:9px}.hero{padding:26px}.hero-symbol{display:none}.filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.field.search{grid-column:1/-1}.filters .btn.primary{grid-column:1/-1}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{padding:13px}.metric strong{font-size:25px}.board{grid-template-columns:1fr}.sectionhead{align-items:start;flex-direction:column}.rulesgrid{grid-template-columns:1fr}}
+@media print{
+  @page{size:A4;margin:0}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:#fff!important;color:#161116!important;font:10pt/1.4 Arial,sans-serif}
+  .shell{padding:13mm 12mm;max-width:none}.nav,.hero,.filters,.message,.rules,footer,.screenonly,.printfoot,#printBtn{display:none!important}
+  .printhead{display:block;border-bottom:2px solid #800000;padding-bottom:11px;margin-bottom:12px;text-align:center}
+  .printhead h1{font-size:22pt;margin:0;color:#800000}.printhead p{margin:4px 0;font-size:10pt}.printhead small{font-size:9pt;color:#555}
+  .metrics{grid-template-columns:repeat(5,1fr);gap:5px;margin:8px 0 16px}
+  .metric{padding:7px 9px;background:#fff!important;border:1px solid #ddd;border-radius:6px}.metric span{font-size:8pt;color:#555}.metric strong{font-size:15pt;color:#222;margin:2px 0}.metric small{display:none}
+  .sectionhead{margin:0 0 10px}.sectionhead h2{font-size:14pt}.sectionhead p,.count{font-size:9pt;color:#555}
+  .board{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .card{padding:12px;border:1px solid #ccc;border-left:3px solid var(--accent);border-radius:8px;background:white!important;color:#111;box-shadow:none}
+  .card:before{display:none}.portrait,.initials{width:49px;height:49px}.initials{background:#eee;color:#333}.person h3{font-size:11pt}.person p{font-size:8pt;color:#555}.tier{margin-top:8px;font-size:7pt;padding:3px 7px;background:#fff;color:#333;border:1px solid #bbb}.cardbottom{padding-top:7px;margin-top:8px;border-top:1px solid #ddd}.cardbottom span{font-size:8pt;color:#555}.cardbottom strong{font-size:15pt}
+  .empty{color:#333;border-color:#bbb;background:white}
+  .printfoot{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="printhead">
+    <h1>TYNECEPLOH EDUCATIONAL FOUNDATION</h1>
+    <p>Official Academic Honor Board</p>
+    <small id="printContext">Academic Recognition</small>
+  </div>
+  <nav>
+    <div class="identity"><div class="mark">🏆</div><div><strong>TEF Honor Board</strong><small>Academic Excellence & Recognition</small></div></div>
+    <div class="navright"><a href="#results">Honor Board</a><a href="#standards">Standards</a><button class="btn print" id="printBtn">⎙ Print Board</button></div>
+  </nav>
+  <header class="hero"><div><span class="eyebrow">Tyneceploh Educational Foundation</span><h1>Celebrating excellence.</h1><p>Explore outstanding students across the entire school or focus on a single class. Every recognition is earned.</p></div><div class="hero-symbol">🏅</div></header>
+  <section class="filters" aria-label="Honor Board filters">
+    <div class="field"><label for="scope">Class</label><select id="scope"><option value="">All Classes · Entire School</option></select></div>
+    <div class="field"><label for="type">Report Type</label><select id="type"><option value="period">Period</option><option value="semester">Semester</option><option value="yearly">Yearly</option></select></div>
+    <div class="field" id="periodWrap"><label for="period">Academic Period</label><select id="period"><option>1st Period</option><option>2nd Period</option><option>3rd Period</option><option>Semester Exam</option><option>4th Period</option><option>5th Period</option><option>6th Period</option><option>Final Exam</option></select></div>
+    <div class="field" id="semesterWrap" hidden><label for="semester">Semester</label><select id="semester"><option>Semester 1</option><option>Semester 2</option></select></div>
+    <div class="field"><label for="tier">Honor Category</label><select id="tier"><option value="">All Honors</option><option value="proprietor">Proprietor List</option><option value="principal">Principal List</option><option value="honor">Honor Roll</option></select></div>
+    <div class="field search"><label for="search">Find Student</label><input id="search" type="search" placeholder="Search name or student ID"></div>
+    <button id="refresh" class="btn primary">Refresh Board</button>
+  </section>
+  <div class="message" id="message" role="status" aria-live="polite"></div>
+  <section class="metrics" aria-label="Summary">
+    <div class="metric"><span>Students Recognized</span><strong id="mTotal">0</strong><small>Current academic selection</small></div>
+    <div class="metric"><span>Proprietor List</span><strong id="mProp">0</strong><small>Average 90%+</small></div>
+    <div class="metric"><span>Principal List</span><strong id="mPrin">0</strong><small>Average 85%+</small></div>
+    <div class="metric"><span>Honor Roll</span><strong id="mHonor">0</strong><small>Average 80%+</small></div>
+    <div class="metric"><span>Classes Covered</span><strong id="mClasses">0</strong><small>With matching reports</small></div>
+  </section>
+  <section id="results">
+    <div class="sectionhead"><div><h2>Honor Roll of Excellence</h2><p id="subtitle">Loading school reports...</p></div><span id="count" class="count"></span></div>
+    <div id="board" class="board"><div class="empty"><h3>Preparing the Honor Board…</h3><p>Loading saved academic reports and student profiles.</p></div></div>
+  </section>
+  <section class="rules" id="standards"><h2>Recognition standards</h2><p>The board applies the established TEF honor criteria to each saved academic report.</p><div class="rulesgrid"><div class="rule"><strong>Proprietor List</strong>90% or higher average</div><div class="rule"><strong>Principal List</strong>85% to below 90%</div><div class="rule"><strong>Honor Roll</strong>80% to below 85%</div><div class="rule"><strong>Minimum score</strong>Every recorded score must be at least 70%</div></div></section>
+  <div class="printfoot">TEF • Official Academic Honor Board • Generated from saved academic reports</div>
+  <footer>TEF Academic Recognition · Photos retrieved from registered student profiles</footer>
+</div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,collection,getDocs} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",authDomain:"tyneceploh.firebaseapp.com",projectId:"tyneceploh"});
+const db=getFirestore(app);
+const $=id=>document.getElementById(id);
+let reports=[],profiles=new Map(),visible=[],covered=0;
+const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s??"").trim().toLowerCase();
+const number=v=>v===null||v===undefined||String(v).trim()===""?NaN:Number(v);
+const dateValue=v=>v?.toMillis?.()??(v?.seconds?Number(v.seconds)*1000:Number(v)||0);
+function message(text="",error=false){$("message").textContent=text;$("message").className="message"+(text?" show":"")+(error?" error":"")}
+function setBusy(b){$("refresh").disabled=b;$("refresh").textContent=b?"Loading…":"Refresh Board"}
+function initials(name){const p=String(name||"Student").trim().split(/\s+/);return (p.length>1?p[0][0]+p[p.length-1][0]:p[0][0]||"S").toUpperCase()}
+function getProfile(s){
+  // Student Management stores userId and photoURL in users documents.
+  const keys=[s.studentId,s.userId,s.docId,s.id].filter(Boolean).map(norm);
+  for(const k of keys){if(profiles.has(k))return profiles.get(k)}
+  return null;
+}
+function classify(s){
+  const subjects=Object.values(s.subjects||{});
+  const allScores=[];
+  const averages=[];
+  for(const subject of subjects){
+    const scores=(subject.breakdown||[]).map(x=>number(x.score)).filter(Number.isFinite);
+    allScores.push(...scores);
+    if(scores.length)averages.push(scores.reduce((a,b)=>a+b,0)/scores.length);
+    else{const avg=number(subject.average);if(Number.isFinite(avg))averages.push(avg)}
+  }
+  const average=averages.length?averages.reduce((a,b)=>a+b,0)/averages.length:number(s.mainAverage);
+  if(!Number.isFinite(average)||!allScores.length||allScores.some(x=>x<70))return null;
+  const tier=average>=90?"proprietor":average>=85?"principal":average>=80?"honor":null;
+  return tier?{tier,average}:null;
+}
+function label(){return $("type").value==="period"?$("period").value:$("type").value==="semester"?$("semester").value:"Yearly"}
+function reportMatches(r){
+  const type=norm($("type").value),rt=norm(r.reportType);
+  if(rt!==type)return false;
+  if(type==="period")return norm(r.period)===norm($("period").value);
+  if(type==="semester")return norm(r.semester)===norm($("semester").value);
+  return true;
+}
+function buildRows(){
+  const scope=$("scope").value;
+  const latest=new Map();
+  for(const r of reports){
+    if(!reportMatches(r))continue;
+    const cls=String(r.class||"").trim();
+    if(!cls||(scope&&norm(cls)!==norm(scope)))continue;
+    const key=norm(cls);
+    if(!latest.has(key)||dateValue(r.generatedAt)>dateValue(latest.get(key).generatedAt))latest.set(key,r);
+  }
+  covered=latest.size;
+  const rows=new Map();
+  for(const [key,r] of latest){
+    for(const s of r.students||[]){
+      const classification=classify(s);
+      if(!classification)continue;
+      const id=String(s.studentId||s.userId||"").trim();
+      const name=String(s.studentName||s.name||"Unnamed Student");
+      const unique=id?norm(id):`${key}|${norm(name)}`;
+      const profile=getProfile(s);
+      // One record per student in a school-wide selection.
+      const row={...classification,id,name,cls:String(r.class||""),photo:profile?.photoURL||s.photoURL||"",report:r};
+      if(!rows.has(unique)||dateValue(r.generatedAt)>dateValue(rows.get(unique).report.generatedAt))rows.set(unique,row);
+    }
+  }
+  return [...rows.values()].sort((a,b)=>b.average-a.average||a.name.localeCompare(b.name));
+}
+function avatar(row){
+  const fallback=`<div class="initials">${escape(initials(row.name))}</div>`;
+  if(!/^https:\/\//i.test(row.photo))return fallback;
+  // No school logo fallback: use profile image or initials only.
+  return `<img class="portrait" src="${escape(row.photo)}" alt="${escape(row.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.outerHTML='<div class=&quot;initials&quot;>${escape(initials(row.name))}</div>'">`;
+}
+const tierName={proprietor:"PROPRIETOR LIST",principal:"PRINCIPAL LIST",honor:"HONOR ROLL"};
+function render(){
+  const all=buildRows(),tier=$("tier").value,q=norm($("search").value);
+  visible=all.filter(x=>(!tier||x.tier===tier)&&(!q||norm(x.name).includes(q)||norm(x.id).includes(q)));
+  const counts={proprietor:0,principal:0,honor:0};
+  all.forEach(x=>counts[x.tier]++);
+  $("mTotal").textContent=all.length;$("mProp").textContent=counts.proprietor;$("mPrin").textContent=counts.principal;$("mHonor").textContent=counts.honor;$("mClasses").textContent=covered;
+  const scope=$("scope").value||"Entire School",context=`${scope} • ${label()} • ${$("type").value[0].toUpperCase()+$("type").value.slice(1)}`;
+  $("subtitle").textContent=context+" • "+covered+" class"+(covered===1?"":"es")+" with reports";
+  $("printContext").textContent=context+($("tier").value?" • "+tierName[$("tier").value]:" • All Honors");
+  $("count").textContent=`${visible.length} shown`;
+  if(!covered){$("board").innerHTML=`<div class="empty"><h3>No matching reports</h3><p>Generate and save academic reports for this selection first. School-wide view combines the latest matching report from each class.</p></div>`;return}
+  if(!visible.length){$("board").innerHTML=`<div class="empty"><h3>No students match</h3><p>Try a different category, class, or search.</p></div>`;return}
+  $("board").innerHTML=visible.map(row=>{
+    const schoolRank=all.findIndex(x=>x===row)+1;
+    return `<article class="card" data-tier="${row.tier}"><div class="cardtop">${avatar(row)}<div class="person"><h3>${escape(row.name)}</h3><p>${escape(row.id||"No student ID")} · ${escape(row.cls)}</p><p>School Rank #${schoolRank}</p></div></div><span class="tier">${tierName[row.tier]}</span><div class="cardbottom"><span>Academic average</span><strong>${row.average.toFixed(1)}%</strong></div></article>`;
+  }).join("");
+}
+function syncType(){
+  $("periodWrap").hidden=$("type").value!=="period";
+  $("semesterWrap").hidden=$("type").value!=="semester";
+  // The CSS grid must respect the hidden attribute.
+  $("periodWrap").style.display=$("type").value==="period"?"":"none";
+  $("semesterWrap").style.display=$("type").value==="semester"?"":"none";
+}
+async function load(){
+  setBusy(true);message("Loading school academic reports and student photographs…");
+  try{
+    const [reportSnap,userSnap]=await Promise.all([getDocs(collection(db,"academic_reports")),getDocs(collection(db,"users"))]);
+    reports=reportSnap.docs.map(d=>({docId:d.id,...d.data()})).filter(r=>Array.isArray(r.students));
+    profiles=new Map();
+    userSnap.forEach(d=>{
+      const s=d.data();
+      if(norm(s.role)!=="student")return;
+      if(s.userId)profiles.set(norm(s.userId),s);
+      profiles.set(norm(d.id),s);
+    });
+    const classes=[...new Set(reports.map(r=>String(r.class||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
+    const selected=$("scope").value;
+    $("scope").innerHTML=`<option value="">All Classes · Entire School</option>`+classes.map(c=>`<option value="${escape(c)}">${escape(c)}</option>`).join("");
+    if(classes.includes(selected))$("scope").value=selected;
+    render();
+    message(`${reports.length} saved academic reports loaded across ${classes.length} classes. Showing latest matching report per class.`);
+  }catch(e){console.error(e);message("Unable to load reports or student profiles. Check your connection and Firestore access.",true);$("board").innerHTML=`<div class="empty"><h3>Could not load Honor Board</h3><p>Check your network and database permissions, then try Refresh Board.</p></div>`}
+  finally{setBusy(false)}
+}
+$("type").addEventListener("change",()=>{syncType();render()});
+for(const id of ["scope","period","semester","tier"])$(id).addEventListener("change",render);
+$("search").addEventListener("input",render);
+$("refresh").addEventListener("click",load);
+$("printBtn").addEventListener("click",()=>{if(!visible.length){message("There are no visible students to print.",true);return}window.print()});
+syncType();load();
+</script>
+</body></html>
