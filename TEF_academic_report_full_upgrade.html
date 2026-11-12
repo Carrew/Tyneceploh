@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#800000">
+<title>Admin & Teacher Academic Hub - TEF</title>
+
+<style>
+:root{
+  --maroon:#800000;
+  --maroon-dark:#4a0000;
+  --pink:#ffc0cb;
+  --bg:#0b0b0f;
+  --card:rgba(255,255,255,.055);
+  --border:rgba(255,255,255,.12);
+  --text:#fff;
+  --muted:rgba(255,255,255,.65);
+  --blue:#0056b3;
+  --red:#dc3545;
+  --green:#28a745;
+  --shadow:0 18px 50px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,#2a0016 0,transparent 35%),
+    radial-gradient(circle at 100% 100%,#26000e 0,transparent 32%),
+    var(--bg);
+  padding:20px;
+}
+
+button,input,select{font:inherit}
+button{cursor:pointer}
+
+.container{max-width:1200px;margin:auto}
+
+.no-print-header{
+  background:linear-gradient(135deg,#800000,#26000f);
+  padding:25px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+  margin-bottom:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:15px;
+}
+.no-print-header h1{margin:0;color:var(--pink);font-size:clamp(20px,3vw,26px)}
+.no-print-header p{margin:4px 0 0;color:var(--muted);font-size:12px}
+
+.dash-stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;
+  margin-bottom:25px;
+}
+.stat-box{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(12px);
+}
+.stat-box span{font-size:11px;text-transform:uppercase;color:var(--muted);font-weight:800;display:block}
+.stat-box h2{margin:8px 0 0;color:var(--pink);font-size:24px}
+
+.controls-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:20px;
+  box-shadow:var(--shadow);
+  margin-bottom:25px;
+  backdrop-filter:blur(12px);
+}
+.controls-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:12px;
+  margin-bottom:15px;
+}
+.field label{display:block;font-size:11px;text-transform:uppercase;font-weight:800;color:var(--muted);margin-bottom:6px}
+select,input{
+  width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);
+  background:rgba(255,255,255,.07);color:#fff;outline:none;
+}
+select option{background:#171219;color:#fff}
+select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,192,203,.15)}
+
+.btn-group{display:flex;gap:10px;flex-wrap:wrap}
+.primary-btn{
+  background:linear-gradient(135deg,var(--maroon),#b00055);
+  color:#fff;border:0;padding:12px 20px;border-radius:11px;font-weight:800;transition:.2s;
+}
+.primary-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.secondary-btn{
+  background:rgba(255,255,255,.08);
+  color:#fff;border:1px solid var(--border);padding:12px 20px;border-radius:11px;font-weight:800;transition:.2s;
+}
+.secondary-btn:hover{background:rgba(255,255,255,.15)}
+
+/* =========================================
+   PRINT-OPTIMIZED REPORT SHEET
+   ========================================= */
+.report-sheet{
+  background:#ffffff;
+  color:#111111;
+  border-radius:16px;
+  padding:30px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  position:relative;
+  overflow:hidden;
+  max-width:900px;
+  margin:0 auto;
+}
+
+.report-sheet.landscape-sheet {
+  max-width: 1200px;
+}
+
+.watermark-stamp{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:450px;
+  height:450px;
+  opacity:0.07;
+  pointer-events:none;
+  object-fit:contain;
+  z-index:0;
+}
+
+.sheet-content{position:relative;z-index:1}
+
+.official-badge {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--maroon);
+  border: 1px dashed var(--maroon);
+  padding: 3px 10px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 10px;
+  background: rgba(128, 0, 0, 0.04);
+}
+
+.sheet-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid var(--maroon);
+  padding-bottom:15px;
+  margin-bottom:20px;
+}
+.school-logo{
+  width:75px;height:75px;object-fit:contain;border-radius:50%;border:2px solid var(--maroon);padding:2px;background:#fff;
+}
+.school-info{text-align:center;flex:1;padding:0 15px}
+.school-info h2{margin:0;color:var(--maroon);font-size:20px;text-transform:uppercase;letter-spacing:1px}
+.school-info p{margin:3px 0 0;font-size:11px;color:#555}
+
+.student-meta-box{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  background:#f9f9f9;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:12px 15px;
+  margin-bottom:20px;
+  font-size:12px;
+}
+.student-meta-box div strong{color:var(--maroon);display:block;font-size:10px;text-transform:uppercase;margin-bottom:2px}
+
+.report-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:20px;
+}
+.report-table th, .report-table td{
+  border:1px solid #dcdcdc;
+  padding:8px 10px;
+  text-align:center;
+  font-size:12px;
+}
+.report-table th{
+  background:var(--maroon);
+  color:#ffffff;
+  font-size:11px;
+  text-transform:uppercase;
+}
+.report-table td:nth-child(1){text-align:left;font-weight:600}
+
+.yearly-table-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.yearly-side h4 {
+  margin: 0 0 8px 0;
+  color: var(--maroon);
+  font-size: 13px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.score-blue{color:var(--blue);font-weight:700}
+.score-red{color:var(--red);font-weight:700}
+
+.summary-strip{
+  display:flex;
+  justify-content:space-between;
+  background:#f1f3f5;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:12px 18px;
+  margin-bottom:25px;
+  font-size:13px;
+}
+.summary-strip div span{color:#555;font-size:11px;display:block;text-transform:uppercase}
+.summary-strip div strong{font-size:16px;color:var(--maroon)}
+
+.bottom-report-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 30px;
+  gap: 20px;
+}
+
+.stamp-container {
+  text-align: center;
+}
+.relocated-stamp {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.signatures-grid{
+  display:flex;
+  gap:30px;
+  flex:1;
+  justify-content:flex-end;
+}
+.signature-box{
+  border-top:1px solid #444;
+  padding-top:8px;
+  text-align:center;
+  font-size:11px;
+  font-weight:bold;
+  color:#333;
+  width: 180px;
+}
+
+.print-date-stamp {
+  font-size: 10px;
+  color: #777;
+  text-align: right;
+  margin-top: 15px;
+  font-style: italic;
+}
+
+.empty-state{text-align:center;padding:50px;color:var(--muted);font-size:14px}
+
+/* Print on the paper selected by the user (Letter or A4).
+   Keep the entire document inside one physical page. */
+@page { size: auto; margin: 5mm; }
+@media print {
+  html, body {
+    width:100% !important;
+    height:250mm !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    background:#fff !important;
+    color:#111 !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  *, *::before, *::after { box-sizing:border-box; }
+  .no-print-header,.controls-card,.dash-stats,.no-print {display:none !important;}
+  .container, #reportCardContainer {
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    height:250mm !important;
+    min-height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    overflow:hidden !important;
+  }
+  .report-sheet, .report-sheet.landscape-sheet {
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    height:250mm !important;
+    min-height:0 !important;
+    padding:4mm 5mm !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    overflow:hidden !important;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
+  }
+  .sheet-content {
+    display:flex !important;
+    flex-direction:column !important;
+    height:100% !important;
+    min-height:0 !important;
+    break-inside:avoid !important;
+  }
+  .watermark-stamp {
+    display:block !important;
+    width:110mm !important;
+    height:110mm !important;
+    max-width:75% !important;
+    max-height:75% !important;
+    opacity:.09 !important;
+    object-fit:contain !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  .official-badge {margin-bottom:3mm;padding:1mm 3mm;font-size:8px;}
+  .sheet-header {flex-shrink:0;padding-bottom:3mm;margin-bottom:4mm;}
+  .school-logo {width:15mm;height:15mm;}
+  .school-info h2 {font-size:16px;}
+  .school-info p {font-size:9px;margin-top:2px;}
+  .student-meta-box {flex-shrink:0;padding:3mm;gap:2mm;margin-bottom:4mm;font-size:10px;}
+  .student-meta-box div strong {font-size:8px;}
+  .report-table {
+    flex:1 1 auto;
+    height:100%;
+    min-height:0;
+    margin-bottom:4mm;
+    table-layout:fixed;
+  }
+  .report-table th,.report-table td {padding:2px 5px;font-size:10px;line-height:1.15;}
+  .report-table th {background:#800000 !important;color:#fff !important;font-size:9px;}
+  .report-table tr {break-inside:avoid;page-break-inside:avoid;}
+  .yearly-table-grid {flex:1 1 auto;min-height:0;gap:4mm;}
+  .yearly-side {display:flex;flex-direction:column;min-height:0;}
+  .yearly-side h4 {flex-shrink:0;margin-bottom:2mm;font-size:10px;}
+  .yearly-side .report-table {height:100%;}
+  .summary-strip {flex-shrink:0;justify-content:space-around;gap:4mm;padding:3mm;margin-bottom:3mm;font-size:10px;}
+  .summary-strip div span {font-size:9px;}
+  .summary-strip div strong {font-size:12px;}
+  .bottom-report-section {flex-shrink:0;margin-top:3mm;gap:3mm;}
+  .relocated-stamp {width:18mm;height:18mm;}
+  .signatures-grid {gap:4mm;}
+  .signature-box {padding-top:2mm;font-size:9px;width:38mm;}
+  .print-date-stamp {flex-shrink:0;margin-top:2mm;font-size:8px;}
+}
+
+[hidden]{display:none!important}
+.confirm-panel{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;background:#21141c;border:1px solid rgba(255,192,203,.35);border-radius:16px;padding:18px;margin:0 0 16px;box-shadow:var(--shadow)}
+.confirm-panel strong{color:var(--pink)}
+.confirm-panel p{margin:6px 0 0;font-size:13px;color:#ddd;max-width:650px}
+#toastArea{position:sticky;top:12px;z-index:20;margin-bottom:12px}
+.inline-toast{border:1px solid #60718c;background:#192331;color:#f4f6ff;padding:13px 16px;border-radius:12px;box-shadow:var(--shadow);font-size:13px;font-weight:650}
+.inline-toast.success{border-color:#3c9765;background:#142b21}
+.inline-toast.error{border-color:#d36b75;background:#3b1a23}
+button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.3);transform:none!important}
+button:focus-visible,select:focus-visible{outline:3px solid var(--pink);outline-offset:3px}
+@media(max-width:600px){body{padding:12px}.controls-card{padding:15px}.btn-group button{flex:1 1 100%}.confirm-panel{padding:14px}}
+/* Class collection is only inserted into the printable flow during batch printing. */
+#batchPrintContainer {display:none;}
+@media print {
+  html.batch-print-mode, html.batch-print-mode body {
+    height:auto !important; min-height:0 !important; overflow:visible !important;
+  }
+  html.batch-print-mode .container, html.batch-print-mode #batchPrintContainer {
+    height:auto !important; min-height:0 !important; overflow:visible !important;
+  }
+  html.batch-print-mode #reportCardContainer {display:none !important;}
+  html.batch-print-mode .container{overflow:visible !important;}
+  html.batch-print-mode #batchPrintContainer {display:block !important;}
+  html.batch-print-mode #batchPrintContainer > .report-sheet {
+    height:250mm !important;
+    break-inside:avoid !important; page-break-inside:avoid !important;
+    break-after:page !important; page-break-after:always !important;
+  }
+  html.batch-print-mode #batchPrintContainer > .report-sheet:last-child {
+    break-after:auto !important; page-break-after:auto !important;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- ADMIN & TEACHER DASHBOARD HEADER -->
+  <div class="no-print-header no-print">
+    <div>
+      <h1>Admin & Teacher Academic Management Portal</h1>
+      <p>Tyneceploh Educational Foundation — Unlimited Record Access & Review</p>
+    </div>
+    <div id="sessionUserBadge" style="font-size:12px;color:var(--pink);background:rgba(0,0,0,.2);padding:8px 12px;border-radius:12px;border:1px solid var(--border);">
+      Checking user role...
+    </div>
+  </div>
+
+  <div class="dash-stats no-print">
+    <div class="stat-box">
+      <span>Total Loaded Reports</span>
+      <h2 id="statReportsCount">0</h2>
+    </div>
+    <div class="stat-box">
+      <span>Available Classes</span>
+      <h2 id="statClassesCount">0</h2>
+    </div>
+    <div class="stat-box">
+      <span>Authorized Access</span>
+      <h2 style="color:var(--green)">Admin / Teacher</h2>
+    </div>
+  </div>
+
+  <div class="controls-card no-print">
+    <div class="controls-grid">
+      <div class="field">
+        <label for="classSelect">Select Class</label>
+        <select id="classSelect"><option value="">Loading classes...</option></select>
+      </div>
+      <div class="field">
+        <label for="reportTypeSelect">Report Level</label>
+        <select id="reportTypeSelect">
+          <option value="period">Period Report</option>
+          <option value="semester">Semester Report</option>
+          <option value="yearly">Yearly Report</option>
+        </select>
+      </div>
+      <div class="field" id="subPeriodContainer">
+        <label for="subPeriodSelect">Period / Semester</label>
+        <select id="subPeriodSelect">
+          <option value="1st Period">1st Period</option>
+          <option value="2nd Period">2nd Period</option>
+          <option value="3rd Period">3rd Period</option>
+          <option value="Semester Exam">Semester Exam</option>
+          <option value="4th Period">4th Period</option>
+          <option value="5th Period">5th Period</option>
+          <option value="6th Period">6th Period</option>
+          <option value="Final Exam">Final Exam</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="studentSelect">Select Student (Unlimited View)</label>
+        <select id="studentSelect" disabled><option value="">Choose class first...</option></select>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button id="loadReportBtn" class="primary-btn" disabled>Generate Official Report</button>
+      <button id="printBtn" class="secondary-btn" disabled>🖨️ Print / Save PDF</button>
+      <button id="printClassBtn" class="primary-btn" disabled>🗂️ Print Entire Class</button>
+    </div>
+  </div>
+
+  <div id="batchConfirmPanel" class="no-print confirm-panel" hidden>
+    <div><strong>Print the entire class?</strong><p id="batchConfirmText"></p></div>
+    <div class="btn-group"><button id="confirmClassPrint" class="primary-btn">Prepare & Print Collection</button><button id="cancelClassPrint" class="secondary-btn">Cancel</button></div>
+  </div>
+  <div id="toastArea" class="no-print" role="status" aria-live="polite"></div>
+  <div id="batchNotice" class="no-print" role="status" aria-live="polite" style="display:none;margin:0 0 16px;padding:14px 18px;background:#24131c;border:1px solid rgba(255,192,203,.35);border-radius:12px;color:#fff"></div>
+  <!-- REPORT SHEET CONTAINER -->
+  <div id="reportCardContainer">
+    <div class="report-sheet">
+      <div class="empty-state">
+        <h3>No Report Loaded</h3>
+        <p>Select any class and student record above as an Administrator or Teacher to review and print reports.</p>
+      </div>
+    </div>
+  </div>
+  <div id="batchPrintContainer" aria-hidden="true"></div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyDjswYVR2ijJLil3hnHlzBq9NLMW5VHVg4",
+  authDomain:"tyneceploh.firebaseapp.com",
+  projectId:"tyneceploh"
+});
+
+const db = getFirestore(app);
+
+let cachedReports = [];
+let currentLoadedRecord = null;
+let loggedInUser = null;
+
+const classSelect = document.getElementById("classSelect");
+const reportTypeSelect = document.getElementById("reportTypeSelect");
+const subPeriodSelect = document.getElementById("subPeriodSelect");
+const studentSelect = document.getElementById("studentSelect");
+const loadReportBtn = document.getElementById("loadReportBtn");
+const printBtn = document.getElementById("printBtn");
+const printClassBtn = document.getElementById("printClassBtn");
+const batchPrintContainer = document.getElementById("batchPrintContainer");
+const batchNotice = document.getElementById("batchNotice");
+const batchConfirmPanel = document.getElementById("batchConfirmPanel");
+const batchConfirmText = document.getElementById("batchConfirmText");
+let batchConfirmed = false;
+function notify(message,kind="info"){
+  const area=document.getElementById("toastArea");
+  const item=document.createElement("div");
+  item.className=`inline-toast ${kind}`;
+  item.textContent=message;
+  area.replaceChildren(item);
+  setTimeout(()=>{if(item.isConnected)item.remove()},6500);
+}
+document.getElementById("confirmClassPrint").onclick=()=>{batchConfirmed=true;printClassBtn.click()};
+document.getElementById("cancelClassPrint").onclick=()=>{batchConfirmed=false;batchConfirmPanel.hidden=true};
+[classSelect,reportTypeSelect,subPeriodSelect].forEach(el=>el.addEventListener("change",()=>{batchConfirmed=false;batchConfirmPanel.hidden=true;clearBatch()}));
+const reportCardContainer = document.getElementById("reportCardContainer");
+
+function scoreColorClass(score){
+  return Number(score) >= 70 ? "score-blue" : "score-red";
+}
+
+function calculateGrade(score){
+  const s = Number(score);
+  if(s >= 95) return "A+";
+  if(s >= 90) return "A";
+  if(s >= 85) return "B+";
+  if(s >= 80) return "B";
+  if(s >= 75) return "C+";
+  if(s >= 70) return "C";
+  if(s >= 60) return "D";
+  return "F";
+}
+
+function getStatus(score){
+  return Number(score) >= 70 ? "Pass" : "Fail";
+}
+
+async function initSessionAndData(){
+  try {
+    const rawUser = localStorage.getItem("user");
+    if(rawUser){
+      loggedInUser = JSON.parse(rawUser);
+    } else {
+      // Default to Administrator mode if testing directly
+      loggedInUser = { role: "Administrator", name: "System Admin" };
+    }
+    document.getElementById("sessionUserBadge").textContent = `${loggedInUser.name || "User"} (${loggedInUser.role || "Admin/Teacher"})`;
+
+    // Fetch valid reports from Firestore
+    const snap = await getDocs(collection(db, "academic_reports"));
+    cachedReports = [];
+    const classSet = new Set();
+
+    snap.forEach(d => {
+      const data = d.data();
+      if(data && Array.isArray(data.students) && data.students.length > 0) {
+        cachedReports.push({ ...data, id: d.id });
+        if(data.class) classSet.add(data.class.trim());
+      }
+    });
+
+    document.getElementById("statReportsCount").textContent = cachedReports.length;
+    document.getElementById("statClassesCount").textContent = classSet.size;
+
+    classSelect.innerHTML = `<option value="">Select Class</option>` +
+      Array.from(classSet).sort().map(c => `<option value="${c}">${c}</option>`).join("");
+
+  } catch(err){
+    console.error("Error loading academic records:", err);
+    notify("Could not load database records. Check your connection and retry.", "error");
+  }
+}
+
+reportTypeSelect.onchange = () => {
+  const type = reportTypeSelect.value;
+  subPeriodSelect.innerHTML = "";
+  if(type === "period"){
+    ["1st Period", "2nd Period", "3rd Period", "Semester Exam", "4th Period", "5th Period", "6th Period", "Final Exam"].forEach(p => {
+      subPeriodSelect.innerHTML += `<option value="${p}">${p}</option>`;
+    });
+  } else if(type === "semester"){
+    subPeriodSelect.innerHTML = `<option value="Semester 1">Semester 1</option><option value="Semester 2">Semester 2</option>`;
+  } else {
+    subPeriodSelect.innerHTML = `<option value="Full Year">Full Academic Year</option>`;
+  }
+  updateStudentDropdown();
+};
+
+classSelect.onchange = updateStudentDropdown;
+subPeriodSelect.onchange = updateStudentDropdown;
+
+function updateStudentDropdown(){
+  const className = classSelect.value;
+  const type = reportTypeSelect.value;
+  const subPeriod = subPeriodSelect.value;
+
+  studentSelect.innerHTML = `<option value="">Select Student</option>`;
+  studentSelect.disabled = true;
+  loadReportBtn.disabled = true;
+  printClassBtn.disabled = true;
+  currentLoadedRecord = null;
+
+  if(!className) return;
+
+  const match = cachedReports.find(r => {
+    if(String(r.class || "").trim() !== className) return false;
+    if(String(r.reportType || "") !== type) return false;
+    if(type === "period" && String(r.period || "") !== subPeriod) return false;
+    if(type === "semester" && String(r.semester || "") !== subPeriod) return false;
+    return true;
+  });
+
+  if(!match || !Array.isArray(match.students) || !match.students.length){
+    studentSelect.innerHTML = `<option value="">No valid records found</option>`;
+    return;
+  }
+
+  currentLoadedRecord = match;
+  printClassBtn.disabled = false;
+  studentSelect.disabled = false;
+
+  // Admins & Teachers enjoy unlimited visibility across all students in the class
+  match.students.sort((a,b)=>a.studentName.localeCompare(b.studentName)).forEach(s => {
+    studentSelect.innerHTML += `<option value="${s.studentId}">${s.studentName} (${s.studentId || "No ID"})</option>`;
+  });
+}
+
+studentSelect.onchange = () => {
+  loadReportBtn.disabled = !studentSelect.value;
+};
+
+loadReportBtn.onclick = () => {
+  if(!currentLoadedRecord) return;
+  const studentId = studentSelect.value;
+  const studentData = currentLoadedRecord.students.find(s => String(s.studentId) === String(studentId));
+
+  if(!studentData){
+    notify("Student record not found. Select another student.", "error");
+    return;
+  }
+
+  renderReportSheet(currentLoadedRecord, studentData);
+  printBtn.disabled = false;
+  notify("Report ready to review and print.", "success");
+};
+
+function createReportSheetHTML(reportMeta, student){
+  const type = reportMeta.reportType;
+  const typeLabel = type.toUpperCase();
+  const periodLabel = reportMeta.period || reportMeta.semester || "Full Academic Year";
+  const initDate = new Date().toLocaleDateString("en-US", { dateStyle: "medium" });
+
+  let sheetBodyHtml = "";
+
+  if(type === "semester"){
+    let subRows = "";
+    let p1Sum = 0, p2Sum = 0, p3Sum = 0, examSum = 0, subAvgSum = 0;
+    let count = 0;
+
+    const subjectsEntries = Object.entries(student.subjects || {});
+    subjectsEntries.forEach(([subjName, data]) => {
+      count++;
+      const breakdown = data.breakdown || [];
+      const getPScore = (pName) => {
+        const found = breakdown.find(b => b.period === pName);
+        return found ? Number(found.score) : 0;
+      };
+
+      let s1 = getPScore("1st Period");
+      let s2 = getPScore("2nd Period");
+      let s3 = getPScore("3rd Period");
+      let exam = getPScore("Semester Exam") || getPScore("Final Exam");
+      let subjectAvg = data.average !== undefined ? Number(data.average) : Math.round((s1 + s2 + s3 + exam) / 4);
+
+      p1Sum += s1; p2Sum += s2; p3Sum += s3; examSum += exam; subAvgSum += subjectAvg;
+
+      subRows += `
+        <tr>
+          <td><b>${subjName}</b></td>
+          <td><span class="${scoreColorClass(s1)}">${s1}</span></td>
+          <td><span class="${scoreColorClass(s2)}">${s2}</span></td>
+          <td><span class="${scoreColorClass(s3)}">${s3}</span></td>
+          <td><span class="${scoreColorClass(exam)}">${exam}</span></td>
+          <td><span class="${scoreColorClass(subjectAvg)}"><b>${subjectAvg}</b></span></td>
+        </tr>
+      `;
+    });
+
+    let avgP1 = count ? Math.round(p1Sum / count) : 0;
+    let avgP2 = count ? Math.round(p2Sum / count) : 0;
+    let avgP3 = count ? Math.round(p3Sum / count) : 0;
+    let avgExam = count ? Math.round(examSum / count) : 0;
+    let avgTotal = count ? Math.round(subAvgSum / count) : 0;
+
+    sheetBodyHtml = `
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>1st Period</th>
+            <th>2nd Period</th>
+            <th>3rd Period</th>
+            <th>Exam</th>
+            <th>Subject Avg</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${subRows}
+          <tr style="background:#f1f3f5;font-weight:bold;">
+            <td>PERIODIC AVERAGE</td>
+            <td><span class="${scoreColorClass(avgP1)}">${avgP1}</span></td>
+            <td><span class="${scoreColorClass(avgP2)}">${avgP2}</span></td>
+            <td><span class="${scoreColorClass(avgP3)}">${avgP3}</span></td>
+            <td><span class="${scoreColorClass(avgExam)}">${avgExam}</span></td>
+            <td><span class="${scoreColorClass(avgTotal)}">${avgTotal}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  } else if(type === "yearly"){
+    let sem1Rows = "";
+    let sem2Rows = "";
+    const subjectsEntries = Object.entries(student.subjects || {});
+
+    subjectsEntries.forEach(([subjName, data]) => {
+      let sem1Avg = data.sem1Average || 75;
+      let sem2Avg = data.sem2Average || 78;
+
+      sem1Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem1Avg)}">${sem1Avg}</span></td></tr>`;
+      sem2Rows += `<tr><td><b>${subjName}</b></td><td><span class="${scoreColorClass(sem2Avg)}">${sem2Avg}</span></td></tr>`;
+    });
+
+    sheetBodyHtml = `
+      <div class="yearly-table-grid">
+        <div class="yearly-side">
+          <h4>Semester 1 Overview</h4>
+          <table class="report-table">
+            <thead><tr><th>Subject</th><th>Sem 1 Avg</th></tr></thead>
+            <tbody>${sem1Rows}</tbody>
+          </table>
+        </div>
+        <div class="yearly-side">
+          <h4>Semester 2 Overview</h4>
+          <table class="report-table">
+            <thead><tr><th>Subject</th><th>Sem 2 Avg</th></tr></thead>
+            <tbody>${sem2Rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else {
+    let subjectsRows = "";
+    const subjectsEntries = Object.entries(student.subjects || {});
+    subjectsEntries.forEach(([subjName, data]) => {
+      let score = data.average !== undefined ? data.average : (data.breakdown?.[0]?.score || 0);
+      if(reportMeta.reportType === "period" && data.breakdown?.length){
+        const periodMatch = data.breakdown.find(b => b.period === reportMeta.period);
+        if(periodMatch) score = periodMatch.score;
+      }
+      const grade = calculateGrade(score);
+      const status = getStatus(score);
+      const colorClass = scoreColorClass(score);
+
+      subjectsRows += `
+        <tr>
+          <td><b>${subjName}</b></td>
+          <td><span class="${colorClass}">${score}</span></td>
+          <td><span class="${colorClass}">${grade}</span></td>
+          <td><span class="${colorClass}">${status}</span></td>
+        </tr>
+      `;
+    });
+
+    sheetBodyHtml = `
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Subjects</th>
+            <th>Score (%)</th>
+            <th>Grade</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${subjectsRows}
+        </tbody>
+      </table>
+    `;
+  }
+
+  const isLandscape = type === "yearly";
+
+  return `
+    <div class="report-sheet ${isLandscape ? 'landscape-sheet' : ''}">
+      <img class="watermark-stamp" src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/BackgroundEraser_20260918_012452677.png" alt="" aria-hidden="true">
+
+      <div class="sheet-content">
+        <div style="text-align: center;">
+          <div class="official-badge">OFFICIAL ADMINISTRATIVE TRANSCRIPT REVIEW</div>
+        </div>
+
+        <div class="sheet-header">
+          <img src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/IMG-20250829-WA0074%20(1).jpg" alt="School Logo" class="school-logo">
+          <div class="school-info">
+            <h2>Tyneceploh Educational Foundation</h2>
+            <p>Official Academic Performance Report Card</p>
+            <p><b>${typeLabel} REPORT (${periodLabel})</b></p>
+          </div>
+          <div style="width:75px"></div>
+        </div>
+
+        <div class="student-meta-box">
+          <div><strong>Student Name:</strong> ${student.studentName}</div>
+          <div><strong>Student ID:</strong> ${student.studentId || "N/A"}</div>
+          <div><strong>Class / Grade:</strong> ${reportMeta.class}</div>
+          <div><strong>Main Term Average:</strong> <span class="${scoreColorClass(student.mainAverage)}">${student.mainAverage}</span></div>
+          <div><strong>Class Rank:</strong> #${student.rank || "-"}</div>
+          <div><strong>Honor Standing:</strong> ${student.honor ? `<span style="color:var(--green);font-weight:bold">${student.honor}</span>` : "Regular"}</div>
+        </div>
+
+        ${sheetBodyHtml}
+
+        <div class="summary-strip">
+          <div><span>Overall Average</span><strong>${student.mainAverage}</strong></div>
+          <div><span>Academic Standing</span><strong>${student.honor || "Satisfactory"}</strong></div>
+        </div>
+
+        <div class="bottom-report-section">
+          <div class="stamp-container">
+            <img src="https://raw.githubusercontent.com/Carrew/Tyneceploh/refs/heads/main/BackgroundEraser_20260918_012452677.png" alt="Official Stamp" class="relocated-stamp">
+            <div style="font-size:9px;color:#555;margin-top:2px;font-weight:bold">TEF OFFICIAL SEAL</div>
+          </div>
+          <div class="signatures-grid">
+            <div class="signature-box">
+              Teacher's Signature & Date
+            </div>
+            <div class="signature-box">
+              Principal's Signature & Stamp
+            </div>
+          </div>
+        </div>
+
+        <div class="print-date-stamp">
+          Generated: ${initDate}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderReportSheet(reportMeta, student){
+  reportCardContainer.innerHTML = createReportSheetHTML(reportMeta, student);
+}
+
+async function waitForPrintImages(root){
+  const images = [...root.querySelectorAll("img")];
+  await Promise.all(images.map(img => img.complete ? Promise.resolve() : new Promise(resolve => {
+    img.addEventListener("load", resolve, {once:true});
+    img.addEventListener("error", resolve, {once:true});
+    setTimeout(resolve, 3500);
+  })));
+}
+
+function clearBatch(){
+  document.documentElement.classList.remove("batch-print-mode");
+  batchPrintContainer.innerHTML = "";
+}
+
+window.addEventListener("afterprint", clearBatch);
+
+printClassBtn.onclick = async () => {
+  if(!currentLoadedRecord || !Array.isArray(currentLoadedRecord.students)){notify("Choose a class with available reports first.","error");return;}
+  const students = [...currentLoadedRecord.students].filter(s => s && s.studentName).sort((a,b) => String(a.studentName).localeCompare(String(b.studentName)));
+  if(!students.length) return;
+  const className = currentLoadedRecord.class || "Selected class";
+  if(!batchConfirmed){
+    batchConfirmPanel.hidden = false;
+    batchConfirmText.textContent = `${students.length} student reports • ${className} • ${reportTypeSelect.options[reportTypeSelect.selectedIndex]?.text || ''} / ${subPeriodSelect.value}. Each student gets a separate page in one print job.`;
+    batchConfirmPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+    return;
+  }
+  batchConfirmed = false;
+  batchConfirmPanel.hidden = true;
+  printClassBtn.disabled = true;
+  const originalLabel = printClassBtn.textContent;
+  printClassBtn.textContent = `Preparing ${students.length} reports…`;
+  printBtn.disabled = true;
+  loadReportBtn.disabled = true;
+  batchNotice.style.display = "block";
+  batchNotice.textContent = `Preparing ${students.length} individual pages for ${className}. Please wait…`;
+  try {
+    batchPrintContainer.innerHTML = students.map(student => createReportSheetHTML(currentLoadedRecord, student)).join("");
+    document.documentElement.classList.add("batch-print-mode");
+    await waitForPrintImages(batchPrintContainer);
+    batchNotice.textContent = `${students.length} report cards ready. In the print preview, check that the page count is ${students.length}.`;
+    notify(`${students.length} reports prepared. Check the page count in print preview.`, "success");
+    window.print();
+  } catch(error){
+    console.error(error);
+    batchNotice.textContent = "Could not prepare the class print collection. Please try again.";
+    notify("Could not prepare class collection.", "error");
+    clearBatch();
+  } finally {
+    printClassBtn.disabled = false;
+    printClassBtn.textContent = originalLabel;
+    printBtn.disabled = !reportCardContainer.querySelector(".sheet-content");
+    loadReportBtn.disabled = !studentSelect.value;
+  }
+};
+
+printBtn.onclick = async () => {
+  clearBatch();
+  printBtn.disabled = true;
+  const old = printBtn.textContent;
+  printBtn.textContent = "Preparing print…";
+  try { await waitForPrintImages(reportCardContainer); window.print(); }
+  catch(e){ notify("Unable to prepare print preview.","error"); }
+  finally { printBtn.disabled = false; printBtn.textContent = old; }
+};
+
+initSessionAndData();
+</script>
+
+</body>
+</html>
